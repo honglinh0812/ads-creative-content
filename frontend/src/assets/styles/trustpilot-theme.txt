@@ -1,0 +1,146 @@
+:root {
+  --tp-color-green: #00b67a;
+  --tp-color-green-dark: #00a067;
+  --tp-color-blue: #1c2833;
+  --tp-color-grey-light: #f8f8f8;
+  --tp-color-grey-medium: #e0e0e0;
+  --tp-color-grey-dark: #6f7579;
+  --tp-color-white: #ffffff;
+  --tp-color-error: #c62828;
+  --tp-color-error-bg: rgba(198, 40, 40, 0.1);
+  --tp-color-selected-border: #4285f4; /* Keep selection blue for now */
+  --tp-color-selected-bg: rgba(66, 133, 244, 0.05);
+
+  --tp-font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Example font */
+  --tp-border-radius: 6px;
+  --tp-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+body {
+  font-family: var(--tp-font-family);
+  background-color: var(--tp-color-grey-light);
+  color: var(--tp-color-blue);
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+
+#app {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3 {
+  color: var(--tp-color-blue);
+  font-weight: 600;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--tp-color-grey-dark);
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid var(--tp-color-grey-medium);
+  border-radius: var(--tp-border-radius);
+  font-size: 16px;
+  background-color: var(--tp-color-white);
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--tp-color-green);
+}
+
+/* Button Styles */
+.button {
+  display: inline-block;
+  padding: 12px 25px;
+  background-color: var(--tp-color-green);
+  color: var(--tp-color-white);
+  border: none;
+  border-radius: var(--tp-border-radius);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+}
+
+.button:hover:not(:disabled) {
+  background-color: var(--tp-color-green-dark);
+}
+
+.button:disabled {
+  background-color: #a8e6cf; /* Lighter green for disabled */
+  cursor: not-allowed;
+}
+
+.button-primary {
+  /* Already defined by .button */
+}
+
+.button-secondary {
+  background-color: var(--tp-color-white);
+  color: var(--tp-color-green);
+  border: 1px solid var(--tp-color-green);
+}
+
+.button-secondary:hover:not(:disabled) {
+  background-color: rgba(0, 182, 122, 0.05);
+}
+
+/* Loading and Error Styles */
+.loading-indicator {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--tp-color-grey-dark);
+}
+
+.error-message {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--tp-color-error);
+  padding: 10px 15px;
+  background-color: var(--tp-color-error-bg);
+  border: 1px solid var(--tp-color-error);
+  border-radius: var(--tp-border-radius);
+}
+
+/* Card Styles (for previews) */
+.card {
+  background-color: var(--tp-color-white);
+  border: 1px solid var(--tp-color-grey-medium);
+  border-radius: var(--tp-border-radius);
+  box-shadow: var(--tp-box-shadow);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.card-content {
+  padding: 20px;
+}
+

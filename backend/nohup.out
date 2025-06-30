@@ -1,0 +1,137 @@
+nohup: ignoring input
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v2.7.8)
+
+2025-06-30 11:18:22.559  INFO 9124 --- [           main] com.fbadsautomation.Application          : Starting Application v0.0.1-SNAPSHOT using Java 17.0.15 on Chanchan with PID 9124 (/home/linhnh/project2/backend/target/facebook-ads-automation-0.0.1-SNAPSHOT.jar started by linhnh in /home/linhnh/project2/backend)
+2025-06-30 11:18:22.563 DEBUG 9124 --- [           main] com.fbadsautomation.Application          : Running with Spring Boot v2.7.8, Spring v5.3.25
+2025-06-30 11:18:22.564  INFO 9124 --- [           main] com.fbadsautomation.Application          : No active profile set, falling back to 1 default profile: "default"
+2025-06-30 11:18:24.802  INFO 9124 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-06-30 11:18:24.972  INFO 9124 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 150 ms. Found 9 JPA repository interfaces.
+2025-06-30 11:18:25.377  INFO 9124 --- [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=e197b765-f290-3352-9866-bd99e5598787
+2025-06-30 11:18:26.209  INFO 9124 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2025-06-30 11:18:26.236  INFO 9124 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-06-30 11:18:26.237  INFO 9124 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.71]
+2025-06-30 11:18:26.375  INFO 9124 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-06-30 11:18:26.376  INFO 9124 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3674 ms
+2025-06-30 11:18:26.976  INFO 9124 --- [           main] o.f.c.internal.license.VersionPrinter    : Flyway Community Edition 8.5.13 by Redgate
+2025-06-30 11:18:26.977  INFO 9124 --- [           main] o.f.c.internal.license.VersionPrinter    : See what's new here: https://flywaydb.org/documentation/learnmore/releaseNotes#8.5.13
+2025-06-30 11:18:26.977  INFO 9124 --- [           main] o.f.c.internal.license.VersionPrinter    : 
+2025-06-30 11:18:26.994  INFO 9124 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-06-30 11:18:27.668  INFO 9124 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-06-30 11:18:27.709  INFO 9124 --- [           main] o.f.c.i.database.base.BaseDatabaseType   : Database: jdbc:postgresql://localhost:5432/fbadsautomation (PostgreSQL 14.18)
+2025-06-30 11:18:27.843  INFO 9124 --- [           main] o.f.core.internal.command.DbValidate     : Successfully validated 4 migrations (execution time 00:00.078s)
+2025-06-30 11:18:27.860  INFO 9124 --- [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 4
+2025-06-30 11:18:27.862  INFO 9124 --- [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2025-06-30 11:18:30.462  INFO 9124 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-06-30 11:18:31.073 DEBUG 9124 --- [           main] c.f.security.JwtAuthenticationFilter     : Filter 'jwtAuthenticationFilter' configured for use
+2025-06-30 11:18:31.134  INFO 9124 --- [           main] com.fbadsautomation.ai.GeminiProvider    : Using Gemini API URL: https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent
+2025-06-30 11:18:31.137  INFO 9124 --- [           main] com.fbadsautomation.ai.OpenAIProvider    : Using OpenAI Text API URL: https://api.openai.com/v1/chat/completions
+2025-06-30 11:18:31.138  INFO 9124 --- [           main] com.fbadsautomation.ai.OpenAIProvider    : Using OpenAI Image API URL: https://api.openai.com/v1/images/generations
+2025-06-30 11:18:31.141  INFO 9124 --- [           main] c.f.ai.StableDiffusionProvider           : Using Stable Diffusion Image API URL: https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0
+2025-06-30 11:18:31.142  INFO 9124 --- [           main] c.f.ai.StableDiffusionProvider           : Image save directory ensured at: uploads/images
+2025-06-30 11:18:31.144  INFO 9124 --- [           main] c.f.ai.HuggingFaceProvider               : Using Hugging Face Text API URL: https://api-inference.huggingface.co/models/PeterBrendan/AdsGPT2
+2025-06-30 11:18:31.145  INFO 9124 --- [           main] c.f.ai.HuggingFaceProvider               : Using Hugging Face Image API URL: https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0
+2025-06-30 11:18:31.145  INFO 9124 --- [           main] c.f.ai.HuggingFaceProvider               : Image save directory ensured at: src/main/resources/static/generated_images
+2025-06-30 11:18:31.663  INFO 9124 --- [           main] c.f.service.AIProviderService            : ✅ Loaded 4 AI providers: [openai, google_gemini, stable_diffusion, hugging_face]
+2025-06-30 11:18:32.105  WARN 9124 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-06-30 11:18:32.515  INFO 9124 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@4a70d302, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@7fd99443, org.springframework.security.web.context.SecurityContextPersistenceFilter@52b959df, org.springframework.security.web.header.HeaderWriterFilter@64518270, org.springframework.web.filter.CorsFilter@622d7e4, org.springframework.security.web.authentication.logout.LogoutFilter@5c18d6d4, org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter@715fa8c5, org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter@644a3add, com.fbadsautomation.security.JwtAuthenticationFilter@3135bf25, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@5aa62ee7, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@6a3fbcb1, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@553d2579, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@668cc9a2, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@261b9a37, org.springframework.security.web.session.SessionManagementFilter@79627d27, org.springframework.security.web.access.ExceptionTranslationFilter@35eee641, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@7b351446]
+2025-06-30 11:18:34.426  INFO 9124 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoint(s) beneath base path '/actuator'
+2025-06-30 11:18:34.503  INFO 9124 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2025-06-30 11:18:34.550  INFO 9124 --- [           main] com.fbadsautomation.Application          : Started Application in 13.039 seconds (JVM running for 14.17)
+2025-06-30 11:18:34.828  INFO 9124 --- [nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-06-30 11:18:34.828  INFO 9124 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-06-30 11:18:34.830  INFO 9124 --- [nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2025-06-30 11:19:06.498 ERROR 9124 --- [nio-8080-exec-3] c.f.security.JwtTokenProvider            : Expired JWT token
+2025-06-30 11:19:08.301 ERROR 9124 --- [nio-8080-exec-8] c.f.security.JwtTokenProvider            : Expired JWT token
+2025-06-30 11:19:09.289 ERROR 9124 --- [nio-8080-exec-2] c.f.security.JwtTokenProvider            : Expired JWT token
+2025-06-30 11:19:33.122  INFO 9124 --- [nio-8080-exec-2] c.fbadsautomation.config.SecurityConfig  : OAuth2 authentication successful
+2025-06-30 11:19:33.143  INFO 9124 --- [nio-8080-exec-2] com.fbadsautomation.service.AuthService  : Processing OAuth2 user: id=1755484858735167, name=Nguyễn Hồng Lĩnh, email=linhk71tincnh@gmail.com
+2025-06-30 11:19:33.284  INFO 9124 --- [nio-8080-exec-2] com.fbadsautomation.service.AuthService  : Successfully processed OAuth2 user linhk71tincnh@gmail.com and generated token
+2025-06-30 11:19:35.103 DEBUG 9124 --- [nio-8080-exec-7] c.f.security.JwtAuthenticationFilter     : Set authentication for user ID: 1
+2025-06-30 11:19:35.135  INFO 9124 --- [nio-8080-exec-7] c.f.controller.AuthController            : Getting current user
+2025-06-30 11:19:35.135  INFO 9124 --- [nio-8080-exec-7] com.fbadsautomation.service.AuthService  : Attempting to retrieve user with ID: 1
+2025-06-30 11:19:35.143  INFO 9124 --- [nio-8080-exec-7] com.fbadsautomation.service.AuthService  : Successfully retrieved user: 1 with email: linhk71tincnh@gmail.com
+2025-06-30 11:19:36.520 DEBUG 9124 --- [io-8080-exec-10] c.f.security.JwtAuthenticationFilter     : Set authentication for user ID: 1
+2025-06-30 11:19:36.533  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Getting dashboard data for user ID: 1
+2025-06-30 11:19:36.538  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Found user: linhk71tincnh@gmail.com with ID: 1
+2025-06-30 11:19:36.538  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Fetching campaigns for user: 1
+2025-06-30 11:19:36.568 DEBUG 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Processing campaign: 1
+2025-06-30 11:19:36.582  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Finished fetching 1 campaigns for user: 1
+2025-06-30 11:19:36.582  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Fetching recent ads for user: 1
+2025-06-30 11:19:36.590 DEBUG 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Filtering ad: 7
+2025-06-30 11:19:36.590 DEBUG 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Processing ad: 7
+2025-06-30 11:19:36.590 DEBUG 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Filtering ad: 6
+2025-06-30 11:19:36.591 DEBUG 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Processing ad: 6
+2025-06-30 11:19:36.591 DEBUG 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Filtering ad: 5
+2025-06-30 11:19:36.591 DEBUG 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Processing ad: 5
+2025-06-30 11:19:36.591 DEBUG 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Filtering ad: 2
+2025-06-30 11:19:36.591 DEBUG 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Processing ad: 2
+2025-06-30 11:19:36.591  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Finished fetching 4 recent ads for user: 1
+2025-06-30 11:19:36.591  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Calculating dashboard stats for user: 1
+2025-06-30 11:19:36.599  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Total campaigns count: 1
+2025-06-30 11:19:36.608  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Total ads count: 4
+2025-06-30 11:19:36.614  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Active campaigns count: 0
+2025-06-30 11:19:36.619  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Active ads count: 0
+2025-06-30 11:19:36.620  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Finished calculating dashboard stats.
+2025-06-30 11:19:36.621  INFO 9124 --- [io-8080-exec-10] c.f.service.DashboardService             : DashboardService: Dashboard data successfully prepared for user ID: 1
+2025-06-30 11:19:48.630 DEBUG 9124 --- [nio-8080-exec-2] c.f.security.JwtAuthenticationFilter     : Set authentication for user ID: 1
+2025-06-30 11:19:48.634  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Getting dashboard data for user ID: 1
+2025-06-30 11:19:48.638  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Found user: linhk71tincnh@gmail.com with ID: 1
+2025-06-30 11:19:48.638  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Fetching campaigns for user: 1
+2025-06-30 11:19:48.644 DEBUG 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Processing campaign: 1
+2025-06-30 11:19:48.649  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Finished fetching 1 campaigns for user: 1
+2025-06-30 11:19:48.650  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Fetching recent ads for user: 1
+2025-06-30 11:19:48.652 DEBUG 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Filtering ad: 7
+2025-06-30 11:19:48.652 DEBUG 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Processing ad: 7
+2025-06-30 11:19:48.652 DEBUG 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Filtering ad: 6
+2025-06-30 11:19:48.652 DEBUG 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Processing ad: 6
+2025-06-30 11:19:48.653 DEBUG 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Filtering ad: 5
+2025-06-30 11:19:48.653 DEBUG 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Processing ad: 5
+2025-06-30 11:19:48.653 DEBUG 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Filtering ad: 2
+2025-06-30 11:19:48.653 DEBUG 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Processing ad: 2
+2025-06-30 11:19:48.653  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Finished fetching 4 recent ads for user: 1
+2025-06-30 11:19:48.653  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Calculating dashboard stats for user: 1
+2025-06-30 11:19:48.655  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Total campaigns count: 1
+2025-06-30 11:19:48.656  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Total ads count: 4
+2025-06-30 11:19:48.658  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Active campaigns count: 0
+2025-06-30 11:19:48.660  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Active ads count: 0
+2025-06-30 11:19:48.660  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Finished calculating dashboard stats.
+2025-06-30 11:19:48.660  INFO 9124 --- [nio-8080-exec-2] c.f.service.DashboardService             : DashboardService: Dashboard data successfully prepared for user ID: 1
+2025-06-30 11:19:51.236 DEBUG 9124 --- [nio-8080-exec-7] c.f.security.JwtAuthenticationFilter     : Set authentication for user ID: 1
+2025-06-30 11:19:51.240  INFO 9124 --- [nio-8080-exec-7] c.f.controller.CampaignController        : Getting all campaigns for user: 1
+2025-06-30 11:19:51.250  INFO 9124 --- [nio-8080-exec-7] c.f.service.CampaignService              : Getting all campaigns for user ID: 1
+2025-06-30 11:19:53.371 DEBUG 9124 --- [io-8080-exec-10] c.f.security.JwtAuthenticationFilter     : Set authentication for user ID: 1
+2025-06-30 11:19:53.374  INFO 9124 --- [io-8080-exec-10] c.f.controller.AdController              : Getting all ads for user: 1
+2025-06-30 11:20:05.118 DEBUG 9124 --- [nio-8080-exec-3] c.f.security.JwtAuthenticationFilter     : Set authentication for user ID: 1
+2025-06-30 11:20:05.120  INFO 9124 --- [nio-8080-exec-3] c.f.controller.CampaignController        : Getting all campaigns for user: 1
+2025-06-30 11:20:05.120  INFO 9124 --- [nio-8080-exec-3] c.f.service.CampaignService              : Getting all campaigns for user ID: 1
+2025-06-30 11:20:06.474 DEBUG 9124 --- [nio-8080-exec-8] c.f.security.JwtAuthenticationFilter     : Set authentication for user ID: 1
+2025-06-30 11:20:06.973 DEBUG 9124 --- [nio-8080-exec-6] c.f.security.JwtAuthenticationFilter     : Set authentication for user ID: 1
+2025-06-30 11:20:53.501 DEBUG 9124 --- [nio-8080-exec-3] c.f.security.JwtAuthenticationFilter     : Set authentication for user ID: 1
+2025-06-30 11:20:53.618  INFO 9124 --- [nio-8080-exec-3] c.f.controller.AdController              : Generating ad content for user: 1
+2025-06-30 11:20:53.619  INFO 9124 --- [nio-8080-exec-3] c.f.controller.AdController              : AdController: Text provider: openai, Image provider: openai
+2025-06-30 11:20:53.620  INFO 9124 --- [nio-8080-exec-3] com.fbadsautomation.service.AdService    : Creating ad with AI content for user ID: 1
+2025-06-30 11:20:53.705  INFO 9124 --- [nio-8080-exec-3] c.f.service.AIContentService             : Generating content for ad: 8
+2025-06-30 11:20:53.707  INFO 9124 --- [nio-8080-exec-3] c.f.integration.ai.AIContentServiceImpl  : Generating 1 text variations using OpenAI
+2025-06-30 11:20:53.708 DEBUG 9124 --- [nio-8080-exec-3] com.fbadsautomation.ai.OpenAIProvider    : Calling OpenAI Text API at: https://api.openai.com/v1/chat/completions with prompt: Tạo nội dung quảng cáo Facebook dạng Page Post Ad với:
+- Primary text: Nội dung chính của bài đăng
+- Headline: Tiêu đề ngắn gọn, hấp dẫn
+- Description: Mô tả chi tiết
+- CTA: Nút kêu gọi hành động phù hợp
+Yêu cầu: Quảng cáo đàn guitar Yamaha
+2025-06-30 11:20:55.973  INFO 9124 --- [nio-8080-exec-3] com.fbadsautomation.ai.OpenAIProvider    : Raw OpenAI response content: {
+    "headline": "Chinh phục âm nhạc với Yamaha",
+    "description": "Dòng đàn guitar chất lượng cao từ Yamaha",
+    "primaryText": "Bạn đam mê âm nhạc? Đừng bỏ lỡ cơ hội sở hữu đàn guitar Yamaha với chất lượng vượt trội và âm thanh sống động. Với hơn 20 năm kinh nghiệm, Yamaha là sự lựa chọn hàng đầu của các nghệ sĩ chuyên nghiệp và học sinh âm nhạc. Nhanh tay đặt hàng ngay hôm nay để trải nghiệm cảm giác đặc biệt này!",
+    "callToAction": "Mua ngay để thể hiện đẳng cấp"
+}
+2025-06-30 11:20:56.007  INFO 9124 --- [nio-8080-exec-3] com.fbadsautomation.ai.OpenAIProvider    : Parsed OpenAI Ad Content: AdContent(id=null, contentType=null, primaryText=Bạn đam mê âm nhạc? Đừng bỏ lỡ cơ hội sở hữu đàn guitar Yamaha với chất lượng vượt trội và âm thanh sống động. Với hơn 20 năm kinh nghiệm, Yamaha là sự lựa chọn hàng đầu của các nghệ sĩ chuyên nghiệp và học sinh âm nhạc. Nhanh tay đặt hàng ngay hôm nay để trải nghiệm cảm giác đặc biệt này!, headline=Chinh phục âm nhạc với Yamaha, description=Dòng đàn guitar chất lượng cao từ Yamaha, callToAction=Mua ngay để thể hiện đẳng cấp, imageUrl=null, isSelected=false, previewOrder=null, aiProvider=OPENAI, ad=null, user=null, createdAt=null, updatedAt=null)
+2025-06-30 11:20:56.022 DEBUG 9124 --- [nio-8080-exec-3] com.fbadsautomation.ai.OpenAIProvider    : Calling OpenAI Image API at: https://api.openai.com/v1/images/generations with prompt: Professional, high-quality advertisement for: Bạn đam mê âm nhạc? Đừng bỏ lỡ cơ hội sở hữu đàn guitar Yamaha với chất lượng vượt trội và âm thanh sống động. Với hơn 20 năm kinh nghiệm, Yamaha là sự lựa chọn hàng đầu của các nghệ sĩ chuyên nghiệp và học sinh âm nhạc. Nhanh tay đặt hàng ngay hôm nay để trải nghiệm cảm giác đặc biệt này!. Clear product focus, studio lighting, crisp details, vibrant colors, commercial photography style, 8k resolution, professional marketing image
+2025-06-30 11:21:12.181  INFO 9124 --- [nio-8080-exec-3] com.fbadsautomation.ai.OpenAIProvider    : Successfully received image URL from OpenAI: https://oaidalleapiprodscus.blob.core.windows.net/private/org-8k1LHtx9aXPWddE6WHfj2X7e/user-R4fQbaqd15Zpyl3OnnNLhaFr/img-wkm8Lhwqc6PtWYQOQwoWqKNH.png?st=2025-06-30T03%3A21%3A11Z&se=2025-06-30T05%3A21%3A11Z&sp=r&sv=2024-08-04&sr=b&rscd=inline&rsct=image/png&skoid=cc612491-d948-4d2e-9821-2683df3719f5&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-06-29T23%3A33%3A33Z&ske=2025-06-30T23%3A33%3A33Z&sks=b&skv=2024-08-04&sig=qIJKnyqUEreIvG37TWUuu5YA3pmb%2BrisUWHzkhXL5k8%3D
+2025-06-30 11:21:12.182  INFO 9124 --- [nio-8080-exec-3] c.f.integration.ai.AIContentServiceImpl  : Images added using OpenAI

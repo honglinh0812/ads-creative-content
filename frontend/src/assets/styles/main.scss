@@ -1,0 +1,16 @@
+// Import modern styles
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import 'variables';
+@import 'base';
+@import 'layout';
+@import 'components';
+
+// Import utilities
+@import 'utilities';
+
+// Legacy styles (can be removed if not needed)
+// @import 'legacy';
+

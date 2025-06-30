@@ -1,0 +1,206 @@
+package com.fbadsautomation.service;
+
+import com.fbadsautomation.exception.ApiException;
+import com.fbadsautomation.integration.facebook.FacebookProperties;
+import com.fbadsautomation.model.User;
+import com.fbadsautomation.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class AuthService {
+
+    private final UserRepository userRepository;
+    private final RestTemplate restTemplate;
+    private final FacebookProperties facebookProperties;
+
+    // Store state for CSRF protection
+    private final Map<String, String> stateStore = new HashMap<>();
+
+    // Store temporary auth tokens for success redirect
+    private final Map<String, Map<String, String>> authTokenStore = new ConcurrentHashMap<>();
+
+    /**
+     * Get Facebook authorization URL
+     * @return The authorization URL
+     */
+    public String getFacebookAuthorizationUrl() {
+        String state = UUID.randomUUID().toString();
+        stateStore.put(state, "pending");
+        /*
+        return String.format(
+            "https://www.facebook.com/v%s/dialog/oauth?client_id=%s&redirect_uri=%s&state=%s&scope=%s",
+            facebookProperties.getApiVersion(),
+            facebookProperties.getAppId(),
+            facebookProperties.getRedirectUri(),
+            state,
+            facebookProperties.getScope()
+        );
+        */
+        return String.format(
+            "https://www.facebook.com/v%s/dialog/oauth?client_id=%s&redirect_uri=%s&state=%s&scope=%s",
+            "18.0",
+            "687686920719737",
+            "https://oriole-relaxing-humbly.ngrok-free.app/api/oauth2/callback/facebook",
+            state,
+            facebookProperties.getScope()
+        );
+    }
+
+    /**
+     * Process Facebook callback
+     * @param code The authorization code
+     * @param state The state parameter
+     * @return Map containing token and user info
+     */
+    @Transactional
+    public Map<String, String> processFacebookCallback(String code, String state) {
+        // Verify state to prevent CSRF
+        if (!stateStore.containsKey(state) || !"pending".equals(stateStore.get(state))) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid state parameter");
+        }
+
+        try {
+            // Exchange code for access token
+            // In a real implementation, this would make API calls to Facebook
+            String accessToken = "mock_access_token_" + System.currentTimeMillis();
+
+            // Get user info from Facebook
+            // In a real implementation, this would make API calls to Facebook
+            String fbUserId = "fb_" + System.currentTimeMillis();
+            String name = "Facebook User";
+            String email = "user" + System.currentTimeMillis() + "@example.com";
+
+            // Find or create user
+            User user = userRepository.findByFbUserId(fbUserId)
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setFbUserId(fbUserId);
+                    newUser.setName(name);
+                    newUser.setEmail(email);
+                    newUser.setFbAccessToken(accessToken);
+                    return userRepository.save(newUser);
+                });
+
+            // Update token if user exists
+            if (user.getId() != null) {
+                user.setFbAccessToken(accessToken);
+                userRepository.save(user);
+            }
+
+            // Generate JWT token for our application
+            String jwtToken = generateJwtToken(user);
+
+            // Clean up state
+            stateStore.remove(state);
+
+            // Store token info for success redirect
+            String sessionId = UUID.randomUUID().toString();
+            Map<String, String> tokenInfo = new HashMap<>();
+            tokenInfo.put("token", jwtToken);
+            tokenInfo.put("userId", user.getId().toString());
+            tokenInfo.put("name", user.getName());
+            tokenInfo.put("email", user.getEmail());
+            authTokenStore.put(sessionId, tokenInfo);
+
+            // Add session ID to response for success endpoint
+            Map<String, String> response = new HashMap<>(tokenInfo);
+            response.put("sessionId", sessionId);
+
+            return response;
+        } catch (Exception e) {
+            log.error("Error processing Facebook callback: {}", e.getMessage(), e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to process Facebook callback: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get stored auth token by session ID
+     * @param sessionId The session ID
+     * @return Map containing token and user info
+     */
+    public Map<String, String> getStoredAuthToken(String sessionId) {
+        if (sessionId == null || !authTokenStore.containsKey(sessionId)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid or expired session");
+        }
+
+        // Get token info and remove from store (one-time use)
+        Map<String, String> tokenInfo = authTokenStore.remove(sessionId);
+        return tokenInfo;
+    }
+
+    /**
+     * Generate token for current authenticated user
+     * @return Map containing token and user info
+     */
+    public Map<String, String> generateTokenForCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+        }
+
+        String userId = authentication.getName();
+        User user = userRepository.findById(Long.parseLong(userId))
+            .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // Generate JWT token for our application
+        String jwtToken = generateJwtToken(user);
+
+        // Return token and user info
+        Map<String, String> response = new HashMap<>();
+        response.put("token", jwtToken);
+        response.put("userId", user.getId().toString());
+        response.put("name", user.getName());
+        response.put("email", user.getEmail());
+
+        return response;
+    }
+
+    /**
+     * Get current authenticated user
+     * @return The current user
+     */
+    public User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+        }
+
+        String userId = authentication.getName();
+        return userRepository.findById(Long.parseLong(userId))
+            .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    /**
+     * Logout current user
+     */
+    public void logout() {
+        // In a real implementation, this would invalidate the JWT token
+        // For now, just log the action
+        log.info("User logged out");
+    }
+
+    /**
+     * Generate JWT token for user
+     * @param user The user
+     * @return The JWT token
+     */
+    private String generateJwtToken(User user) {
+        // In a real implementation, this would generate a proper JWT token
+        // For now, just return a mock token
+        return "mock_jwt_token_" + user.getId() + "_" + System.currentTimeMillis();
+    }
+}

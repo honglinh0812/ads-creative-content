@@ -1,0 +1,540 @@
+<template>
+  <div class="ad-detail-container">
+    <Card>
+      <template #title>
+        <div class="card-header">
+          <div class="title-section">
+            <h2>{{ ad.headline }}</h2>
+            <span :class="getStatusClass(ad.status)">{{ ad.status }}</span>
+          </div>
+          <div class="action-buttons">
+            <Button 
+              label="Publish to Facebook" 
+              icon="pi pi-send" 
+              @click="publishAd" 
+              :disabled="!canPublish || publishing"
+              :loading="publishing"
+              v-if="ad.status !== 'ACTIVE'"
+            />
+          </div>
+        </div>
+      </template>
+      <template #content>
+        <div v-if="loading" class="loading-container">
+          <ProgressSpinner />
+          <p>Loading ad details...</p>
+        </div>
+        <div v-else-if="error" class="error-container">
+          <p class="error-message">{{ error }}</p>
+          <Button label="Retry" icon="pi pi-refresh" @click="fetchAd" />
+        </div>
+        <div v-else>
+          <div class="ad-preview-container">
+            <div class="ad-preview">
+              <div class="ad-preview-header">
+                <div class="page-info">
+                  <div class="page-avatar"></div>
+                  <div class="page-name">Your Page Name</div>
+                </div>
+                <div class="post-time">Just now · <i class="pi pi-globe"></i></div>
+              </div>
+              <div class="ad-preview-content">
+                <p class="primary-text">{{ ad.primaryText }}</p>
+                <div class="ad-image" v-if="ad.imageUrl">
+                  <img :src="ad.imageUrl" alt="Ad Image" />
+                </div>
+                <div class="ad-headline-description">
+                  <h3>{{ ad.headline }}</h3>
+                  <p>{{ ad.description }}</p>
+                </div>
+                <div class="ad-cta">
+                  <Button :label="formatCTA(ad.cta)" class="p-button-sm" />
+                </div>
+              </div>
+            </div>
+            <div class="ad-details">
+              <h3>Ad Details</h3>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <span class="label">Type:</span>
+                  <span class="value">{{ ad.adType }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Status:</span>
+                  <span class="value" :class="getStatusClass(ad.status)">{{ ad.status }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Call to Action:</span>
+                  <span class="value">{{ formatCTA(ad.cta) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Created:</span>
+                  <span class="value">{{ formatDate(ad.createdAt) }}</span>
+                </div>
+                <div class="detail-item" v-if="ad.fbAdId">
+                  <span class="label">Facebook Ad ID:</span>
+                  <span class="value">{{ ad.fbAdId }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <Divider />
+          
+          <div class="ad-content-section">
+            <h3>Generated Content</h3>
+            <div v-if="adContents.length === 0" class="empty-state">
+              <p>No AI-generated content yet</p>
+              <div class="ai-prompt-container">
+                <Textarea 
+                  v-model="aiPrompt" 
+                  rows="3" 
+                  placeholder="Describe what you want to advertise..."
+                />
+                <div class="ai-provider-selection">
+                  <div class="p-field-radiobutton">
+                    <RadioButton id="openai" value="openai" v-model="aiProvider" />
+                    <label for="openai">OpenAI</label>
+                  </div>
+                  <div class="p-field-radiobutton">
+                    <RadioButton id="gemini" value="gemini" v-model="aiProvider" />
+                    <label for="gemini">Gemini</label>
+                  </div>
+                </div>
+                <Button 
+                  label="Generate Content" 
+                  icon="pi pi-bolt" 
+                  @click="generateContent" 
+                  :disabled="!aiPrompt || generatingContent"
+                  :loading="generatingContent"
+                />
+              </div>
+            </div>
+            <div v-else>
+              <div class="content-cards">
+                <Card v-for="content in adContents" :key="content.id" class="content-card">
+                  <template #title>
+                    {{ content.headline }}
+                  </template>
+                  <template #content>
+                    <p class="primary-text">{{ content.primaryText }}</p>
+                    <p class="description">{{ content.description }}</p>
+                    <p class="provider">Generated by: {{ content.aiProvider }}</p>
+                  </template>
+                  <template #footer>
+                    <Button 
+                      :label="content.isSelected ? 'Selected' : 'Use This Content'" 
+                      @click="selectContent(content)" 
+                      :disabled="content.isSelected"
+                      :class="{'p-button-success': content.isSelected}"
+                    />
+                  </template>
+                </Card>
+              </div>
+              
+              <div class="generate-more">
+                <Divider />
+                <h4>Generate More Content</h4>
+                <div class="ai-prompt-container">
+                  <Textarea 
+                    v-model="aiPrompt" 
+                    rows="3" 
+                    placeholder="Describe what you want to advertise..."
+                  />
+                  <div class="ai-provider-selection">
+                    <div class="p-field-radiobutton">
+                      <RadioButton id="openai" value="openai" v-model="aiProvider" />
+                      <label for="openai">OpenAI</label>
+                    </div>
+                    <div class="p-field-radiobutton">
+                      <RadioButton id="gemini" value="gemini" v-model="aiProvider" />
+                      <label for="gemini">Gemini</label>
+                    </div>
+                  </div>
+                  <Button 
+                    label="Generate More Content" 
+                    icon="pi pi-bolt" 
+                    @click="generateContent" 
+                    :disabled="!aiPrompt || generatingContent"
+                    :loading="generatingContent"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </Card>
+  </div>
+</template>
+
+<script>
+import { mapGetters, mapActions } from 'vuex'
+import moment from 'moment'
+
+export default {
+  name: 'AdDetail',
+  props: {
+    campaignId: {
+      type: String,
+      required: true
+    },
+    adId: {
+      type: String,
+      required: true
+    }
+  },
+  data() {
+    return {
+      aiPrompt: '',
+      aiProvider: 'openai',
+      publishing: false
+    }
+  },
+  computed: {
+    ...mapGetters('ad', ['currentAd', 'adContents', 'loading', 'error', 'generatingContent']),
+    ad() {
+      return this.currentAd || {}
+    },
+    canPublish() {
+      return this.ad.status === 'DRAFT' && this.adContents.some(content => content.isSelected)
+    }
+  },
+  methods: {
+    ...mapActions('ad', ['fetchAd', 'generateContent', 'selectContent', 'publishAd']),
+    ...mapActions('notification', ['showSuccess', 'showError']),
+    
+    fetchAd() {
+      this.fetchAd({
+        campaignId: this.campaignId,
+        adId: this.adId
+      })
+    },
+    
+    async generateContent() {
+      if (!this.aiPrompt) return
+      
+      try {
+        await this.generateContent({
+          campaignId: this.campaignId,
+          adId: this.adId,
+          prompt: this.aiPrompt,
+          provider: this.aiProvider
+        })
+        this.aiPrompt = ''
+      } catch (error) {
+        this.showError({
+          title: 'Error',
+          message: `Failed to generate content: ${error.message}`
+        })
+      }
+    },
+    
+    async selectContent(content) {
+      try {
+        await this.selectContent({
+          campaignId: this.campaignId,
+          adId: this.adId,
+          contentId: content.id
+        })
+        this.showSuccess({
+          title: 'Success',
+          message: 'Content selected successfully'
+        })
+      } catch (error) {
+        this.showError({
+          title: 'Error',
+          message: `Failed to select content: ${error.message}`
+        })
+      }
+    },
+    
+    async publishAd() {
+      this.publishing = true
+      
+      try {
+        await this.publishAd({
+          campaignId: this.campaignId,
+          adId: this.adId
+        })
+        this.showSuccess({
+          title: 'Success',
+          message: 'Ad published successfully to Facebook'
+        })
+      } catch (error) {
+        this.showError({
+          title: 'Error',
+          message: `Failed to publish ad: ${error.message}`
+        })
+      } finally {
+        this.publishing = false
+      }
+    },
+    
+    formatDate(dateString) {
+      return moment(dateString).format('MMM D, YYYY')
+    },
+    
+    formatCTA(cta) {
+      if (!cta) return ''
+      
+      return cta.split('_').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      ).join(' ')
+    },
+    
+    getStatusClass(status) {
+      const statusClasses = {
+        'DRAFT': 'status-draft',
+        'PENDING': 'status-pending',
+        'ACTIVE': 'status-active',
+        'PAUSED': 'status-paused',
+        'COMPLETED': 'status-completed',
+        'FAILED': 'status-failed',
+        'REJECTED': 'status-rejected'
+      }
+      return `status-badge ${statusClasses[status] || ''}`
+    }
+  },
+  created() {
+    this.fetchAd({
+      campaignId: this.campaignId,
+      adId: this.adId
+    })
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.ad-detail-container {
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    
+    .title-section {
+      display: flex;
+      align-items: center;
+      
+      h2 {
+        margin: 0;
+        margin-right: 1rem;
+      }
+    }
+  }
+  
+  .loading-container, .error-container, .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 0;
+    text-align: center;
+  }
+  
+  .error-message {
+    color: #f44336;
+    margin-bottom: 1rem;
+  }
+  
+  .ad-preview-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+    
+    .ad-preview {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: #fff;
+      
+      .ad-preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
+        
+        .page-info {
+          display: flex;
+          align-items: center;
+          
+          .page-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #1877f2;
+            margin-right: 8px;
+          }
+          
+          .page-name {
+            font-weight: 600;
+          }
+        }
+        
+        .post-time {
+          color: #65676b;
+          font-size: 0.9rem;
+        }
+      }
+      
+      .ad-preview-content {
+        padding: 12px;
+        
+        .primary-text {
+          margin-bottom: 12px;
+        }
+        
+        .ad-image {
+          margin: 0 -12px;
+          
+          img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+          }
+        }
+        
+        .ad-headline-description {
+          padding: 12px;
+          border: 1px solid #f0f0f0;
+          margin: 12px 0;
+          
+          h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.1rem;
+          }
+          
+          p {
+            margin: 0;
+            color: #65676b;
+            font-size: 0.9rem;
+          }
+        }
+        
+        .ad-cta {
+          display: flex;
+          justify-content: center;
+        }
+      }
+    }
+    
+    .ad-details {
+      h3 {
+        margin-top: 0;
+      }
+      
+      .details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        
+        .detail-item {
+          .label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+          }
+        }
+      }
+    }
+  }
+  
+  .ad-content-section {
+    margin-top: 2rem;
+    
+    .content-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      
+      .content-card {
+        .primary-text {
+          font-size: 0.9rem;
+          margin-bottom: 1rem;
+        }
+        
+        .description {
+          font-size: 0.85rem;
+          color: #666;
+        }
+        
+        .provider {
+          font-size: 0.8rem;
+          color: #999;
+          font-style: italic;
+          margin-top: 1rem;
+        }
+      }
+    }
+    
+    .generate-more {
+      margin-top: 2rem;
+      
+      h4 {
+        margin-top: 0;
+      }
+    }
+  }
+  
+  .ai-prompt-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+    
+    .ai-provider-selection {
+      display: flex;
+      gap: 2rem;
+    }
+  }
+  
+  .status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    
+    &.status-draft {
+      background-color: #e0e0e0;
+      color: #616161;
+    }
+    
+    &.status-pending {
+      background-color: #fff8e1;
+      color: #ff8f00;
+    }
+    
+    &.status-active {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+    
+    &.status-paused {
+      background-color: #e3f2fd;
+      color: #1565c0;
+    }
+    
+    &.status-completed {
+      background-color: #e8eaf6;
+      color: #3949ab;
+    }
+    
+    &.status-failed {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+    
+    &.status-rejected {
+      background-color: #fce4ec;
+      color: #c2185b;
+    }
+  }
+}
+</style>

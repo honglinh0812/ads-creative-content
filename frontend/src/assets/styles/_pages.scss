@@ -1,0 +1,452 @@
+/* Page-specific styles
+ * Styles for individual pages in the application
+ */
+
+// Login page
+.login-page {
+  @include flex-center;
+  min-height: calc(100vh - 120px);
+  
+  &__container {
+    max-width: 400px;
+    width: 100%;
+    @include card;
+    text-align: center;
+    
+    .logo {
+      margin-bottom: $spacing-lg;
+      
+      img {
+        max-width: 120px;
+        margin-bottom: $spacing-sm;
+      }
+    }
+    
+    .facebook-login-btn {
+      background-color: $primary-color;
+      color: white;
+      width: 100%;
+      padding: $spacing-sm;
+      border-radius: $border-radius-md;
+      font-weight: $font-weight-medium;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      i {
+        margin-right: $spacing-sm;
+      }
+      
+      &:hover {
+        background-color: darken($primary-color, 5%);
+      }
+    }
+  }
+}
+
+// Page selection
+.page-selection {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: $spacing-xl 0;
+  
+  &__header {
+    text-align: center;
+    margin-bottom: $spacing-xl;
+    
+    h1 {
+      margin-bottom: $spacing-sm;
+    }
+    
+    p {
+      color: $text-light;
+    }
+  }
+  
+  &__list {
+    @include card;
+    
+    .page-item {
+      @include flex-between;
+      padding: $spacing-md;
+      border-bottom: 1px solid $border-color;
+      transition: background-color $transition-fast;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      &:hover {
+        background-color: rgba($primary-color, 0.05);
+      }
+      
+      .page-info {
+        display: flex;
+        align-items: center;
+        
+        .avatar {
+          margin-right: $spacing-md;
+        }
+        
+        .page-name {
+          font-weight: $font-weight-medium;
+        }
+      }
+    }
+  }
+  
+  &__empty {
+    @include card;
+    text-align: center;
+    padding: $spacing-xl;
+    
+    p {
+      margin-bottom: $spacing-lg;
+    }
+  }
+}
+
+// Dashboard page
+.dashboard-page {
+  &__header {
+    @include flex-between;
+    margin-bottom: $spacing-xl;
+    
+    .welcome {
+      h1 {
+        margin-bottom: $spacing-xs;
+      }
+      
+      p {
+        color: $text-light;
+        margin-bottom: 0;
+      }
+    }
+  }
+  
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: $spacing-md;
+    margin-bottom: $spacing-xl;
+    
+    @include respond-to(md) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @include respond-to(lg) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .stat-card {
+      @include card;
+      
+      .stat-value {
+        font-size: $font-size-2xl;
+        font-weight: $font-weight-bold;
+        color: $primary-color;
+        margin-bottom: $spacing-xs;
+      }
+      
+      .stat-label {
+        color: $text-light;
+        font-size: $font-size-sm;
+      }
+    }
+  }
+  
+  &__recent {
+    margin-bottom: $spacing-xl;
+    
+    .section-header {
+      @include flex-between;
+      margin-bottom: $spacing-lg;
+      
+      h2 {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+// Create Ad page
+.create-ad-page {
+  max-width: 800px;
+  margin: 0 auto;
+  
+  &__header {
+    margin-bottom: $spacing-xl;
+    
+    h1 {
+      margin-bottom: $spacing-xs;
+    }
+    
+    p {
+      color: $text-light;
+    }
+  }
+  
+  &__form {
+    @include card;
+    
+    .form-section {
+      margin-bottom: $spacing-xl;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      h3 {
+        margin-bottom: $spacing-md;
+        padding-bottom: $spacing-xs;
+        border-bottom: 1px solid $border-color;
+      }
+    }
+    
+    .ad-type-selection {
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);
+      gap: $spacing-md;
+      
+      @include respond-to(md) {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      
+      .ad-type-option {
+        border: 2px solid $border-color;
+        border-radius: $border-radius-md;
+        padding: $spacing-md;
+        text-align: center;
+        cursor: pointer;
+        transition: all $transition-normal;
+        
+        &:hover {
+          border-color: rgba($primary-color, 0.5);
+        }
+        
+        &.selected {
+          border-color: $primary-color;
+          background-color: rgba($primary-color, 0.05);
+        }
+        
+        .icon {
+          font-size: 24px;
+          margin-bottom: $spacing-sm;
+          color: $primary-color;
+        }
+        
+        .title {
+          font-weight: $font-weight-medium;
+          margin-bottom: $spacing-xs;
+        }
+        
+        .description {
+          font-size: $font-size-sm;
+          color: $text-light;
+        }
+      }
+    }
+    
+    .prompt-input {
+      textarea {
+        min-height: 120px;
+      }
+    }
+    
+    .media-upload {
+      .upload-preview {
+        margin-top: $spacing-md;
+        text-align: center;
+        
+        img {
+          max-height: 200px;
+          border-radius: $border-radius-md;
+        }
+      }
+    }
+    
+    .duration-selection {
+      .budget-warning {
+        margin-top: $spacing-md;
+        @extend .alert--warning;
+      }
+    }
+    
+    .form-actions {
+      @include flex-between;
+      margin-top: $spacing-xl;
+      padding-top: $spacing-lg;
+      border-top: 1px solid $border-color;
+    }
+  }
+}
+
+// Ad Preview Dialog
+.ad-preview-dialog {
+  .preview-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $spacing-lg;
+    margin-bottom: $spacing-lg;
+    
+    @include respond-to(md) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .preview-option {
+      border: 2px solid $border-color;
+      border-radius: $border-radius-md;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all $transition-normal;
+      
+      &:hover {
+        border-color: rgba($primary-color, 0.5);
+      }
+      
+      &.selected {
+        border-color: $primary-color;
+      }
+    }
+  }
+  
+  .dialog-actions {
+    @include flex-between;
+    margin-top: $spacing-lg;
+  }
+}
+
+// Ad Detail page
+.ad-detail-page {
+  max-width: 800px;
+  margin: 0 auto;
+  
+  &__header {
+    @include flex-between;
+    margin-bottom: $spacing-xl;
+    
+    .back-link {
+      display: flex;
+      align-items: center;
+      color: $text-light;
+      
+      i {
+        margin-right: $spacing-xs;
+      }
+    }
+  }
+  
+  &__content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $spacing-xl;
+    
+    @include respond-to(lg) {
+      grid-template-columns: 3fr 2fr;
+    }
+  }
+  
+  &__preview {
+    @include card;
+  }
+  
+  &__info {
+    @include card;
+    
+    .info-section {
+      margin-bottom: $spacing-lg;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      h3 {
+        font-size: $font-size-lg;
+        margin-bottom: $spacing-sm;
+        padding-bottom: $spacing-xs;
+        border-bottom: 1px solid $border-color;
+      }
+      
+      .info-item {
+        @include flex-between;
+        margin-bottom: $spacing-sm;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        .label {
+          font-weight: $font-weight-medium;
+          color: $text-light;
+        }
+      }
+    }
+  }
+  
+  &__actions {
+    margin-top: $spacing-xl;
+    
+    .action-btn {
+      margin-right: $spacing-sm;
+      margin-bottom: $spacing-sm;
+    }
+  }
+}
+
+// Campaign Detail page
+.campaign-detail-page {
+  &__header {
+    @include flex-between;
+    margin-bottom: $spacing-xl;
+    
+    .back-link {
+      display: flex;
+      align-items: center;
+      color: $text-light;
+      
+      i {
+        margin-right: $spacing-xs;
+      }
+    }
+  }
+  
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-md;
+    margin-bottom: $spacing-xl;
+    
+    @include respond-to(md) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .stat-card {
+      @include card;
+      
+      .stat-value {
+        font-size: $font-size-2xl;
+        font-weight: $font-weight-bold;
+        color: $primary-color;
+        margin-bottom: $spacing-xs;
+      }
+      
+      .stat-label {
+        color: $text-light;
+        font-size: $font-size-sm;
+      }
+    }
+  }
+  
+  &__ads {
+    margin-bottom: $spacing-xl;
+    
+    .section-header {
+      @include flex-between;
+      margin-bottom: $spacing-lg;
+      
+      h2 {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
