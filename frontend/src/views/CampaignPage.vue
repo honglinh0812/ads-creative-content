@@ -107,140 +107,320 @@
                 </svg>
                 <h3 class="text-xl font-semibold text-secondary-900 mb-2">No campaigns yet</h3>
                 <p class="text-secondary-600 mb-6">Create your first campaign to get started with Facebook Ads</p>
-                <router-link to="/campaign/create" class="btn btn-primary">
+                <router-link to="/campaign/create" class="btn btn-sm btn-primary">
                   Create Your First Campaign
                 </router-link>
               </div>
             </div>
 
             <!-- Campaigns List -->
-            <div v-else class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              <div v-for="campaign in campaigns" :key="campaign.id" class="card hover:shadow-lg transition-shadow duration-200">
-                <div class="card-body">
-                  <div class="flex items-start justify-between mb-4">
-                    <div class="flex-1">
-                      <h3 class="text-lg font-semibold text-secondary-900 mb-1">{{ campaign.name }}</h3>
-                      <p class="text-sm text-secondary-600">{{ campaign.objective?.replace('_', ' ') }}</p>
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              <div v-for="campaign in campaigns" :key="campaign.id" class="card hover:shadow-lg transition-shadow duration-200 flex flex-col">
+                <div class="card-body flex flex-col justify-between h-full p-3">
+                  <div>
+                    <div class="flex items-start justify-between mb-2">
+                       <div>
+                        <h3 class="text-base font-semibold text-secondary-900 line-clamp-2">{{ campaign.name }}</h3>
+                        <p class="text-xs text-secondary-600 line-clamp-1">{{ campaign.objective?.replace("_", " ") }}</p>
+                      </div>
+                      <span :class="getStatusBadgeClass(campaign.status)">{{ campaign.status }}</span>
                     </div>
-                    <span :class="getStatusBadgeClass(campaign.status)">
-                      {{ campaign.status }}
-                    </span>
-                  </div>
-                  
-                  <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
+
+                    <div class="mb-2">
                       <p class="text-xs text-secondary-500 mb-1">Budget Type</p>
-                      <p class="text-sm font-medium text-secondary-900">{{ campaign.budgetType?.replace('_', ' ') || 'Daily' }}</p>
+                      <p class="text-sm font-medium text-secondary-900">{{ campaign.budgetType?.replace("_", " ") || "N/A" }}</p>
                     </div>
-                    <div>
+
+                    <div class="mb-2">
                       <p class="text-xs text-secondary-500 mb-1">Budget</p>
                       <p class="text-sm font-medium text-secondary-900">
                         ${{ campaign.dailyBudget || campaign.totalBudget || campaign.budget || 0 }}
                       </p>
                     </div>
-                  </div>
 
-                  <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p class="text-xs text-secondary-500 mb-1">Ads</p>
-                      <p class="text-sm font-medium text-secondary-900">{{ campaign.adCount || 0 }}</p>
+                    <div v-if="campaign.targetAudience" class="mb-2">
+                      <p class="text-xs text-secondary-500 mb-1">Target Audience</p>
+                      <p class="text-sm text-secondary-700 line-clamp-2">{{ campaign.targetAudience }}</p>
                     </div>
-                    <div>
-                      <p class="text-xs text-secondary-500 mb-1">Created</p>
-                      <p class="text-sm font-medium text-secondary-900">{{ formatDate(campaign.createdAt) }}</p>
-                    </div>
-                  </div>
-
-                  <div v-if="campaign.targetAudience" class="mb-4">
-                    <p class="text-xs text-secondary-500 mb-1">Target Audience</p>
-                    <p class="text-sm text-secondary-700 line-clamp-2">{{ campaign.targetAudience }}</p>
                   </div>
                   
-                  <div class="flex items-center justify-between pt-4 border-t border-neutral-200">
-                    <div class="flex gap-2">
-                      <router-link :to="`/campaigns/${campaign.id}/edit`" class="btn btn-xs btn-ghost">
+                  <div class="flex items-center justify-between pt-2 border-t border-neutral-200">
+                    <div class="flex gap-1">
+                      <button @click="showEditCampaignModal(campaign)" class="btn btn-xs btn-outline-secondary">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
                         Edit
-                      </router-link>
-                      <button @click="deleteCampaign(campaign.id)" class="btn btn-xs btn-ghost text-error-600 hover:bg-error-50">
+                      </button>
+                      <button @click="confirmDeleteCampaign(campaign.id)" class="btn btn-xs btn-outline-error">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
                         Delete
                       </button>
                     </div>
-                    <router-link :to="`/campaigns/${campaign.id}`" class="btn btn-xs btn-primary">
+                    <button @click="showCampaignDetails(campaign)" class="btn btn-xs btn-primary">
                       View Details
-                    </router-link>
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+
+            <!-- Pagination -->
+            <div v-if="totalPages > 1" class="flex justify-center mt-8">
+              <Paginator :rows="size" :totalRecords="totalItems" :rowsPerPageOptions="[5, 10, 20]" @page="onPageChange"></Paginator>
+            </div>          </div>
         </div>
       </main>
     </div>
+
+    <!-- Campaign Detail Modal -->
+    <Dialog v-model:visible="showDetailModal" modal header="Campaign Details" :style="{ width: '80vw', maxWidth: '1000px' }" :breakpoints="{ '960px': '90vw', '641px': '100vw' }">
+      <div v-if="selectedCampaign">
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Name:</label>
+          <p class="text-secondary-900">{{ selectedCampaign.name }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Objective:</label>
+          <p class="text-secondary-900">{{ selectedCampaign.objective?.replace("_", " ") || "N/A" }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Budget Type:</label>
+          <p class="text-secondary-900">{{ selectedCampaign.budgetType?.replace("_", " ") || "N/A" }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Daily Budget:</label>
+          <p class="text-secondary-900">${{ selectedCampaign.dailyBudget || 0 }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Total Budget:</label>
+          <p class="text-secondary-900">${{ selectedCampaign.totalBudget || 0 }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Target Audience:</label>
+          <p class="text-secondary-900">{{ selectedCampaign.targetAudience || 'N/A' }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Start Date:</label>
+          <p class="text-secondary-900">{{ formatDate(selectedCampaign.startDate) }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">EndDate:</label>
+          <p class="text-secondary-900">{{ formatDate(selectedCampaign.endDate) }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Status:</label>
+          <p class="text-secondary-900">{{ selectedCampaign.status || 'N/A' }}</p>
+        </div>
+      </div>
+      <template #footer>
+        <button @click="showDetailModal = false" class="btn btn-primary">OK</button>
+      </template>
+    </Dialog>
+
+    <!-- Edit Campaign Modal -->
+    <Dialog v-model:visible="showEditModal" modal header="Edit Campaign" :style="{ width: '70vw', maxWidth: '900px' }" :breakpoints="{ '960px': '90vw', '641px': '100vw' }">
+      <div v-if="editingCampaign">
+        <div class="field mb-4">
+          <label for="editName" class="block text-sm font-medium text-secondary-700 mb-1">Name:</label>
+          <InputText id="editName" v-model="editingCampaign.name" class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editObjective" class="block text-sm font-medium text-secondary-700 mb-1">Objective:</label>
+          <Dropdown id="editObjective" v-model="editingCampaign.objective" :options="['BRAND_AWARENESS', 'REACH', 'TRAFFIC', 'ENGAGEMENT', 'LEAD_GENERATION', 'APP_PROMOTION', 'SALES']" placeholder="Select an Objective" class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editBudgetType" class="block text-sm font-medium text-secondary-700 mb-1">Budget Type:</label>
+          <Dropdown id="editBudgetType" v-model="editingCampaign.budgetType" :options="['DAILY', 'TOTAL']" placeholder="Select Budget Type" class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editDailyBudget" class="block text-sm font-medium text-secondary-700 mb-1">Daily Budget:</label>
+          <InputNumber id="editDailyBudget" v-model="editingCampaign.dailyBudget" mode="currency" currency="USD" locale="en-US" class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editTotalBudget" class="block text-sm font-medium text-secondary-700 mb-1">Total Budget:</label>
+          <InputNumber id="editTotalBudget" v-model="editingCampaign.totalBudget" mode="currency" currency="USD" locale="en-US" class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editTargetAudience" class="block text-sm font-medium text-secondary-700 mb-1">Target Audience:</label>
+          <Textarea id="editTargetAudience" v-model="editingCampaign.targetAudience" rows="3" class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editStartDate" class="block text-sm font-medium text-secondary-700 mb-1">Start Date:</label>
+          <PvcCalendar id="editStartDate" v-model="editingCampaign.startDate" dateFormat="yy-mm-dd" showIcon class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editEndDate" class="block text-sm font-medium text-secondary-700 mb-1">End Date:</label>
+          <PvcCalendar id="editEndDate" v-model="editingCampaign.endDate" dateFormat="yy-mm-dd" showIcon class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editStatus" class="block text-sm font-medium text-secondary-700 mb-1">Status:</label>
+          <Dropdown id="editStatus" v-model="editingCampaign.status" :options="['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'FAILED']" placeholder="Select Status" class="w-full" />
+        </div>
+      </div>
+      <template #footer>
+        <button @click="confirmCancelEdit" class="btn btn-secondary">Cancel</button>
+        <button @click="saveEditedCampaign" class="btn btn-primary">Save</button>
+      </template>
+    </Dialog>
+
+    <ConfirmDialog></ConfirmDialog>
+    <Toast />
   </div>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import Paginator from 'primevue/paginator';
+import Dialog from 'primevue/dialog';
+import ConfirmDialog from 'primevue/confirmdialog';
+import Toast from 'primevue/toast';
+import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
+import InputNumber from 'primevue/inputnumber';
+import Textarea from 'primevue/textarea';
+import PvcCalendar from 'primevue/calendar';
 
 export default {
   name: 'CampaignPage',
+  components: {
+    Paginator,
+    Dialog,
+    ConfirmDialog,
+    Toast,
+    InputText,
+    Dropdown,
+    InputNumber,
+    Textarea,
+    PvcCalendar
+  },
   data() {
     return {
-      sidebarOpen: false
+      sidebarOpen: false,
+      page: 0,
+      size: 5,
+      showDetailModal: false,
+      selectedCampaign: null,
+      showEditModal: false,
+      editingCampaign: null
     }
   },
   computed: {
-    ...mapState('campaign', ['campaigns', 'loading', 'error'])
+    ...mapState("campaign", [
+      "campaigns",
+      "loading",
+      "error",
+      "totalItems",
+      "totalPages",
+      "currentPage",
+    ]),
   },
   async mounted() {
     await this.loadCampaigns()
   },
   methods: {
-    ...mapActions('campaign', ['fetchCampaigns', 'deleteCampaign']),
+    ...mapActions("campaign", ["fetchCampaigns", "deleteCampaign", "updateCampaign"]),
     
     async loadCampaigns() {
       try {
-        await this.fetchCampaigns()
+        await this.fetchCampaigns({ page: this.page, size: this.size })
       } catch (error) {
-        console.error('Failed to load campaigns:', error)
+        console.error("Failed to load campaigns:", error)
       }
+    },
+    
+    onPageChange(event) {
+      this.page = event.page;
+      this.size = event.rows;
+      this.loadCampaigns();
     },
     
     toggleSidebar() {
       this.sidebarOpen = !this.sidebarOpen
     },
     
-    async deleteCampaign(campaignId) {
-      if (confirm('Are you sure you want to delete this campaign? This action cannot be undone.')) {
-        try {
-          await this.deleteCampaign(campaignId)
-          // Refresh the campaigns list
-          await this.loadCampaigns()
-        } catch (error) {
-          console.error('Failed to delete campaign:', error)
-          alert('Failed to delete campaign. Please try again.')
+    showCampaignDetails(campaign) {
+      this.selectedCampaign = campaign;
+      this.showDetailModal = true;
+    },
+
+    showEditCampaignModal(campaign) {
+      this.editingCampaign = { ...campaign }; // Create a copy to avoid direct mutation
+      this.showEditModal = true;
+    },
+
+    async saveEditedCampaign() {
+      try {
+        // Convert date objects to ISO strings if they exist
+        if (this.editingCampaign.startDate) {
+          this.editingCampaign.startDate = this.editingCampaign.startDate.toISOString().split('T')[0];
         }
+        if (this.editingCampaign.endDate) {
+          this.editingCampaign.endDate = this.editingCampaign.endDate.toISOString().split('T')[0];
+        }
+
+        await this.updateCampaign({
+          campaignId: this.editingCampaign.id,
+          campaignData: this.editingCampaign,
+        });
+        this.showEditModal = false;
+        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Campaign updated successfully', life: 3000 });
+        await this.loadCampaigns(); // Refresh list after update
+      } catch (error) {
+        console.error('Failed to save campaign:', error);
+        this.$toast.add({ severity: 'error', summary: 'Error', detail: error.message || 'Failed to update campaign', life: 3000 });
       }
+    },
+    confirmCancelEdit() {
+      this.$confirm.require({
+        message: 'Are you sure you want to cancel? Your unsaved changes will be lost.',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.showEditModal = false;
+          this.$toast.add({ severity: 'info', summary: 'Cancelled', detail: 'Changes discarded', life: 3000 });
+        },
+        reject: () => {
+          // Do nothing, stay in modal
+        }
+      });
+    },
+    confirmDeleteCampaign(campaignId) {
+      this.$confirm.require({
+        message: 'Do you really want to delete this campaign? This action cannot be undone.',
+        header: 'Delete Confirmation',
+        icon: 'pi pi-info-circle',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+          try {
+            await this.deleteCampaign(campaignId);
+            this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Campaign deleted successfully', life: 3000 });
+            await this.loadCampaigns(); // Refresh list after delete
+          } catch (error) {
+            console.error('Failed to delete campaign:', error);
+            this.$toast.add({ severity: 'error', summary: 'Error', detail: error.message || 'Failed to delete campaign', life: 3000 });
+          }
+        },
+        reject: () => {
+          this.$toast.add({ severity: 'info', summary: 'Cancelled', detail: 'Delete operation cancelled', life: 3000 });
+        }
+      });
     },
     
     getStatusBadgeClass(status) {
-      const baseClass = 'badge badge-sm'
+      const baseClass = "badge badge-sm"
       switch (status?.toLowerCase()) {
-        case 'active':
+        case "active":
           return `${baseClass} badge-success`
-        case 'paused':
+        case "paused":
           return `${baseClass} badge-warning`
-        case 'draft':
+        case "draft":
           return `${baseClass} badge-neutral`
-        case 'completed':
+        case "completed":
           return `${baseClass} badge-info`
-        case 'failed':
+        case "failed":
           return `${baseClass} badge-error`
         default:
           return `${baseClass} badge-neutral`
@@ -248,12 +428,12 @@ export default {
     },
     
     formatDate(dateString) {
-      if (!dateString) return ''
+      if (!dateString) return ""
       const date = new Date(dateString)
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
       })
     }
   }
@@ -290,4 +470,7 @@ export default {
   }
 }
 </style>
+
+
+
 

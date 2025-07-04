@@ -39,8 +39,7 @@ public class DashboardService {
 
             // Get campaigns summary
             log.info("DashboardService: Fetching campaigns for user: {}", user.getId());
-            List<DashboardResponse.CampaignSummary> campaigns = campaignRepository.findByUserOrderByCreatedAtDesc(user)
-                    .stream()
+            List<DashboardResponse.CampaignSummary> campaigns = campaignRepository.findTop5ByUserOrderByCreatedAtDesc(user)                    .stream()
                     .map(campaign -> {
                         log.debug("DashboardService: Processing campaign: {}", campaign.getId());
                         try {
@@ -74,19 +73,8 @@ public class DashboardService {
             log.info("DashboardService: Fetching recent ads for user: {}", user.getId());
             List<DashboardResponse.AdSummary> recentAds;
             try {
-                recentAds = adRepository.findTop10ByOrderByCreatedDateDesc()
+                recentAds = adRepository.findTop5ByUserOrderByCreatedDateDesc(user)
                         .stream()
-                        .filter(ad -> {
-                            log.debug("DashboardService: Filtering ad: {}", ad.getId());
-                            try {
-                                return ad.getCampaign() != null && 
-                                       ad.getCampaign().getUser() != null && 
-                                       ad.getCampaign().getUser().getId().equals(user.getId());
-                            } catch (Exception e) {
-                                log.warn("DashboardService: Error filtering ad {}: {}", ad.getId(), e.getMessage(), e); // Log full stack trace
-                                return false;
-                            }
-                        })
                         .map(ad -> {
                             log.debug("DashboardService: Processing ad: {}", ad.getId());
                             try {

@@ -128,12 +128,7 @@
                 <!-- Campaign Selection -->
                 <div>
                   <label class="form-label">Chọn Campaign <span class="text-red-500">*</span></label>
-                  <select v-model="formData.campaignId" class="form-select" required>
-                    <option value="">Chọn campaign...</option>
-                    <option v-for="campaign in campaigns" :key="campaign.id" :value="campaign.id">
-                      {{ campaign.name }}
-                    </option>
-                  </select>
+                  <Dropdown v-model="formData.campaignId" :options="campaigns" optionLabel="name" optionValue="id" placeholder="Chọn campaign..." class="w-full" :class="{ 'p-invalid': !formData.campaignId && showValidation }" required />
                   <p v-if="!formData.campaignId && showValidation" class="form-error">Vui lòng chọn campaign</p>
                 </div>
 
@@ -163,30 +158,36 @@
                 <!-- Ad Name -->
                 <div>
                   <label class="form-label">Tên quảng cáo <span class="text-red-500">*</span></label>
-                  <input v-model="formData.name" type="text" class="form-input" placeholder="Nhập tên quảng cáo..." required>
+                  <InputText v-model="formData.name" class="w-full" :class="{ 'p-invalid': !formData.name && showValidation }" placeholder="Nhập tên quảng cáo..." required />
                   <p v-if="!formData.name && showValidation" class="form-error">Vui lòng nhập tên quảng cáo</p>
                 </div>
 
                 <!-- Prompt -->
                 <div>
                   <label class="form-label">Nội dung prompt <span class="text-red-500">*</span></label>
-                  <textarea v-model="formData.prompt" class="form-textarea" rows="4" 
-                            placeholder="Ví dụ: Quảng cáo về sản phẩm chất tẩy rửa thân thiện với môi trường..." required></textarea>
+                  <Textarea v-model="formData.prompt" rows="4" class="w-full" :class="{ 'p-invalid': !formData.prompt && showValidation }" placeholder="Ví dụ: Quảng cáo về sản phẩm chất tẩy rửa thân thiện với môi trường..." required></Textarea>
                   <p v-if="!formData.prompt && showValidation" class="form-error">Vui lòng nhập nội dung prompt</p>
                 </div>
 
                 <div class="mb-4">
                   <label for="language" class="block text-sm font-medium text-gray-700 mb-1">Ngôn ngữ</label>
-                  <select v-model="formData.language" id="language" class="form-select mt-1 block w-full">
-                    <option value="vi">Tiếng Việt</option>
-                    <option value="en">English</option>
-                  </select>
+                  <Dropdown v-model="formData.language" :options="[{label: 'Tiếng Việt', value: 'vi'}, {label: 'English', value: 'en'}]" optionLabel="label" optionValue="value" id="language" class="w-full" />
                 </div>
 
                 <!-- Number of Variations -->
                 <div>
                   <label class="form-label">Số lượng quảng cáo muốn tạo <span class="text-red-500">*</span></label>
-                  <input v-model.number="formData.numberOfVariations" type="number" class="form-input" min="1" placeholder="Mặc định là 1" required>
+                  <input
+                    type="number"
+                    v-model.number="formData.numberOfVariations"
+                    id="numberOfVariations"
+                    class="w-full p-2 border border-gray-300 rounded-md"
+                    :class="{ 'border-red-500': !formData.numberOfVariations && showValidation }"
+                    placeholder="Mặc định là 1"
+                    min="1"
+                    max="10"
+                    required
+                  />
                   <p v-if="!formData.numberOfVariations && showValidation" class="form-error">Vui lòng nhập số lượng quảng cáo muốn tạo</p>
                 </div>
 
@@ -523,8 +524,8 @@ export default {
     async loadData() {
       try {
         // Load campaigns
-        const campaignsResponse = await api.get('/campaigns')
-        this.campaigns = campaignsResponse.data
+        const campaignsResponse = await api.campaigns.getAll(0, 100); // Lấy nhiều campaign hơn để đảm bảo tìm thấy
+        this.campaigns = campaignsResponse.data.content || campaignsResponse.data || []
         
         // Load AI providers
         const [textResponse, imageResponse] = await Promise.all([

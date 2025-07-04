@@ -19,5 +19,9 @@ public class AdResponse {
     private String status;
     private String campaignName;
     private String imageUrl;
+    private String headline;
+    private String description;
+    private String primaryText;
+    private String callToAction;
     private LocalDateTime createdDate;
 }

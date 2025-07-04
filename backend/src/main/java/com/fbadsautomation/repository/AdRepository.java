@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,5 +39,9 @@ public interface AdRepository extends JpaRepository<Ad, Long> {
     // Thêm phương thức đếm theo user trực tiếp
     long countByUser(User user);
     long countByUserAndStatus(User user, String status);
+
+    List<Ad> findTop5ByUserOrderByCreatedDateDesc(User user);
+    Page<Ad> findAllByUser(User user, Pageable pageable);
 }
+
 

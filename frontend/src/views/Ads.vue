@@ -114,148 +114,321 @@
             </div>
 
             <!-- Ads List -->
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div v-for="ad in ads" :key="ad.id" class="card hover:shadow-lg transition-shadow duration-200">
-                <div class="card-body">
-                  <!-- Ad Image Preview -->
-                  <div v-if="ad.imageUrl" class="mb-4">
-                    <div class="aspect-video bg-neutral-100 rounded-lg overflow-hidden">
-                      <img 
-                        :src="ad.imageUrl" 
-                        :alt="ad.name"
-                        class="w-full h-full object-cover"
-                        @error="handleImageError"
-                      />
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              <div v-for="ad in ads" :key="ad.id" class="card hover:shadow-lg transition-shadow duration-200 flex flex-col">
+                <div class="card-body flex flex-col justify-between h-full p-3">
+                  <div>
+                    <!-- Ad Image Preview -->
+                    <div v-if="ad.imageUrl" class="mb-2">
+                      <div class="aspect-video bg-neutral-100 rounded-lg overflow-hidden">
+                        <img 
+                          :src="ad.imageUrl" 
+                          :alt="ad.name"
+                          class="w-full h-full object-cover"
+                          @error="handleImageError"
+                        />
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div class="flex items-start justify-between mb-3">
-                    <div class="flex-1">
-                      <h3 class="text-lg font-semibold text-secondary-900 mb-1">{{ ad.name }}</h3>
-                      <p class="text-sm text-secondary-600">{{ ad.campaignName || 'No Campaign' }}</p>
+                    
+                    <div class="flex items-start justify-between mb-2">
+                      <div class="flex-1">
+                        <h3 class="text-base font-semibold text-secondary-900">{{ ad.name }}</h3>
+                        <p class="text-xs text-secondary-600">{{ ad.campaignName || 'No Campaign' }}</p>
+                      </div>
+                      <span :class="getStatusBadgeClass(ad.status)">
+                        {{ ad.status }}
+                      </span>
                     </div>
-                    <span :class="getStatusBadgeClass(ad.status)">
-                      {{ ad.status }}
-                    </span>
-                  </div>
-                  
-                  <div class="mb-3">
-                    <span class="badge badge-neutral">{{ ad.adType?.replace('_', ' ') || 'Unknown Type' }}</span>
-                  </div>
+                    
+                    <div class="mb-2">
+                      <span class="badge badge-neutral">{{ ad.adType?.replace('_', ' ') || 'Unknown Type' }}</span>
+                    </div>
 
-                  <!-- Ad Content Preview -->
-                  <div v-if="ad.headline || ad.description" class="mb-4 p-3 bg-neutral-50 rounded-lg">
-                    <div v-if="ad.headline" class="mb-2">
-                      <p class="text-xs text-secondary-500 mb-1">Headline</p>
-                      <p class="text-sm font-medium text-secondary-900 line-clamp-2">{{ ad.headline }}</p>
+                    <!-- Ad Content Preview -->
+                    <div v-if="ad.headline || ad.description" class="mb-2 p-1 bg-neutral-50 rounded-lg">
+                      <div v-if="ad.headline" class="mb-1">
+                        <p class="text-xs text-secondary-500 mb-0">Headline</p>
+                        <p class="text-sm font-medium text-secondary-900">{{ ad.headline }}</p>
+                      </div>
+                      <div v-if="ad.description">
+                        <p class="text-xs text-secondary-500 mb-0">Description</p>
+                        <p class="text-sm text-secondary-700">{{ ad.description }}</p>
+                      </div>
                     </div>
-                    <div v-if="ad.description">
-                      <p class="text-xs text-secondary-500 mb-1">Description</p>
-                      <p class="text-sm text-secondary-700 line-clamp-3">{{ ad.description }}</p>
-                    </div>
-                  </div>
 
-                  <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p class="text-xs text-secondary-500 mb-1">Call to Action</p>
-                      <p class="text-sm font-medium text-secondary-900">{{ ad.callToAction || 'None' }}</p>
-                    </div>
-                    <div>
-                      <p class="text-xs text-secondary-500 mb-1">Created</p>
-                      <p class="text-sm font-medium text-secondary-900">{{ formatDate(ad.createdDate) }}</p>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                      <div>
+                        <p class="text-xs text-secondary-500 mb-1">Call to Action</p>
+                        <p class="text-sm font-medium text-secondary-900">{{ ad.callToAction || 'None' }}</p>
+                      </div>
+                      <div>
+                        <p class="text-xs text-secondary-500 mb-1">Created</p>
+                        <p class="text-sm font-medium text-secondary-900">{{ formatDate(ad.createdDate) }}</p>
+                      </div>
                     </div>
                   </div>
                   
-                  <div class="flex items-center justify-between pt-4 border-t border-neutral-200">
-                    <div class="flex gap-2">
-                      <router-link :to="`/ads/${ad.id}/edit`" class="btn btn-xs btn-ghost">
+                  <div class="flex items-center justify-between pt-2 border-t border-neutral-200">
+                    <div class="flex gap-1">
+                      <button @click="showEditAdModal(ad)" class="btn btn-xs btn-outline-secondary">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
                         Edit
-                      </router-link>
-                      <button @click="deleteAd(ad.id)" class="btn btn-xs btn-ghost text-error-600 hover:bg-error-50">
+                      </button>
+                      <button @click="confirmDeleteAd(ad.id)" class="btn btn-xs btn-outline-error">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
                         Delete
                       </button>
                     </div>
-                    <router-link :to="`/ads/${ad.id}`" class="btn btn-xs btn-primary">
+                    <button @click="showAdDetails(ad)" class="btn btn-xs btn-primary">
                       View Details
-                    </router-link>
+                    </button>
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="totalPages > 1" class="flex justify-center mt-8">
+              <Paginator :rows="size" :totalRecords="totalItems" :rowsPerPageOptions="[5, 10, 20]" @page="onPageChange"></Paginator>
             </div>
           </div>
         </div>
       </main>
     </div>
+
+    <!-- Ad Detail Modal -->
+    <Dialog v-model:visible="showDetailModal" modal header="Ad Details" :style="{ width: '90vw', maxWidth: '1200px' }" :breakpoints="{ '960px': '95vw', '641px': '100vw' }">
+      <div v-if="selectedAd">
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Name:</label>
+          <p class="text-secondary-900">{{ selectedAd.name }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Campaign:</label>
+          <p class="text-secondary-900">{{ selectedAd.campaignName || 'N/A' }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Ad Type:</label>
+          <p class="text-secondary-900">{{ selectedAd.adType?.replace('_', ' ') || 'N/A' }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Status:</label>
+          <p class="text-secondary-900">{{ selectedAd.status || 'N/A' }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Headline:</label>
+          <p class="text-secondary-900">{{ selectedAd.headline || 'N/A' }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Description:</label>
+          <p class="text-secondary-900">{{ selectedAd.description || 'N/A' }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Primary Text:</label>
+          <p class="text-secondary-900">{{ selectedAd.primaryText || 'N/A' }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Call to Action:</label>
+          <p class="text-secondary-900">{{ selectedAd.callToAction || 'N/A' }}</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Image URL:</label>
+          <img v-if="selectedAd.imageUrl" :src="selectedAd.imageUrl" class="w-full h-auto object-cover rounded-lg" />
+          <p v-else class="text-secondary-900">N/A</p>
+        </div>
+        <div class="field mb-4">
+          <label class="block text-sm font-medium text-secondary-700 mb-1">Created Date:</label>
+          <p class="text-secondary-900">{{ formatDate(selectedAd.createdDate) }}</p>
+        </div>
+      </div>
+      <template #footer>
+        <button @click="showDetailModal = false" class="btn btn-primary">OK</button>
+      </template>
+    </Dialog>
+
+    <!-- Edit Ad Modal -->
+    <Dialog v-model:visible="showEditModal" modal header="Edit Ad" :style="{ width: '90vw', maxWidth: '1200px' }" :breakpoints="{ '960px': '95vw', '641px': '100vw' }">   <div v-if="editingAd">
+        <div class="field mb-4">
+          <label for="editAdName" class="block text-sm font-medium text-secondary-700 mb-1">Name:</label>
+          <InputText id="editAdName" v-model="editingAd.name" class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editAdHeadline" class="block text-sm font-medium text-secondary-700 mb-1">Headline:</label>
+          <InputText id="editAdHeadline" v-model="editingAd.headline" class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editAdDescription" class="block text-sm font-medium text-secondary-700 mb-1">Description:</label>
+          <Textarea id="editAdDescription" v-model="editingAd.description" rows="3" class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editAdPrimaryText" class="block text-sm font-medium text-secondary-700 mb-1">Primary Text:</label>
+          <Textarea id="editAdPrimaryText" v-model="editingAd.primaryText" rows="3" class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editAdCallToAction" class="block text-sm font-medium text-secondary-700 mb-1">Call to Action:</label>
+          <Dropdown id="editAdCallToAction" v-model="editingAd.callToAction" :options="['SHOP_NOW', 'LEARN_MORE', 'SIGN_UP', 'DOWNLOAD', 'CONTACT_US']" placeholder="Select Call to Action" class="w-full" />
+        </div>
+        <div class="field mb-4">
+          <label for="editAdStatus" class="block text-sm font-medium text-secondary-700 mb-1">Status:</label>
+          <Dropdown id="editAdStatus" v-model="editingAd.status" :options="['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'FAILED']" placeholder="Select Status" class="w-full" />
+        </div>
+      </div>
+      <template #footer>
+        <button @click="confirmCancelEdit" class="btn btn-secondary">Cancel</button>
+        <button @click="saveEditedAd" class="btn btn-primary">Save</button>
+      </template>
+    </Dialog>
+
+    <ConfirmDialog></ConfirmDialog>
+    <Toast />
   </div>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import Paginator from 'primevue/paginator';
+import Dialog from 'primevue/dialog';
+import ConfirmDialog from 'primevue/confirmdialog';
+import Toast from 'primevue/toast';
+import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
+import Textarea from 'primevue/textarea';
 
 export default {
-  name: 'Ads',
+  name: "Ads",
+  components: {
+    Paginator,
+    Dialog,
+    ConfirmDialog,
+    Toast,
+    InputText,
+    Dropdown,
+    Textarea
+  },
   data() {
     return {
-      sidebarOpen: false
+      sidebarOpen: false,
+      page: 0,
+      size: 5,
+      showDetailModal: false,
+      selectedAd: null,
+      showEditModal: false,
+      editingAd: null
     }
   },
   computed: {
-    ...mapState('ad', ['ads', 'loading', 'error'])
+    ...mapState("ad", [
+      "ads",
+      "loading",
+      "error",
+      "totalItems",
+      "totalPages",
+      "currentPage",
+    ]),
   },
   async mounted() {
     await this.loadAds()
   },
+  created() {
+    this.$confirm = this.$root.$confirm; // Ensure $confirm is available
+  },
   methods: {
-    ...mapActions('ad', ['fetchAds', 'deleteAd']),
+    ...mapActions("ad", ["fetchAds", "deleteAd", "updateAd"]),
     
     async loadAds() {
       try {
-        await this.fetchAds()
+        await this.fetchAds({ page: this.page, size: this.size })
       } catch (error) {
-        console.error('Failed to load ads:', error)
+        console.error("Failed to load ads:", error)
       }
+    },
+    
+    onPageChange(event) {
+      this.page = event.page;
+      this.size = event.rows;
+      this.loadAds();
     },
     
     toggleSidebar() {
       this.sidebarOpen = !this.sidebarOpen
     },
     
-    async deleteAd(adId) {
-      if (confirm('Are you sure you want to delete this ad? This action cannot be undone.')) {
-        try {
-          await this.deleteAd(adId)
-          // Refresh the ads list
-          await this.loadAds()
-        } catch (error) {
-          console.error('Failed to delete ad:', error)
-          alert('Failed to delete ad. Please try again.')
-        }
+    showAdDetails(ad) {
+      this.selectedAd = ad;
+      this.showDetailModal = true;
+    },
+
+    showEditAdModal(ad) {
+      this.editingAd = { ...ad }; // Create a copy to avoid direct mutation
+      this.showEditModal = true;
+    },
+
+    async saveEditedAd() {
+      try {
+        await this.updateAd({
+          adId: this.editingAd.id,
+          adData: this.editingAd,
+        });
+        this.showEditModal = false;
+        this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Ad updated successfully', life: 3000 });
+        await this.loadAds(); // Refresh list after update
+      } catch (error) {
+        console.error("Failed to save ad:", error);
+        this.$toast.add({ severity: 'error', summary: 'Error', detail: error.message || 'Failed to update ad', life: 3000 });
       }
     },
-    
-    handleImageError(event) {
-      // Hide broken image
-      event.target.style.display = 'none'
+    confirmDeleteAd(adId) {
+      this.$confirm.require({
+        message: 'Do you really want to delete this ad? This action cannot be undone.',
+        header: 'Delete Confirmation',
+        icon: 'pi pi-info-circle',
+        acceptClass: 'p-button-danger',
+        accept: async () => {
+          try {
+            await this.deleteAd(adId);
+            this.$toast.add({ severity: 'success', summary: 'Success', detail: 'Ad deleted successfully', life: 3000 });
+            await this.loadAds(); // Refresh list after delete
+          } catch (error) {
+            console.error('Failed to delete ad:', error);
+            this.$toast.add({ severity: 'error', summary: 'Error', detail: error.message || 'Failed to delete ad', life: 3000 });
+          }
+        },
+        reject: () => {
+          this.$toast.add({ severity: 'info', summary: 'Cancelled', detail: 'Delete operation cancelled', life: 3000 });
+        }
+      });
+    },
+    confirmCancelEdit() {
+      this.$confirm.require({
+        message: 'Are you sure you want to cancel? Your unsaved changes will be lost.',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.showEditModal = false;
+          this.$toast.add({ severity: 'info', summary: 'Cancelled', detail: 'Changes discarded', life: 3000 });
+        },
+        reject: () => {
+          // Do nothing, stay in modal
+        }
+      });
     },
     
     getStatusBadgeClass(status) {
-      const baseClass = 'badge badge-sm'
+      const baseClass = "badge badge-sm"
       switch (status?.toLowerCase()) {
-        case 'active':
+        case "active":
           return `${baseClass} badge-success`
-        case 'paused':
+        case "paused":
           return `${baseClass} badge-warning`
-        case 'draft':
+        case "draft":
           return `${baseClass} badge-neutral`
-        case 'completed':
+        case "completed":
           return `${baseClass} badge-info`
-        case 'failed':
+        case "failed":
           return `${baseClass} badge-error`
         default:
           return `${baseClass} badge-neutral`
@@ -263,12 +436,12 @@ export default {
     },
     
     formatDate(dateString) {
-      if (!dateString) return ''
+      if (!dateString) return ""
       const date = new Date(dateString)
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
       })
     }
   }
@@ -316,4 +489,7 @@ export default {
   }
 }
 </style>
+
+
+
 

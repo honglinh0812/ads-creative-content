@@ -8,7 +8,10 @@ export default {
     adContents: [],
     loading: false,
     error: null,
-    generatingContent: false
+    generatingContent: false,
+    totalItems: 0,
+    totalPages: 0,
+    currentPage: 0
   },
   getters: {
     ads: state => state.ads,
@@ -17,11 +20,17 @@ export default {
     selectedContent: state => state.adContents.find(content => content.isSelected),
     loading: state => state.loading,
     generatingContent: state => state.generatingContent,
-    error: state => state.error
+    error: state => state.error,
+    totalItems: state => state.totalItems,
+    totalPages: state => state.totalPages,
+    currentPage: state => state.currentPage
   },
   mutations: {
-    SET_ADS(state, ads) {
-      state.ads = ads
+    SET_ADS(state, data) {
+      state.ads = data.content
+      state.totalItems = data.totalElements
+      state.totalPages = data.totalPages
+      state.currentPage = data.number
     },
     SET_CURRENT_AD(state, ad) {
       state.currentAd = ad
@@ -66,129 +75,132 @@ export default {
     }
   },
   actions: {
-    async fetchAds({ commit }) {
-      commit('SET_LOADING', true)
-      commit('SET_ERROR', null)
+    async fetchAds({ commit }, { page = 0, size = 5 } = {}) {
+      commit("SET_LOADING", true);
+      commit("SET_ERROR", null);
       
       try {
-        const response = await api.ads.getAll()
-        commit('SET_ADS', response.data)
+        const response = await api.ads.getAll(page, size);
+        commit("SET_ADS", response.data);
       } catch (error) {
-        console.error('Fetch ads error:', error)
-        commit('SET_ERROR', error.message || 'Failed to fetch ads')
-        throw error
+        console.error("Fetch ads error:", error);
+        commit("SET_ERROR", error.message || "Failed to fetch ads");
+        throw error;
       } finally {
-        commit('SET_LOADING', false)
+        commit("SET_LOADING", false);
       }
     },
     
     async fetchAd({ commit }, adId) {
-      commit('SET_LOADING', true)
-      commit('SET_ERROR', null)
+      commit("SET_LOADING", true);
+      commit("SET_ERROR", null);
       
       try {
-        const response = await api.ads.get(adId)
-        commit('SET_CURRENT_AD', response.data)
-        return response.data
+        const response = await api.ads.get(adId);
+        commit("SET_CURRENT_AD", response.data);
+        return response.data;
       } catch (error) {
-        console.error('Fetch ad error:', error)
-        commit('SET_ERROR', error.message || 'Failed to fetch ad details')
-        throw error
+        console.error("Fetch ad error:", error);
+        commit("SET_ERROR", error.message || "Failed to fetch ad details");
+        throw error;
       } finally {
-        commit('SET_LOADING', false)
+        commit("SET_LOADING", false);
       }
     },
     
     async createAdWithContent({ commit, dispatch }, formData) {
-      commit('SET_GENERATING_CONTENT', true)
-      commit('SET_ERROR', null)
+      commit("SET_GENERATING_CONTENT", true);
+      commit("SET_ERROR", null);
       
       try {
-        console.log('Creating ad with form data:', formData)
-        const response = await api.ads.create(formData)
-        console.log('Ad created successfully:', response.data)
+        console.log("Creating ad with form data:", formData);
+        const response = await api.ads.generate(formData);
+        console.log("Ad created successfully:", response.data);
         
-        commit('ADD_AD', response.data.ad)
-        commit('SET_AD_CONTENTS', response.data.contents)
+        // The response from /ads/generate is AdGenerationResponse, not Ad
+        // We need to fetch the ad details after generation if needed, or adapt the flow
+        // For now, we'll just set the ad contents
+        commit("SET_AD_CONTENTS", response.data.variations);
         
         // Also refresh dashboard data if available
         try {
-          await dispatch('dashboard/fetchDashboardData', null, { root: true })
+          await dispatch("dashboard/fetchDashboardData", null, { root: true });
         } catch (dashboardError) {
-          console.warn('Failed to refresh dashboard after ad creation:', dashboardError)
+          console.warn("Failed to refresh dashboard after ad creation:", dashboardError);
         }
         
-        return response.data
+        return response.data;
       } catch (error) {
-        console.error('Create ad error:', error)
-        commit('SET_ERROR', error.message || 'Failed to create ad')
-        throw error
+        console.error("Create ad error:", error);
+        commit("SET_ERROR", error.message || "Failed to create ad");
+        throw error;
       } finally {
-        commit('SET_GENERATING_CONTENT', false)
+        commit("SET_GENERATING_CONTENT", false);
       }
     },
     
     async selectAdContent({ commit }, { adId, contentId }) {
-      commit('SET_LOADING', true)
-      commit('SET_ERROR', null)
+      commit("SET_LOADING", true);
+      commit("SET_ERROR", null);
       
       try {
-        const response = await api.ads.selectContent(adId, contentId)
+        const response = await api.ads.selectContent(adId, contentId);
         
-        commit('UPDATE_AD', response.data)
-        commit('SELECT_CONTENT', contentId)
+        commit("UPDATE_AD", response.data.ad);
+        commit("SELECT_CONTENT", contentId);
         
-        return response.data
+        return response.data;
       } catch (error) {
-        console.error('Select content error:', error)
-        commit('SET_ERROR', error.message || 'Failed to select content')
-        throw error
+        console.error("Select content error:", error);
+        commit("SET_ERROR", error.message || "Failed to select content");
+        throw error;
       } finally {
-        commit('SET_LOADING', false)
+        commit("SET_LOADING", false);
       }
     },
     
     async fetchAdContents({ commit }, adId) {
-      commit('SET_LOADING', true)
-      commit('SET_ERROR', null)
+      commit("SET_LOADING", true);
+      commit("SET_ERROR", null);
       
       try {
-        const response = await api.ads.getContents(adId)
-        commit('SET_AD_CONTENTS', response.data)
-        return response.data
+        const response = await api.ads.getContents(adId);
+        commit("SET_AD_CONTENTS", response.data);
+        return response.data;
       } catch (error) {
-        console.error('Fetch ad contents error:', error)
-        commit('SET_ERROR', error.message || 'Failed to fetch ad contents')
-        throw error
+        console.error("Fetch ad contents error:", error);
+        commit("SET_ERROR", error.message || "Failed to fetch ad contents");
+        throw error;
       } finally {
-        commit('SET_LOADING', false)
+        commit("SET_LOADING", false);
       }
     },
     
     async deleteAd({ commit, dispatch }, adId) {
-      commit('SET_LOADING', true)
-      commit('SET_ERROR', null)
+      commit("SET_LOADING", true);
+      commit("SET_ERROR", null);
       
       try {
-        await api.ads.delete(adId)
-        commit('REMOVE_AD', adId)
+        await api.ads.delete(adId);
+        commit("REMOVE_AD", adId);
         
         // Also refresh dashboard data if available
         try {
-          await dispatch('dashboard/fetchDashboardData', null, { root: true })
+          await dispatch("dashboard/fetchDashboardData", null, { root: true });
         } catch (dashboardError) {
-          console.warn('Failed to refresh dashboard after ad deletion:', dashboardError)
+          console.warn("Failed to refresh dashboard after ad deletion:", dashboardError);
         }
         
-        return true
+        return true;
       } catch (error) {
-        console.error('Delete ad error:', error)
-        commit('SET_ERROR', error.message || 'Failed to delete ad')
-        throw error
+        console.error("Delete ad error:", error);
+        commit("SET_ERROR", error.message || "Failed to delete ad");
+        throw error;
       } finally {
-        commit('SET_LOADING', false)
+        commit("SET_LOADING", false);
       }
     }
   }
 }
+
 

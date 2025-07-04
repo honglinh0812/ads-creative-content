@@ -21,6 +21,9 @@ import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
 import Toast from 'primevue/toast'
 import ToastService from 'primevue/toastservice'
+import ConfirmationService from 'primevue/confirmationservice';
+import ConfirmDialog from 'primevue/confirmdialog';
+import Calendar from 'primevue/calendar';
 import ProgressSpinner from 'primevue/progressspinner'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
@@ -37,7 +40,7 @@ app.use(store)
 app.use(router)
 app.use(PrimeVue, { ripple: true })
 app.use(ToastService)
-
+app.use(ConfirmationService)
 // Register PrimeVue components
 app.component('Button', Button)
 app.component('InputText', InputText)
@@ -64,4 +67,8 @@ app.config.errorHandler = (err, vm, info) => {
   })
 }
 
-app.mount('#app')
+app.component("ConfirmDialog", ConfirmDialog);
+app.component("PvcCalendar", Calendar);
+
+app.mount("#app");
+

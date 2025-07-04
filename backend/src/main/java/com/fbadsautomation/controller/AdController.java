@@ -10,10 +10,13 @@ import com.fbadsautomation.service.AdService;
 import com.fbadsautomation.service.AIContentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,12 +33,16 @@ public class AdController {
     private final AIContentService aiContentService;
 
     @GetMapping
-    public ResponseEntity<List<AdResponse>> getAllAds(Authentication authentication) {
-        log.info("Getting all ads for user: {}", authentication.getName());
+    public ResponseEntity<Page<AdResponse>> getAllAds(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            Authentication authentication) {
+        log.info("Getting all ads for user: {} with page {} and size {}", authentication.getName(), page, size);
         Long userId = Long.parseLong(authentication.getName());
 
         try {
-            List<AdResponse> ads = adService.getAllAdResponsesByUser(userId);
+            Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+            Page<AdResponse> ads = adService.getAllAdResponsesByUserPaginated(userId, pageable);
             return ResponseEntity.ok(ads);
         } catch (Exception e) {
             log.error("🔥 Failed to load ads for user {}: {}", userId, e.getMessage(), e);
@@ -175,4 +182,5 @@ public class AdController {
         }
     }
 }
+
 

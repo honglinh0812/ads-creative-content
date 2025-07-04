@@ -100,11 +100,11 @@
                 <!-- Campaign Name -->
                 <div>
                   <label class="form-label">Tên Campaign <span class="text-red-500">*</span></label>
-                  <input
+                  <InputText
                     v-model="form.name"
-                    type="text"
-                    class="form-input"
-                    :class="{ 'border-red-500': errors.name }"
+                    id="campaignName"
+                    class="w-full"
+                    :class="{ 'p-invalid': errors.name }"
                     placeholder="Nhập tên campaign..."
                     required
                   />
@@ -114,12 +114,7 @@
                 <!-- Campaign Objective -->
                 <div>
                   <label class="form-label">Mục tiêu Campaign <span class="text-red-500">*</span></label>
-                  <select v-model="form.objective" class="form-select" :class="{ 'border-red-500': errors.objective }" required>
-                    <option value="">Chọn mục tiêu...</option>
-                    <option v-for="objective in objectives" :key="objective.value" :value="objective.value">
-                      {{ objective.label }}
-                    </option>
-                  </select>
+                  <Dropdown v-model="form.objective" :options="objectives" optionLabel="label" optionValue="value" placeholder="Chọn mục tiêu..." class="w-full" :class="{ 'p-invalid': errors.objective }" required />
                   <p v-if="errors.objective" class="form-error">{{ errors.objective }}</p>
                 </div>
 
@@ -149,69 +144,67 @@
                 <!-- Budget Amount -->
                 <div v-if="form.budgetType === 'DAILY'">
                   <label class="form-label">Ngân sách hàng ngày <span class="text-red-500">*</span></label>
-                  <div class="relative">
-                    <input
-                      v-model.number="form.dailyBudget"
-                      type="number"
-                      class="form-input pl-8"
-                      :class="{ 'border-red-500': errors.dailyBudget }"
-                      placeholder="0"
-                      min="1"
-                      step="0.01"
-                      required
-                    />
-                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-500">$</span>
-                  </div>
+                  <input
+                    type="number"
+                    v-model.number="form.dailyBudget"
+                    id="dailyBudget"
+                    class="w-full p-2 border border-gray-300 rounded-md"
+                    :class="{ 'border-red-500': errors.dailyBudget }"
+                    placeholder="0"
+                    min="1"
+                    step="0.01"
+                    required
+                  />
                   <p v-if="errors.dailyBudget" class="form-error">{{ errors.dailyBudget }}</p>
                 </div>
 
                 <div v-if="form.budgetType === 'LIFETIME'">
                   <label class="form-label">Tổng ngân sách <span class="text-red-500">*</span></label>
-                  <div class="relative">
-                    <input
-                      v-model.number="form.totalBudget"
-                      type="number"
-                      class="form-input pl-8"
-                      :class="{ 'border-red-500': errors.totalBudget }"
-                      placeholder="0"
-                      min="1"
-                      step="0.01"
-                      required
-                    />
-                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-500">$</span>
-                  </div>
+                  <input
+                    type="number"
+                    v-model.number="form.totalBudget"
+                    id="totalBudget"
+                    class="w-full p-2 border border-gray-300 rounded-md"
+                    :class="{ 'border-red-500': errors.totalBudget }"
+                    placeholder="0"
+                    min="1"
+                    step="0.01"
+                    required
+                  />
                   <p v-if="errors.totalBudget" class="form-error">{{ errors.totalBudget }}</p>
                 </div>
 
                 <!-- Target Audience -->
                 <div>
                   <label class="form-label">Đối tượng mục tiêu</label>
-                  <textarea
+                  <Textarea
                     v-model="form.targetAudience"
-                    class="form-textarea"
                     rows="3"
+                    class="w-full"
                     placeholder="Mô tả đối tượng mục tiêu của bạn..."
-                  ></textarea>
+                  ></Textarea>
                 </div>
 
                 <!-- Date Range -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label class="form-label">Ngày bắt đầu</label>
-                    <input
+                    <PvcCalendar
                       v-model="form.startDate"
-                      type="date"
-                      class="form-input"
-                      :min="today"
+                      dateFormat="yy-mm-dd"
+                      showIcon
+                      class="w-full"
+                      :minDate="new Date()"
                     />
                   </div>
                   <div>
                     <label class="form-label">Ngày kết thúc</label>
-                    <input
+                    <PvcCalendar
                       v-model="form.endDate"
-                      type="date"
-                      class="form-input"
-                      :min="form.startDate || today"
+                      dateFormat="yy-mm-dd"
+                      showIcon
+                      class="w-full"
+                      :minDate="form.startDate ? new Date(form.startDate) : new Date()"
                     />
                   </div>
                 </div>
@@ -252,7 +245,7 @@ export default {
       form: {
         name: '',
         objective: '',
-        budgetType: '',
+        budgetType: 'DAILY',
         dailyBudget: null,
         totalBudget: null,
         targetAudience: '',

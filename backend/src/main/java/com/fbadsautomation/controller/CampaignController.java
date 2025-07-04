@@ -6,12 +6,15 @@ import com.fbadsautomation.model.Campaign;
 import com.fbadsautomation.service.CampaignService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/campaigns")
@@ -38,11 +41,15 @@ public class CampaignController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CampaignDTO>> getAllCampaigns(Authentication authentication) {
-        log.info("Getting all campaigns for user: {}", authentication.getName());
+    public ResponseEntity<Page<CampaignDTO>> getAllCampaigns(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            Authentication authentication) {
+        log.info("Getting all campaigns for user: {} with page {} and size {}", authentication.getName(), page, size);
         Long userId = Long.valueOf(authentication.getName());
-        List<Campaign> campaigns = campaignService.getAllCampaignsByUser(userId);
-        List<CampaignDTO> dtos = campaigns.stream().map(this::toDTO).toList();
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Campaign> campaigns = campaignService.getAllCampaignsByUserPaginated(userId, pageable);
+        Page<CampaignDTO> dtos = campaigns.map(this::toDTO);
         return ResponseEntity.ok(dtos);
     }
 
@@ -87,4 +94,5 @@ public class CampaignController {
         return ResponseEntity.noContent().build();
     }
 }
+
 

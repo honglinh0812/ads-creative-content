@@ -14,6 +14,8 @@ import com.fbadsautomation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,41 +46,6 @@ public class AdService {
 
     @Value("${app.image.storage.location:uploads/images}")
     private String imageStorageLocation;
-
-    /**
-     * Get all ads for a user
-     * @param userId The user ID
-     * @return List of ads
-     */
-    @Transactional(readOnly = true)
-    public List<AdResponse> getAllAdResponsesByUser(Long userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
-
-        return adRepository.findByUserOrderByCreatedDateDesc(user).stream()
-            .map(ad -> {
-                try {
-                    String campaignName = (ad.getCampaign() != null && ad.getCampaign().getName() != null)
-                            ? ad.getCampaign().getName()
-                            : "Unknown";
-
-                    return AdResponse.builder()
-                            .id(ad.getId())
-                            .name(ad.getName())
-                            .adType(ad.getAdType() != null ? ad.getAdType().toString() : null)
-                            .status(ad.getStatus())
-                            .campaignName(campaignName)
-                            .imageUrl(ad.getImageUrl())
-                            .createdDate(ad.getCreatedDate())
-                            .build();
-                } catch (Exception e) {
-                    log.error("❌ Error mapping ad {}: {}", ad.getId(), e.getMessage(), e);
-                    return null;
-                }
-            })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
-    }
 
     /**
      * Get ad by ID and user
@@ -251,11 +218,37 @@ public class AdService {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to save media file");
         }
     }
+
+    public Page<AdResponse> getAllAdResponsesByUserPaginated(Long userId, Pageable pageable) {
+        log.info("Getting ads for user ID: {} with pageable: {}", userId, pageable);
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+
+        return adRepository.findAllByUser(user, pageable).map(ad -> {
+            try {
+                String campaignName = (ad.getCampaign() != null && ad.getCampaign().getName() != null)
+                        ? ad.getCampaign().getName()
+                        : "Unknown";
+
+                return AdResponse.builder()
+                        .id(ad.getId())
+                        .name(ad.getName())
+                        .adType(ad.getAdType() != null ? ad.getAdType().toString() : null)
+                        .status(ad.getStatus())
+                        .campaignName(campaignName)
+                        .imageUrl(ad.getImageUrl())
+                        .headline(ad.getHeadline())
+                        .description(ad.getDescription())
+                        .primaryText(ad.getPrimaryText())
+                        .callToAction(ad.getCallToAction())
+                        .createdDate(ad.getCreatedDate())
+                        .build();
+            } catch (Exception e) {
+                log.error("Error mapping ad {}: {}", ad.getId(), e.getMessage(), e);
+                return null;
+            }
+        });
+    }
 }
-
-
-
-
-
 
 

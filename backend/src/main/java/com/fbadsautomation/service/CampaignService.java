@@ -8,6 +8,8 @@ import com.fbadsautomation.repository.CampaignRepository;
 import com.fbadsautomation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,20 +24,6 @@ public class CampaignService {
 
     private final CampaignRepository campaignRepository;
     private final UserRepository userRepository;
-
-    /**
-     * Get all campaigns for the current user
-     * @param userEmail The user email
-     * @return List of campaigns
-     */
-    public List<Campaign> getAllCampaignsByUser(Long userId) {
-        log.info("Getting all campaigns for user ID: {}", userId);
-        
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
-        
-        return campaignRepository.findByUserOrderByCreatedAtDesc(user);
-    }
 
     /**
      * Get campaign by ID and user
@@ -133,5 +121,15 @@ public class CampaignService {
         
         campaignRepository.delete(campaign);
     }
+
+    public Page<Campaign> getAllCampaignsByUserPaginated(Long userId, Pageable pageable) {
+        log.info("Getting campaigns for user ID: {} with pageable: {}", userId, pageable);
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+        
+        return campaignRepository.findAllByUser(user, pageable);
+    }
 }
+
 

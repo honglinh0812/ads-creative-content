@@ -6,26 +6,17 @@ export default {
     campaigns: [],
     currentCampaign: null,
     loading: false,
-    error: null,
-    totalItems: 0,
-    totalPages: 0,
-    currentPage: 0
+    error: null
   },
   getters: {
     campaigns: state => state.campaigns,
     currentCampaign: state => state.currentCampaign,
     loading: state => state.loading,
-    error: state => state.error,
-    totalItems: state => state.totalItems,
-    totalPages: state => state.totalPages,
-    currentPage: state => state.currentPage
+    error: state => state.error
   },
   mutations: {
-    SET_CAMPAIGNS(state, data) {
-      state.campaigns = data.content
-      state.totalItems = data.totalElements
-      state.totalPages = data.totalPages
-      state.currentPage = data.number
+    SET_CAMPAIGNS(state, campaigns) {
+      state.campaigns = campaigns
     },
     SET_CURRENT_CAMPAIGN(state, campaign) {
       state.currentCampaign = campaign
@@ -56,12 +47,12 @@ export default {
     }
   },
   actions: {
-    async fetchCampaigns({ commit }, { page = 0, size = 5 } = {}) {
+    async fetchCampaigns({ commit }) {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
       
       try {
-        const response = await api.campaigns.getAll(page, size)
+        const response = await api.campaigns.getAll()
         commit('SET_CAMPAIGNS', response.data)
       } catch (error) {
         console.error('Fetch campaigns error:', error)
@@ -160,5 +151,4 @@ export default {
     }
   }
 }
-
 
