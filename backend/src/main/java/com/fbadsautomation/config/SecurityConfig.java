@@ -2,6 +2,14 @@ package com.fbadsautomation.config;
 
 import com.fbadsautomation.security.JwtAuthenticationFilter;
 import com.fbadsautomation.service.AuthService;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,26 +21,18 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-
-@Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 @Slf4j
+@Configuration
+
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Value("${cors.allowed-origins}")
@@ -49,7 +49,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeRequests()
-            .antMatchers("/api/auth/oauth2/**", "/api/public/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+            .antMatchers(
+                "/api/auth/register",
+                "/api/auth/login-app",
+                "/api/auth/forgot-password",
+                "/api/auth/reset-password",
+                "/api/auth/oauth2/**",
+                "/api/public/**",
+                "/api/ai-providers/**",
+                "/swagger-ui/**",
+                "/v3/api-docs/**"
+            ).permitAll()
             .anyRequest().authenticated()
             .and()
             .oauth2Login()
@@ -77,11 +87,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 log.info("OAuth2 authentication successful");
                 
                 try {
-                    OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
-                    
-                    // Process the OAuth2 user and create/update our user
+                    OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal(); // Process the OAuth2 user and create/update our user
                     String token = authService.processOAuth2User(oauth2User);
-                    
                     // Redirect to frontend with token
                     String redirectUrl = "https://linhnh.site/auth-success#token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
                     response.sendRedirect(redirectUrl);
@@ -90,8 +97,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     log.error("Error processing OAuth2 authentication: {}", e.getMessage(), e);
                     response.sendRedirect("https://linhnh.site/login?error=auth_process_failed");
                 }
-            }
-        };
+            };
+    };
     }
 
     @Bean
@@ -109,19 +116,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        // Add bypass-tunnel-reminder to allowed headers for localtunnel
-        configuration.setAllowedHeaders(Arrays.asList(
-            "authorization", 
-            "content-type", 
-            "x-auth-token",
-            "bypass-tunnel-reminder"  // Added for localtunnel bypass
+        configuration.setAllowedOrigins(List.of(
+            "https://linhnh.site",
+            "http://localhost:8081",
+            "https://linhnh812.loca.lt",
+            "http://localhost:8080",
+            "http://localhost:3000"
         ));
-        configuration.setExposedHeaders(List.of("x-auth-token"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
 }

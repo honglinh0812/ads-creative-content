@@ -1,0 +1,312 @@
+<template>
+  <!-- Nút hamburger ngoài sidebar, chỉ hiện khi sidebar đóng -->
+  <button v-if="!sidebarOpen" class="sidebar-hamburger-fixed" @click="$emit('toggle')" aria-label="Mở sidebar">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+    </svg>
+  </button>
+  <aside :class="['app-sidebar', { open: sidebarOpen }]">
+    <!-- Nút 3 gạch trong sidebar, chỉ hiện khi sidebar mở -->
+    <button v-if="sidebarOpen" class="sidebar-hamburger" @click="$emit('toggle')" aria-label="Đóng sidebar">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+    <div v-if="sidebarOpen" class="sidebar-content">
+      <div class="sidebar-header">
+        <router-link to="/dashboard" class="logo">
+          <img src="/logo.png" alt="Logo" class="logo-img" />
+          <span class="logo-text">Creative Ads</span>
+        </router-link>
+      </div>
+      <nav class="sidebar-menu">
+        <router-link
+          v-for="item in menu"
+          :key="item.path"
+          :to="item.path"
+          class="sidebar-link"
+          :class="{ active: isActive(item) }"
+        >
+          <span class="icon" v-if="item.icon"><component :is="item.icon" class="w-5 h-5 mr-2" /></span>
+          <span>{{ item.label }}</span>
+        </router-link>
+      </nav>
+      <div class="sidebar-actions">
+        <button v-if="!isDashboard" class="btn btn-sm btn-outline w-full mb-2" @click="goDashboard">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M3 12l6-6m-6 6l6 6"></path>
+          </svg>
+          Back to Dashboard
+        </button>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <span class="user-avatar">{{ userInitials }}</span>
+          <span class="user-name">{{ userName }}</span>
+        </div>
+        <button class="btn btn-sm btn-ghost w-full mt-2" @click="confirmLogout">Logout</button>
+      </div>
+    </div>
+    <!-- Overlay khi sidebar đóng ở mobile/tablet -->
+    <div v-if="!sidebarOpen" class="sidebar-overlay" @click="$emit('toggle')"></div>
+    <!-- Dialog xác nhận logout -->
+    <div v-if="showLogoutDialog" class="logout-dialog">
+      <div class="logout-dialog-content">
+        <p>Bạn có muốn đăng xuất?</p>
+        <div class="flex gap-2 mt-4 justify-end">
+          <button class="btn btn-sm btn-secondary" @click="showLogoutDialog = false">No</button>
+          <button class="btn btn-sm btn-error" @click="doLogout">Yes</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+</template>
+
+<script>
+import { ref, computed } from 'vue'
+import { useStore } from 'vuex'
+import { useRoute, useRouter } from 'vue-router'
+import { HomeIcon, SparklesIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
+
+export default {
+  name: 'AppSidebar',
+  props: {
+    sidebarOpen: {
+      type: Boolean,
+      required: true
+    }
+  },
+  emits: ['toggle', 'logout'],
+  setup(props, { emit }) {
+    const store = useStore()
+    const route = useRoute()
+    const router = useRouter()
+    const showLogoutDialog = ref(false)
+    const userName = computed(() => store.getters['auth/user']?.name || 'User')
+    const userInitials = computed(() => userName.value.split(' ').map(w => w[0]).join('').toUpperCase())
+    // Chỉ 3 mục chính
+    const menu = [
+      { label: 'Dashboard', path: '/dashboard', icon: HomeIcon, match: ['dashboard'] },
+      { label: 'Campaigns', path: '/campaigns', icon: SparklesIcon, match: ['campaign', 'campaigns'] },
+      { label: 'Ads', path: '/ads', icon: ChartBarIcon, match: ['ad', 'ads'] }
+    ]
+    // Xác định active
+    function isActive(item) {
+      return item.match.some(m => route.path.includes(m))
+    }
+    // Đang ở dashboard?
+    const isDashboard = computed(() => route.path === '/dashboard')
+    // Back to dashboard
+    function goDashboard() {
+      router.push('/dashboard')
+    }
+    // Xác nhận logout
+    function confirmLogout() {
+      showLogoutDialog.value = true
+    }
+    function doLogout() {
+      showLogoutDialog.value = false
+      emit('logout')
+    }
+    return {
+      menu,
+      userName,
+      userInitials,
+      isActive,
+      isDashboard,
+      goDashboard,
+      showLogoutDialog,
+      confirmLogout,
+      doLogout
+    }
+  }
+}
+</script>
+
+<style scoped>
+.app-sidebar {
+  width: 240px;
+  background: var(--sidebar-bg, #fff);
+  color: var(--sidebar-text, #222);
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+  transition: transform 0.2s cubic-bezier(.4,0,.2,1);
+}
+.app-sidebar:not(.open) {
+  transform: translateX(-100%);
+}
+.sidebar-hamburger-fixed {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 210;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: all 0.2s ease;
+}
+.sidebar-hamburger {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 110;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: all 0.2s ease;
+}
+.sidebar-content {
+  margin-top: 56px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px);
+}
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem 1rem 1rem 1rem;
+  border-bottom: 1px solid #eee;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+.logo-img {
+  width: 32px;
+  height: 32px;
+  margin-right: 0.5rem;
+}
+.logo-text {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: var(--sidebar-text, #222);
+}
+.sidebar-menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0;
+}
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 6px;
+  margin-bottom: 0.25rem;
+  transition: background 0.15s;
+}
+.sidebar-link.active, .sidebar-link:hover {
+  background: var(--sidebar-active-bg, #f3f4f6);
+  color: var(--sidebar-active-text, #2563eb);
+}
+.icon {
+  display: flex;
+  align-items: center;
+}
+.sidebar-actions {
+  padding: 0 1rem 1rem 1rem;
+}
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: auto;
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+.user-name {
+  font-size: 1rem;
+  font-weight: 500;
+}
+.sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .app-sidebar {
+    transform: translateX(-100%);
+    position: fixed;
+    z-index: 200;
+    width: 240px;
+  }
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar-hamburger-fixed {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 210;
+  }
+  .sidebar-hamburger {
+    display: block;
+  }
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.1);
+    z-index: 99;
+  }
+}
+.logout-dialog {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.2);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.logout-dialog-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem 2.5rem;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.12);
+  min-width: 300px;
+  text-align: center;
+}
+</style> 

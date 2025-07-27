@@ -219,8 +219,17 @@
 
 // Content wrapper
 .content-wrapper {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
+  padding: 0 var(--space-4);
+  
+  @media (min-width: 640px) {
+    padding: 0 var(--space-6);
+  }
+  
+  @media (min-width: 1024px) {
+    padding: 0 var(--space-8);
+  }
 }
 
 // Page header
@@ -300,6 +309,85 @@
   min-width: 0px;
 }
 
+// Mobile-first responsive design
+@media (max-width: 639px) {
+  .sm\\:hidden {
+    display: none !important;
+  }
+  
+  .sm\\:block {
+    display: block !important;
+  }
+  
+  .sm\\:flex {
+    display: flex !important;
+  }
+  
+  .sm\\:grid {
+    display: grid !important;
+  }
+  
+  .sm\\:grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+  
+  .sm\\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  .sm\\:px-6 {
+    padding-left: var(--space-6) !important;
+    padding-right: var(--space-6) !important;
+  }
+  
+  .sm\\:space-x-4 > * + * {
+    margin-left: var(--space-4) !important;
+  }
+  
+  .sm\\:space-y-0 > * + * {
+    margin-top: 0 !important;
+  }
+}
+
+@media (min-width: 640px) {
+  .sm\\:hidden {
+    display: none !important;
+  }
+  
+  .sm\\:block {
+    display: block !important;
+  }
+  
+  .sm\\:flex {
+    display: flex !important;
+  }
+  
+  .sm\\:grid {
+    display: grid !important;
+  }
+  
+  .sm\\:grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+  
+  .sm\\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  .sm\\:px-6 {
+    padding-left: var(--space-6) !important;
+    padding-right: var(--space-6) !important;
+  }
+  
+  .sm\\:space-x-4 > * + * {
+    margin-left: var(--space-4) !important;
+  }
+  
+  .sm\\:space-y-0 > * + * {
+    margin-top: 0 !important;
+  }
+}
+
 // Responsive display
 @media (max-width: 1023px) {
   .lg\\:hidden {
@@ -314,6 +402,15 @@
   
   .lg\\:flex {
     display: flex !important;
+  }
+  
+  .lg\\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  .lg\\:px-8 {
+    padding-left: var(--space-8) !important;
+    padding-right: var(--space-8) !important;
   }
 }
 

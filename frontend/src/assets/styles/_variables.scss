@@ -1,8 +1,15 @@
-/* Modern Variables for Facebook Ads Automation */
+/* Modern Design System for Facebook Ads Automation */
 
-// Color Palette - Modern and Professional
+// Color Palette - Professional and Accessible
 :root {
-  // Primary Colors
+  // Brand Colors - Facebook-inspired but modern
+  --brand-primary: #1877f2;
+  --brand-primary-hover: #166fe5;
+  --brand-primary-light: #e7f3ff;
+  --brand-secondary: #42b883;
+  --brand-accent: #ff6b6b;
+
+  // Primary Colors - Blue scale
   --primary-50: #eff6ff;
   --primary-100: #dbeafe;
   --primary-200: #bfdbfe;
@@ -14,7 +21,7 @@
   --primary-800: #1e40af;
   --primary-900: #1e3a8a;
 
-  // Secondary Colors
+  // Secondary Colors - Gray scale
   --secondary-50: #f8fafc;
   --secondary-100: #f1f5f9;
   --secondary-200: #e2e8f0;
@@ -25,6 +32,42 @@
   --secondary-700: #334155;
   --secondary-800: #1e293b;
   --secondary-900: #0f172a;
+
+  // Success Colors
+  --success-50: #f0fdf4;
+  --success-100: #dcfce7;
+  --success-200: #bbf7d0;
+  --success-300: #86efac;
+  --success-400: #4ade80;
+  --success-500: #22c55e;
+  --success-600: #16a34a;
+  --success-700: #15803d;
+  --success-800: #166534;
+  --success-900: #14532d;
+
+  // Warning Colors
+  --warning-50: #fffbeb;
+  --warning-100: #fef3c7;
+  --warning-200: #fde68a;
+  --warning-300: #fcd34d;
+  --warning-400: #fbbf24;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+  --warning-700: #b45309;
+  --warning-800: #92400e;
+  --warning-900: #78350f;
+
+  // Error Colors
+  --error-50: #fef2f2;
+  --error-100: #fee2e2;
+  --error-200: #fecaca;
+  --error-300: #fca5a5;
+  --error-400: #f87171;
+  --error-500: #ef4444;
+  --error-600: #dc2626;
+  --error-700: #b91c1c;
+  --error-800: #991b1b;
+  --error-900: #7f1d1d;
 
   // Success Colors
   --success-50: #f0fdf4;
@@ -74,21 +117,22 @@
   --neutral-800: #262626;
   --neutral-900: #171717;
 
-  // Typography
+  // Typography - Modern font stack
   --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-family-mono: 'JetBrains Mono', 'Fira Code', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  --font-family-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  // Font Sizes
-  --text-xs: 0.75rem;     // 12px
-  --text-sm: 0.875rem;    // 14px
-  --text-base: 1rem;      // 16px
-  --text-lg: 1.125rem;    // 18px
-  --text-xl: 1.25rem;     // 20px
-  --text-2xl: 1.5rem;     // 24px
-  --text-3xl: 1.875rem;   // 30px
-  --text-4xl: 2.25rem;    // 36px
-  --text-5xl: 3rem;       // 48px
-  --text-6xl: 3.75rem;    // 60px
+  // Font Sizes - Responsive and accessible
+  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --text-sm: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
+  --text-base: clamp(1rem, 0.9rem + 0.5vw, 1.125rem);
+  --text-lg: clamp(1.125rem, 1rem + 0.625vw, 1.25rem);
+  --text-xl: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.3rem + 1vw, 1.875rem);
+  --text-3xl: clamp(1.875rem, 1.6rem + 1.375vw, 2.25rem);
+  --text-4xl: clamp(2.25rem, 1.9rem + 1.75vw, 3rem);
+  --text-5xl: clamp(3rem, 2.5rem + 2.5vw, 3.75rem);
+  --text-6xl: clamp(3.75rem, 3rem + 3.75vw, 4.5rem);
 
   // Font Weights
   --font-thin: 100;
@@ -144,13 +188,26 @@
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
 
-  // Transitions
+  // Transitions - Modern easing curves
   --transition-none: none;
-  --transition-all: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-colors: color, background-color, border-color, text-decoration-color, fill, stroke 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-opacity: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-shadow: box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-transform: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-all: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-colors: color, background-color, border-color, text-decoration-color, fill, stroke 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-opacity: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-shadow: box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-transform: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: transform 300ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  // Animation durations
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+
+  // Easing functions
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
   // Z-Index
   --z-0: 0;
@@ -167,5 +224,47 @@
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
+
+  // Theme Colors - Light mode
+  --color-bg: var(--neutral-50);
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: var(--neutral-100);
+  --color-text: var(--secondary-900);
+  --color-text-secondary: var(--secondary-600);
+  --color-text-muted: var(--secondary-500);
+  --color-border: var(--neutral-200);
+  --color-border-light: var(--neutral-100);
+  --color-primary: var(--brand-primary);
+  --color-primary-hover: var(--brand-primary-hover);
+
+  // Interactive states
+  --color-hover: var(--neutral-100);
+  --color-active: var(--neutral-200);
+  --color-focus: var(--primary-500);
+  --color-disabled: var(--neutral-300);
+  --color-disabled-text: var(--neutral-500);
+  --color-primary-bg: #eaf5ff;
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+  --color-card-shadow: 0 2px 8px rgba(27,31,35,0.04);
+  --color-card-shadow-hover: 0 6px 24px rgba(27,31,35,0.08);
+}
+
+.dark :root {
+  --color-bg: #161b22;
+  --color-bg-secondary: #22272e;
+  --color-text: #c9d1d9;
+  --color-text-secondary: #8b949e;
+  --color-border: #30363d;
+  --color-primary: #58a6ff;
+  --color-primary-bg: #21262d;
+  --color-success: #3fb950;
+  --color-error: #ff7b72;
+  --color-warning: #d29922;
+  --color-info: #58a6ff;
+  --color-card-shadow: 0 2px 8px rgba(1,4,9,0.24);
+  --color-card-shadow-hover: 0 6px 24px rgba(1,4,9,0.32);
 }
 

@@ -1,6 +1,9 @@
 package com.fbadsautomation.dto;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
+
+@Slf4j
 
 public class AdCreateRequest {
     private Long campaignId;
@@ -10,7 +13,8 @@ public class AdCreateRequest {
     private String name;
 
     // Constructors
-    public AdCreateRequest() {}
+    public AdCreateRequest() {;
+    }
 
     public AdCreateRequest(Long campaignId, String adType, String prompt, 
                           MultipartFile mediaFile, String name) {
@@ -23,18 +27,21 @@ public class AdCreateRequest {
 
     // Getters and Setters
     public Long getCampaignId() { return campaignId; }
-    public void setCampaignId(Long campaignId) { this.campaignId = campaignId; }
+    public void setCampaignId(Long campaignId) { this.campaignId = campaignId;
+    }
 
     public String getAdType() { return adType; }
-    public void setAdType(String adType) { this.adType = adType; }
+    public void setAdType(String adType) { this.adType = adType;
+    }
 
     public String getPrompt() { return prompt; }
-    public void setPrompt(String prompt) { this.prompt = prompt; }
+    public void setPrompt(String prompt) { this.prompt = prompt;
+    }
 
     public MultipartFile getMediaFile() { return mediaFile; }
-    public void setMediaFile(MultipartFile mediaFile) { this.mediaFile = mediaFile; }
+    public void setMediaFile(MultipartFile mediaFile) { this.mediaFile = mediaFile;
+    }
 
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-}
-
+    public void setName(String name) { this.name = name; };
+    }

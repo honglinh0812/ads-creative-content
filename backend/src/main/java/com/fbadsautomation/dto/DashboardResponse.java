@@ -2,6 +2,9 @@ package com.fbadsautomation.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 
 public class DashboardResponse {
     private List<CampaignSummary> campaigns;
@@ -9,7 +12,8 @@ public class DashboardResponse {
     private DashboardStats stats;
 
     // Constructors
-    public DashboardResponse() {}
+    public DashboardResponse() {;
+    }
 
     public DashboardResponse(List<CampaignSummary> campaigns, List<AdSummary> recentAds, DashboardStats stats) {
         this.campaigns = campaigns;
@@ -34,20 +38,21 @@ public class DashboardResponse {
         private String objective;
         private String status;
         private Double budget;
-        private LocalDateTime createdAt;
+        private LocalDateTime createdDate;
         private int adCount;
 
         // Constructors
-        public CampaignSummary() {}
+        public CampaignSummary() {;
+    }
 
         public CampaignSummary(Long id, String name, String objective, String status, 
-                             Double budget, LocalDateTime createdAt, int adCount) {
+                             Double budget, LocalDateTime createdDate, int adCount) {
             this.id = id;
             this.name = name;
             this.objective = objective;
             this.status = status;
             this.budget = budget;
-            this.createdAt = createdAt;
+            this.createdDate = createdDate;
             this.adCount = adCount;
         }
 
@@ -67,11 +72,11 @@ public class DashboardResponse {
         public Double getBudget() { return budget; }
         public void setBudget(Double budget) { this.budget = budget; }
 
-        public LocalDateTime getCreatedAt() { return createdAt; }
-        public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+        public LocalDateTime getCreatedDate() { return createdDate; }
+        public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
 
         public int getAdCount() { return adCount; }
-        public void setAdCount(int adCount) { this.adCount = adCount; }
+        public void setAdCount(int adCount) { this.adCount = adCount; };
     }
 
     public static class AdSummary {
@@ -82,12 +87,19 @@ public class DashboardResponse {
         private String campaignName;
         private LocalDateTime createdDate;
         private String imageUrl;
+        private String videoUrl;
+        private String headline;
+        private String primaryText;
+        private String description;
+        private String callToAction;
 
         // Constructors
-        public AdSummary() {}
+        public AdSummary() {;
+    }
 
         public AdSummary(Long id, String name, String adType, String status, 
-                        String campaignName, LocalDateTime createdDate, String imageUrl) {
+                        String campaignName, LocalDateTime createdDate, String imageUrl, String videoUrl,
+                        String headline, String primaryText, String description, String callToAction) {
             this.id = id;
             this.name = name;
             this.adType = adType;
@@ -95,6 +107,11 @@ public class DashboardResponse {
             this.campaignName = campaignName;
             this.createdDate = createdDate;
             this.imageUrl = imageUrl;
+            this.videoUrl = videoUrl;
+            this.headline = headline;
+            this.primaryText = primaryText;
+            this.description = description;
+            this.callToAction = callToAction;
         }
 
         // Getters and Setters
@@ -118,6 +135,21 @@ public class DashboardResponse {
 
         public String getImageUrl() { return imageUrl; }
         public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+        public String getVideoUrl() { return videoUrl; }
+        public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
+
+        public String getHeadline() { return headline; }
+        public void setHeadline(String headline) { this.headline = headline; }
+
+        public String getPrimaryText() { return primaryText; }
+        public void setPrimaryText(String primaryText) { this.primaryText = primaryText; }
+
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+
+        public String getCallToAction() { return callToAction; }
+        public void setCallToAction(String callToAction) { this.callToAction = callToAction; };
     }
 
     public static class DashboardStats {
@@ -127,7 +159,8 @@ public class DashboardResponse {
         private long activeAds;
 
         // Constructors
-        public DashboardStats() {}
+        public DashboardStats() {;
+    }
 
         public DashboardStats(long totalCampaigns, long totalAds, long activeCampaigns, long activeAds) {
             this.totalCampaigns = totalCampaigns;
@@ -147,7 +180,6 @@ public class DashboardResponse {
         public void setActiveCampaigns(long activeCampaigns) { this.activeCampaigns = activeCampaigns; }
 
         public long getActiveAds() { return activeAds; }
-        public void setActiveAds(long activeAds) { this.activeAds = activeAds; }
+        public void setActiveAds(long activeAds) { this.activeAds = activeAds; };
     }
 }
-

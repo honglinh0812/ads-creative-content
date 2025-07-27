@@ -9,7 +9,7 @@ export default {
     error: null
   },
   getters: {
-    isAuthenticated: state => !!state.token,
+    isAuthenticated: state => !!state.token && !!state.user,
     user: state => state.user,
     loading: state => state.loading,
     error: state => state.error
@@ -31,6 +31,12 @@ export default {
     },
     SET_ERROR(state, error) {
       state.error = error;
+    },
+    CLEAR_AUTH(state) {
+      state.user = null;
+      state.token = null;
+      state.error = null;
+      localStorage.removeItem('token');
     }
   },
   actions: {
@@ -43,7 +49,7 @@ export default {
         window.location.href = api.auth.login();
       } catch (error) {
         commit('SET_ERROR', error.message || 'Authentication failed');
-        dispatch('notification/showError', {
+        dispatch('toast/showError', {
           title: 'Login Failed',
           message: 'Failed to authenticate with Facebook. Please try again.'
         }, { root: true });
@@ -51,8 +57,8 @@ export default {
         commit('SET_LOADING', false);
       }
     },
-    // eslint-disable-next-line no-unused-vars
-    async fetchUser({ commit, dispatch }) {
+    
+    async fetchUser({ commit }) {
       commit('SET_LOADING', true);
       commit('SET_ERROR', null);
       try {
@@ -66,10 +72,9 @@ export default {
         console.error('Fetch user error:', error);
         commit('SET_ERROR', error.message || 'Failed to fetch user data');
         
-        // If token is invalid, clear it
+        // If token is invalid, clear authentication
         if (error.response && error.response.status === 401) {
-          commit('SET_TOKEN', null);
-          commit('SET_USER', null);
+          commit('CLEAR_AUTH');
         }
         
         throw error;
@@ -86,8 +91,7 @@ export default {
       } catch (error) {
         console.error('Logout error:', error);
       } finally {
-        commit('SET_TOKEN', null);
-        commit('SET_USER', null);
+        commit('CLEAR_AUTH');
         commit('SET_LOADING', false);
         window.location.href = '/';
       }
@@ -99,6 +103,10 @@ export default {
     
     setUser({ commit }, user) {
       commit('SET_USER', user);
+    },
+    
+    clearAuth({ commit }) {
+      commit('CLEAR_AUTH');
     }
   }
 }

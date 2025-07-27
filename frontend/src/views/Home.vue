@@ -1,31 +1,37 @@
 <template>
   <div class="home">
     <div class="redirect-message">
-      <h2>Redirecting to Create Ad page...</h2>
+      <h2>Redirecting...</h2>
       <ProgressSpinner />
     </div>
   </div>
 </template>
 
 <script>
+import ProgressSpinner from 'primevue/progressspinner'
+
 export default {
   name: 'Home',
+  components: {
+    ProgressSpinner
+  },
   mounted() {
-    // Redirect to Create Ad page as per user flow requirements
-    this.$router.push('/ad/create');
+    // Check if user is authenticated
+    if (this.$store.getters['auth/isAuthenticated']) {
+      this.$router.push('/dashboard');
+    } else {
+      this.$router.push('/login');
+    }
   }
 }
 </script>
 
 <style scoped>
-.home {
+.home-container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 70vh;
-}
-
-.redirect-message {
   text-align: center;
 }
 </style>

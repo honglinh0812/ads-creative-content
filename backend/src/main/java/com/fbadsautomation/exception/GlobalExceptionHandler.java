@@ -1,93 +1,161 @@
 package com.fbadsautomation.exception;
 
+import com.fbadsautomation.dto.ErrorResponse;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-
+@Slf4j
 @ControllerAdvice
+
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException ex, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                ex.getStatus().value(),
-                ex.getMessage(),
+        log.error("API Exception: {}", ex.getMessage(), ex);
+
+        ErrorResponse errorResponse = ErrorResponse.of(ex.getStatus().value(),
                 ex.getErrorCode(),
-                LocalDateTime.now(),
-                request.getDescription(false)
+                ex.getMessage(),
+                getPath(request)
         );
+        errorResponse.setRequestId(generateRequestId());
+
         return new ResponseEntity<>(errorResponse, ex.getStatus());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ValidationErrorResponse> handleValidationExceptions(
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(
             MethodArgumentNotValidException ex, WebRequest request) {
-        
+
+        log.warn("Validation error: {}", ex.getMessage());
+
         BindingResult result = ex.getBindingResult();
         Map<String, String> fieldErrors = new HashMap<>();
-        
+
         for (FieldError fieldError : result.getFieldErrors()) {
             fieldErrors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
-        
-        ValidationErrorResponse errorResponse = new ValidationErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Validation failed",
-                "VALIDATION_ERROR",
-                LocalDateTime.now(),
-                request.getDescription(false),
-                fieldErrors
+
+        // Check for custom validation error (prompt or ad links must be provided)
+        boolean hasPromptOrAdLinksError = result.getGlobalErrors().stream()
+            .anyMatch(error -> error.getDefaultMessage().contains("Either prompt or ad links must be provided"));
+        String message = hasPromptOrAdLinksError ?
+            "Could not create ads. Please check the ad prompt / ad link and try again." :
+            "Validation failed. Please check your input and try again.";
+
+        ErrorResponse errorResponse = ErrorResponse.validationError(message,
+                fieldErrors,
+                getPath(request)
         );
-        
+        errorResponse.setRequestId(generateRequestId());
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+            IllegalArgumentException ex, WebRequest request) {
+        log.warn("Illegal argument: {}", ex.getMessage());
+
+        ErrorResponse errorResponse = ErrorResponse.of(HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                ex.getMessage(),
+                getPath(request)
+        );
+        errorResponse.setRequestId(generateRequestId());
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+            AccessDeniedException ex, WebRequest request) {
+        log.warn("Access denied: {}", ex.getMessage());
+
+        ErrorResponse errorResponse = ErrorResponse.of(HttpStatus.FORBIDDEN.value(),
+                "Access Denied",
+                "You don't have permission to access this resource",
+                getPath(request)
+        );
+        errorResponse.setRequestId(generateRequestId());
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException ex, WebRequest request) {
+        log.warn("File upload size exceeded: {}", ex.getMessage());
+
+        ErrorResponse errorResponse = ErrorResponse.of(HttpStatus.BAD_REQUEST.value(),
+                "File Too Large",
+                "The uploaded file exceeds the maximum allowed size",
+                getPath(request)
+        );
+        errorResponse.setRequestId(generateRequestId());
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(
+            ConstraintViolationException ex, WebRequest request) {
+        log.warn("Constraint violation: {}", ex.getMessage());
+
+        Map<String, String> fieldErrors = new HashMap<>();
+        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
+            String fieldName = violation.getPropertyPath().toString();
+            String message = violation.getMessage();
+            fieldErrors.put(fieldName, message);
+        }
+
+        ErrorResponse errorResponse = ErrorResponse.validationError("Validation constraints violated",
+                fieldErrors,
+                getPath(request)
+        );
+        errorResponse.setRequestId(generateRequestId());
+
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "An unexpected error occurred",
-                "INTERNAL_SERVER_ERROR",
-                LocalDateTime.now(),
-                request.getDescription(false)
+        log.error("Unexpected error occurred: {}", ex.getMessage(), ex);
+
+        ErrorResponse errorResponse = ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal Server Error",
+                "An unexpected error occurred. Please try again later.",
+                getPath(request)
         );
+        errorResponse.setRequestId(generateRequestId());
+
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ErrorResponse {
-        private int status;
-        private String message;
-        private String errorCode;
-        private LocalDateTime timestamp;
-        private String path;
+    private String getPath(WebRequest request) {
+        return request.getDescription(false).replace("uri= ", "");
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ValidationErrorResponse extends ErrorResponse {
-        private Map<String, String> fieldErrors;
-
-        public ValidationErrorResponse(int status, String message, String errorCode, 
-                                      LocalDateTime timestamp, String path, 
-                                      Map<String, String> fieldErrors) {
-            super(status, message, errorCode, timestamp, path);
-            this.fieldErrors = fieldErrors;
-        }
+    private String generateRequestId() {
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 }

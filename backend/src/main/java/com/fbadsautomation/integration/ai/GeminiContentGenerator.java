@@ -2,18 +2,18 @@ package com.fbadsautomation.integration.ai;
 
 import com.fbadsautomation.exception.ApiException;
 import com.fbadsautomation.model.AdContent;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
+
 public class GeminiContentGenerator implements AIContentGenerator {
 
     private final AIProperties aiProperties;
@@ -26,7 +26,6 @@ public class GeminiContentGenerator implements AIContentGenerator {
             log.info("Generating content with Gemini for prompt: {}", prompt);
             
             String url = API_URL + aiProperties.getGeminiModel() + ":generateContent?key=" + aiProperties.getGeminiApiKey();
-            
             Map<String, Object> requestBody = new HashMap<>();
             
             Map<String, Object> contents = new HashMap<>();
@@ -47,11 +46,11 @@ public class GeminiContentGenerator implements AIContentGenerator {
             headers.set("Content-Type", "application/json");
             
             // Create HTTP entity
-            org.springframework.http.HttpEntity<Map<String, Object>> entity = 
+            org.springframework.http.HttpEntity<Map<String, Object>> entity =
                 new org.springframework.http.HttpEntity<>(requestBody, headers);
             
             // Make API call
-            org.springframework.http.ResponseEntity<Map> response = 
+            org.springframework.http.ResponseEntity<Map> response =
                 restTemplate.postForEntity(url, entity, Map.class);
             
             // Process response
@@ -65,7 +64,6 @@ public class GeminiContentGenerator implements AIContentGenerator {
                     if (parts.length > 0) {
                         Map<String, Object> part = (Map<String, Object>) parts[0];
                         String text = (String) part.get("text");
-                        
                         // Parse the content
                         return parseContent(text, contentType);
                     }
@@ -91,9 +89,9 @@ public class GeminiContentGenerator implements AIContentGenerator {
             + (contentType == AdContent.ContentType.TEXT ? "text ad" : "image ad")
             + ". Your response should be in JSON format with the following structure: "
             + "{\n"
-            + "  \"primaryText\": \"The main text of the ad (max 125 characters)\",\n"
+            + "  \"primaryText\": \"The main text of the ad (no strict character limit)\",\n"
             + "  \"headline\": \"The headline (max 40 characters)\",\n"
-            + "  \"description\": \"The description (max 30 characters)\"\n"
+            + "  \"description\": \"The description (max 125 characters)\"\n"
             + "}\n"
             + "Make sure the content is engaging, concise, and follows Facebook's best practices.";
     }
@@ -103,7 +101,6 @@ public class GeminiContentGenerator implements AIContentGenerator {
             // Extract JSON from the response
             int startIndex = content.indexOf('{');
             int endIndex = content.lastIndexOf('}');
-            
             if (startIndex >= 0 && endIndex >= 0) {
                 String jsonContent = content.substring(startIndex, endIndex + 1);
                 

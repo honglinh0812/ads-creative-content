@@ -16,7 +16,7 @@ export default {
 </script>
 
 <style scoped>
-.not-found {
+.notfound-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -24,37 +24,42 @@ export default {
   text-align: center;
 }
 
-.not-found__container {
+.notfound-content {
   max-width: 500px;
+  margin: 0 auto;
 }
 
-h1 {
-  font-size: 6rem;
+.notfound-title {
+  font-size: var(--text-6xl);
   margin-bottom: 0;
-  color: #4267B2;
+  color: var(--color-primary);
+  font-weight: var(--font-bold);
 }
 
-h2 {
-  margin-bottom: 1rem;
+.notfound-message {
+  margin-bottom: var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--text-lg);
 }
 
-p {
-  margin-bottom: 2rem;
-  color: #666;
+.notfound-description {
+  margin-bottom: var(--space-6);
+  color: var(--color-text-secondary);
 }
 
-.btn {
+.notfound-btn {
   display: inline-block;
-  padding: 0.75rem 1.5rem;
-  background-color: #4267B2;
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--color-primary);
   color: white;
-  text-decoration: none;
-  border-radius: 4px;
-  font-weight: 500;
+  border-radius: var(--radius-base);
+  font-weight: var(--font-medium);
+  font-size: var(--text-base);
   transition: background-color 0.3s;
+  border: none;
+  cursor: pointer;
 }
-
-.btn:hover {
-  background-color: #365899;
+.notfound-btn:hover {
+  background-color: var(--color-info);
 }
 </style>

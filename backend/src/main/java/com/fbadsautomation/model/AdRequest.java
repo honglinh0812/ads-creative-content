@@ -1,8 +1,11 @@
 package com.fbadsautomation.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.extern.slf4j.Slf4j;
 
 @JsonInclude(JsonInclude.Include.NON_NULL) // Prevent sending null fields in JSON
+@Slf4j
+
 public class AdRequest {
     private String adType;
     private String prompt;
@@ -13,10 +16,11 @@ public class AdRequest {
     private Integer videoDuration; // Use Integer to handle null if not sent
     private int numberOfVariations;
     private String language;
+    private FacebookCTA callToAction;
 
     // Constructors
     public AdRequest() {
-        this.numberOfVariations = 1; // Default value
+        this.numberOfVariations = 1;
     }
 
     // Getters and Setters
@@ -92,5 +96,11 @@ public class AdRequest {
     public void setLanguage(String language) {
         this.language = language;
     }
-}
 
+    public FacebookCTA getCallToAction() {
+        return this.callToAction;
+    }
+    public void setCallToAction(FacebookCTA callToAction) {
+        this.callToAction = callToAction;
+    }
+}

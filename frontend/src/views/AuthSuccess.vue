@@ -2,7 +2,7 @@
   <div class="auth-success-container">
     <div v-if="loading" class="loading-container">
       <ProgressSpinner />
-      <h2>Đang xử lý đăng nhập...</h2>
+      <h2>Processing login...</h2>
     </div>
   </div>
 </template>
@@ -27,27 +27,31 @@ export default {
     
     async processAuthSuccess() {
       try {
-        // Lấy token từ URL fragment
-        const hash = window.location.hash.substring(1); // Bỏ dấu # ở đầu
+        // Get token from URL fragment
+        const hash = window.location.hash.substring(1); // Remove # from start
         const params = new URLSearchParams(hash);
         const token = params.get('token');
         
         if (!token) {
-          console.error('Không tìm thấy token trong URL');
+          console.error('Token not found in URL');
           this.$router.push('/login?error=no_token');
           return;
         }
         
-        // Lưu token vào store và localStorage
+        // Save token to store and localStorage
         this.SET_TOKEN(token);
         
-        // Tải thông tin người dùng
+        // Load user info
         await this.fetchUser();
         
-        // Chuyển hướng đến trang dashboard
-        this.$router.push('/dashboard');
+        // Get redirect path from sessionStorage or default to dashboard
+        const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard'
+        sessionStorage.removeItem('redirectAfterLogin') // Clear after use
+        
+        // Redirect to target page
+        this.$router.push(redirectPath);
       } catch (error) {
-        console.error('Lỗi xử lý đăng nhập:', error);
+        console.error('Login handling error:', error);
         this.$router.push('/login?error=auth_process_failed');
       }
     }

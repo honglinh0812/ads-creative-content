@@ -33,8 +33,8 @@ ALTER TABLE ads ADD COLUMN IF NOT EXISTS selected_content_id BIGINT;
 ALTER TABLE ad_contents ADD COLUMN IF NOT EXISTS preview_order INTEGER DEFAULT 1;
 
 -- Thêm foreign key constraint cho selected_content_id
-ALTER TABLE ads ADD CONSTRAINT fk_ads_selected_content 
-    FOREIGN KEY (selected_content_id) REFERENCES ad_contents(id);
+ALTER TABLE ads DROP CONSTRAINT IF EXISTS fk_ads_selected_content;
+ALTER TABLE ads ADD CONSTRAINT fk_ads_selected_content FOREIGN KEY (selected_content_id) REFERENCES ad_contents(id);
 
 -- Cập nhật enum values cho ad_type
 -- Đảm bảo chỉ có 3 loại: PAGE_POST_AD, WEBSITE_CONVERSION_AD, LEAD_FORM_AD
@@ -44,5 +44,5 @@ CREATE INDEX IF NOT EXISTS idx_campaigns_user_id ON campaigns(user_id);
 CREATE INDEX IF NOT EXISTS idx_ads_campaign_id ON ads(campaign_id);
 CREATE INDEX IF NOT EXISTS idx_ad_contents_ad_id ON ad_contents(ad_id);
 CREATE INDEX IF NOT EXISTS idx_ads_created_date ON ads(created_date);
-CREATE INDEX IF NOT EXISTS idx_campaigns_created_at ON campaigns(created_at);
+CREATE INDEX IF NOT EXISTS idx_campaigns_created_at ON campaigns(created_date);
 

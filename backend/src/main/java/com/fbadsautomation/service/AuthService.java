@@ -6,6 +6,11 @@ import com.fbadsautomation.integration.facebook.FacebookProperties;
 import com.fbadsautomation.model.User;
 import com.fbadsautomation.repository.UserRepository;
 import com.fbadsautomation.security.JwtTokenProvider;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,15 +18,20 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.SimpleMailMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.util.Optional;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
+
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -30,10 +40,97 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
 
     // Store state for CSRF protection
-    private final Map<String, String> stateStore = new ConcurrentHashMap<>( );
-
-    // Store temporary auth tokens for success redirect
+    private final Map<String, String> stateStore = new ConcurrentHashMap<>(); // Store temporary auth tokens for success redirect
     private final Map<String, Map<String, String>> authTokenStore = new ConcurrentHashMap<>();
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final Map<String, String> resetTokenStore = new ConcurrentHashMap<>(); // token -> username/email
+    // Nếu có JavaMailSender thì inject vào đây
+    //@Autowired
+    //private JavaMailSender mailSender;
+    @Value("${app.reset-password.base-url:http://localhost:3000/reset-password}")
+    private String resetPasswordBaseUrl;
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+
+    // Đăng ký tài khoản mới
+    public void registerUser(String username, String email, String password) {
+        username = username.trim();
+        email = email.trim().toLowerCase();
+        if (userRepository.existsByUsername(username)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Username already exists");
+        }
+        if (userRepository.existsByEmail(email)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Email already exists");
+        }
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(password));
+        userRepository.save(user);
+    }
+
+    // Đăng nhập bằng username/password hoặc email/password
+    public String loginWithUsernamePassword(String usernameOrEmail, String password) {
+        String input = usernameOrEmail.trim();
+        logger.info("Login attempt with: '{}'", input);
+
+        Optional<User> userByUsername = userRepository.findByUsernameIgnoreCase(input);
+        if (userByUsername.isPresent()) {
+            logger.info("Found user by username: {}", userByUsername.get().getUsername());
+        } else {
+            logger.info("No user found by username: {}", input);
+        }
+
+        Optional<User> userByEmail = userRepository.findByEmailIgnoreCase(input.toLowerCase());
+        if (userByEmail.isPresent()) {
+            logger.info("Found user by email: {}", userByEmail.get().getEmail());
+        } else {
+            logger.info("No user found by email: {}", input.toLowerCase());
+        }
+
+        User user = userByUsername.orElse(userByEmail.orElse(null));
+        if (user == null) {
+            logger.warn("Login failed: User not found for input '{}'", input);
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "User not found");
+        }
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
+            logger.warn("Login failed: Invalid password for user '{}'", user.getUsername());
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid password");
+        }
+        logger.info("Login successful for user '{}'", user.getUsername());
+        return generateJwtToken(user);
+    }
+
+    // Gửi email quên mật khẩu
+    public void forgotPassword(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+        String token = UUID.randomUUID().toString();
+        resetTokenStore.put(token, user.getUsername() != null ? user.getUsername() : user.getEmail());
+        // Gửi email (giả lập)
+        String resetUrl = resetPasswordBaseUrl + "?token=" + token;
+        // Nếu có mailSender thì gửi thật, ở đây log ra
+        log.info("Reset password link for {}: {}", email, resetUrl);
+        //SimpleMailMessage message = new SimpleMailMessage();
+        //message.setTo(email);
+        //message.setSubject("Reset your password");
+        //message.setText("Click the link to reset your password: " + resetUrl);
+        //mailSender.send(message);
+    }
+
+    // Đặt lại mật khẩu
+    public void resetPassword(String token, String newPassword) {
+        String usernameOrEmail = resetTokenStore.get(token);
+        if (usernameOrEmail == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid or expired token");
+        }
+        User user = userRepository.findByUsername(usernameOrEmail)
+                .orElse(userRepository.findByEmail(usernameOrEmail)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found")));
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        resetTokenStore.remove(token);
+    }
 
     /**
      * Get Facebook authorization URL
@@ -43,7 +140,7 @@ public class AuthService {
         String state = UUID.randomUUID().toString();
         stateStore.put(state, "pending");
         return String.format(
-            "https://www.facebook.com/v%s/dialog/oauth?client_id=%s&redirect_uri=%s&state=%s&scope=%s",
+            "https://www.facebook.com/v%s/dialog/oauth?client_id= %s&redirect_uri=%s&state=%s&scope=%s",
             facebookProperties.getApiVersion( ),
             facebookProperties.getAppId(),
             facebookProperties.getRedirectUri(),
@@ -76,7 +173,6 @@ public class AuthService {
             String fbUserId = (String) userInfo.get("id");
             String name = (String) userInfo.get("name");
             String email = (String) userInfo.get("email");
-
             // Find or create user
             User user = userRepository.findByEmail(email)
                 .orElseGet(() -> {
@@ -98,7 +194,6 @@ public class AuthService {
 
             // Generate JWT token for our application
             String jwtToken = generateJwtToken(user);
-
             // Clean up state
             stateStore.remove(state);
 
@@ -153,7 +248,6 @@ public class AuthService {
 
         // Generate JWT token for our application
         String jwtToken = jwtTokenProvider.generateToken(user.getId());
-
         // Return token and user info
         Map<String, String> response = new HashMap<>();
         response.put("token", jwtToken);
@@ -186,12 +280,33 @@ public class AuthService {
     }
 
     /**
-     * Logout current user
+     * Logout current user and blacklist the JWT token
      */
     public void logout() {
-        // In a real implementation, this would invalidate the JWT token
-        // For now, just log the action
-        log.info("User logged out");
+        try {
+            // Get the current request to extract the JWT token
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                String authHeader = request.getHeader("Authorization");
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    String token = authHeader.substring(7);
+                    // Blacklist the token
+                    jwtTokenProvider.blacklistToken(token);
+                    log.info("User logged out and token blacklisted successfully");
+                } else {
+                    log.warn("No valid JWT token found during logout");
+                };
+    }
+
+            // Clear security context
+            SecurityContextHolder.clearContext();
+
+        } catch (Exception e) {
+            log.error("Error during logout: {}", e.getMessage());
+            // Still clear the security context even if token blacklisting fails
+            SecurityContextHolder.clearContext();
+        }
     }
 
     /**
@@ -206,7 +321,6 @@ public class AuthService {
             String fbUserId = oauth2User.getAttribute("id");
             String name = oauth2User.getAttribute("name");
             String email = oauth2User.getAttribute("email");
-            
             log.info("Processing OAuth2 user: id={}, name={}, email={}", fbUserId, name, email);
             
             if (email == null) { // Changed from fbUserId to email as primary identifier
@@ -232,7 +346,6 @@ public class AuthService {
 
             // Generate JWT token for our application
             String jwtToken = generateJwtToken(user);
-            
             log.info("Successfully processed OAuth2 user {} and generated token", email);
             return jwtToken;
             

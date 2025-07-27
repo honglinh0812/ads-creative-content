@@ -3,21 +3,22 @@ package com.fbadsautomation.service;
 import com.fbadsautomation.ai.AIProvider;
 import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.AdContent;
-import com.fbadsautomation.model.AdRequest;
 import com.fbadsautomation.model.AdGenerationResponse;
+import com.fbadsautomation.model.AdRequest;
 import com.fbadsautomation.repository.AdContentRepository;
 import com.fbadsautomation.repository.AdRepository;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
+@Slf4j
 @Service
+
 public class AdGenerationService {
-    private static final Logger log = LoggerFactory.getLogger(AdGenerationService.class);
 
     private final AIProviderService aiProviderService;
     private final AdRepository adRepository;
@@ -52,9 +53,9 @@ public class AdGenerationService {
         List<AdContent> adContents = textProvider.generateAdContent(
                 request.getPrompt(),
                 request.getNumberOfVariations(),
-                request.getLanguage()
+                request.getLanguage(),
+                request.getCallToAction()
         );
-
         // 3. Get the Image Provider (if specified)
         AIProvider imageProvider = null;
         if (request.getImageProvider() != null && !request.getImageProvider().isEmpty()) {
@@ -99,7 +100,6 @@ public class AdGenerationService {
         .status("success")
         .message("Ad content generated successfully")
         .build();
-
         return response;
     }
 
@@ -111,4 +111,3 @@ public class AdGenerationService {
         return response;
     }
 }
-

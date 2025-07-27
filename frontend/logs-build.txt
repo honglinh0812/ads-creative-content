@@ -1,0 +1,29 @@
+ ERROR  Failed to compile with 5 errors                                                                     10:29:33 PM
+
+[eslint] 
+/home/linhnh/ads-creative-content/frontend/src/components/ToastContainer.vue
+   99:7  error  'CheckCircleIcon' is assigned a value but never used          no-unused-vars
+  107:7  error  'XCircleIcon' is assigned a value but never used              no-unused-vars
+  115:7  error  'ExclamationTriangleIcon' is assigned a value but never used  no-unused-vars
+  123:7  error  'InformationCircleIcon' is assigned a value but never used    no-unused-vars
+
+/home/linhnh/ads-creative-content/frontend/src/components/analytics/AIProviderChart.vue
+  125:15  error  'computed' is defined but never used  no-unused-vars
+
+/home/linhnh/ads-creative-content/frontend/src/components/analytics/BudgetAnalyticsChart.vue
+  150:15  error  'computed' is defined but never used  no-unused-vars
+
+/home/linhnh/ads-creative-content/frontend/src/components/analytics/ContentAnalyticsChart.vue
+  197:15  error  'computed' is defined but never used  no-unused-vars
+
+/home/linhnh/ads-creative-content/frontend/src/components/analytics/PerformanceTrendsChart.vue
+  75:9  error  'chart' is assigned a value but never used  no-unused-vars
+
+/home/linhnh/ads-creative-content/frontend/src/services/optimizationAPI.js
+  272:21  error  Unreachable code  no-unreachable
+
+/home/linhnh/ads-creative-content/frontend/src/views/Analytics.vue
+  185:9  error  Component name "Analytics" should always be multi-word  vue/multi-word-component-names
+
+/home/linhnh/ads-creative-content/frontend/src/views/Optimization.vue
+  284:9  error  Component name "Optimization" should always be multi-word  vue/multi-word-component-names

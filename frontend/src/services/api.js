@@ -34,10 +34,11 @@ apiClient.interceptors.response.use(
     return response
   },
   error => {
-    // Handle session expiration
+    // Handle session expiration - don't redirect directly, let Vue router handle it
     if (error.response && error.response.status === 401) {
+      // Clear token but don't redirect - let the component handle the redirect
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      console.log('Token expired, cleared from localStorage')
     }
     
     // Handle localtunnel 511 error
@@ -83,20 +84,38 @@ export default {
     getAll: (page = 0, size = 5) => apiClient.get(`/ads?page=${page}&size=${size}`),
     get: (adId) => apiClient.get(`/ads/${adId}`),
     generate: (generationData) => apiClient.post('/ads/generate', generationData),
+    saveExisting: (saveData) => apiClient.post('/ads/save-existing', saveData),
     create: (adData) => apiClient.post('/ads', adData),
+    update: (adId, adData) => apiClient.put(`/ads/${adId}`, adData),
     selectContent: (adId, contentId) => 
       apiClient.post(`/ads/${adId}/select-content`, null, {
         params: { contentId }
       }),
     getContents: (adId) => apiClient.get(`/ads/${adId}/contents`),
-    delete: (adId) => apiClient.delete(`/ads/${adId}`)
+    delete: (adId) => apiClient.delete(`/ads/${adId}`),
+    extractFromLibrary: (extractionData) => apiClient.post('/ads/extract-from-library', extractionData)
+  },
+  
+  // Meta Ad Library endpoints
+  metaAdLibrary: {
+    validateUrl: (url) => apiClient.post('/meta-ad-library/validate-url', { url }),
+    extract: (url, accessToken) => apiClient.post('/meta-ad-library/extract', { url, accessToken })
+  },
+  
+
+  
+  // ScrapeCreators endpoints
+  scrapeCreators: {
+    scrape: (id, getTranscript = false) => apiClient.get(`/scrape-creators/scrape?id=${id}&getTranscript=${getTranscript}`),
+    scrapeBatch: (adIds, getTranscript = false) => apiClient.post('/scrape-creators/scrape-batch', { adIds, getTranscript })
   },
   
   // Provider endpoints
   providers: {
     getImageProviders: () => apiClient.get('/ai-providers/image'),
     getTextProviders: () => apiClient.get('/ai-providers/text'),
-    getAllProviders: () => apiClient.get('/ai-providers')
+    getAllProviders: () => apiClient.get('/ai-providers'),
+    getCallToActions: (language = 'en') => apiClient.get(`/ai-providers/call-to-actions?language=${language}`)
   },
   
   // Upload endpoints
@@ -131,3 +150,8 @@ export default {
   }
 }
 
+// Export analytics API
+export { analyticsAPI } from './analyticsAPI'
+
+// Export optimization API
+export { optimizationAPI } from './optimizationAPI'

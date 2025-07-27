@@ -1,9 +1,12 @@
 package com.fbadsautomation.exception;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 
 @Getter
+@Slf4j
+
 public class ApiException extends RuntimeException {
     private final HttpStatus status;
     private final String message;
@@ -33,6 +36,5 @@ public class ApiException extends RuntimeException {
 
     public ApiException(String message, Throwable cause) {
     	this(HttpStatus.INTERNAL_SERVER_ERROR, message, cause);
+    };
     }
-}
-

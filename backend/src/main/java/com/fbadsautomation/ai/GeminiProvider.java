@@ -3,33 +3,29 @@ package com.fbadsautomation.ai;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fbadsautomation.model.AdContent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+@Slf4j
 @Service
-public class GeminiProvider implements AIProvider {
-    private static final Logger log = LoggerFactory.getLogger(GeminiProvider.class);
 
+public class GeminiProvider implements AIProvider {
     private final RestTemplate restTemplate;
     private final String apiKey;
     private final String apiUrl;
-
     private final ObjectMapper objectMapper = new ObjectMapper(); // For parsing JSON
-
     public GeminiProvider(
             RestTemplate restTemplate,
-            @Value("${ai.gemini.api-key:}") String apiKey,
+            @Value("${ai.gemini.api-key}") String apiKey,
             @Value("${ai.gemini.api-url:https://generativelanguage.googleapis.com/v1beta/models}") String baseUrl) { // Use v1beta for JSON mode
         this.restTemplate = restTemplate;
         this.apiKey = apiKey;
@@ -37,23 +33,18 @@ public class GeminiProvider implements AIProvider {
         this.apiUrl = baseUrl + "/gemini-1.5-pro:generateContent";
         log.info("Using Gemini API URL: {}", this.apiUrl);
     }
-
     // Corrected return type to List<AdContent>
     @Override
-    public List<AdContent> generateAdContent(String prompt, int numberOfVariations, String language) {
+    public List<AdContent> generateAdContent(String prompt, int numberOfVariations, String language, com.fbadsautomation.model.FacebookCTA callToAction) {
         List<AdContent> adContents = new ArrayList<>();
-
         if (apiKey == null || apiKey.isEmpty()) {
             log.warn("Gemini API key is missing. Returning mock data.");
-            return generateMockAdContents(prompt, numberOfVariations);
+            return generateMockAdContents(prompt, numberOfVariations, callToAction);
         }
-
         String fullUrl = apiUrl + "?key=" + apiKey;
         log.debug("Calling Gemini API at: {}", fullUrl);
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-
         // Updated prompt for JSON output
         String fullPrompt;
         if ("en".equalsIgnoreCase(language)) {
@@ -69,25 +60,20 @@ public class GeminiProvider implements AIProvider {
         }
         Map<String, Object> contentPart = new HashMap<>();
         contentPart.put("text", fullPrompt);
-
         Map<String, Object> content = new HashMap<>();
         content.put("role", "user");
         content.put("parts", List.of(contentPart));
-
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("contents", List.of(content));
         // Add generationConfig for JSON output
         Map<String, Object> generationConfig = new HashMap<>();
-        generationConfig.put("responseMimeType", "application/json");
+        // Loại bỏ responseMimeType vì không được hỗ trợ trong API version hiện tại
         generationConfig.put("candidateCount", 1); // Request one candidate with potentially multiple variations inside
         requestBody.put("generationConfig", generationConfig);
-
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-
         try {
             Map<String, Object> response = restTemplate.postForObject(fullUrl, request, Map.class);
             log.debug("Gemini API Response: {}", response);
-
             if (response != null && response.containsKey("candidates")) {
                 List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
                 if (!candidates.isEmpty() && candidates.get(0).containsKey("content")) {
@@ -103,6 +89,8 @@ public class GeminiProvider implements AIProvider {
                                 for (AdContent adContent : parsedContents) {
                                     adContent.setAiProvider(AdContent.AIProvider.GEMINI);
                                     adContent.setIsSelected(false); // Default value
+                                    adContent.setCallToAction(callToAction);
+                                    adContent.setCta(callToAction);
                                     adContents.add(adContent);
                                     if (adContents.size() >= numberOfVariations) break; // Stop if enough variations are parsed
                                 }
@@ -117,18 +105,14 @@ public class GeminiProvider implements AIProvider {
             if (adContents.isEmpty()) {
                  log.warn("Failed to parse valid ad content from Gemini response. Response: {}", response);
             }
-
         } catch (Exception e) {
             log.error("Error calling Gemini API: {}", e.getMessage(), e);
-            return generateMockAdContents(prompt, numberOfVariations);
         }
-
         // Fill with mock data if not enough variations generated/parsed
         while (adContents.size() < numberOfVariations) {
             log.warn("Generated/Parsed only {} valid ad contents from Gemini, filling remaining {} with mock data.", adContents.size(), numberOfVariations - adContents.size());
-            adContents.addAll(generateMockAdContents(prompt, 1));
+            adContents.addAll(generateMockAdContents(prompt, 1, callToAction));
         }
-
         return adContents;
     }
 
@@ -139,24 +123,39 @@ public class GeminiProvider implements AIProvider {
     }
 
     @Override
-    public String getProviderName() {
-        return "Google Gemini";
+    public java.util.Set<com.fbadsautomation.model.Capability> getCapabilities() {
+        return java.util.EnumSet.of(com.fbadsautomation.model.Capability.TEXT_GENERATION);
     }
 
     @Override
+    public String getApiUrl() {
+        return apiUrl;
+    }
+
+    @Override
+    public String getName() {
+        return "Gemini";
+    }
+
+    @Override
+    public String getProviderName() {
+        return "Gemini";
+    }
+
     public boolean supportsImageGeneration() {
         return false;
     }
 
     // Mock Ad Content Generation (Corrected return type)
-    private List<AdContent> generateMockAdContents(String prompt, int numberOfVariations) {
+    private List<AdContent> generateMockAdContents(String prompt, int numberOfVariations, com.fbadsautomation.model.FacebookCTA callToAction) {
         List<AdContent> mockContents = new ArrayList<>();
         for (int i = 0; i < numberOfVariations; i++) {
             AdContent adContent = new AdContent();
             adContent.setHeadline("Gemini: Tiêu đề mẫu #" + (i + 1) + " cho: " + prompt);
             adContent.setDescription("Mô tả ngắn gọn cho mẫu quảng cáo Gemini #" + (i + 1));
             adContent.setPrimaryText("Đây là nội dung chính của mẫu quảng cáo Gemini #" + (i + 1) + ". Nội dung này sẽ mô tả chi tiết về sản phẩm hoặc dịch vụ được quảng cáo.");
-            adContent.setCallToAction("Khám phá ngay #" + (i + 1));
+            adContent.setCallToAction(callToAction);
+            adContent.setCta(callToAction);
             adContent.setImageUrl("/img/placeholder.png"); // Use local placeholder
             adContent.setAiProvider(AdContent.AIProvider.GEMINI);
             adContent.setIsSelected(false);
@@ -165,4 +164,3 @@ public class GeminiProvider implements AIProvider {
         return mockContents;
     }
 }
-

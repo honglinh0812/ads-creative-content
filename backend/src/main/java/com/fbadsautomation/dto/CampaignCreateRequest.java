@@ -2,6 +2,9 @@ package com.fbadsautomation.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 
 public class CampaignCreateRequest {
     private String name;
@@ -14,7 +17,8 @@ public class CampaignCreateRequest {
     private LocalDate endDate;
 
     // Constructors
-    public CampaignCreateRequest() {}
+    public CampaignCreateRequest() {;
+    }
 
     public CampaignCreateRequest(String name, String objective, String budgetType, 
                                Double dailyBudget, Double totalBudget, String targetAudience,
@@ -31,27 +35,33 @@ public class CampaignCreateRequest {
 
     // Getters and Setters
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setName(String name) { this.name = name;
+    }
 
     public String getObjective() { return objective; }
-    public void setObjective(String objective) { this.objective = objective; }
+    public void setObjective(String objective) { this.objective = objective;
+    }
 
     public String getBudgetType() { return budgetType; }
-    public void setBudgetType(String budgetType) { this.budgetType = budgetType; }
+    public void setBudgetType(String budgetType) { this.budgetType = budgetType;
+    }
 
     public Double getDailyBudget() { return dailyBudget; }
-    public void setDailyBudget(Double dailyBudget) { this.dailyBudget = dailyBudget; }
+    public void setDailyBudget(Double dailyBudget) { this.dailyBudget = dailyBudget;
+    }
 
     public Double getTotalBudget() { return totalBudget; }
-    public void setTotalBudget(Double totalBudget) { this.totalBudget = totalBudget; }
+    public void setTotalBudget(Double totalBudget) { this.totalBudget = totalBudget;
+    }
 
     public String getTargetAudience() { return targetAudience; }
-    public void setTargetAudience(String targetAudience) { this.targetAudience = targetAudience; }
+    public void setTargetAudience(String targetAudience) { this.targetAudience = targetAudience;
+    }
 
     public LocalDate getStartDate() { return startDate; }
-    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate;
+    }
 
     public LocalDate getEndDate() { return endDate; }
-    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
-}
-
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; };
+    }

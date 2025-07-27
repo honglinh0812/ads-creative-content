@@ -1,163 +1,111 @@
 <template>
-  <div class="ad-detail-container">
-    <Card>
-      <template #title>
-        <div class="card-header">
-          <div class="title-section">
-            <h2>{{ ad.headline }}</h2>
-            <span :class="getStatusClass(ad.status)">{{ ad.status }}</span>
-          </div>
-          <div class="action-buttons">
-            <Button 
-              label="Publish to Facebook" 
-              icon="pi pi-send" 
-              @click="publishAd" 
-              :disabled="!canPublish || publishing"
-              :loading="publishing"
-              v-if="ad.status !== 'ACTIVE'"
-            />
-          </div>
-        </div>
-      </template>
+  <div class="ad-detail-container max-w-4xl mx-auto py-8 px-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-secondary-900 mb-2">{{ ad.headline }}</h1>
+        <span :class="getStatusClass(ad.status)">{{ ad.status }}</span>
+      </div>
+      <div class="flex gap-2">
+        <Button 
+          label="Publish to Facebook" 
+          icon="pi pi-send" 
+          @click="publishAd" 
+          :disabled="!canPublish || publishing"
+          :loading="publishing"
+          v-if="ad.status !== 'ACTIVE'"
+          class="btn btn-primary btn-lg flex items-center gap-2"
+        />
+      </div>
+    </div>
+    <Card class="rounded-2xl shadow-lg border-0 mb-8">
       <template #content>
-        <div v-if="loading" class="loading-container">
+        <div v-if="loading" class="flex flex-col items-center justify-center py-12">
           <ProgressSpinner />
-          <p>Loading ad details...</p>
+          <p class="mt-4 text-secondary-600">Loading ad details...</p>
         </div>
-        <div v-else-if="error" class="error-container">
+        <div v-else-if="error" class="alert alert-error mb-6">
           <p class="error-message">{{ error }}</p>
-          <Button label="Retry" icon="pi pi-refresh" @click="fetchAd" />
+          <Button label="Retry" icon="pi pi-refresh" @click="fetchAd" class="btn btn-secondary mt-3" />
         </div>
         <div v-else>
-          <div class="ad-preview-container">
-            <div class="ad-preview">
-              <div class="ad-preview-header">
-                <div class="page-info">
-                  <div class="page-avatar"></div>
-                  <div class="page-name">Your Page Name</div>
+          <div class="ad-preview-container flex flex-col md:flex-row gap-8">
+            <div class="ad-preview flex-1 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 shadow">
+              <div class="ad-preview-header flex items-center justify-between mb-4">
+                <div class="page-info flex items-center gap-3">
+                  <div class="page-avatar w-10 h-10 bg-gray-200 rounded-full"></div>
+                  <div class="page-name font-semibold">Your Page Name</div>
                 </div>
-                <div class="post-time">Just now · <i class="pi pi-globe"></i></div>
+                <div class="post-time text-xs text-secondary-500">Just now · <i class="pi pi-globe"></i></div>
               </div>
               <div class="ad-preview-content">
-                <p class="primary-text">{{ ad.primaryText }}</p>
-                <div class="ad-image" v-if="ad.imageUrl">
-                  <img :src="ad.imageUrl" alt="Ad Image" />
+                <p class="primary-text text-lg text-secondary-900 mb-4">{{ ad.primaryText }}</p>
+                <div class="ad-image mb-4" v-if="ad.imageUrl">
+                  <div class="w-[192px] h-[128px] bg-neutral-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm cursor-pointer flex items-center justify-center" @click="showMediaModal = true">
+                    <img :src="ad.imageUrl" alt="Ad Image" class="max-w-full max-h-full object-contain" />
+                  </div>
                 </div>
-                <div class="ad-headline-description">
-                  <h3>{{ ad.headline }}</h3>
-                  <p>{{ ad.description }}</p>
+                <div class="ad-headline-description mb-4">
+                  <h3 class="font-semibold text-xl mb-1">{{ ad.headline }}</h3>
+                  <p class="text-secondary-700">{{ ad.description }}</p>
                 </div>
                 <div class="ad-cta">
-                  <Button :label="formatCTA(ad.cta)" class="p-button-sm" />
+                  <Button :label="formatCTA(ad.cta)" class="btn btn-success btn-sm" />
                 </div>
               </div>
             </div>
-            <div class="ad-details">
-              <h3>Ad Details</h3>
-              <div class="details-grid">
+            <div class="ad-details flex-1">
+              <h3 class="font-semibold text-lg mb-4">Ad Details</h3>
+              <div class="details-grid grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="detail-item">
-                  <span class="label">Type:</span>
-                  <span class="value">{{ ad.adType }}</span>
+                  <span class="label text-secondary-600">Type:</span>
+                  <span class="value text-secondary-900 font-semibold">{{ ad.adType }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="label">Status:</span>
-                  <span class="value" :class="getStatusClass(ad.status)">{{ ad.status }}</span>
+                  <span class="label text-secondary-600">Status:</span>
+                  <span class="value font-semibold" :class="getStatusClass(ad.status)">{{ ad.status }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="label">Call to Action:</span>
-                  <span class="value">{{ formatCTA(ad.cta) }}</span>
+                  <span class="label text-secondary-600">Call to Action:</span>
+                  <span class="value text-secondary-900 font-semibold">{{ formatCTA(ad.cta) }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="label">Created:</span>
-                  <span class="value">{{ formatDate(ad.createdAt) }}</span>
+                  <span class="label text-secondary-600">Created:</span>
+                  <span class="value text-secondary-900 font-semibold">{{ formatDate(ad.createdDate) }}</span>
                 </div>
                 <div class="detail-item" v-if="ad.fbAdId">
-                  <span class="label">Facebook Ad ID:</span>
-                  <span class="value">{{ ad.fbAdId }}</span>
+                  <span class="label text-secondary-600">Facebook Ad ID:</span>
+                  <span class="value text-secondary-900 font-semibold">{{ ad.fbAdId }}</span>
                 </div>
               </div>
             </div>
           </div>
-          
-          <Divider />
-          
+          <Divider class="my-8" />
           <div class="ad-content-section">
-            <h3>Generated Content</h3>
-            <div v-if="adContents.length === 0" class="empty-state">
-              <p>No AI-generated content yet</p>
-              <div class="ai-prompt-container">
+            <h3 class="font-semibold text-lg mb-4">Generated Content</h3>
+            <div v-if="adContents.length === 0" class="empty-state text-center py-8">
+              <p class="text-secondary-600 mb-4">No AI-generated content yet</p>
+              <div class="ai-prompt-container flex flex-col sm:flex-row gap-4 items-center justify-center">
                 <Textarea 
                   v-model="aiPrompt" 
                   rows="3" 
                   placeholder="Describe what you want to advertise..."
+                  class="form-input w-full max-w-md"
                 />
-                <div class="ai-provider-selection">
-                  <div class="p-field-radiobutton">
-                    <RadioButton id="openai" value="openai" v-model="aiProvider" />
-                    <label for="openai">OpenAI</label>
-                  </div>
-                  <div class="p-field-radiobutton">
-                    <RadioButton id="gemini" value="gemini" v-model="aiProvider" />
-                    <label for="gemini">Gemini</label>
+                <div class="ai-provider-selection flex gap-4">
+                  <div v-for="provider in textProviders" :key="provider.id" class="p-field-radiobutton flex items-center gap-2">
+                    <RadioButton :id="provider.id" :value="provider.id" v-model="textProvider" />
+                    <label :for="provider.id" class="text-secondary-700">{{ provider.name }}</label>
                   </div>
                 </div>
-                <Button 
-                  label="Generate Content" 
-                  icon="pi pi-bolt" 
-                  @click="generateContent" 
-                  :disabled="!aiPrompt || generatingContent"
-                  :loading="generatingContent"
-                />
+                <Button label="Generate" icon="pi pi-magic" @click="generateContent" class="btn btn-primary btn-lg" :disabled="!aiPrompt || !textProvider" />
               </div>
             </div>
-            <div v-else>
-              <div class="content-cards">
-                <Card v-for="content in adContents" :key="content.id" class="content-card">
-                  <template #title>
-                    {{ content.headline }}
-                  </template>
-                  <template #content>
-                    <p class="primary-text">{{ content.primaryText }}</p>
-                    <p class="description">{{ content.description }}</p>
-                    <p class="provider">Generated by: {{ content.aiProvider }}</p>
-                  </template>
-                  <template #footer>
-                    <Button 
-                      :label="content.isSelected ? 'Selected' : 'Use This Content'" 
-                      @click="selectContent(content)" 
-                      :disabled="content.isSelected"
-                      :class="{'p-button-success': content.isSelected}"
-                    />
-                  </template>
-                </Card>
-              </div>
-              
-              <div class="generate-more">
-                <Divider />
-                <h4>Generate More Content</h4>
-                <div class="ai-prompt-container">
-                  <Textarea 
-                    v-model="aiPrompt" 
-                    rows="3" 
-                    placeholder="Describe what you want to advertise..."
-                  />
-                  <div class="ai-provider-selection">
-                    <div class="p-field-radiobutton">
-                      <RadioButton id="openai" value="openai" v-model="aiProvider" />
-                      <label for="openai">OpenAI</label>
-                    </div>
-                    <div class="p-field-radiobutton">
-                      <RadioButton id="gemini" value="gemini" v-model="aiProvider" />
-                      <label for="gemini">Gemini</label>
-                    </div>
-                  </div>
-                  <Button 
-                    label="Generate More Content" 
-                    icon="pi pi-bolt" 
-                    @click="generateContent" 
-                    :disabled="!aiPrompt || generatingContent"
-                    :loading="generatingContent"
-                  />
+            <div v-else class="generated-content-list grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <div v-for="content in adContents" :key="content.id" class="generated-content-card card p-6 rounded-xl shadow border-0 bg-gradient-to-br from-white to-gray-50">
+                <h4 class="font-semibold text-lg mb-2">{{ content.title }}</h4>
+                <p class="text-secondary-700 mb-2">{{ content.body }}</p>
+                <div class="flex gap-2 mt-4">
+                  <Button label="Use This" class="btn btn-success btn-sm" @click="useGeneratedContent(content)" />
                 </div>
               </div>
             </div>
@@ -171,6 +119,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import moment from 'moment'
+import api from '@/services/api'
 
 export default {
   name: 'AdDetail',
@@ -187,14 +136,22 @@ export default {
   data() {
     return {
       aiPrompt: '',
-      aiProvider: 'openai',
-      publishing: false
+      textProvider: 'openai',
+      publishing: false,
+      textProviders: [],
+      showMediaModal: false,
+      selectedMediaUrl: '',
+      standardCTAs: []
     }
+  },
+  async mounted() {
+    await this.loadCallToActions()
   },
   computed: {
     ...mapGetters('ad', ['currentAd', 'adContents', 'loading', 'error', 'generatingContent']),
     ad() {
-      return this.currentAd || {}
+      const a = this.currentAd || {}
+      return { ...a, imageUrl: a.imageUrl || a.mediaFileUrl || '' }
     },
     canPublish() {
       return this.ad.status === 'DRAFT' && this.adContents.some(content => content.isSelected)
@@ -202,7 +159,41 @@ export default {
   },
   methods: {
     ...mapActions('ad', ['fetchAd', 'generateContent', 'selectContent', 'publishAd']),
-    ...mapActions('notification', ['showSuccess', 'showError']),
+    ...mapActions('toast', ['showSuccess', 'showError']),
+    
+    async loadTextProviders() {
+      try {
+        const response = await api.providers.getTextProviders()
+        this.textProviders = response.data
+        if (this.textProviders.length > 0 && !this.textProvider) {
+          this.textProvider = this.textProviders[0].id
+        }
+      } catch (error) {
+        console.error('Error loading text providers:', error)
+      }
+    },
+    
+    async loadCallToActions() {
+      try {
+        const response = await api.providers.getCallToActions('en') // Default to English
+        this.standardCTAs = response.data
+      } catch (error) {
+        console.error('Failed to load call to actions:', error)
+        // Fallback to default CTAs if API fails
+        this.standardCTAs = [
+          { value: 'SHOP_NOW', label: 'Shop Now' },
+          { value: 'LEARN_MORE', label: 'Learn More' },
+          { value: 'SIGN_UP', label: 'Sign Up' },
+          { value: 'DOWNLOAD', label: 'Download' },
+          { value: 'CONTACT_US', label: 'Contact Us' },
+          { value: 'APPLY_NOW', label: 'Apply Now' },
+          { value: 'BOOK_NOW', label: 'Book Now' },
+          { value: 'GET_OFFER', label: 'Get Offer' },
+          { value: 'MESSAGE_PAGE', label: 'Message Page' },
+          { value: 'SUBSCRIBE', label: 'Subscribe' }
+        ]
+      }
+    },
     
     fetchAd() {
       this.fetchAd({
@@ -219,7 +210,7 @@ export default {
           campaignId: this.campaignId,
           adId: this.adId,
           prompt: this.aiPrompt,
-          provider: this.aiProvider
+          provider: this.textProvider
         })
         this.aiPrompt = ''
       } catch (error) {
@@ -276,11 +267,14 @@ export default {
     },
     
     formatCTA(cta) {
-      if (!cta) return ''
-      
-      return cta.split('_').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ')
+      if (!cta) return '';
+      // Try to find in standardCTAs first
+      const found = this.standardCTAs.find(item => item.value === cta || item.value === (cta || '').toUpperCase());
+      if (found) {
+        return found.label;
+      }
+      // If not found, return the CTA value as is
+      return cta;
     },
     
     getStatusClass(status) {
@@ -294,6 +288,35 @@ export default {
         'REJECTED': 'status-rejected'
       }
       return `status-badge ${statusClasses[status] || ''}`
+    },
+
+    openMediaModal(url) {
+      this.selectedMediaUrl = url;
+      this.showMediaModal = true;
+    },
+
+    closeMediaModal() {
+      this.showMediaModal = false;
+      this.selectedMediaUrl = '';
+    },
+
+    async useGeneratedContent(content) {
+      try {
+        await this.selectContent({
+          campaignId: this.campaignId,
+          adId: this.adId,
+          contentId: content.id
+        });
+        this.showSuccess({
+          title: 'Success',
+          message: 'Content selected successfully'
+        });
+      } catch (error) {
+        this.showError({
+          title: 'Error',
+          message: `Failed to select content: ${error.message}`
+        });
+      }
     }
   },
   created() {
@@ -301,6 +324,7 @@ export default {
       campaignId: this.campaignId,
       adId: this.adId
     })
+    this.loadTextProviders()
   }
 }
 </script>
@@ -486,7 +510,7 @@ export default {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    max-width: 600px;
+    max-width: 100%;
     margin: 0 auto;
     
     .ai-provider-selection {

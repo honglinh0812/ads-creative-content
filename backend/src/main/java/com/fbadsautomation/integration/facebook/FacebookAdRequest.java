@@ -1,11 +1,14 @@
 package com.fbadsautomation.integration.facebook;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+
+@Data
+@Slf4j
 
 /**
  * Request object for creating a Facebook ad
  */
-@Data
 public class FacebookAdRequest {
     private String campaignName;
     private String adName;

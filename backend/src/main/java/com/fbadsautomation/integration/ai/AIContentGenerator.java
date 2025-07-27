@@ -1,10 +1,9 @@
 package com.fbadsautomation.integration.ai;
 
 import com.fbadsautomation.model.AdContent;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Map;
+import org.springframework.stereotype.Service;
 
 public interface AIContentGenerator {
     /**

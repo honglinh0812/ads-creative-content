@@ -4,14 +4,19 @@ export default {
   namespaced: true,
   state: {
     adRequest: {
+      campaignId: null,
       adType: 'PAGE_POST',
+      name: '',
       prompt: '',
-      aiProvider: null, // Initialize as null, user must select
-      numberOfVariations: 3,
+      textProvider: null, // Initialize as null, user must select
+      numberOfVariations: 1,
       imageProvider: null,
       videoProvider: null,
       generateVideo: false,
       videoDuration: 10,
+      adLinks: [], // Add support for ad links
+      promptStyle: '', // Add support for prompt style
+      language: 'vi', // Add support for language
       // These might not be needed if we store files directly in uploadedMedia
       // uploadedImageFile: null, 
       // uploadedVideoFile: null
@@ -120,7 +125,7 @@ export default {
       commit('SET_AD_VARIATIONS', state.adVariations.filter(ad => ad.isUpload));
 
       // --- Validation --- 
-      const selectedTextProvider = rootState.aiProvider.selectedProviders.TEXT;
+      const selectedTextProvider = state.adRequest.textProvider || rootState.aiProvider.selectedProviders.TEXT;
       if (!selectedTextProvider) {
           commit('SET_ERROR', 'Vui lòng chọn một nhà cung cấp để sinh văn bản.');
           commit('SET_LOADING', false);
@@ -131,8 +136,8 @@ export default {
       // Prepare request based on selections and uploads
       const requestData = {
           ...state.adRequest, // Includes prompt, numberOfVariations etc.
-          aiProvider: selectedTextProvider, // Use the validated text provider
-          imageProvider: rootState.aiProvider.selectedProviders.IMAGE,
+          textProvider: selectedTextProvider, // Use textProvider from form or fallback to aiProvider
+          imageProvider: state.adRequest.imageProvider || rootState.aiProvider.selectedProviders.IMAGE,
           videoProvider: rootState.aiProvider.selectedProviders.VIDEO,
           generateVideo: rootState.aiProvider.generateVideo,
           videoDuration: rootState.aiProvider.selectedVideoDuration,
@@ -179,6 +184,21 @@ export default {
                  errorMessage = `Lỗi Yêu cầu (400): ${error.response.data.error || error.response.data.message || 'Kiểm tra lại thông tin nhập.'}`;
             }
         }
+        
+        // Handle specific error for empty prompt and ad links
+        if (error.response && error.response.status === 400 && error.response.data && error.response.data.message) {
+            if (error.response.data.message.includes('Could not create ads. Please check the ad prompt / ad link and try again.')) {
+                errorMessage = 'Could not create ads. Please check the ad prompt / ad link and try again.';
+            }
+        }
+        
+        // Handle validation errors with fieldErrors
+        if (error.response && error.response.status === 400 && error.response.data && error.response.data.fieldErrors) {
+            const fieldErrors = error.response.data.fieldErrors;
+            const errorMessages = Object.values(fieldErrors).join(', ');
+            errorMessage = errorMessages || errorMessage;
+        }
+        
         commit('SET_ERROR', errorMessage)
         // Keep uploaded previews even on error
         commit('SET_AD_VARIATIONS', state.adVariations.filter(ad => ad.isUpload));

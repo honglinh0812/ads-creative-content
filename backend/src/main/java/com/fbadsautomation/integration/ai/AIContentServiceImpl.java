@@ -1,37 +1,41 @@
 package com.fbadsautomation.integration.ai;
 
-
 import com.fbadsautomation.ai.AIProvider; // Import the main interface
 import com.fbadsautomation.ai.GeminiProvider;
 import com.fbadsautomation.ai.HuggingFaceProvider;
 import com.fbadsautomation.ai.OpenAIProvider;
-import com.fbadsautomation.service.AIProviderService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.http.HttpStatus;
-
+import com.fbadsautomation.exception.ApiException;
 import com.fbadsautomation.model.AdContent; // Import AdContent
 import com.fbadsautomation.model.AdType; // Import AdType
-import com.fbadsautomation.exception.ApiException;
-import lombok.extern.slf4j.Slf4j;
-
+import com.fbadsautomation.service.AIContentValidationService;
+import com.fbadsautomation.service.AIProviderService;
+import com.fbadsautomation.service.MetaAdLibraryService;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@Service
 
 /**
  * Service for generating ad content using AI based on ad type
  */
-@Service
-@Slf4j
 public class AIContentServiceImpl {
 
     private final AIProviderService aiProviderService;
+    private final MetaAdLibraryService metaAdLibraryService;
+    private final AIContentValidationService validationService;
 
     @Autowired
-    public AIContentServiceImpl(AIProviderService aiProviderService) {
+    public AIContentServiceImpl(AIProviderService aiProviderService,
+                               MetaAdLibraryService metaAdLibraryService,
+                               AIContentValidationService validationService) {
         this.aiProviderService = aiProviderService;
+        this.metaAdLibraryService = metaAdLibraryService;
+        this.validationService = validationService;
     }
 
     public List<AdContent> generateContent(String prompt,
@@ -39,15 +43,22 @@ public class AIContentServiceImpl {
                                            String textProvider,
                                            String imageProvider,
                                            int numberOfVariations,
-                                           String language) {
+                                           String language,
+                                           List<String> adLinks,
+                                           String promptStyle,
+                                           String customPrompt,
+                                           String extractedContent,
+                                           com.fbadsautomation.model.FacebookCTA callToAction) {
         
         String providerId = (textProvider == null || textProvider.isBlank())
                 ? "openai" : textProvider;
+        log.info("🔍 Requested text provider: '{}', normalized to: '{}'", textProvider, providerId);
         AIProvider textAI = aiProviderService.getProvider(providerId);
         if (textAI == null) {
             log.error("Unsupported text AI provider: {}", providerId);
             throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported AI provider: " + providerId);
         }
+        log.info("✅ Found text AI provider: {} ({})", textAI.getProviderName(), providerId);
 
         AIProvider imageAI = null;
         if (imageProvider != null && !imageProvider.isBlank()) {
@@ -58,23 +69,37 @@ public class AIContentServiceImpl {
             }
         }
 
+        // Build final prompt based on available inputs
+        String finalPrompt = buildFinalPrompt(prompt, adLinks, promptStyle, customPrompt, extractedContent);
         try {
             AdType adType = convertContentTypeToAdType(contentType);
-            String enhancedPrompt = enhancePromptForAdType(prompt, adType);
+            String enhancedPrompt = enhancePromptForAdType(finalPrompt, adType);
+            log.info("Generating {} text variations using enhanced reliability features", numberOfVariations);
 
-            log.info("Generating {} text variations using {}", numberOfVariations, textAI.getProviderName());
-            List<AdContent> contents = textAI.generateAdContent(enhancedPrompt, numberOfVariations, language);
-
-            if (imageAI != null) {
+            // Use enhanced AI provider service with caching, circuit breaker, and fallback
+            // Sử dụng CTA được truyền hoặc default nếu null
+            com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
+            List<AdContent> contents = aiProviderService.generateContentWithReliability(
+                enhancedPrompt, textProvider, numberOfVariations, language, adLinks, cta); // Generate images with reliability features if image provider is specified
+            if (imageProvider != null && !imageProvider.isBlank()) {
                 for (AdContent content : contents) {
                     String imagePrompt = content.getPrimaryText();
-                    String imageUrl = imageAI.generateImage(imagePrompt);
+                    String imageUrl = aiProviderService.generateImageWithReliability(imagePrompt, imageProvider);
                     content.setImageUrl(imageUrl);
                 }
-                log.info("Images added using {}", imageAI.getProviderName());
+                log.info("Images added using enhanced reliability features");
             }
 
-            return contents;
+            // Validate and filter generated content
+            List<AdContent> validatedContents = validationService.validateAndFilterContent(contents);
+            if (validatedContents.isEmpty()) {
+                log.warn("All generated content was filtered out due to validation failures");
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Generated content did not meet quality standards. Please try with a different prompt.");
+            }
+
+            log.info("Successfully generated and validated {} content variations", validatedContents.size());
+            return validatedContents;
 
         } catch (Exception e) {
             log.error("Failed to generate content with {}: {}", textAI.getProviderName(), e.getMessage(), e);
@@ -83,23 +108,94 @@ public class AIContentServiceImpl {
     }
 
     /**
+     * Build final prompt by combining original prompt and ad link content
+     */
+    private String buildFinalPrompt(String originalPrompt, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent) {
+        StringBuilder finalPrompt = new StringBuilder(); // Check if we have extracted content from Meta Ad Library
+        boolean hasExtractedContent = (extractedContent != null && !extractedContent.trim().isEmpty());
+        boolean hasAdLinks = (adLinks != null && !adLinks.isEmpty());
+        boolean hasOriginalPrompt = (originalPrompt != null && !originalPrompt.trim().isEmpty());
+        
+        if (hasExtractedContent) {
+            // Use extracted content from Meta Ad Library
+            log.info("Using extracted content from Meta Ad Library");
+            if (hasOriginalPrompt) {
+                // Both prompt and extracted content available
+                log.info("Combining original prompt with extracted content");
+                finalPrompt.append("Yêu cầu từ người dùng: ").append(originalPrompt).append("\n\n");
+                finalPrompt.append(extractedContent);
+            } else {
+                // Only extracted content available
+                log.info("Using only extracted content as prompt is empty");
+                finalPrompt.append(extractedContent);
+            }
+        } else if (hasAdLinks) {
+            // Extract content from ad links
+            List<Map<String, Object>> adContents = metaAdLibraryService.extractAdsByAdIds(adLinks); // Lấy nội dung body của từng ad (nếu có)
+            StringBuilder adLinkContentBuilder = new StringBuilder();
+            for (int i = 0; i < adContents.size(); i++) {
+                Map<String, Object> ad = adContents.get(i);
+                String body = null;
+                if (ad.get("body") != null) {
+                    body = String.valueOf(ad.get("body")); } else if (ad.get("snapshot") instanceof Map) {
+                    Object snapshotBody = ((Map<?, ?>) ad.get("snapshot")).get("body");
+                    if (snapshotBody != null) body = String.valueOf(snapshotBody); }
+                if (body != null && !body.trim().isEmpty()) {
+                    adLinkContentBuilder.append("Quảng cáo ").append(i + 1).append(": ").append(body).append("\n");
+                }
+            }
+            String adLinkContent = adLinkContentBuilder.toString().trim();
+            boolean hasAdLinkContent = (adLinkContent != null && !adLinkContent.isEmpty());
+            if (hasOriginalPrompt) {
+                if (hasAdLinkContent) {
+                    // Both prompt and ad links are available - combine them
+                    log.info("Combining original prompt with ad link content");
+                    finalPrompt.append("Yêu cầu từ người dùng: ").append(originalPrompt).append("\n\n");
+                    finalPrompt.append("Nội dung tham khảo từ quảng cáo:\n").append(adLinkContent);
+                } else {
+                    // Ad links provided but no content extracted - use original prompt only
+                    log.info("Ad links provided but no content extracted, using original prompt only");
+                    finalPrompt.append(originalPrompt);
+                }
+            } else {
+                if (hasAdLinkContent) {
+                    // Only ad links available - use extracted content
+                    log.info("Using only ad link content as prompt is empty");
+                    finalPrompt.append(adLinkContent);
+                } else {
+                    // Neither prompt nor ad link content available - throw error
+                    log.error("No prompt and no content extracted from ad links");
+                    throw new ApiException(HttpStatus.BAD_REQUEST, 
+                        "Could not generate content: Please provide a valid prompt or ad link");
+                }
+            }
+        } else {
+            // Only original prompt available
+            log.info("Using only original prompt as no ad links or extracted content provided");
+            finalPrompt.append(originalPrompt);
+        }
+        
+        log.info("Final prompt built: {}", finalPrompt.toString());
+        return finalPrompt.toString();
+    }
+
+    /**
      * Convert ContentType to AdType for backward compatibility or prompt enhancement.
      * Corrected to use actual values from AdContent.ContentType enum.
      */
     private AdType convertContentTypeToAdType(AdContent.ContentType contentType) {
         if (contentType == null) {
-            return AdType.PAGE_POST; // Default if null
+            return AdType.PAGE_POST_AD;
+        // Default if null;
         }
         // Corrected switch cases to use actual enum constants from AdContent.ContentType
         switch (contentType) {
-            case TEXT: 
-            case IMAGE: 
-            case COMBINED: 
-            case PAGE_POST: // This was likely intended to map to AdType.PAGE_POST
+            case TEXT:
+            case IMAGE:
+            case COMBINED:
+            case PAGE_POST:
             default:
-                // Currently, all ContentTypes map to AdType.PAGE_POST for prompt enhancement.
-                // This logic can be refined if different ContentTypes should map to different AdTypes.
-                return AdType.PAGE_POST; 
+                return AdType.PAGE_POST_AD;
         }
     }
 
@@ -107,55 +203,7 @@ public class AIContentServiceImpl {
      * Enhance user prompt based on ad type to potentially get better AI-generated content.
      */
     private String enhancePromptForAdType(String userPrompt, AdType adType) {
-        // This prompt enhancement logic can be kept or modified based on requirements.
-        // It adds context based on the intended Facebook ad type.
-        String basePrompt = "Tạo nội dung quảng cáo Facebook với:";
-        String typeSpecificPrompt;
-
-        // Corrected: Use unqualified enum names in switch cases
-        if (adType == null) {
-             return basePrompt + "\n" + userPrompt; // Default if null
-        }
-        // Corrected switch cases to use unqualified enum names
-        switch (adType) {
-            case PAGE_POST: 
-                typeSpecificPrompt =
-                    "Tạo nội dung quảng cáo Facebook dạng Page Post Ad với:\n" +
-                    "- Primary text: Nội dung chính của bài đăng\n" +
-                    "- Headline: Tiêu đề ngắn gọn, hấp dẫn\n" +
-                    "- Description: Mô tả chi tiết\n" +
-                    "- CTA: Nút kêu gọi hành động phù hợp\n" +
-                    "Yêu cầu: " + userPrompt;
-                break;
-
-            case LEAD_FORM: 
-                typeSpecificPrompt =
-                    "Tạo nội dung quảng cáo Facebook dạng Lead Form Ad với:\n" +
-                    "- Primary text: Nội dung chính nhấn mạnh giá trị người dùng nhận được khi điền form\n" +
-                    "- Headline: Tiêu đề ngắn gọn, hấp dẫn, khuyến khích điền form\n" +
-                    "- Description: Mô tả lợi ích khi đăng ký\n" +
-                    "- CTA: Nút kêu gọi hành động liên quan đến đăng ký/liên hệ\n" +
-                    "Yêu cầu: " + userPrompt;
-                break;
-
-            case WEBSITE_CONVERSION: 
-                typeSpecificPrompt =
-                    "Tạo nội dung quảng cáo Facebook dạng Website Conversion Ad với:\n" +
-                    "- Primary text: Nội dung chính nhấn mạnh giá trị và lợi ích khi truy cập website\n" +
-                    "- Headline: Tiêu đề ngắn gọn, hấp dẫn, thúc đẩy chuyển đổi\n" +
-                    "- Description: Mô tả chi tiết về sản phẩm/dịch vụ và lợi ích\n" +
-                    "- CTA: Nút kêu gọi hành động liên quan đến mua hàng/đăng ký\n" +
-                    "Yêu cầu: " + userPrompt;
-                break;
-
-            default:
-                typeSpecificPrompt = basePrompt + "\n" + userPrompt;
-        }
-
-        return typeSpecificPrompt;
+        // Return user prompt directly without adding template text
+        return userPrompt;
     }
-
-    // Removed the old generator dependencies and the legacy generateAdContent method
-    // Removed the internal AIProvider enum as it's now defined in the ai package
 }
-

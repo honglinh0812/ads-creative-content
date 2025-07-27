@@ -4,27 +4,26 @@ import com.fbadsautomation.dto.CampaignCreateRequest;
 import com.fbadsautomation.dto.CampaignDTO;
 import com.fbadsautomation.model.Campaign;
 import com.fbadsautomation.service.CampaignService;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-
+@Slf4j
 @RestController
 @RequestMapping("/api/campaigns")
 @RequiredArgsConstructor
-@Slf4j
 @CrossOrigin(origins = "*")
+
 public class CampaignController {
 
     private final CampaignService campaignService;
-
     private CampaignDTO toDTO(Campaign campaign) {
         return new CampaignDTO(
             campaign.getId(),
@@ -47,7 +46,7 @@ public class CampaignController {
             Authentication authentication) {
         log.info("Getting all campaigns for user: {} with page {} and size {}", authentication.getName(), page, size);
         Long userId = Long.valueOf(authentication.getName());
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
         Page<Campaign> campaigns = campaignService.getAllCampaignsByUserPaginated(userId, pageable);
         Page<CampaignDTO> dtos = campaigns.map(this::toDTO);
         return ResponseEntity.ok(dtos);
@@ -85,7 +84,6 @@ public class CampaignController {
         return ResponseEntity.ok(dto);
     }
 
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCampaign(@PathVariable Long id, Authentication authentication) {
         log.info("Deleting campaign: {} for user: {}", id, authentication.getName());
@@ -94,5 +92,3 @@ public class CampaignController {
         return ResponseEntity.noContent().build();
     }
 }
-
-

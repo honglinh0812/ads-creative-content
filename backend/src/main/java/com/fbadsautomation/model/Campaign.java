@@ -1,17 +1,29 @@
 package com.fbadsautomation.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "campaigns")
@@ -19,19 +31,21 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Slf4j
+
 public class Campaign {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false)
     private String name;
     
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private CampaignStatus status;
-    
+
     @Column(name = "objective")
     @Enumerated(EnumType.STRING)
     private CampaignObjective objective;
@@ -66,23 +80,22 @@ public class Campaign {
     private Set<Ad> ads = new HashSet<>();
     
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_date", updatable = false)
+    private LocalDateTime createdDate;
     
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
     public enum CampaignStatus {
-        DRAFT, PENDING, ACTIVE, PAUSED, COMPLETED, FAILED
+        DRAFT, PENDING, ACTIVE, PAUSED, COMPLETED, FAILED;
     }
     
     public enum CampaignObjective {
-        BRAND_AWARENESS, REACH, TRAFFIC, ENGAGEMENT, APP_INSTALLS, VIDEO_VIEWS, LEAD_GENERATION, CONVERSIONS, CATALOG_SALES, STORE_TRAFFIC
+        BRAND_AWARENESS, REACH, TRAFFIC, ENGAGEMENT, APP_INSTALLS, VIDEO_VIEWS, LEAD_GENERATION, CONVERSIONS, CATALOG_SALES, STORE_TRAFFIC;
     }
     
     public enum BudgetType {
-        DAILY, LIFETIME
+        DAILY, LIFETIME;
     }
 }
-

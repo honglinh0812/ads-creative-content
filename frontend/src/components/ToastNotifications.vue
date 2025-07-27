@@ -10,16 +10,16 @@
         >
           <div class="toast-content">
             <div class="toast-icon">
-              <svg v-if="toast.type === 'success'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg v-if="toast.type === 'success'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              <svg v-else-if="toast.type === 'error'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg v-else-if="toast.type === 'error'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              <svg v-else-if="toast.type === 'warning'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg v-else-if="toast.type === 'warning'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
               </svg>
-              <svg v-else-if="toast.type === 'info'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg v-else-if="toast.type === 'info'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
             </div>
@@ -30,7 +30,7 @@
             </div>
             
             <button @click="removeToast(toast.id)" class="toast-close">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
@@ -81,138 +81,134 @@ export default {
 
 <style scoped>
 .toast-container {
-  @apply fixed top-4 right-4 z-50 space-y-3;
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   max-width: 400px;
+  pointer-events: none;
 }
 
 .toast {
-  @apply bg-white rounded-lg shadow-lg border overflow-hidden;
-  min-width: 300px;
+  background: rgba(255,255,255,0.98);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.08);
+  border: 1.5px solid #e5e7eb;
+  min-width: 320px;
+  font-size: 1.08rem;
+  color: #22292f;
+  font-weight: 500;
+  pointer-events: auto;
+  transition: box-shadow 0.2s;
 }
 
 .toast-success {
-  @apply border-success-200;
+  border-left: 5px solid #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
 }
-
 .toast-error {
-  @apply border-error-200;
+  border-left: 5px solid #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
 }
-
 .toast-warning {
-  @apply border-warning-200;
+  border-left: 5px solid #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
 }
-
 .toast-info {
-  @apply border-info-200;
+  border-left: 5px solid #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
 }
-
 .toast-content {
-  @apply flex items-start gap-3 p-4;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.1rem 1.3rem 1.1rem 1.1rem;
 }
-
 .toast-icon {
-  @apply flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center;
+  flex-shrink: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: #f3f4f6;
 }
-
-.toast-success .toast-icon {
-  @apply bg-success-100 text-success-600;
-}
-
-.toast-error .toast-icon {
-  @apply bg-error-100 text-error-600;
-}
-
-.toast-warning .toast-icon {
-  @apply bg-warning-100 text-warning-600;
-}
-
-.toast-info .toast-icon {
-  @apply bg-info-100 text-info-600;
-}
-
+.toast-success .toast-icon { background: #bbf7d0; color: #059669; }
+.toast-error .toast-icon { background: #fecaca; color: #dc2626; }
+.toast-warning .toast-icon { background: #fef08a; color: #d97706; }
+.toast-info .toast-icon { background: #dbeafe; color: #2563eb; }
 .toast-text {
-  @apply flex-1 min-w-0;
+  flex: 1;
+  min-width: 0;
 }
-
 .toast-title {
-  @apply font-semibold text-secondary-900 text-sm mb-1;
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 1.08rem;
+  margin-bottom: 0.15rem;
 }
-
 .toast-message {
-  @apply text-secondary-700 text-sm leading-relaxed;
+  color: #334155;
+  font-size: 1.01rem;
+  line-height: 1.5;
 }
-
 .toast-close {
-  @apply flex-shrink-0 p-1 hover:bg-neutral-100 rounded-lg transition-colors text-secondary-400 hover:text-secondary-600;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  background: none;
+  border: none;
+  color: #64748b;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background 0.15s;
+  pointer-events: auto;
 }
-
+.toast-close:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
 .toast-progress {
-  @apply h-1 bg-neutral-100 relative overflow-hidden;
+  height: 4px;
+  background: #f1f5f9;
+  position: relative;
+  overflow: hidden;
 }
-
 .toast-progress-bar {
-  @apply h-full bg-current absolute top-0 left-0;
+  height: 100%;
+  background: currentColor;
+  position: absolute;
+  top: 0; left: 0;
   width: 100%;
   animation: toast-progress linear forwards;
 }
-
-.toast-success .toast-progress-bar {
-  @apply text-success-500;
-}
-
-.toast-error .toast-progress-bar {
-  @apply text-error-500;
-}
-
-.toast-warning .toast-progress-bar {
-  @apply text-warning-500;
-}
-
-.toast-info .toast-progress-bar {
-  @apply text-info-500;
-}
-
+.toast-success .toast-progress-bar { color: #10b981; }
+.toast-error .toast-progress-bar { color: #ef4444; }
+.toast-warning .toast-progress-bar { color: #f59e0b; }
+.toast-info .toast-progress-bar { color: #3b82f6; }
 @keyframes toast-progress {
-  from {
-    transform: translateX(0%);
-  }
-  to {
-    transform: translateX(-100%);
-  }
+  from { transform: translateX(0%); }
+  to { transform: translateX(-100%); }
 }
-
-/* Transition animations */
-.toast-enter-active {
-  transition: all 0.3s ease-out;
-}
-
-.toast-leave-active {
-  transition: all 0.3s ease-in;
-}
-
-.toast-enter-from {
-  transform: translateX(100%);
-  opacity: 0;
-}
-
-.toast-leave-to {
-  transform: translateX(100%);
-  opacity: 0;
-}
-
-.toast-move {
-  transition: transform 0.3s ease;
-}
-
+.toast-enter-active { transition: all 0.3s ease-out; }
+.toast-leave-active { transition: all 0.3s ease-in; }
+.toast-enter-from { transform: translateX(100%); opacity: 0; }
+.toast-leave-to { transform: translateX(100%); opacity: 0; }
+.toast-move { transition: transform 0.3s ease; }
 @media (max-width: 640px) {
   .toast-container {
-    @apply left-4 right-4 top-4;
+    left: 0.5rem;
+    right: 0.5rem;
+    top: 0.5rem;
     max-width: none;
   }
-  
-  .toast {
-    min-width: auto;
-  }
+  .toast { min-width: auto; }
 }
 </style>
 

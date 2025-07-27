@@ -1,16 +1,18 @@
 package com.fbadsautomation.dto;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Slf4j
+
 public class AdGenerationResponse {
     private Long adId; // ID của ad đã tạo
     private List<AdVariation> variations;
@@ -29,6 +31,5 @@ public class AdGenerationResponse {
         private String callToAction;
         private String imageUrl;
         private Integer order;
+    };
     }
-}
-

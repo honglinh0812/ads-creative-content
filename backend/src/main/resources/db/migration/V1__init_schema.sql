@@ -1,64 +1,70 @@
 create table users (
    id  bigserial not null,
-    created_at timestamp,
-    email varchar(255) not null,
-    facebook_id varchar(255),
-    facebook_page_id varchar(255),
-    facebook_token varchar(255),
-    fb_access_token varchar(255),
-    fb_token_expires_at timestamp,
-    fb_user_id varchar(255),
+    email varchar(255) not null unique,
     name varchar(255),
+    facebook_id varchar(255) unique,
+    facebook_token varchar(255),
+    created_date timestamp,
     updated_at timestamp,
     primary key (id)
 );
 
 create table campaigns (
    id  bigserial not null,
+    name varchar(255) not null,
+    status varchar(255),
+    objective varchar(255),
     budget float8,
     budget_type varchar(255),
-    created_at timestamp,
-    fb_campaign_id varchar(255),
-    name varchar(255) not null,
-    objective varchar(255),
-    status varchar(255),
-    updated_at timestamp,
+    daily_budget double precision,
+    total_budget double precision,
+    target_audience text,
+    start_date date,
+    end_date date,
     user_id int8 not null,
+    created_date timestamp,
+    updated_at timestamp,
     primary key (id)
 );
 
 create table ads (
    id  bigserial not null,
-    ad_type varchar(255),
-    created_by varchar(255),
-    created_date timestamp,
-    call_to_action varchar(255),
-    description varchar(500),
-    fb_ad_id varchar(255),
-    headline varchar(255),
-    image_url varchar(255),
-    name varchar(255),
-    primary_text varchar(1000),
-    status varchar(255),
-    updated_by varchar(255),
-    updated_date timestamp,
     campaign_id int8,
+    user_id int8 not null,
+    ad_type varchar(255),
+    headline varchar(500),
+    primary_text varchar(2000),
+    description varchar(1000),
+    call_to_action varchar(50),
+    image_url varchar(1000),
+    video_url varchar(1000),
+    prompt text,
+    media_file_path varchar(1000),
+    name varchar(500),
+    selected_content_id bigint,
+    status varchar(255),
+    created_by varchar(255),
+    updated_by varchar(255),
+    created_date timestamp,
+    updated_at timestamp,
     primary key (id)
 );
 
 create table ad_contents (
    id  bigserial not null,
-    ai_provider varchar(255),
-    call_to_action varchar(255),
     content_type varchar(255),
-    created_at timestamp,
-    description varchar(500),
-    headline varchar(255),
-    image_url varchar(255),
+    primary_text varchar(2000),
+    headline varchar(500),
+    description varchar(1000),
+    call_to_action varchar(50),
+    image_url varchar(1000),
     is_selected boolean,
-    primary_text varchar(1000),
-    updated_at timestamp,
+    preview_order integer,
+    ai_provider varchar(255),
     ad_id int8 not null,
+    user_id int8 not null,
+    created_date timestamp,
+    updated_at timestamp,
     primary key (id)
 );
 
@@ -71,7 +77,7 @@ create table lead_form_ads (
     privacy_policy_url varchar(255),
     thanks_message varchar(255),
     updated_by varchar(255),
-    updated_date timestamp,
+    updated_at timestamp,
     ad_id int8,
     primary key (id)
 );
@@ -84,7 +90,7 @@ create table lead_form_fields (
     field_type varchar(255),
     is_required boolean not null,
     updated_by varchar(255),
-    updated_date timestamp,
+    updated_at timestamp,
     lead_form_ad_id int8,
     primary key (id)
 );
@@ -98,7 +104,7 @@ create table page_post_ads (
     post_message varchar(255),
     post_type varchar(255),
     updated_by varchar(255),
-    updated_date timestamp,
+    updated_at timestamp,
     ad_id int8,
     primary key (id)
 );
@@ -109,7 +115,7 @@ create table website_conversion_ads (
     created_date timestamp,
     pixel_id varchar(255),
     updated_by varchar(255),
-    updated_date timestamp,
+    updated_at timestamp,
     website_url varchar(255),
     ad_id int8,
     primary key (id)
@@ -125,9 +131,6 @@ alter table users
 
 alter table users
    add constraint UK_jmubronqnn4q0cwe2egqsgvnl unique (facebook_id);
-
-alter table users
-   add constraint UK_7f7qpsjqee7i3tq2a3bit5tb2 unique (fb_user_id);
 
 alter table campaigns
    add constraint FK9palj5bmfdaatu6s2d03oh7qe

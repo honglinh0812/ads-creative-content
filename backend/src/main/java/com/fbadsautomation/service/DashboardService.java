@@ -1,21 +1,23 @@
 package com.fbadsautomation.service;
 
 import com.fbadsautomation.dto.DashboardResponse;
-import com.fbadsautomation.model.User;
 import com.fbadsautomation.model.Campaign;
-import com.fbadsautomation.repository.UserRepository;
-import com.fbadsautomation.repository.CampaignRepository;
+import com.fbadsautomation.model.User;
 import com.fbadsautomation.repository.AdRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.stereotype.Service;
-
+import com.fbadsautomation.repository.CampaignRepository;
+import com.fbadsautomation.repository.UserRepository;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-@Service
 @Slf4j
+@Service
+
 public class DashboardService {
 
     @Autowired
@@ -31,7 +33,6 @@ public class DashboardService {
     public DashboardResponse getDashboardData(Long userId) {
         try {
             log.info("DashboardService: Getting dashboard data for user ID: {}", userId);
-            
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
@@ -39,7 +40,8 @@ public class DashboardService {
 
             // Get campaigns summary
             log.info("DashboardService: Fetching campaigns for user: {}", user.getId());
-            List<DashboardResponse.CampaignSummary> campaigns = campaignRepository.findTop5ByUserOrderByCreatedAtDesc(user)                    .stream()
+            List<DashboardResponse.CampaignSummary> campaigns = campaignRepository.findTop5ByUserOrderByCreatedDateDesc(user)
+                    .stream()
                     .map(campaign -> {
                         log.debug("DashboardService: Processing campaign: {}", campaign.getId());
                         try {
@@ -48,11 +50,9 @@ public class DashboardService {
                                     campaign.getName(),
                                     campaign.getObjective() != null ? campaign.getObjective().toString() : null,
                                     campaign.getStatus() != null ? campaign.getStatus().toString() : "DRAFT",
-                                    campaign.getDailyBudget() != null ? campaign.getDailyBudget() : 
-                                        (campaign.getTotalBudget() != null ? campaign.getTotalBudget() : 0.0),
-                                    campaign.getCreatedAt(),
-                                    campaign.getAds() != null ? campaign.getAds().size() : 0
-                            );
+                                    campaign.getDailyBudget() != null ? campaign.getDailyBudget() : (campaign.getTotalBudget() != null ? campaign.getTotalBudget() : 0.0),
+                                    campaign.getCreatedDate(),
+                                    campaign.getAds() != null ? campaign.getAds().size() : 0);
                         } catch (Exception e) {
                             log.error("DashboardService: Error mapping campaign {}: {}", campaign.getId(), e.getMessage(), e);
                             return new DashboardResponse.CampaignSummary(
@@ -61,7 +61,7 @@ public class DashboardService {
                                     null,
                                     "DRAFT",
                                     0.0,
-                                    campaign.getCreatedAt(),
+                                    campaign.getCreatedDate(),
                                     0
                             );
                         }
@@ -85,7 +85,12 @@ public class DashboardService {
                                         ad.getStatus() != null ? ad.getStatus() : "DRAFT",
                                         ad.getCampaign() != null ? ad.getCampaign().getName() : "Unknown",
                                         ad.getCreatedDate(),
-                                        ad.getImageUrl()
+                                        ad.getImageUrl(),
+                                        ad.getVideoUrl(),
+                                        ad.getHeadline(),
+                                        ad.getPrimaryText(),
+                                        ad.getDescription(),
+                                        ad.getCallToAction() != null ? ad.getCallToAction().getLabel() : null
                                 );
                             } catch (Exception e) {
                                 log.error("DashboardService: Error mapping ad {}: {}", ad.getId(), e.getMessage(), e); // Log full stack trace
@@ -96,6 +101,11 @@ public class DashboardService {
                                         "DRAFT",
                                         "Unknown",
                                         ad.getCreatedDate(),
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
                                         null
                                 );
                             }
@@ -143,10 +153,7 @@ public class DashboardService {
             }
             log.info("DashboardService: Finished calculating dashboard stats.");
 
-            DashboardResponse.DashboardStats stats = new DashboardResponse.DashboardStats(
-                    totalCampaigns, totalAds, activeCampaigns, activeAds
-            );
-
+            DashboardResponse.DashboardStats stats = new DashboardResponse.DashboardStats(totalCampaigns, totalAds, activeCampaigns, activeAds);
             DashboardResponse response = new DashboardResponse(campaigns, recentAds, stats);
             log.info("DashboardService: Dashboard data successfully prepared for user ID: {}", userId);
             

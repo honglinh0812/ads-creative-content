@@ -199,6 +199,22 @@ export default {
       } finally {
         commit("SET_LOADING", false);
       }
+    },
+
+    async updateAd({ commit }, { adId, adData }) {
+      commit("SET_LOADING", true);
+      commit("SET_ERROR", null);
+      try {
+        const response = await api.ads.update(adId, adData);
+        commit("UPDATE_AD", response.data);
+        return response.data;
+      } catch (error) {
+        console.error("Update ad error:", error);
+        commit("SET_ERROR", error.message || "Failed to update ad");
+        throw error;
+      } finally {
+        commit("SET_LOADING", false);
+      }
     }
   }
 }

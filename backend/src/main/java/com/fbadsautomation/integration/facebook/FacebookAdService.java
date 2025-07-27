@@ -1,293 +1,291 @@
-package com.fbadsautomation.integration.facebook;
+// package com.fbadsautomation.integration.facebook;
 
-// import com.fbadsautomation.repository.PagePostAdRepository;
-// import com.fbadsautomation.repository.LeadFormAdRepository;
-// import com.fbadsautomation.repository.WebsiteConversionAdRepository;
+// // import com.fbadsautomation.repository.PagePostAdRepository;
+// // import com.fbadsautomation.repository.LeadFormAdRepository;
+// // import com.fbadsautomation.repository.WebsiteConversionAdRepository;
 
-// import com.fbadsautomation.model.Ad;
-// import com.fbadsautomation.model.AdType;
-// import com.fbadsautomation.model.PagePostAd;
-// import com.fbadsautomation.model.LeadFormAd;
-// import com.fbadsautomation.model.WebsiteConversionAd;
-// import com.fbadsautomation.model.AdContent;
-// import com.fbadsautomation.exception.ApiException;
+// // import com.fbadsautomation.model.Ad;
+// // import com.fbadsautomation.model.AdType;
+// // import com.fbadsautomation.model.PagePostAd;
+// // import com.fbadsautomation.model.LeadFormAd;
+// // import com.fbadsautomation.model.WebsiteConversionAd;
+// // import com.fbadsautomation.model.AdContent;
+// // import com.fbadsautomation.exception.ApiException;
 
-// import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.stereotype.Service;
-// import org.springframework.web.client.RestTemplate;
-// import org.springframework.http.HttpEntity;
-// import org.springframework.http.HttpHeaders;
-// import org.springframework.http.HttpMethod;
-// import org.springframework.http.ResponseEntity;
-// import org.springframework.http.HttpStatus;
+// // import org.springframework.beans.factory.annotation.Autowired;
+// // import org.springframework.stereotype.Service;
+// // import org.springframework.web.client.RestTemplate;
+// // import org.springframework.http.HttpEntity;
+// // import org.springframework.http.HttpHeaders;
+// // import org.springframework.http.HttpMethod;
+// // import org.springframework.http.ResponseEntity;
+// // import org.springframework.http.HttpStatus;
 
-// import java.util.Map;
-// import java.util.HashMap;
-// import java.util.logging.Logger;
-// import java.util.logging.Level;
+// // import java.util.Map;
+// // import java.util.HashMap;
+// // import java.util.logging.Logger;
+// // import java.util.logging.Level;
 
-/**
- * Service for interacting with Facebook Marketing API to create and manage ads
- * This service is commented out as per new requirements to remove Facebook API integration.
- */
-// @Service
-// public class FacebookAdService {
+// /**
+//  * Service for interacting with Facebook Marketing API to create and manage ads
+//  * This service is commented out as per new requirements to remove Facebook API integration.
+//  */
+// // @Service
+// // public class FacebookAdService {
     
-//     private static final Logger logger = Logger.getLogger(FacebookAdService.class.getName( ));
-   
-//     private static final AdType PAGE_POST = AdType.PAGE_POST;
-//     private static final AdType LEAD_FORM = AdType.LEAD_FORM;
-//     private static final AdType WEBSITE_CONVERSION = AdType.WEBSITE_CONVERSION;
+// //     private static final Logger logger = Logger.getLogger(FacebookAdService.class.getName( ))//     private static final AdType PAGE_POST = AdType.PAGE_POST;
+// //     private static final AdType LEAD_FORM = AdType.LEAD_FORM//     private static final AdType WEBSITE_CONVERSION = AdType.WEBSITE_CONVERSION;
 
-//     @Autowired
-//     private FacebookProperties facebookProperties;
+// //     @Autowired
+// //     private FacebookProperties facebookProperties;
     
-//     @Autowired
-//     private RestTemplate restTemplate;
+// //     @Autowired
+// //     private RestTemplate restTemplate;
 
-//     @Autowired
-//     private PagePostAdRepository pagePostAdRepository;
+// //     @Autowired
+// //     private PagePostAdRepository pagePostAdRepository;
 
-//     @Autowired
-//     private LeadFormAdRepository leadFormAdRepository;
+// //     @Autowired
+// //     private LeadFormAdRepository leadFormAdRepository;
 
-//     @Autowired
-//     private WebsiteConversionAdRepository websiteConversionAdRepository;
+// //     @Autowired
+// //     private WebsiteConversionAdRepository websiteConversionAdRepository;
 
-    
-//     /**
-//      * Create a Facebook ad based on ad type and content
-//      * 
-//      * @param ad The ad entity
-//      * @param adContent The ad content
-//      * @param accessToken User\"s Facebook access token
-//      * @return The created Facebook ad ID
-//      */
+// //     /**
+// //      * Create a Facebook ad based on ad type and content
+// //      * 
+// //      * @param ad The ad entity
+// //      * @param adContent The ad content
+// //      * @param accessToken User\"s Facebook access token
+// //      * @return The created Facebook ad ID
+// //      */
      
-//     public String createFacebookAd(Ad ad, AdContent adContent, String accessToken) {
-//     try {
-//         // Common ad creation logic
-//         Map<String, Object> adRequest = createBaseAdRequest(ad, adContent);
+// //     public String createFacebookAd(Ad ad, AdContent adContent, String accessToken) {
+// //     try {
+// //         // Common ad creation logic
+// //         Map<String, Object> adRequest = createBaseAdRequest(ad, adContent)//         // Add type-specific parameters
+// //         switch (ad.getAdType()) {
+// //             case PAGE_POST:
+// //                 // Lấy PagePostAd từ repository thay vì ép kiểu
+// //                 PagePostAd pagePostAd = pagePostAdRepository.findByAdId(ad.getId())
+// //                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Page post ad not found"));
+// //                 addPagePostAdParameters(adRequest, pagePostAd, adContent);
+// //                 break;
+// //             case LEAD_FORM:
+// //                 // Lấy LeadFormAd từ repository thay vì ép kiểu
+// //                 LeadFormAd leadFormAd = leadFormAdRepository.findByAdId(ad.getId())
+// //                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Lead form ad not found"))//                 addLeadFormAdParameters(adRequest, leadFormAd, adContent);
+// //                 break;
+// //             case WEBSITE_CONVERSION:
+// //                 // Lấy WebsiteConversionAd từ repository thay vì ép kiểu
+// //                 WebsiteConversionAd websiteConversionAd = websiteConversionAdRepository.findByAdId(ad.getId())
+// //                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Website conversion ad not found"))//                 addWebsiteConversionAdParameters(adRequest, websiteConversionAd, adContent);
+// //                 break;
+// //             default:
+// //                 throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported ad type: " + ad.getAdType());
+// //;
+//     }
 
-//         // Add type-specific parameters
-//         switch (ad.getAdType()) {
-//             case PAGE_POST:
-//                 // Lấy PagePostAd từ repository thay vì ép kiểu
-//                 PagePostAd pagePostAd = pagePostAdRepository.findByAdId(ad.getId())
-//                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Page post ad not found"));
-//                 addPagePostAdParameters(adRequest, pagePostAd, adContent);
-//                 break;
-//             case LEAD_FORM:
-//                 // Lấy LeadFormAd từ repository thay vì ép kiểu
-//                 LeadFormAd leadFormAd = leadFormAdRepository.findByAdId(ad.getId())
-//                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Lead form ad not found"));
-//                 addLeadFormAdParameters(adRequest, leadFormAd, adContent);
-//                 break;
-//             case WEBSITE_CONVERSION:
-//                 // Lấy WebsiteConversionAd từ repository thay vì ép kiểu
-//                 WebsiteConversionAd websiteConversionAd = websiteConversionAdRepository.findByAdId(ad.getId())
-//                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Website conversion ad not found"));
-//                 addWebsiteConversionAdParameters(adRequest, websiteConversionAd, adContent);
-//                 break;
-//             default:
-//                 throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported ad type: " + ad.getAdType());
-//         }
-
-//         // Call Facebook API to create the ad
-//         String fbAdId = callFacebookAdCreationApi(adRequest, accessToken);
-
-//         return fbAdId;
+// //         // Call Facebook API to create the ad
+// //         String fbAdId = callFacebookAdCreationApi(adRequest, accessToken)//         return fbAdId;
+// //;
 //     } catch (Exception e) {
-//         logger.log(Level.SEVERE, "Failed to create Facebook ad", e);
-//         throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create Facebook ad: " + e.getMessage(), e);
+// //         logger.log(Level.SEVERE, "Failed to create Facebook ad", e);
+// //         throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create Facebook ad: " + e.getMessage(), e);
+// //;
 //     }
-// }
+// //;
+//     }
 
-//     /**
-//      * Create base ad request with common parameters
-//      */
-//     private Map<String, Object> createBaseAdRequest(Ad ad, AdContent adContent) {
-//         Map<String, Object> adRequest = new HashMap<>();
-//         adRequest.put("name", ad.getName());
-//         adRequest.put("status", "PAUSED"); // Start as paused for review
-//         adRequest.put("campaign_id", ad.getCampaign().getId());
+// //     /**
+// //      * Create base ad request with common parameters
+// //      */
+// //     private Map<String, Object> createBaseAdRequest(Ad ad, AdContent adContent) {
+// //         Map<String, Object> adRequest = new HashMap<>()//         adRequest.put("name", ad.getName());
+// //         adRequest.put("status", "PAUSED"); // Start as paused for review
+// //         adRequest.put("campaign_id", ad.getCampaign().getId());
         
-//         // Add creative details
-//         Map<String, Object> creative = new HashMap<>();
-//         Map<String, Object> objectStorySpec = new HashMap<>();
+// //         // Add creative details
+// //         Map<String, Object> creative = new HashMap<>()//         Map<String, Object> objectStorySpec = new HashMap<>();
         
-//         // Add common creative parameters
-//         // These will be customized further based on ad type
+// //         // Add common creative parameters
+// //         // These will be customized further based on ad type
         
-//         creative.put("object_story_spec", objectStorySpec);
-//         adRequest.put("creative", creative);
+// //         creative.put("object_story_spec", objectStorySpec);
+// //         adRequest.put("creative", creative);
         
-//         return adRequest;
+// //         return adRequest;
+// //;
 //     }
     
-//     /**
-//      * Add Page Post Ad specific parameters
-//      */
-//     private void addPagePostAdParameters(Map<String, Object> adRequest, PagePostAd pagePostAd, AdContent adContent) {
-//         Map<String, Object> creative = (Map<String, Object>) adRequest.get("creative");
-//         Map<String, Object> objectStorySpec = (Map<String, Object>) creative.get("object_story_spec");
+// //     /**
+// //      * Add Page Post Ad specific parameters
+// //      */
+// //     private void addPagePostAdParameters(Map<String, Object> adRequest, PagePostAd pagePostAd, AdContent adContent) {
+// //         Map<String, Object> creative = (Map<String, Object>) adRequest.get("creative")//         Map<String, Object> objectStorySpec = (Map<String, Object>) creative.get("object_story_spec");
         
-//         // Set page ID
-//         objectStorySpec.put("page_id", pagePostAd.getPageId());
+// //         // Set page ID
+// //         objectStorySpec.put("page_id", pagePostAd.getPageId());
         
-//         // Add link data for post
-//         Map<String, Object> linkData = new HashMap<>();
-//         linkData.put("message", adContent.getPrimaryText());
-//         linkData.put("link", pagePostAd.getLinkUrl());
-//         linkData.put("name", adContent.getHeadline());
-//         linkData.put("description", adContent.getDescription());
+// //         // Add link data for post
+// //         Map<String, Object> linkData = new HashMap<>()//         linkData.put("message", adContent.getPrimaryText());
+// //         linkData.put("link", pagePostAd.getLinkUrl());
+// //         linkData.put("name", adContent.getHeadline());
+// //         linkData.put("description", adContent.getDescription());
         
-//         // Add call to action
-//         Map<String, Object> callToAction = new HashMap<>();
-//         callToAction.put("type", adContent.getCta());
-//         linkData.put("call_to_action", callToAction);
+// //         // Add call to action
+// //         Map<String, Object> callToAction = new HashMap<>()//         callToAction.put("type", adContent.getCta());
+// //         linkData.put("call_to_action", callToAction);
         
-//         // Add image if available
-//         if (adContent.getImageUrl() != null && !adContent.getImageUrl().isEmpty()) {
-//             linkData.put("image_hash", getImageHashFromUrl(adContent.getImageUrl()));
-//         }
+// //         // Add image if available
+// //         if (adContent.getImageUrl() != null && !adContent.getImageUrl().isEmpty()) {
+// //             linkData.put("image_hash", getImageHashFromUrl(adContent.getImageUrl()))//;
+//     }
         
-//         objectStorySpec.put("link_data", linkData);
+// //         objectStorySpec.put("link_data", linkData);
+// //;
 //     }
     
-//     /**
-//      * Add Lead Form Ad specific parameters
-//      */
-//     private void addLeadFormAdParameters(Map<String, Object> adRequest, LeadFormAd leadFormAd, AdContent adContent) {
-//         // First create the lead form
-//         String formId = createLeadForm(leadFormAd, adContent.getPrimaryText());
+// //     /**
+// //      * Add Lead Form Ad specific parameters
+// //      */
+// //     private void addLeadFormAdParameters(Map<String, Object> adRequest, LeadFormAd leadFormAd, AdContent adContent) {
+// //         // First create the lead form
+// //         String formId = createLeadForm(leadFormAd, adContent.getPrimaryText())//         Map<String, Object> creative = (Map<String, Object>) adRequest.get("creative");
+// //         Map<String, Object> objectStorySpec = (Map<String, Object>) creative.get("object_story_spec")//         // Set page ID
+// //         objectStorySpec.put("page_id", leadFormAd.getAd().getCampaign().getUser().getFacebookPageId());
         
-//         Map<String, Object> creative = (Map<String, Object>) adRequest.get("creative");
-//         Map<String, Object> objectStorySpec = (Map<String, Object>) creative.get("object_story_spec");
+// //         // Add link data for the ad
+// //         Map<String, Object> linkData = new HashMap<>()//         linkData.put("message", adContent.getPrimaryText());
+// //         linkData.put("name", adContent.getHeadline());
+// //         linkData.put("description", adContent.getDescription());
         
-//         // Set page ID
-//         objectStorySpec.put("page_id", leadFormAd.getAd().getCampaign().getUser().getFacebookPageId());
+// //         // Add call to action
+// //         Map<String, Object> callToAction = new HashMap<>()//         callToAction.put("type", "LEARN_MORE");
+// //         linkData.put("call_to_action", callToAction);
         
-//         // Add link data for the ad
-//         Map<String, Object> linkData = new HashMap<>();
-//         linkData.put("message", adContent.getPrimaryText());
-//         linkData.put("name", adContent.getHeadline());
-//         linkData.put("description", adContent.getDescription());
+// //         // Add image if available
+// //         if (adContent.getImageUrl() != null && !adContent.getImageUrl().isEmpty()) {
+// //             linkData.put("image_hash", getImageHashFromUrl(adContent.getImageUrl()))//;
+//     }
         
-//         // Add call to action
-//         Map<String, Object> callToAction = new HashMap<>();
-//         callToAction.put("type", "LEARN_MORE");
-//         linkData.put("call_to_action", callToAction);
+// //         // Add form ID
+// //         linkData.put("link", "https://www.facebook.com/" );
+// //         objectStorySpec.put("link_data", linkData);
         
-//         // Add image if available
-//         if (adContent.getImageUrl() != null && !adContent.getImageUrl().isEmpty()) {
-//             linkData.put("image_hash", getImageHashFromUrl(adContent.getImageUrl()));
-//         }
-        
-//         // Add form ID
-//         linkData.put("link", "https://www.facebook.com/" );
-//         objectStorySpec.put("link_data", linkData);
-        
-//         creative.put("object_type", "LEAD_GENERATION");
-//         creative.put("object_id", formId);
+// //         creative.put("object_type", "LEAD_GENERATION");
+// //         creative.put("object_id", formId);
+// //;
 //     }
     
-//     /**
-//      * Add Website Conversion Ad specific parameters
-//      */
-//     private void addWebsiteConversionAdParameters(Map<String, Object> adRequest, WebsiteConversionAd websiteConversionAd, AdContent adContent) {
-//         Map<String, Object> creative = (Map<String, Object>) adRequest.get("creative");
-//         Map<String, Object> objectStorySpec = (Map<String, Object>) creative.get("object_story_spec");
+// //     /**
+// //      * Add Website Conversion Ad specific parameters
+// //      */
+// //     private void addWebsiteConversionAdParameters(Map<String, Object> adRequest, WebsiteConversionAd websiteConversionAd, AdContent adContent) {
+// //         Map<String, Object> creative = (Map<String, Object>) adRequest.get("creative")//         Map<String, Object> objectStorySpec = (Map<String, Object>) creative.get("object_story_spec");
         
-//         // Set page ID
-//         objectStorySpec.put("page_id", websiteConversionAd.getAd().getCampaign().getUser().getFacebookPageId());
+// //         // Set page ID
+// //         objectStorySpec.put("page_id", websiteConversionAd.getAd().getCampaign().getUser().getFacebookPageId());
         
-//         // Add link data for the ad
-//         Map<String, Object> linkData = new HashMap<>();
-//         linkData.put("message", adContent.getPrimaryText());
-//         linkData.put("link", websiteConversionAd.getWebsiteUrl());
-//         linkData.put("name", adContent.getHeadline());
-//         linkData.put("description", adContent.getDescription());
+// //         // Add link data for the ad
+// //         Map<String, Object> linkData = new HashMap<>()//         linkData.put("message", adContent.getPrimaryText());
+// //         linkData.put("link", websiteConversionAd.getWebsiteUrl());
+// //         linkData.put("name", adContent.getHeadline());
+// //         linkData.put("description", adContent.getDescription());
         
-//         // Add call to action
-//         Map<String, Object> callToAction = new HashMap<>();
-//         callToAction.put("type", adContent.getCta());
-//         linkData.put("call_to_action", callToAction);
+// //         // Add call to action
+// //         Map<String, Object> callToAction = new HashMap<>()//         callToAction.put("type", adContent.getCta());
+// //         linkData.put("call_to_action", callToAction);
         
-//         // Add image if available
-//         if (adContent.getImageUrl() != null && !adContent.getImageUrl().isEmpty()) {
-//             linkData.put("image_hash", getImageHashFromUrl(adContent.getImageUrl()));
-//         }
+// //         // Add image if available
+// //         if (adContent.getImageUrl() != null && !adContent.getImageUrl().isEmpty()) {
+// //             linkData.put("image_hash", getImageHashFromUrl(adContent.getImageUrl()))//;
+//     }
         
-//         objectStorySpec.put("link_data", linkData);
+// //         objectStorySpec.put("link_data", linkData);
         
-//         // Add tracking specs for conversion tracking
-//         Map<String, Object> trackingSpec = new HashMap<>();
-//         trackingSpec.put("action.type", new String[]{"offsite_conversion"});
-//         trackingSpec.put("fb_pixel", new String[]{websiteConversionAd.getPixelId()});
+// //         // Add tracking specs for conversion tracking
+// //         Map<String, Object> trackingSpec = new HashMap<>()//         trackingSpec.put("action.type", new String[]{"offsite_conversion";
+//     });
+// //         trackingSpec.put("fb_pixel", new String[]{websiteConversionAd.getPixelId();
+//     });
         
-//         adRequest.put("tracking_specs", new Map[]{trackingSpec});
-//         adRequest.put("conversion_domain", extractDomain(websiteConversionAd.getWebsiteUrl()));
+// //         adRequest.put("tracking_specs", new Map[]{trackingSpec;
+//     });
+// //         adRequest.put("conversion_domain", extractDomain(websiteConversionAd.getWebsiteUrl()));
+// //;
 //     }
     
-//     /**
-//      * Create a lead form for Lead Form Ad
-//      */
-//     private String createLeadForm(LeadFormAd leadFormAd, String contextCard) {
-//         try {
-//             // Implementation for creating a lead form via Facebook API
-//             // This would make an API call to Facebook to create the form
+// //     /**
+// //      * Create a lead form for Lead Form Ad
+// //      */
+// //     private String createLeadForm(LeadFormAd leadFormAd, String contextCard) {
+// //         try {
+// //             // Implementation for creating a lead form via Facebook API
+// //             // This would make an API call to Facebook to create the form
             
-//             // For demonstration purposes, returning a mock form ID
-//             return "mock_form_id_" + System.currentTimeMillis();
-//         } catch (Exception e) {
-//             logger.log(Level.SEVERE, "Failed to create lead form", e);
-//             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create lead form: " + e.getMessage(), e);
-//         }
+// //             // For demonstration purposes, returning a mock form ID
+// //             return "mock_form_id_" + System.currentTimeMillis();
+// //;
+//     } catch (Exception e) {
+// //             logger.log(Level.SEVERE, "Failed to create lead form", e);
+// //             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create lead form: " + e.getMessage(), e);
+// //;
+//     }
+// //;
 //     }
     
-//     /**
-//      * Call Facebook API to create the ad
-//      */
-//     private String callFacebookAdCreationApi(Map<String, Object> adRequest, String accessToken) {
-//         try {
-//             // Implementation for calling Facebook Marketing API
-//             // This would make an API call to Facebook to create the ad
+// //     /**
+// //      * Call Facebook API to create the ad
+// //      */
+// //     private String callFacebookAdCreationApi(Map<String, Object> adRequest, String accessToken) {
+// //         try {
+// //             // Implementation for calling Facebook Marketing API
+// //             // This would make an API call to Facebook to create the ad
             
-//             // For demonstration purposes, returning a mock ad ID
-//             return "mock_ad_id_" + System.currentTimeMillis();
-//         } catch (Exception e) {
-//             logger.log(Level.SEVERE, "Failed to call Facebook Ad Creation API", e);
-//             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to call Facebook Ad Creation API: " + e.getMessage(), e);
-//         }
+// //             // For demonstration purposes, returning a mock ad ID
+// //             return "mock_ad_id_" + System.currentTimeMillis();
+// //;
+//     } catch (Exception e) {
+// //             logger.log(Level.SEVERE, "Failed to call Facebook Ad Creation API", e);
+// //             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to call Facebook Ad Creation API: " + e.getMessage(), e);
+// //;
+//     }
+// //;
 //     }
     
-//     /**
-//      * Get image hash from URL
-//      */
-//     private String getImageHashFromUrl(String imageUrl) {
-//         try {
-//             // Implementation for getting image hash from Facebook
-//             // This would upload the image to Facebook and get the hash
+// //     /**
+// //      * Get image hash from URL
+// //      */
+// //     private String getImageHashFromUrl(String imageUrl) {
+// //         try {
+// //             // Implementation for getting image hash from Facebook
+// //             // This would upload the image to Facebook and get the hash
             
-//             // For demonstration purposes, returning a mock image hash
-//             return "mock_image_hash_" + System.currentTimeMillis();
-//         } catch (Exception e) {
-//             logger.log(Level.SEVERE, "Failed to get image hash", e);
-//             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get image hash: " + e.getMessage(), e);
-//         }
+// //             // For demonstration purposes, returning a mock image hash
+// //             return "mock_image_hash_" + System.currentTimeMillis();
+// //;
+//     } catch (Exception e) {
+// //             logger.log(Level.SEVERE, "Failed to get image hash", e);
+// //             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get image hash: " + e.getMessage(), e);
+// //;
+//     }
+// //;
 //     }
     
-//     /**
-//      * Extract domain from URL
-//      */
-//     private String extractDomain(String url) {
-//         try {
-//             java.net.URL parsedUrl = new java.net.URL(url);
-//             return parsedUrl.getHost();
-//         } catch (Exception e) {
-//             logger.log(Level.WARNING, "Failed to extract domain from URL: " + url, e);
-//             return url;
-//         }
+// //     /**
+// //      * Extract domain from URL
+// //      */
+// //     private String extractDomain(String url) {
+// //         try {
+// //             java.net.URL parsedUrl = new java.net.URL(url)//             return parsedUrl.getHost();
+// //;
+//     } catch (Exception e) {
+// //             logger.log(Level.WARNING, "Failed to extract domain from URL: " + url, e);
+// //             return url;
+// //;
 //     }
-// }
+// //;
+//     }
+// //;
+//     }

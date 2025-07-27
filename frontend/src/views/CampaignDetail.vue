@@ -1,57 +1,8 @@
 <template>
-  <div class="app-layout">
-    <div class="flex flex-1">
-      <!-- Sidebar -->
-      <aside class="app-sidebar" :class="{ open: sidebarOpen }">
-        <div class="sidebar-header">
-          <router-link to="/dashboard" class="flex items-center gap-3 px-6 py-4">
-            <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-              </svg>
-            </div>
-            <h1 class="text-lg font-bold text-secondary-900">Ads Quick Content</h1>
-          </router-link>
-        </div>
-
-        <nav class="nav">
-          <router-link to="/dashboard" class="nav-item" active-class="active">
-            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6H8V5z"></path>
-            </svg>
-            <span class="nav-text">Dashboard</span>
-          </router-link>
-          
-          <router-link to="/campaigns" class="nav-item" active-class="active">
-            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-            </svg>
-            <span class="nav-text">Campaigns</span>
-          </router-link>
-          
-          <router-link to="/ads" class="nav-item" active-class="active">
-            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2"></path>
-            </svg>
-            <span class="nav-text">Ads</span>
-          </router-link>
-        </nav>
-
-        <div class="sidebar-footer">
-          <div class="px-6 py-4">
-            <router-link to="/campaigns" class="btn btn-sm btn-ghost w-full">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-              </svg>
-              Back to Campaigns
-            </router-link>
-          </div>
-        </div>
-      </aside>
-
-      <!-- Main Content -->
-      <main class="app-main flex-1">
+  <div :class="['page-wrapper', { 'sidebar-closed': !sidebarOpen }]">
+    <AppSidebar :sidebarOpen="sidebarOpen" @toggle="toggleSidebar" @logout="handleLogout" />
+    <!-- phần còn lại của trang -->
+    <div class="app-main flex-1" :style="mainContentStyle">
         <div class="content-wrapper">
           <!-- Mobile Header -->
           <div class="mobile-header lg:hidden">
@@ -85,40 +36,37 @@
           <!-- Campaign Details -->
           <div v-else-if="campaign">
             <!-- Campaign Header -->
-            <div class="page-header">
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <h1 class="page-title">{{ campaign.name }}</h1>
-                  <div class="flex items-center gap-4 mt-2">
-                    <span :class="getStatusBadgeClass(campaign.status)">
-                      {{ campaign.status }}
-                    </span>
-                    <span class="text-sm text-secondary-600">
-                      Created {{ formatDate(campaign.createdAt) }}
-                    </span>
-                  </div>
+            <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+              <div class="flex-1">
+                <h1 class="text-3xl font-bold text-secondary-900">{{ campaign.name }}</h1>
+                <div class="flex items-center gap-4 mt-2">
+                  <span :class="getStatusBadgeClass(campaign.status)">
+                    {{ campaign.status }}
+                  </span>
+                  <span class="text-sm text-secondary-600">
+                    Created {{ formatDate(campaign.createdDate) }}
+                  </span>
                 </div>
-                
-                <div class="flex items-center gap-3">
-                  <router-link 
-                    :to="`/campaigns/${campaign.id}/edit`" 
-                    class="btn btn-sm btn-secondary"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                    </svg>
-                    Edit
-                  </router-link>
-                  <button 
-                    @click="confirmDeleteCampaign" 
-                    class="btn btn-sm btn-error"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                    Delete
-                  </button>
-                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <router-link 
+                  :to="`/campaigns/${campaign.id}/edit`" 
+                  class="btn btn-secondary btn-lg flex items-center gap-2"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                  Edit
+                </router-link>
+                <button 
+                  @click="confirmDeleteCampaign" 
+                  class="btn btn-error btn-lg flex items-center gap-2"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                  Delete
+                </button>
               </div>
             </div>
 
@@ -134,7 +82,7 @@
                       </p>
                     </div>
                     <div class="w-10 h-10 bg-success-100 rounded-lg flex items-center justify-center">
-                      <svg class="w-5 h-5 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-4 h-4 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                       </svg>
                     </div>
@@ -152,7 +100,7 @@
                       </p>
                     </div>
                     <div class="w-10 h-10 bg-info-100 rounded-lg flex items-center justify-center">
-                      <svg class="w-5 h-5 text-info-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-4 h-4 text-info-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2"></path>
                       </svg>
                     </div>
@@ -170,7 +118,7 @@
                       </p>
                     </div>
                     <div class="w-10 h-10 bg-warning-100 rounded-lg flex items-center justify-center">
-                      <svg class="w-5 h-5 text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-4 h-4 text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
                     </div>
@@ -207,8 +155,8 @@
               <div class="card-body">
                 <!-- Empty State -->
                 <div v-if="ads.length === 0" class="text-center py-12">
-                  <div class="w-16 h-16 bg-secondary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div class="w-12 h-12 bg-secondary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-4 h-4 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2"></path>
                     </svg>
                   </div>
@@ -230,17 +178,22 @@
                     class="card hover:shadow-lg transition-shadow duration-200"
                   >
                     <div class="card-body">
-                      <!-- Ad Preview Image -->
-                      <div class="aspect-video bg-secondary-100 rounded-lg mb-4 overflow-hidden">
-                        <img 
-                          v-if="ad.imageUrl" 
-                          :src="ad.imageUrl" 
-                          :alt="ad.name"
-                          class="w-full h-full object-cover"
-                        >
-                        <div v-else class="w-full h-full flex items-center justify-center">
-                          <svg class="w-8 h-8 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      <!-- Ad Preview Image - Fixed size 192x128 -->
+                      <div v-if="ad.imageUrl || ad.mediaFileUrl" class="mb-4">
+                        <div class="w-[192px] h-[128px] bg-secondary-100 rounded-lg overflow-hidden mx-auto border border-gray-200 shadow-sm cursor-pointer flex items-center justify-center" @click="viewAdDetail(ad)">
+                          <img 
+                            :src="ad.imageUrl || ad.mediaFileUrl" 
+                            :alt="ad.name"
+                            class="max-w-full max-h-full object-contain"
+                            @error="handleImageError"
+                          >
+                        </div>
+                      </div>
+                      <!-- Placeholder when no image -->
+                      <div v-else class="mb-4">
+                        <div class="w-[192px] h-[128px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mx-auto border border-gray-200 shadow-sm flex items-center justify-center">
+                          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                           </svg>
                         </div>
                       </div>
@@ -251,7 +204,7 @@
                         <p class="text-sm text-secondary-600 mb-3 line-clamp-3">{{ ad.description }}</p>
                         
                         <div class="flex items-center justify-between">
-                          <span :class="getStatusBadgeClass(ad.status)">
+                          <span :class="getStatusBadgeClass(ad.status) + ' absolute top-2 right-2 z-10'">
                             {{ ad.status }}
                           </span>
                           <div class="flex items-center gap-2">
@@ -280,7 +233,7 @@
                               title="Delete"
                             >
                               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                               </svg>
                             </button>
                           </div>
@@ -293,7 +246,6 @@
             </div>
           </div>
         </div>
-      </main>
     </div>
 
     <!-- Delete Campaign Modal -->
@@ -309,8 +261,8 @@
         </div>
         <div class="modal-body">
           <div class="flex items-start gap-4">
-            <div class="w-12 h-12 bg-error-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <svg class="w-6 h-6 text-error-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-8 h-8 bg-error-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-error-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
               </svg>
             </div>
@@ -345,8 +297,8 @@
         </div>
         <div class="modal-body">
           <div class="flex items-start gap-4">
-            <div class="w-12 h-12 bg-error-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <svg class="w-6 h-6 text-error-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-8 h-8 bg-error-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-error-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
               </svg>
             </div>
@@ -372,9 +324,11 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
+import AppSidebar from '@/components/AppSidebar.vue'
 
 export default {
   name: 'CampaignDetail',
+  components: { AppSidebar },
   props: {
     id: {
       type: String,
@@ -383,11 +337,11 @@ export default {
   },
   data() {
     return {
-      sidebarOpen: false,
       showDeleteCampaignModal: false,
       showDeleteAdModal: false,
       adToDelete: null,
-      deleting: false
+      deleting: false,
+      sidebarOpen: true
     }
   },
   computed: {
@@ -395,6 +349,9 @@ export default {
     ...mapState('ad', ['ads']),
     campaign() {
       return this.currentCampaign || this.campaigns.find(c => c.id === parseInt(this.id)) || null
+    },
+    mainContentStyle() {
+      return this.sidebarOpen ? { marginLeft: '240px' } : { marginLeft: '0' }
     }
   },
   async mounted() {
@@ -452,6 +409,7 @@ export default {
           title: 'Success',
           message: 'Campaign deleted successfully'
         })
+        await this.$store.dispatch('dashboard/fetchDashboardData', null, { root: true })
         this.$router.push('/campaigns')
       } catch (error) {
         console.error('Failed to delete campaign:', error)
@@ -539,8 +497,21 @@ export default {
       const diffTime = Math.abs(end - start)
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
       return `${diffDays} days`
+    },
+
+    handleImageError(event) {
+      event.target.src = 'https://via.placeholder.com/100x150'; // Fallback to placeholder
+    },
+    handleLogout() {
+      this.$store.dispatch('auth/logout')
     }
   }
 }
 </script>
+
+<style scoped>
+.page-wrapper.sidebar-closed .app-main {
+  margin-left: 0 !important;
+}
+</style>
 
