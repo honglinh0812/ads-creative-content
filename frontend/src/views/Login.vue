@@ -154,7 +154,7 @@ export default {
       try {
         const res = await fetch(`${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api'}/auth/login-app`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'bypass-tunnel-reminder': 'true' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(this.loginForm)
         })
         if (!res.ok) {
@@ -204,7 +204,7 @@ export default {
       try {
         const res = await fetch(`${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api'}/auth/register`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'bypass-tunnel-reminder': 'true' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             username: this.registerForm.username,
             email: this.registerForm.email,
@@ -240,7 +240,7 @@ export default {
       try {
         const res = await fetch(`${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api'}/auth/forgot-password`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'bypass-tunnel-reminder': 'true' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: this.forgotForm.email })
         })
         if (!res.ok) {

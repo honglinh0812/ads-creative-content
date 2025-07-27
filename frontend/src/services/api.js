@@ -4,23 +4,17 @@ import axios from 'axios'
 const apiClient = axios.create({
   baseURL: process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api',
   headers: {
-    'Content-Type': 'application/json',
-    // Add bypass header for localtunnel (removed User-Agent as it's unsafe)
-    'bypass-tunnel-reminder': 'true'
+    'Content-Type': 'application/json'
   }
 })
 
-// Add request interceptor for auth token and localtunnel bypass
+// Add request interceptor for auth token
 apiClient.interceptors.request.use(
   config => {
     const token = localStorage.getItem('token')
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
-    
-    // Ensure bypass header is always present (removed User-Agent)
-    config.headers['bypass-tunnel-reminder'] = 'true'
-    
     return config
   },
   error => {
@@ -40,17 +34,9 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('token')
       console.log('Token expired, cleared from localStorage')
     }
-    
-    // Handle localtunnel 511 error
-    if (error.response && error.response.status === 511) {
-      console.warn('Localtunnel authentication required. Retrying with bypass headers...')
-      // The request will be retried automatically with bypass headers
-    }
-    
     // Extract error message
     const message = error.response?.data?.message || error.message || 'An error occurred'
     error.message = message
-    
     return Promise.reject(error)
   }
 )
@@ -98,16 +84,8 @@ export default {
   
   // Meta Ad Library endpoints
   metaAdLibrary: {
-    validateUrl: (url) => apiClient.post('/meta-ad-library/validate-url', { url }),
-    extract: (url, accessToken) => apiClient.post('/meta-ad-library/extract', { url, accessToken })
-  },
-  
-
-  
-  // ScrapeCreators endpoints
-  scrapeCreators: {
-    scrape: (id, getTranscript = false) => apiClient.get(`/scrape-creators/scrape?id=${id}&getTranscript=${getTranscript}`),
-    scrapeBatch: (adIds, getTranscript = false) => apiClient.post('/scrape-creators/scrape-batch', { adIds, getTranscript })
+    get: (id) => apiClient.get(`/meta-ad-library/${id}`),
+    search: (query) => apiClient.get(`/meta-ad-library/search?q=${encodeURIComponent(query)}`)
   },
   
   // Provider endpoints
@@ -140,18 +118,10 @@ export default {
       
       return apiClient.post('/upload/image', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          'bypass-tunnel-reminder': 'true'
-          // Removed User-Agent header as it's unsafe
+          'Content-Type': 'multipart/form-data'
         },
         onUploadProgress
       })
     }
   }
 }
-
-// Export analytics API
-export { analyticsAPI } from './analyticsAPI'
-
-// Export optimization API
-export { optimizationAPI } from './optimizationAPI'

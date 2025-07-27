@@ -74,7 +74,7 @@ export default {
       try {
         const res = await fetch(`${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api'}/auth/reset-password`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'bypass-tunnel-reminder': 'true' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: this.token, newPassword: this.newPassword })
         })
         if (!res.ok) {

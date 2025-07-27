@@ -47,7 +47,7 @@ public class AuthService {
     // Nếu có JavaMailSender thì inject vào đây
     //@Autowired
     //private JavaMailSender mailSender;
-    @Value("${app.reset-password.base-url:http://localhost:3000/reset-password}")
+    @Value("${app.reset-password.base-url:https://linhnh.site/reset-password}")
     private String resetPasswordBaseUrl;
 
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);

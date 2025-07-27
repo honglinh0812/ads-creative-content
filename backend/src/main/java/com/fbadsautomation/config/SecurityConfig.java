@@ -118,10 +118,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
             "https://linhnh.site",
-            "http://localhost:8081",
-            "https://linhnh812.loca.lt",
-            "http://localhost:8080",
-            "http://localhost:3000"
+            "https://api.linhnh.site"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
