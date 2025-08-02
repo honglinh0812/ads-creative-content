@@ -203,7 +203,14 @@ public class AIContentServiceImpl {
      * Enhance user prompt based on ad type to potentially get better AI-generated content.
      */
     private String enhancePromptForAdType(String userPrompt, AdType adType) {
-        // Return user prompt directly without adding template text
-        return userPrompt;
+        // Bổ sung hướng dẫn kiểm duyệt để AI sinh nội dung đạt chuẩn
+        StringBuilder enhancedPrompt = new StringBuilder(userPrompt);
+        enhancedPrompt.append("\n\nLưu ý: Nội dung quảng cáo phải tuân thủ các tiêu chí sau:\n");
+        enhancedPrompt.append("- Tiêu đề (headline) tối đa 40 ký tự, mô tả (description) tối đa 125 ký tự, nội dung chính (primaryText) tối đa 10.000 ký tự.\n");
+        enhancedPrompt.append("- Mỗi trường phải có ít nhất 3 từ.\n");
+        enhancedPrompt.append("- Không chứa từ ngữ vi phạm chính sách, spam, hoặc nội dung không phù hợp (ví dụ: 'hate', 'violence', 'drugs', 'miracle', 'guaranteed results', 'FREE!!!', 'ACT NOW!!!', ...).\n");
+        enhancedPrompt.append("- Nội dung phải rõ ràng, dễ đọc, không viết hoa toàn bộ, không lặp lại từ ngữ vô nghĩa.\n");
+        enhancedPrompt.append("- Nếu không chắc chắn, hãy ưu tiên an toàn và tuân thủ chính sách quảng cáo Facebook.\n");
+        return enhancedPrompt.toString();
     }
 }

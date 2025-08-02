@@ -59,6 +59,19 @@ public class AdGenerationRequest {
     
     private Boolean saveExistingContent; // Flag để backend biết chỉ lưu nội dung hiện tại
 
+    // New fields for ad type specific data
+    private String websiteUrl; // For WEBSITE_CONVERSION_AD
+    private List<LeadFormQuestion> leadFormQuestions; // For LEAD_FORM_AD
+    
+    // Inner class for lead form questions
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LeadFormQuestion {
+        private String type; // FULL_NAME, EMAIL, PHONE, COMPANY, JOB_TITLE, CUSTOM
+        private String customText; // For CUSTOM type
+    }
+    
     @AssertTrue(message = "Could not create ads. Please check the ad prompt / ad link and try again.")
     public boolean isPromptOrAdLinksValid() {
         boolean hasPrompt = prompt != null && !prompt.trim().isEmpty();

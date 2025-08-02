@@ -96,12 +96,33 @@
                   <label class="field-label">
                     <span class="label-text">Ad Type</span>
                     <span class="label-required">*</span>
+                    <button 
+                      type="button" 
+                      @click="showAdTypeHelp = true" 
+                      class="help-btn ml-2"
+                      title="Learn more about ad types"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </button>
                   </label>
-                  <select v-model="formData.adType" class="form-input">
+                  <select v-model="formData.adType" class="form-input" @change="onAdTypeChange">
                     <option v-for="type in adTypes" :key="type.value" :value="type.value">
                       {{ type.label }}
                     </option>
                   </select>
+                  <div v-if="selectedAdType" class="ad-type-description mt-2 p-3 bg-blue-50 rounded-lg">
+                    <div class="flex items-start">
+                      <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <div>
+                        <p class="text-sm font-medium text-blue-900">{{ selectedAdType.label }}</p>
+                        <p class="text-sm text-blue-700">{{ selectedAdType.description }}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Ad Name -->
@@ -141,11 +162,77 @@
                   </label>
                   <select v-model="formData.callToAction" class="form-input" :class="{ 'error': showValidation && !formData.callToAction }">
                     <option value="">Select Call to Action</option>
-                    <option v-for="cta in standardCTAs" :key="cta.value" :value="cta.value">
+                    <option v-for="cta in availableCTAs" :key="cta.value" :value="cta.value">
                       {{ cta.label }}
                     </option>
                   </select>
                   <div v-if="showValidation && !formData.callToAction" class="error-message">Please select a Call to Action</div>
+                </div>
+
+                <!-- Website URL (for Website Conversion Ad) -->
+                <div v-if="formData.adType === 'WEBSITE_CONVERSION_AD'" class="form-field md:col-span-2">
+                  <label class="field-label">
+                    <span class="label-text">Website URL</span>
+                    <span class="label-required">*</span>
+                  </label>
+                  <input 
+                    v-model="formData.websiteUrl" 
+                    type="url" 
+                    class="form-input" 
+                    :class="{ 'error': showValidation && formData.adType === 'WEBSITE_CONVERSION_AD' && !formData.websiteUrl }" 
+                    placeholder="https://your-website.com"
+                  >
+                  <div v-if="showValidation && formData.adType === 'WEBSITE_CONVERSION_AD' && !formData.websiteUrl" class="error-message">
+                    Please enter your website URL
+                  </div>
+                </div>
+
+                <!-- Lead Form Questions (for Lead Form Ad) -->
+                <div v-if="formData.adType === 'LEAD_FORM_AD'" class="form-field md:col-span-2">
+                  <label class="field-label">
+                    <span class="label-text">Lead Form Questions</span>
+                    <span class="label-required">*</span>
+                  </label>
+                  <div class="lead-form-questions">
+                    <div v-for="(question, index) in formData.leadFormQuestions" :key="index" class="question-item mb-3">
+                      <div class="flex gap-2">
+                        <select v-model="question.type" class="form-input flex-1">
+                          <option value="FULL_NAME">Full Name</option>
+                          <option value="EMAIL">Email</option>
+                          <option value="PHONE">Phone Number</option>
+                          <option value="COMPANY">Company</option>
+                          <option value="JOB_TITLE">Job Title</option>
+                          <option value="CUSTOM">Custom Question</option>
+                        </select>
+                        <input 
+                          v-if="question.type === 'CUSTOM'"
+                          v-model="question.customText" 
+                          type="text" 
+                          class="form-input flex-1" 
+                          placeholder="Enter your question"
+                        >
+                        <button 
+                          v-if="formData.leadFormQuestions.length > 1"
+                          @click="removeLeadFormQuestion(index)" 
+                          type="button" 
+                          class="btn btn-sm btn-danger"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <button @click="addLeadFormQuestion" type="button" class="btn btn-sm btn-secondary">
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                      </svg>
+                      Add Question
+                    </button>
+                  </div>
+                  <div v-if="showValidation && formData.adType === 'LEAD_FORM_AD' && formData.leadFormQuestions.length === 0" class="error-message">
+                    Please add at least one question to your lead form
+                  </div>
                 </div>
 
                 <!-- Prompt or Ad Links -->
@@ -419,6 +506,49 @@
       </div>
     </Dialog>
 
+    <!-- Ad Type Help Dialog -->
+    <Dialog v-model:visible="showAdTypeHelp" header="Loại quảng cáo Facebook" :modal="true" :closable="true" class="help-dialog">
+      <div class="help-content">
+        <div class="help-section">
+          <h3 class="help-title">3 Loại quảng cáo chính</h3>
+          <div class="ad-types-help">
+            <div class="ad-type-help-item">
+              <h4 class="ad-type-title">📱 Page Post Ad</h4>
+              <p class="ad-type-desc">Quảng cáo hiển thị như bài đăng trên trang Facebook. Phù hợp cho:</p>
+              <ul class="ad-type-features">
+                <li>Brand awareness và engagement</li>
+                <li>Tương tác với cộng đồng</li>
+                <li>Chia sẻ thông tin, tin tức</li>
+                <li>Giới thiệu sản phẩm/dịch vụ</li>
+              </ul>
+            </div>
+            
+            <div class="ad-type-help-item">
+              <h4 class="ad-type-title">🌐 Website Conversion Ad</h4>
+              <p class="ad-type-desc">Quảng cáo dẫn người dùng đến website để thực hiện hành động. Phù hợp cho:</p>
+              <ul class="ad-type-features">
+                <li>Bán hàng online</li>
+                <li>Đăng ký dịch vụ</li>
+                <li>Tải ứng dụng</li>
+                <li>Thu thập leads qua website</li>
+              </ul>
+            </div>
+            
+            <div class="ad-type-help-item">
+              <h4 class="ad-type-title">📋 Lead Form Ad</h4>
+              <p class="ad-type-desc">Quảng cáo thu thập thông tin khách hàng trực tiếp trên Facebook. Phù hợp cho:</p>
+              <ul class="ad-type-features">
+                <li>Thu thập thông tin liên hệ</li>
+                <li>Đăng ký nhận báo giá</li>
+                <li>Đăng ký webinar/event</li>
+                <li>Khảo sát, nghiên cứu thị trường</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Dialog>
+
     <!-- Help Dialog -->
     <Dialog v-model:visible="showHelp" header="Hướng dẫn tạo quảng cáo" :modal="true" :closable="true" class="help-dialog">
       <div class="help-content">
@@ -500,7 +630,9 @@ export default {
         textProvider: '',
         imageProvider: '',
         numberOfVariations: 1,
-        callToAction: '' // Thêm callToAction vào formData
+        callToAction: '', // Thêm callToAction vào formData
+        websiteUrl: '', // For Website Conversion Ad
+        leadFormQuestions: [{ type: 'FULL_NAME' }] // For Lead Form Ad
       },
       
       uploadedFile: null,
@@ -528,17 +660,23 @@ export default {
         {
           value: 'PAGE_POST_AD',
           label: 'Page Post Ad',
-          description: 'Ad posts on page'
+          description: 'Quảng cáo hiển thị như bài đăng trên trang Facebook. Phù hợp cho brand awareness, engagement và tương tác với cộng đồng.',
+          fields: ['headline', 'description', 'primaryText', 'image'],
+          ctaOptions: ['LEARN_MORE', 'SHOP_NOW', 'SIGN_UP', 'CONTACT_US']
         },
         {
           value: 'WEBSITE_CONVERSION_AD',
           label: 'Website Conversion Ad',
-          description: 'Website conversion ad'
+          description: 'Quảng cáo dẫn người dùng đến website để thực hiện hành động cụ thể như mua hàng, đăng ký, tải app.',
+          fields: ['headline', 'description', 'primaryText', 'image', 'websiteUrl'],
+          ctaOptions: ['SHOP_NOW', 'LEARN_MORE', 'SIGN_UP', 'DOWNLOAD', 'GET_QUOTE']
         },
         {
           value: 'LEAD_FORM_AD',
           label: 'Lead Form Ad',
-          description: 'Lead collection ad'
+          description: 'Quảng cáo thu thập thông tin khách hàng tiềm năng trực tiếp trên Facebook, không cần chuyển đến website.',
+          fields: ['headline', 'description', 'primaryText', 'image', 'leadFormQuestions'],
+          ctaOptions: ['SIGN_UP', 'GET_QUOTE', 'CONTACT_US', 'APPLY_NOW']
         }
       ],
       
@@ -570,6 +708,7 @@ export default {
       showMediaModal: false,
       selectedMediaUrl: '',
       placeholderImageUrl: '/img/placeholder.png',
+      showAdTypeHelp: false,
       // Thêm danh sách CTA chuẩn của Facebook
       standardCTAs: [],
 
@@ -597,6 +736,17 @@ export default {
     
     getSelectedTextProvider() {
       return this.textProviders.find(p => p.id === this.formData.textProvider)
+    },
+    
+    selectedAdType() {
+      return this.adTypes.find(type => type.value === this.formData.adType)
+    },
+    
+    availableCTAs() {
+      if (!this.selectedAdType) return this.standardCTAs
+      return this.standardCTAs.filter(cta => 
+        this.selectedAdType.ctaOptions.includes(cta.value)
+      )
     },
     
     getSelectedImageProvider() {
@@ -699,6 +849,28 @@ export default {
       }
     },
     
+    onAdTypeChange() {
+      // Reset ad-specific fields when ad type changes
+      if (this.formData.adType !== 'WEBSITE_CONVERSION_AD') {
+        this.formData.websiteUrl = ''
+      }
+      if (this.formData.adType !== 'LEAD_FORM_AD') {
+        this.formData.leadFormQuestions = [{ type: 'FULL_NAME' }]
+      }
+      // Reset CTA to empty when ad type changes
+      this.formData.callToAction = ''
+    },
+    
+    addLeadFormQuestion() {
+      this.formData.leadFormQuestions.push({ type: 'EMAIL' })
+    },
+    
+    removeLeadFormQuestion(index) {
+      if (this.formData.leadFormQuestions.length > 1) {
+        this.formData.leadFormQuestions.splice(index, 1)
+      }
+    },
+    
     validateStep1() {
       const hasPrompt = !!this.formData.prompt && this.formData.prompt.trim() !== ''
       const hasAdLinks = Array.isArray(this.adLinks) && this.adLinks.some(link => link && link.trim() !== '')
@@ -707,6 +879,15 @@ export default {
                          this.formData.name && 
                          this.formData.numberOfVariations &&
                          this.formData.callToAction
+      
+      // Validate ad-specific fields
+      let adSpecificValid = true
+      if (this.formData.adType === 'WEBSITE_CONVERSION_AD' && !this.formData.websiteUrl) {
+        adSpecificValid = false
+      }
+      if (this.formData.adType === 'LEAD_FORM_AD' && this.formData.leadFormQuestions.length === 0) {
+        adSpecificValid = false
+      }
       
       this.promptOrAdLinksError = false
       if (!hasPrompt && !hasAdLinks) {
@@ -719,11 +900,14 @@ export default {
         name: this.formData.name,
         numberOfVariations: this.formData.numberOfVariations,
         callToAction: this.formData.callToAction,
+        websiteUrl: this.formData.websiteUrl,
+        leadFormQuestions: this.formData.leadFormQuestions,
         prompt: this.formData.prompt,
         adLinks: this.adLinks,
         hasPrompt,
         hasAdLinks,
         basicValid,
+        adSpecificValid,
         promptOrAdLinksError: this.promptOrAdLinksError
       });
       
@@ -1508,6 +1692,86 @@ export default {
   font-size: 0.875rem;
   color: #6b7280;
   line-height: 1.5;
+}
+
+/* Ad Type Help Styles */
+.help-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+}
+
+.help-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.ad-types-help {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ad-type-help-item {
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background: #f9fafb;
+}
+
+.ad-type-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.ad-type-desc {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.ad-type-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ad-type-features li {
+  font-size: 0.875rem;
+  color: #4b5563;
+  padding: 0.25rem 0;
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.ad-type-features li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #10b981;
+  font-weight: bold;
+}
+
+/* Lead Form Questions Styles */
+.lead-form-questions {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: #f9fafb;
+}
+
+.question-item {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
 }
 
 /* Disabled state for AI provider cards */

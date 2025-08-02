@@ -182,7 +182,9 @@
                       <div class="grid grid-cols-2 gap-2 mb-2">
                         <div>
                           <p class="text-xs text-secondary-500 mb-1">Budget</p>
-                          <p class="text-sm font-medium text-secondary-900">${{ campaign.budget }}</p>
+                          <p class="text-sm font-medium text-secondary-900">
+                            {{ campaign.budgetType === 'DAILY' ? 'Daily' : 'Lifetime' }}: ${{ campaign.budget }}
+                          </p>
                         </div>
                         <div>
                           <p class="text-xs text-secondary-500 mb-1">Ads</p>
@@ -232,9 +234,9 @@
                 <div v-for="ad in recentAds" :key="ad.id" class="card hover:shadow-lg transition-shadow duration-200 flex flex-col items-center max-w-[220px] w-full mx-auto">
                   <div class="card-body flex flex-col justify-between h-full p-3 w-full">
                     <div>
-                      <!-- Ad Image Preview - Fixed size 192x128 -->
+                      <!-- Ad Image Preview - Fixed size 100x100 -->
                       <div v-if="ad.imageUrl || ad.mediaFileUrl" class="mb-3 flex justify-center">
-                        <div class="w-[192px] h-[128px] bg-neutral-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm cursor-pointer flex items-center justify-center" @click="viewAdDetail(ad)">
+                        <div class="w-[100px] h-[100px] bg-neutral-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm cursor-pointer flex items-center justify-center" @click="viewAdDetail(ad)">
                           <img 
                             :src="ad.imageUrl || ad.mediaFileUrl" 
                             :alt="ad.name"
@@ -245,7 +247,7 @@
                       </div>
                       <!-- Placeholder when no image -->
                       <div v-else class="mb-3">
-                        <div class="w-[192px] h-[128px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mx-auto border border-gray-200 shadow-sm flex items-center justify-center">
+                        <div class="w-[100px] h-[100px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mx-auto border border-gray-200 shadow-sm flex items-center justify-center">
                           <svg class="w-4 h-4 sm:w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                           </svg>
@@ -267,7 +269,7 @@
                       </div>
                       
                       <!-- Ad Content Preview -->
-                      <div v-if="ad.headline || ad.description" class="mb-3 p-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                      <div v-if="ad.headline || ad.description || ad.primaryText" class="mb-3 p-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
                         <div v-if="ad.headline" class="mb-1">
                           <p class="text-xs text-gray-500 mb-1 font-medium">Headline</p>
                           <p class="text-xs font-semibold text-gray-900 line-clamp-2">{{ ad.headline }}</p>
@@ -275,6 +277,10 @@
                         <div v-if="ad.description">
                           <p class="text-xs text-gray-500 mb-1 font-medium">Description</p>
                           <p class="text-xs text-gray-700 line-clamp-2">{{ ad.description }}</p>
+                        </div>
+                        <div v-if="ad.primaryText">
+                          <p class="text-xs text-gray-500 mb-1 font-medium">Primary Text</p>
+                          <p class="text-xs text-gray-700 line-clamp-3">{{ ad.primaryText }}</p>
                         </div>
                       </div>
                     </div>

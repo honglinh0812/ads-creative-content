@@ -52,6 +52,7 @@ com/fbadsautomation/dto/AnalyticsResponse$KPIMetrics.class
 com/fbadsautomation/dto/OptimizationResponse$RecommendationType.class
 com/fbadsautomation/config/RateLimitingConfig$RateLimitingInterceptor.class
 com/fbadsautomation/ai/AnthropicProvider.class
+com/fbadsautomation/dto/AdGenerationRequest$LeadFormQuestion.class
 com/fbadsautomation/model/AdContent$AIProvider.class
 com/fbadsautomation/config/RedisConfig.class
 com/fbadsautomation/dto/ApiResponse$PaginationInfo$PaginationInfoBuilder.class

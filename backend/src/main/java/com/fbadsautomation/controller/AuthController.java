@@ -33,6 +33,7 @@ public class AuthController {
         map.put("id", user.getId());
         map.put("email", user.getEmail());
         map.put("name", user.getName());
+        map.put("username", user.getUsername());
         return ResponseEntity.ok(map);
     }
 

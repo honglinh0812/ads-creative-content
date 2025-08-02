@@ -15,8 +15,8 @@
     <div v-if="sidebarOpen" class="sidebar-content">
       <div class="sidebar-header">
         <router-link to="/dashboard" class="logo">
-          <img src="/logo.png" alt="Logo" class="logo-img" />
-          <span class="logo-text">Creative Ads</span>
+          <img src="/logo.svg" alt="Logo" class="logo-img" />
+          <span class="logo-text">Ads Creative</span>
         </router-link>
       </div>
       <nav class="sidebar-menu">
@@ -44,26 +44,16 @@
           <span class="user-avatar">{{ userInitials }}</span>
           <span class="user-name">{{ userName }}</span>
         </div>
-        <button class="btn btn-sm btn-ghost w-full mt-2" @click="confirmLogout">Logout</button>
       </div>
     </div>
     <!-- Overlay khi sidebar đóng ở mobile/tablet -->
     <div v-if="!sidebarOpen" class="sidebar-overlay" @click="$emit('toggle')"></div>
-    <!-- Dialog xác nhận logout -->
-    <div v-if="showLogoutDialog" class="logout-dialog">
-      <div class="logout-dialog-content">
-        <p>Bạn có muốn đăng xuất?</p>
-        <div class="flex gap-2 mt-4 justify-end">
-          <button class="btn btn-sm btn-secondary" @click="showLogoutDialog = false">No</button>
-          <button class="btn btn-sm btn-error" @click="doLogout">Yes</button>
-        </div>
-      </div>
-    </div>
+
   </aside>
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
 import { HomeIcon, SparklesIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
@@ -76,13 +66,13 @@ export default {
       required: true
     }
   },
-  emits: ['toggle', 'logout'],
-  setup(props, { emit }) {
+  emits: ['toggle'],
+  setup() {
     const store = useStore()
     const route = useRoute()
     const router = useRouter()
-    const showLogoutDialog = ref(false)
-    const userName = computed(() => store.getters['auth/user']?.name || 'User')
+
+    const userName = computed(() => store.getters['auth/user']?.username || store.getters['auth/user']?.name || 'User')
     const userInitials = computed(() => userName.value.split(' ').map(w => w[0]).join('').toUpperCase())
     // Chỉ 3 mục chính
     const menu = [
@@ -100,14 +90,7 @@ export default {
     function goDashboard() {
       router.push('/dashboard')
     }
-    // Xác nhận logout
-    function confirmLogout() {
-      showLogoutDialog.value = true
-    }
-    function doLogout() {
-      showLogoutDialog.value = false
-      emit('logout')
-    }
+
     return {
       menu,
       userName,
@@ -115,9 +98,7 @@ export default {
       isActive,
       isDashboard,
       goDashboard,
-      showLogoutDialog,
-      confirmLogout,
-      doLogout
+
     }
   }
 }

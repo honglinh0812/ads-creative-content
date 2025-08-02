@@ -115,7 +115,9 @@ public class AdController {
                     request.getCustomPrompt(),
                     request.getExtractedContent(),
                     request.getMediaFileUrl(), // truyền mediaFileUrl vào
-                    request.getCallToAction() // truyền call to action vào
+                    request.getCallToAction(), // truyền call to action vào
+                    request.getWebsiteUrl(), // truyền website URL vào
+                    request.getLeadFormQuestions() // truyền lead form questions vào
                 );
                 // Convert to AdGenerationResponse
                 List<AdGenerationResponse.AdVariation> variations = contents.stream()
@@ -157,7 +159,9 @@ public class AdController {
                     request.getCustomPrompt(),
                     request.getExtractedContent(),
                     request.getMediaFileUrl(), // truyền mediaFileUrl vào
-                    request.getCallToAction() // truyền call to action vào
+                    request.getCallToAction(), // truyền call to action vào
+                    request.getWebsiteUrl(), // truyền website URL vào
+                    request.getLeadFormQuestions() // truyền lead form questions vào
                 );
                 List<AdContent> contents = (List<AdContent>) adResult.get("contents");
                 Ad ad = (Ad) adResult.get("ad");

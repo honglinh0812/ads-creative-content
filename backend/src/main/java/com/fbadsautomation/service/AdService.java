@@ -41,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Service
@@ -86,7 +87,7 @@ public class AdService {
      */
     @Transactional
     public Map<String, Object> createAdWithAIContent(Long campaignId, String adType, String prompt, 
-                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction) {
+                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions) {
         log.info("Creating ad with AI content for user ID: {}", userId);
         
         User user = userRepository.findById(userId)
@@ -104,6 +105,22 @@ public class AdService {
         ad.setStatus("GENERATING");
         ad.setCreatedBy(user.getId().toString());
         ad.setCreatedDate(LocalDateTime.now());
+        
+        // Set ad type specific fields
+        if (websiteUrl != null && !websiteUrl.trim().isEmpty()) {
+            ad.setWebsiteUrl(websiteUrl);
+        }
+        
+        if (leadFormQuestions != null && !leadFormQuestions.isEmpty()) {
+            // Convert lead form questions to JSON string
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                String leadFormQuestionsJson = objectMapper.writeValueAsString(leadFormQuestions);
+                ad.setLeadFormQuestions(leadFormQuestionsJson);
+            } catch (Exception e) {
+                log.warn("Failed to serialize lead form questions: {}", e.getMessage());
+            }
+        }
         
         // Save media file if provided
         if (mediaFile != null && !mediaFile.isEmpty()) {
@@ -366,7 +383,7 @@ public class AdService {
                                                  String textProvider, String imageProvider, Integer numberOfVariations, 
                                                  String language, List<String> adLinks, String promptStyle, 
                                                  String customPrompt, String extractedContent, String mediaFileUrl,
-                                                 com.fbadsautomation.model.FacebookCTA callToAction) {
+                                                 com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions) {
         log.info("Generating preview content for ad: {}", tempAd.getName());
         
         // Generate AI content without saving to database

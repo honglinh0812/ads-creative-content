@@ -149,6 +149,54 @@
                   </div>
                 </div>
 
+                <!-- Start Date -->
+                <div class="form-field">
+                  <label class="field-label">
+                    <span class="label-text">Start Date & Time</span>
+                    <span class="label-required">*</span>
+                  </label>
+                  <Calendar 
+                    v-model="form.startDate" 
+                    :minDate="new Date()"
+                    :showTime="true"
+                    :showSeconds="false"
+                    :showIcon="true"
+                    dateFormat="dd/mm/yy"
+                    hourFormat="24"
+                    class="form-input w-full h-12 text-lg" 
+                    :class="{ 'error': errors.startDate }" 
+                    placeholder="Select start date and time..." 
+                  />
+                  <div v-if="errors.startDate" class="error-message flex items-center gap-2 mt-2">
+                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    {{ errors.startDate }}
+                  </div>
+                </div>
+
+                <!-- End Date -->
+                <div class="form-field">
+                  <label class="field-label">
+                    <span class="label-text">End Date & Time</span>
+                    <span class="label-required">*</span>
+                  </label>
+                  <Calendar 
+                    v-model="form.endDate" 
+                    :minDate="form.startDate || new Date()"
+                    :showTime="true"
+                    :showSeconds="false"
+                    :showIcon="true"
+                    dateFormat="dd/mm/yy"
+                    hourFormat="24"
+                    class="form-input w-full h-12 text-lg" 
+                    :class="{ 'error': errors.endDate }" 
+                    placeholder="Select end date and time..." 
+                  />
+                  <div v-if="errors.endDate" class="error-message flex items-center gap-2 mt-2">
+                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    {{ errors.endDate }}
+                  </div>
+                </div>
+
                 <!-- Submit -->
                 <div class="flex justify-end mt-8">
                   <router-link to="/campaigns" class="btn btn-lg btn-secondary hover:bg-gray-100 transition-all duration-300 transform hover:-translate-y-1">
@@ -216,6 +264,7 @@ import AppSidebar from '@/components/AppSidebar.vue'
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
+import Calendar from 'primevue/calendar';
 
 export default {
   name: 'CampaignCreate',
@@ -224,7 +273,8 @@ export default {
     AppSidebar,
     Dialog,
     InputText,
-    Dropdown
+    Dropdown,
+    Calendar
   },
   data() {
     return {
@@ -323,8 +373,41 @@ export default {
         this.errors.budgetType = 'Budget type is required'
       }
 
-      if (this.form.startDate && this.form.endDate && new Date(this.form.endDate) < new Date(this.form.startDate)) {
-        this.errors.endDate = 'End date must be after start date'
+      // Validate budget based on type
+      if (this.form.budgetType === 'DAILY') {
+        if (!this.form.dailyBudget || this.form.dailyBudget <= 0) {
+          this.errors.dailyBudget = 'Daily budget is required and must be greater than 0'
+        }
+      } else if (this.form.budgetType === 'LIFETIME') {
+        if (!this.form.totalBudget || this.form.totalBudget <= 0) {
+          this.errors.totalBudget = 'Total budget is required and must be greater than 0'
+        }
+      }
+
+      // Validate start date
+      if (!this.form.startDate) {
+        this.errors.startDate = 'Start date is required'
+      } else {
+        const startDate = new Date(this.form.startDate)
+        const now = new Date()
+        if (startDate < now) {
+          this.errors.startDate = 'Start date must be in the future'
+        }
+      }
+
+      // Validate end date
+      if (!this.form.endDate) {
+        this.errors.endDate = 'End date is required'
+      } else if (this.form.startDate) {
+        const startDate = new Date(this.form.startDate)
+        const endDate = new Date(this.form.endDate)
+        const minEndDate = new Date(startDate.getTime() + 60 * 60 * 1000) // 1 hour later
+        
+        if (endDate <= startDate) {
+          this.errors.endDate = 'End date must be after start date'
+        } else if (endDate < minEndDate) {
+          this.errors.endDate = 'End date must be at least 1 hour after start date'
+        }
       }
       
       console.log('Validation errors:', this.errors)

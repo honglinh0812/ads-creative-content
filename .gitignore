@@ -38,3 +38,17 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# Bỏ qua file hướng dẫn và log
+API_KEYS_GUIDE.md
+FIXES_SUMMARY.md
+PROJECT_SUMMARY.md
+backend/failure-log.txt
+backend/log.txt
+backend/remove_word.sh
+
+# Bỏ qua ảnh trong uploads
+backend/uploads/images/
+
+# Bỏ qua thư mục deployment
+deployment/
+

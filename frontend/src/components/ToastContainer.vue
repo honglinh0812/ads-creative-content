@@ -234,8 +234,8 @@ export default {
   border-radius: var(--radius-sm);
   transition: var(--transition-colors);
   flex-shrink: 0;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 0.375rem;
+  height: 0.375rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -247,8 +247,8 @@ export default {
 }
 
 .toast-close svg {
-  width: 1rem;
-  height: 1rem;
+  width: 0.25rem;
+  height: 0.25rem;
 }
 
 /* Toast Transitions */

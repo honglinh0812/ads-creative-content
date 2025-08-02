@@ -84,6 +84,13 @@ public class Ad {
     @Column(name = "updated_at")
     private java.time.LocalDateTime updatedAt;
     
+    // New fields for ad type specific data
+    @Column(name = "website_url", length = 1000)
+    private String websiteUrl; // For WEBSITE_CONVERSION_AD
+    
+    @Column(name = "lead_form_questions", columnDefinition = "TEXT")
+    private String leadFormQuestions; // JSON string for LEAD_FORM_AD questions
+    
     // Getter & Setter cho tất cả các trường
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -123,4 +130,10 @@ public class Ad {
     public void setCreatedDate(java.time.LocalDateTime createdDate) { this.createdDate = createdDate; }
     public java.time.LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(java.time.LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    // Getters and setters for new fields
+    public String getWebsiteUrl() { return websiteUrl; }
+    public void setWebsiteUrl(String websiteUrl) { this.websiteUrl = websiteUrl; }
+    public String getLeadFormQuestions() { return leadFormQuestions; }
+    public void setLeadFormQuestions(String leadFormQuestions) { this.leadFormQuestions = leadFormQuestions; }
 }

@@ -32,7 +32,21 @@
         <i class="pi pi-chevron-down"></i>
         <div v-if="showDropdown" class="dropdown" role="menu" aria-label="User dropdown">
           <a href="#" @click.prevent="goProfile" tabindex="0" role="menuitem">Profile</a>
-          <a href="#" @click.prevent="logout" tabindex="0" role="menuitem">Logout</a>
+          <a href="#" @click.prevent="confirmLogout" tabindex="0" role="menuitem">Logout</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Logout confirmation dialog -->
+    <div v-if="showLogoutDialog" class="logout-dialog-overlay" @click="cancelLogout">
+      <div class="logout-dialog" @click.stop>
+        <div class="logout-dialog-content">
+          <h3>Xác nhận đăng xuất</h3>
+          <p>Bạn có chắc chắn muốn đăng xuất?</p>
+          <div class="logout-dialog-actions">
+            <button class="btn btn-secondary" @click="cancelLogout">Hủy</button>
+            <button class="btn btn-primary" @click="doLogout">Đăng xuất</button>
+          </div>
         </div>
       </div>
     </div>
@@ -51,6 +65,7 @@ export default {
     return {
       showDropdown: false,
       showNotificationDropdown: false,
+      showLogoutDialog: false,
       defaultAvatar: 'https://avatars.githubusercontent.com/u/9919?s=200&v=4'
     }
   },
@@ -61,7 +76,7 @@ export default {
       return this.user && this.user.avatar ? this.user.avatar : this.defaultAvatar
     },
     username() {
-      return this.user && this.user.name ? this.user.name : 'User'
+      return this.user && (this.user.username || this.user.name) ? (this.user.username || this.user.name) : 'User'
     },
     notificationCount() {
       return this.toasts.length
@@ -81,8 +96,15 @@ export default {
       this.showDropdown = false
       this.$router.push('/profile')
     },
-    logout() {
+    confirmLogout() {
       this.showDropdown = false
+      this.showLogoutDialog = true
+    },
+    cancelLogout() {
+      this.showLogoutDialog = false
+    },
+    doLogout() {
+      this.showLogoutDialog = false
       this.$store.dispatch('auth/logout')
     },
     toggleNotificationDropdown() {
@@ -343,6 +365,93 @@ export default {
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+
+/* Logout Dialog Styles */
+.logout-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.logout-dialog {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 400px;
+  width: 90%;
+  animation: dialogFadeIn 0.2s ease-out;
+}
+
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.logout-dialog-content {
+  padding: 24px;
+  text-align: center;
+}
+
+.logout-dialog-content h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.logout-dialog-content p {
+  margin: 0 0 24px 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.logout-dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.logout-dialog-actions .btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.logout-dialog-actions .btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.logout-dialog-actions .btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.logout-dialog-actions .btn-primary {
+  background: #ef4444;
+  color: white;
+}
+
+.logout-dialog-actions .btn-primary:hover {
+  background: #dc2626;
 }
 @media (max-width: 600px) {
   .header {

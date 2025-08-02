@@ -9,7 +9,7 @@
       <template #title>
         <div class="login-header">
           <div class="logo-container">
-            <img src="/logo192.svg" alt="Ads Creative Logo" class="facebook-logo" />
+            <img src="/logo.svg" alt="Ads Creative Logo" class="facebook-logo" />
           </div>
           <h1 class="login-title">Facebook Ads Automation</h1>
         </div>

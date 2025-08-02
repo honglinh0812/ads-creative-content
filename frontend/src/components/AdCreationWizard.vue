@@ -1785,9 +1785,10 @@ export default {
 }
 
 .variation-image img {
-  width: 100%;
-  height: 200px;
+  width: 100px;
+  height: 100px;
   object-fit: cover;
+  border-radius: var(--radius-md);
 }
 
 .variation-text {
@@ -2287,7 +2288,8 @@ export default {
   }
 
   .variation-image img {
-    height: 150px;
+    height: 100px;
+    width: 100px;
   }
 
   .text-content {
