@@ -356,179 +356,96 @@ export default {
 
 <style scoped>
 .campaign-analytics-table {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  @apply flex flex-col gap-5;
 }
 
 .table-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  @apply flex justify-between items-center gap-4 flex-wrap;
 }
 
 .search-box {
-  position: relative;
-  flex: 1;
-  min-width: 200px;
+  @apply relative flex-1 min-w-[200px];
 }
 
 .search-box i {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6b7280;
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm;
 }
 
 .search-input {
-  width: 100%;
-  padding: 8px 12px 8px 36px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  @apply w-full py-2 pl-9 pr-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors;
 }
 
 .filter-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  @apply flex items-center gap-2;
 }
 
 .filter-select {
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
+  @apply py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors;
 }
 
 .sort-btn {
-  padding: 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.sort-btn:hover {
-  background: #f3f4f6;
+  @apply p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 cursor-pointer transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700;
 }
 
 .table-loading,
 .table-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
-  color: #6b7280;
+  @apply flex flex-col items-center justify-center p-12 text-gray-500 dark:text-gray-400;
 }
 
 .loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e5e7eb;
-  border-top: 3px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  @apply w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mb-4;
 }
 
 .table-empty i {
-  font-size: 48px;
-  margin-bottom: 16px;
-  color: #d1d5db;
+  @apply text-5xl mb-4 text-gray-300 dark:text-gray-600;
 }
 
 .table-container {
-  overflow-x: auto;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  @apply overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm;
 }
 
 .analytics-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
+  @apply w-full border-collapse bg-white dark:bg-gray-800;
 }
 
 .analytics-table th {
-  background: #f9fafb;
-  padding: 12px;
-  text-align: left;
-  font-weight: 600;
-  color: #374151;
-  border-bottom: 1px solid #e5e7eb;
-  white-space: nowrap;
+  @apply bg-gray-50 dark:bg-gray-700 p-3 text-left font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 whitespace-nowrap;
 }
 
 .analytics-table th.numeric {
-  text-align: right;
+  @apply text-right;
 }
 
 .analytics-table th.sortable {
-  cursor: pointer;
-  user-select: none;
-  position: relative;
-}
-
-.analytics-table th.sortable:hover {
-  background: #f3f4f6;
+  @apply cursor-pointer select-none relative hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors;
 }
 
 .analytics-table th i {
-  margin-left: 4px;
-  font-size: 12px;
+  @apply ml-1 text-xs;
 }
 
 .analytics-table td {
-  padding: 12px;
-  border-bottom: 1px solid #f3f4f6;
+  @apply p-3 border-b border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white;
 }
 
 .analytics-table td.numeric {
-  text-align: right;
+  @apply text-right;
 }
 
 .table-row {
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.table-row:hover {
-  background: #f9fafb;
+  @apply cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50;
 }
 
 .campaign-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  @apply flex flex-col gap-0.5;
 }
 
 .campaign-info .name {
-  font-weight: 500;
-  color: #111827;
+  @apply font-medium text-gray-900 dark:text-white;
 }
 
 .campaign-info .objective {
-  font-size: 12px;
-  color: #6b7280;
+  @apply text-xs text-gray-500 dark:text-gray-400;
 }
 
 .status-badge {
@@ -638,7 +555,7 @@ export default {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .table-controls {
     flex-direction: column;
     align-items: stretch;

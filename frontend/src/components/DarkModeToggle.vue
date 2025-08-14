@@ -1,11 +1,13 @@
 <template>
-  <button class="dark-toggle" :aria-label="isDark ? 'Switch to Light mode' : 'Switch to Dark mode'" @click="toggleDarkMode">
-    <span v-if="isDark">
-      <i class="pi pi-sun"></i>
-    </span>
-    <span v-else>
-      <i class="pi pi-moon"></i>
-    </span>
+  <button 
+    class="dark-toggle bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-neutral-600 dark:text-neutral-300 transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 rounded-lg p-2.5 border border-neutral-200 dark:border-neutral-600 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-neutral-800" 
+    :aria-label="isDark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'" 
+    @click="toggleDarkMode"
+  >
+    <transition name="icon-fade" mode="out-in">
+      <i v-if="isDark" key="sun" class="pi pi-sun text-lg"></i>
+      <i v-else key="moon" class="pi pi-moon text-lg"></i>
+    </transition>
   </button>
 </template>
 
@@ -51,18 +53,75 @@ export default {
 </script>
 
 <style scoped>
-.toggle-btn {
-  background: none;
-  border: none;
-  font-size: var(--text-2xl);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  padding: var(--space-2);
-  border-radius: var(--radius-full);
-  transition: background 0.15s, color 0.15s;
+.dark-toggle {
+  position: relative;
+  overflow: hidden;
 }
-.toggle-btn.active {
-  background: var(--color-primary-bg);
-  color: var(--color-primary);
+
+.dark-toggle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgb(59 130 246 / 10%) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
 }
-</style> 
+
+.dark-toggle:active::before {
+  width: 120px;
+  height: 120px;
+}
+
+/* Icon transition animations */
+.icon-fade-enter-active,
+.icon-fade-leave-active {
+  transition: all 0.2s ease-in-out;
+}
+
+.icon-fade-enter-from {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.8);
+}
+
+.icon-fade-leave-to {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.8);
+}
+
+.icon-fade-enter-to,
+.icon-fade-leave-from {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+/* Responsive adjustments */
+@media (width <= 768px) {
+  .dark-toggle {
+    padding: 0.625rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .dark-toggle {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .dark-toggle,
+  .icon-fade-enter-active,
+  .icon-fade-leave-active {
+    transition: none;
+  }
+  
+  .dark-toggle:hover {
+    transform: none;
+  }
+}
+</style>

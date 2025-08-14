@@ -1404,14 +1404,14 @@ export default {
 
 .ai-provider-card:hover {
   border-color: #8b5cf6;
-  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 10px 25px rgb(139 92 246 / 10%);
   transform: translateY(-2px);
 }
 
 .ai-provider-card.selected {
   border-color: #8b5cf6;
   background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.2);
+  box-shadow: 0 10px 25px rgb(139 92 246 / 20%);
   transform: scale(1.02);
 }
 
@@ -1440,19 +1440,19 @@ export default {
   min-height: 400px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px rgb(0 0 0 / 5%);
 }
 
 .ad-preview-card:hover {
   border-color: #10b981;
-  box-shadow: 0 20px 40px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 20px 40px rgb(16 185 129 / 10%);
   transform: translateY(-4px);
 }
 
 .ad-preview-card.selected {
   border-color: #10b981;
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 20px 40px rgb(16 185 129 / 20%);
   transform: scale(1.02);
 }
 
@@ -1474,6 +1474,7 @@ export default {
   align-items: center;
   justify-content: center;
 }
+
 .ad-preview-image img {
   max-width: 100%;
   max-height: 100%;
@@ -1517,16 +1518,16 @@ export default {
   font-weight: 600;
   text-align: center;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 6px rgb(59 130 246 / 20%);
 }
 
 .ad-preview-cta:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 12px rgb(59 130 246 / 30%);
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .ai-provider-grid {
     grid-template-columns: 1fr;
   }
@@ -1540,7 +1541,7 @@ export default {
   }
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .ai-provider-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1550,7 +1551,7 @@ export default {
   }
 }
 
-@media (min-width: 1280px) {
+@media (width >= 1280px) {
   .ad-preview-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -1560,13 +1561,13 @@ export default {
 .enhanced-card {
   border: none;
   border-radius: 1.5rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgb(0 0 0 / 10%);
   transition: all 0.3s ease;
   overflow: hidden;
 }
 
 .enhanced-card:hover {
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 40px rgb(0 0 0 / 15%);
   transform: translateY(-2px);
 }
 
@@ -1609,7 +1610,7 @@ export default {
 
 .enhanced-form-input:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 10%);
   outline: none;
 }
 
@@ -1751,7 +1752,7 @@ export default {
   padding-left: 1.25rem;
 }
 
-.ad-type-features li:before {
+.ad-type-features li::before {
   content: "✓";
   position: absolute;
   left: 0;
@@ -1799,7 +1800,7 @@ export default {
 
 .enhanced-form-textarea:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 10%);
   outline: none;
 }
 
@@ -1821,12 +1822,12 @@ export default {
 .enhanced-btn-primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 6px rgb(59 130 246 / 20%);
 }
 
 .enhanced-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 12px rgb(59 130 246 / 30%);
 }
 
 .enhanced-btn-secondary {
@@ -1843,12 +1844,12 @@ export default {
 .enhanced-btn-success {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 6px rgb(16 185 129 / 20%);
 }
 
 .enhanced-btn-success:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 12px rgb(16 185 129 / 30%);
 }
 
 /* Progress Indicator Styles */
@@ -1900,7 +1901,7 @@ export default {
   background: #3b82f6;
   border-color: #3b82f6;
   color: white;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 4px rgb(59 130 246 / 20%);
 }
 
 .progress-step.completed .step-indicator {

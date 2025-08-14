@@ -351,14 +351,14 @@ export default {
 }
 
 /* Show mobile header on mobile devices */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .mobile-header {
     display: block;
   }
 }
 
 /* Responsive adjustments */
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .mobile-header-content {
     padding: var(--space-3);
   }
@@ -378,7 +378,7 @@ export default {
   }
 }
 
-@media (max-width: 360px) {
+@media (width <= 360px) {
   .mobile-header-actions {
     gap: var(--space-1);
   }

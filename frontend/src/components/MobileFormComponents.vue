@@ -326,20 +326,20 @@ export default {
   color: var(--color-text);
   transition: var(--transition-all);
   min-height: 48px; /* iOS touch target minimum */
-  -webkit-appearance: none; /* Remove iOS styling */
+  appearance: none; /* Remove iOS styling */
   appearance: none;
 }
 
 .mobile-input:focus {
   outline: none;
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
+  box-shadow: 0 0 0 3px rgb(24 119 242 / 10%);
   transform: none; /* Prevent zoom on iOS */
 }
 
 .mobile-input.has-error {
   border-color: var(--error-500);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 10%);
 }
 
 .mobile-input.has-icon {
@@ -377,19 +377,19 @@ export default {
   resize: vertical;
   min-height: 120px;
   font-family: inherit;
-  -webkit-appearance: none;
+  appearance: none;
   appearance: none;
 }
 
 .mobile-textarea:focus {
   outline: none;
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
+  box-shadow: 0 0 0 3px rgb(24 119 242 / 10%);
 }
 
 .mobile-textarea.has-error {
   border-color: var(--error-500);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 10%);
 }
 
 .mobile-textarea-counter {
@@ -422,7 +422,7 @@ export default {
   color: var(--color-text);
   transition: var(--transition-all);
   min-height: 48px;
-  -webkit-appearance: none;
+  appearance: none;
   appearance: none;
   cursor: pointer;
 }
@@ -430,12 +430,12 @@ export default {
 .mobile-select:focus {
   outline: none;
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
+  box-shadow: 0 0 0 3px rgb(24 119 242 / 10%);
 }
 
 .mobile-select.has-error {
   border-color: var(--error-500);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 10%);
 }
 
 .mobile-select-arrow {
@@ -466,7 +466,6 @@ export default {
 
 .mobile-checkbox-label {
   display: flex;
-  align-items: flex-start;
   gap: var(--space-3);
   cursor: pointer;
   font-size: var(--text-base);
@@ -594,7 +593,7 @@ export default {
 }
 
 /* Responsive adjustments */
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .mobile-input,
   .mobile-textarea,
   .mobile-select {

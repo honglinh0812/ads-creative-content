@@ -321,9 +321,9 @@ export default {
     width: 100%;
     max-width: 500px;
     backdrop-filter: blur(20px);
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+    background: rgb(255 255 255 / 95%);
+    border: 1px solid rgb(255 255 255 / 20%);
+    box-shadow: 0 25px 50px rgb(0 0 0 / 10%);
     
     .login-header {
       display: flex;
@@ -340,7 +340,7 @@ export default {
         align-items: center;
         justify-content: center;
         margin-bottom: 1.5rem;
-        box-shadow: 0 10px 30px rgba(24, 119, 242, 0.3);
+        box-shadow: 0 10px 30px rgb(24 119 242 / 30%);
         animation: pulse 2s ease-in-out infinite;
         
         .facebook-logo {
@@ -357,7 +357,7 @@ export default {
         font-weight: 700;
         text-align: center;
         background: linear-gradient(135deg, #1877f2, #42a5f5);
-        -webkit-background-clip: text;
+        background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
       }
@@ -385,7 +385,7 @@ export default {
         border-radius: 12px;
         margin-bottom: 1.5rem;
         width: 100%;
-        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        box-shadow: 0 5px 15px rgb(255 107 107 / 30%);
         
         i {
           margin-right: 0.75rem;
@@ -400,12 +400,12 @@ export default {
         font-size: 1.1rem;
         padding: 1rem;
         border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(24, 119, 242, 0.3);
+        box-shadow: 0 10px 30px rgb(24 119 242 / 30%);
         transition: all 0.3s ease;
         
         &:hover {
           transform: translateY(-2px);
-          box-shadow: 0 15px 40px rgba(24, 119, 242, 0.4);
+          box-shadow: 0 15px 40px rgb(24 119 242 / 40%);
         }
       }
       
@@ -430,12 +430,12 @@ export default {
             display: flex;
             align-items: center;
             padding: 1rem;
-            background: rgba(24, 119, 242, 0.05);
+            background: rgb(24 119 242 / 5%);
             border-radius: 12px;
             transition: all 0.3s ease;
             
             &:hover {
-              background: rgba(24, 119, 242, 0.1);
+              background: rgb(24 119 242 / 10%);
               transform: translateY(-2px);
             }
             
@@ -474,6 +474,7 @@ export default {
   flex-direction: column;
   align-items: center;
 }
+
 .login-methods {
   width: 100%;
   max-width: 350px;
@@ -481,14 +482,16 @@ export default {
   flex-direction: column;
   align-items: center;
 }
+
 .or-divider {
-  margin: 1.5rem 0 1rem 0;
+  margin: 1.5rem 0 1rem;
   color: #888;
   font-weight: 600;
   text-align: center;
   width: 100%;
   position: relative;
 }
+
 .login-form, .register-form, .forgot-form {
   width: 100%;
   display: flex;
@@ -496,6 +499,7 @@ export default {
   gap: 1rem;
   margin-bottom: 1rem;
 }
+
 .login-input {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -503,12 +507,14 @@ export default {
   border: 1px solid #e0e0e0;
   font-size: 1rem;
 }
+
 .btn-login {
   width: 100%;
   padding: 0.75rem;
   border-radius: 8px;
   font-size: 1.1rem;
 }
+
 .login-links {
   display: flex;
   justify-content: center;
@@ -516,6 +522,7 @@ export default {
   margin-bottom: 1rem;
   font-size: 0.95rem;
 }
+
 .forgot-success {
   color: #2563eb;
   margin-top: 1rem;
@@ -524,8 +531,9 @@ export default {
 
 @keyframes float {
   0%, 100% {
-    transform: translateY(0px) rotate(0deg);
+    transform: translateY(0) rotate(0deg);
   }
+
   50% {
     transform: translateY(-20px) rotate(180deg);
   }
@@ -535,12 +543,13 @@ export default {
   0%, 100% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.05);
   }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .login-container {
     padding: 1rem;
     

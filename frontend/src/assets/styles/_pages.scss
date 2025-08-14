@@ -5,12 +5,15 @@
 // Login page
 .login-page {
   @include flex-center;
+
   min-height: calc(100vh - 120px);
   
   &__container {
     max-width: 400px;
     width: 100%;
+
     @include card;
+
     text-align: center;
     
     .logo {
@@ -68,6 +71,7 @@
     
     .page-item {
       @include flex-between;
+
       padding: $spacing-md;
       border-bottom: 1px solid $border-color;
       transition: background-color $transition-fast;
@@ -97,6 +101,7 @@
   
   &__empty {
     @include card;
+
     text-align: center;
     padding: $spacing-xl;
     
@@ -110,6 +115,7 @@
 .dashboard-page {
   &__header {
     @include flex-between;
+
     margin-bottom: $spacing-xl;
     
     .welcome {
@@ -160,6 +166,7 @@
     
     .section-header {
       @include flex-between;
+
       margin-bottom: $spacing-lg;
       
       h2 {
@@ -268,12 +275,14 @@
     .duration-selection {
       .budget-warning {
         margin-top: $spacing-md;
+
         @extend .alert--warning;
       }
     }
     
     .form-actions {
       @include flex-between;
+
       margin-top: $spacing-xl;
       padding-top: $spacing-lg;
       border-top: 1px solid $border-color;
@@ -312,6 +321,7 @@
   
   .dialog-actions {
     @include flex-between;
+
     margin-top: $spacing-lg;
   }
 }
@@ -323,6 +333,7 @@
   
   &__header {
     @include flex-between;
+
     margin-bottom: $spacing-xl;
     
     .back-link {
@@ -369,6 +380,7 @@
       
       .info-item {
         @include flex-between;
+
         margin-bottom: $spacing-sm;
         
         &:last-child {
@@ -397,6 +409,7 @@
 .campaign-detail-page {
   &__header {
     @include flex-between;
+
     margin-bottom: $spacing-xl;
     
     .back-link {
@@ -442,6 +455,7 @@
     
     .section-header {
       @include flex-between;
+
       margin-bottom: $spacing-lg;
       
       h2 {

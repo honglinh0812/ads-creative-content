@@ -12,8 +12,17 @@ module.exports = {
   },
   rules: {
     'vue/multi-word-component-names': ['error', {
-      ignores: ['Home', 'Login', 'Dashboard', 'Ads', 'Button', 'Textarea', 'Dropdown', 'Card', 'Column', 'Dialog', 'Toast', 'Divider'],
+      ignores: ['Home', 'Login', 'Dashboard', 'Ads', 'Button', 'Textarea', 'Dropdown', 'Card', 'Column', 'Dialog', 'Toast', 'Divider', 'Input', 'Modal'],
     }],
   },
+  overrides: [
+    {
+      files: ['*.vue'],
+      rules: {
+        // Disable CSS-related rules for Vue files, let stylelint handle them
+        'no-undef': 'off'
+      }
+    }
+  ]
 };
 

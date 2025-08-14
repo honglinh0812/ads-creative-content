@@ -13,8 +13,8 @@
 
 html {
   line-height: var(--leading-normal);
-  -webkit-text-size-adjust: 100%;
-  -moz-tab-size: 4;
+  text-size-adjust: 100%;
+  tab-size: 4;
   tab-size: 4;
   font-family: var(--font-family-sans);
   font-feature-settings: normal;
@@ -46,7 +46,7 @@ h1 {
   font-size: var(--text-4xl);
   font-weight: var(--font-bold);
   
-  @media (min-width: 768px) {
+  @media (width >= 768px) {
     font-size: var(--text-5xl);
   }
 }
@@ -54,7 +54,7 @@ h1 {
 h2 {
   font-size: var(--text-3xl);
   
-  @media (min-width: 768px) {
+  @media (width >= 768px) {
     font-size: var(--text-4xl);
   }
 }
@@ -62,7 +62,7 @@ h2 {
 h3 {
   font-size: var(--text-2xl);
   
-  @media (min-width: 768px) {
+  @media (width >= 768px) {
     font-size: var(--text-3xl);
   }
 }
@@ -70,7 +70,7 @@ h3 {
 h4 {
   font-size: var(--text-xl);
   
-  @media (min-width: 768px) {
+  @media (width >= 768px) {
     font-size: var(--text-2xl);
   }
 }
@@ -78,7 +78,7 @@ h4 {
 h5 {
   font-size: var(--text-lg);
   
-  @media (min-width: 768px) {
+  @media (width >= 768px) {
     font-size: var(--text-xl);
   }
 }
@@ -86,7 +86,7 @@ h5 {
 h6 {
   font-size: var(--text-base);
   
-  @media (min-width: 768px) {
+  @media (width >= 768px) {
     font-size: var(--text-lg);
   }
 }
@@ -197,7 +197,7 @@ input, textarea, select, button {
   }
   
   h2, h3 {
-    page-break-after: avoid;
+    break-after: avoid;
   }
 }
 

@@ -1,18 +1,18 @@
 <template>
-  <div :class="['skeleton', type]" :style="skeletonStyle">
+  <div :class="['skeleton', 'animate-pulse', type]" :style="skeletonStyle">
     <template v-if="type === 'card'">
-      <div class="skeleton-card"></div>
+      <div class="skeleton-card bg-gray-200 dark:bg-gray-700 w-full h-45 rounded-xl transition-all duration-300"></div>
     </template>
     <template v-else-if="type === 'table'">
-      <div v-for="i in rows" :key="i" class="skeleton-row">
-        <div v-for="j in cols" :key="j" class="skeleton-bar"></div>
+      <div v-for="i in rows" :key="i" class="skeleton-row flex gap-2 mb-2">
+        <div v-for="j in cols" :key="j" class="skeleton-bar bg-gray-200 dark:bg-gray-700 flex-1 h-6 rounded-md transition-all duration-300"></div>
       </div>
     </template>
     <template v-else-if="type === 'text'">
-      <div v-for="i in rows" :key="i" class="skeleton-bar-sm"></div>
+      <div v-for="i in rows" :key="i" class="skeleton-bar-sm bg-gray-200 dark:bg-gray-700 w-full h-4.5 rounded-md mb-2 last:mb-0 transition-all duration-300"></div>
     </template>
     <template v-else-if="type === 'avatar'">
-      <div class="skeleton-avatar"></div>
+      <div class="skeleton-avatar bg-gray-200 dark:bg-gray-700 w-12 h-12 rounded-full transition-all duration-300"></div>
     </template>
   </div>
 </template>
@@ -54,51 +54,88 @@ export default {
 </script>
 
 <style scoped>
-.skeleton-container {
-  display: flex;
-  gap: var(--space-2);
-  width: 100%;
-  background: none;
+/* Custom shimmer animation for enhanced visual effect */
+.skeleton.animate-pulse .skeleton-card,
+.skeleton.animate-pulse .skeleton-bar,
+.skeleton.animate-pulse .skeleton-bar-sm,
+.skeleton.animate-pulse .skeleton-avatar {
+  background: linear-gradient(
+    90deg,
+    theme('colors.gray.200') 25%,
+    theme('colors.gray.100') 50%,
+    theme('colors.gray.200') 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
 }
-.skeleton-card {
-  width: 100%;
-  height: 180px;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(90deg, var(--color-bg), var(--color-bg-secondary), var(--color-bg));
-  animation: skeleton-loading 1.2s infinite linear;
+
+@media (prefers-color-scheme: dark) {
+  .skeleton.animate-pulse .skeleton-card,
+  .skeleton.animate-pulse .skeleton-bar,
+  .skeleton.animate-pulse .skeleton-bar-sm,
+  .skeleton.animate-pulse .skeleton-avatar {
+    background: linear-gradient(
+      90deg,
+      theme('colors.gray.700') 25%,
+      theme('colors.gray.600') 50%,
+      theme('colors.gray.700') 75%
+    );
+  }
 }
-.skeleton-row {
-  display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-}
-.skeleton-bar {
-  flex: 1;
-  height: 24px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(90deg, var(--color-bg), var(--color-bg-secondary), var(--color-bg));
-  animation: skeleton-loading 1.2s infinite linear;
-}
-.skeleton-bar-sm {
-  width: 100%;
-  height: 18px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(90deg, var(--color-bg), var(--color-bg-secondary), var(--color-bg));
-  animation: skeleton-loading 1.2s infinite linear;
-}
-.skeleton-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(90deg, var(--color-bg), var(--color-bg-secondary), var(--color-bg));
-  animation: skeleton-loading 1.2s infinite linear;
-}
-@keyframes skeleton-loading {
-  100% {
+
+@keyframes shimmer {
+  0% {
     background-position: 200% 0;
   }
-  0% {
+
+  100% {
     background-position: -200% 0;
   }
 }
-</style> 
+
+/* Responsive adjustments */
+@media (width <= 640px) {
+  .skeleton-card {
+    @apply h-32;
+  }
+  
+  .skeleton-bar {
+    @apply h-5;
+  }
+  
+  .skeleton-bar-sm {
+    @apply h-4;
+  }
+  
+  .skeleton-avatar {
+    @apply w-10 h-10;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton.animate-pulse .skeleton-card,
+  .skeleton.animate-pulse .skeleton-bar,
+  .skeleton.animate-pulse .skeleton-bar-sm,
+  .skeleton.animate-pulse .skeleton-avatar {
+    animation: none;
+
+    @apply opacity-60;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .skeleton .skeleton-card,
+  .skeleton .skeleton-bar,
+  .skeleton .skeleton-bar-sm,
+  .skeleton .skeleton-avatar {
+    @apply border border-gray-400 dark:border-gray-500;
+  }
+}
+
+/* Focus management */
+.skeleton {
+  @apply select-none;
+}
+</style>

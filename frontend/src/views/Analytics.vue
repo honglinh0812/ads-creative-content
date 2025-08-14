@@ -377,7 +377,7 @@ export default {
   font-size: 32px;
   font-weight: 700;
   color: #1f2937;
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
 }
 
 .header-content p {
@@ -447,11 +447,8 @@ export default {
 /* Modal Styles */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgb(0 0 0 / 50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -461,7 +458,7 @@ export default {
 .modal-content {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
@@ -676,7 +673,7 @@ export default {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .analytics-view {
     padding: 16px;
   }

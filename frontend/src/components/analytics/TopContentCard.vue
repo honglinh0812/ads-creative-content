@@ -221,7 +221,7 @@ export default {
 
 .top-content-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -3px rgb(0 0 0 / 10%);
   border-color: #d1d5db;
 }
 
@@ -299,7 +299,7 @@ export default {
   font-weight: 600;
   color: #111827;
   line-height: 1.4;
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -488,7 +488,7 @@ export default {
 }
 
 /* Responsive Design */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .top-content-card {
     padding: 16px;
   }
@@ -535,6 +535,7 @@ export default {
   from {
     width: 0;
   }
+
   to {
     width: var(--target-width);
   }

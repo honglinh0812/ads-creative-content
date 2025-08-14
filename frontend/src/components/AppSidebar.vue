@@ -116,12 +116,14 @@ export default {
   z-index: 100;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+  box-shadow: 2px 0 8px rgb(0 0 0 / 4%);
   transition: transform 0.2s cubic-bezier(.4,0,.2,1);
 }
+
 .app-sidebar:not(.open) {
   transform: translateX(-100%);
 }
+
 .sidebar-hamburger-fixed {
   position: fixed;
   top: 1rem;
@@ -136,9 +138,10 @@ export default {
   justify-content: center;
   cursor: pointer;
   z-index: 210;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
   transition: all 0.2s ease;
 }
+
 .sidebar-hamburger {
   position: absolute;
   top: 1rem;
@@ -153,42 +156,49 @@ export default {
   justify-content: center;
   cursor: pointer;
   z-index: 110;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
   transition: all 0.2s ease;
 }
+
 .sidebar-content {
   margin-top: 56px;
   display: flex;
   flex-direction: column;
   height: calc(100vh - 56px);
 }
+
 .sidebar-header {
   display: flex;
   align-items: center;
-  padding: 1.5rem 1rem 1rem 1rem;
+  padding: 1.5rem 1rem 1rem;
   border-bottom: 1px solid #eee;
 }
+
 .logo {
   display: flex;
   align-items: center;
   text-decoration: none;
 }
+
 .logo-img {
   width: 32px;
   height: 32px;
   margin-right: 0.5rem;
 }
+
 .logo-text {
   font-weight: bold;
   font-size: 1.2rem;
   color: var(--sidebar-text, #222);
 }
+
 .sidebar-menu {
   flex: 1;
   display: flex;
   flex-direction: column;
   padding: 1rem 0;
 }
+
 .sidebar-link {
   display: flex;
   align-items: center;
@@ -199,17 +209,21 @@ export default {
   margin-bottom: 0.25rem;
   transition: background 0.15s;
 }
+
 .sidebar-link.active, .sidebar-link:hover {
   background: var(--sidebar-active-bg, #f3f4f6);
   color: var(--sidebar-active-text, #2563eb);
 }
+
 .icon {
   display: flex;
   align-items: center;
 }
+
 .sidebar-actions {
-  padding: 0 1rem 1rem 1rem;
+  padding: 0 1rem 1rem;
 }
+
 .sidebar-footer {
   padding: 1rem;
   border-top: 1px solid #eee;
@@ -218,11 +232,13 @@ export default {
   align-items: flex-start;
   margin-top: auto;
 }
+
 .user-info {
   display: flex;
   align-items: center;
   margin-bottom: 0.5rem;
 }
+
 .user-avatar {
   width: 32px;
   height: 32px;
@@ -235,33 +251,39 @@ export default {
   font-weight: bold;
   margin-right: 0.5rem;
 }
+
 .user-name {
   font-size: 1rem;
   font-weight: 500;
 }
+
 .sidebar-overlay {
   display: none;
 }
 
-@media (max-width: 900px) {
+@media (width <= 900px) {
   .app-sidebar {
     transform: translateX(-100%);
     position: fixed;
     z-index: 200;
     width: 240px;
   }
+
   .app-sidebar.open {
     transform: translateX(0);
   }
+
   .sidebar-hamburger-fixed {
     position: fixed;
     top: 1rem;
     left: 1rem;
     z-index: 210;
   }
+
   .sidebar-hamburger {
     display: block;
   }
+
   .sidebar-overlay {
     display: block;
     position: fixed;
@@ -269,24 +291,26 @@ export default {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0,0,0,0.1);
+    background: rgb(0 0 0 / 10%);
     z-index: 99;
   }
 }
+
 .logout-dialog {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.2);
+  inset: 0;
+  background: rgb(0 0 0 / 20%);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .logout-dialog-content {
   background: #fff;
   border-radius: 12px;
   padding: 2rem 2.5rem;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 32px rgb(0 0 0 / 12%);
   min-width: 300px;
   text-align: center;
 }

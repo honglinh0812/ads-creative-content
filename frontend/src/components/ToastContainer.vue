@@ -187,7 +187,7 @@ export default {
   font-size: var(--text-sm);
   color: var(--color-text-secondary);
   line-height: var(--leading-relaxed);
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .toast-actions {
@@ -275,7 +275,7 @@ export default {
 }
 
 /* Responsive */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .toast-container {
     left: var(--space-4);
     right: var(--space-4);

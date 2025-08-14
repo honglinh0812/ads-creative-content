@@ -556,7 +556,7 @@ export default {
 }
 
 /* Responsive Adjustments */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-3);
@@ -597,7 +597,7 @@ export default {
   }
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .stats-grid {
     grid-template-columns: 1fr;
   }

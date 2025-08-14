@@ -1030,7 +1030,7 @@ export default {
   background: var(--brand-primary);
   border-color: var(--brand-primary);
   color: white;
-  box-shadow: 0 0 0 4px rgba(24, 119, 242, 0.1);
+  box-shadow: 0 0 0 4px rgb(24 119 242 / 10%);
 }
 
 .progress-step.completed .step-indicator {
@@ -1096,6 +1096,7 @@ export default {
     opacity: 0;
     transform: translateX(20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -1157,12 +1158,12 @@ export default {
 .field-input:focus {
   outline: none;
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
+  box-shadow: 0 0 0 3px rgb(24 119 242 / 10%);
 }
 
 .field-input.field-error {
   border-color: var(--error-500);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 10%);
 }
 
 .field-error-message {
@@ -1205,7 +1206,7 @@ export default {
 .ad-type-option.selected {
   border-color: var(--brand-primary);
   background: var(--primary-50);
-  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
+  box-shadow: 0 0 0 3px rgb(24 119 242 / 10%);
 }
 
 .type-icon {
@@ -1400,7 +1401,7 @@ export default {
 .provider-card.selected {
   border-color: var(--brand-primary);
   background: var(--primary-50);
-  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
+  box-shadow: 0 0 0 3px rgb(24 119 242 / 10%);
 }
 
 .provider-header {
@@ -1750,7 +1751,7 @@ export default {
 
 .variation-card.selected {
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
+  box-shadow: 0 0 0 3px rgb(24 119 242 / 10%);
 }
 
 .variation-header {
@@ -1939,6 +1940,7 @@ export default {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -1947,7 +1949,7 @@ export default {
 /* Enhanced Mobile Responsiveness */
 
 /* Large tablets and small desktops */
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
   .ad-creation-wizard {
     padding: var(--space-4);
   }
@@ -1979,7 +1981,7 @@ export default {
 }
 
 /* Tablets */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .ad-creation-wizard {
     padding: var(--space-3);
   }
@@ -2148,7 +2150,7 @@ export default {
 }
 
 /* Mobile phones */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .ad-creation-wizard {
     padding: var(--space-2);
   }
@@ -2305,7 +2307,7 @@ export default {
     padding: var(--space-3);
     background: var(--color-bg-secondary);
     border-top: 1px solid var(--color-border);
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -4px 12px rgb(0 0 0 / 10%);
     z-index: 10;
   }
 
@@ -2323,7 +2325,7 @@ export default {
 }
 
 /* Extra small devices */
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .progress-container {
     gap: var(--space-2);
   }

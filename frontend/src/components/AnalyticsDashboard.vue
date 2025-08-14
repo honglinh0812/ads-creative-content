@@ -610,7 +610,7 @@ export default {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .analytics-dashboard {
     padding: var(--space-4);
   }

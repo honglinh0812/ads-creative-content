@@ -52,3 +52,4 @@ backend/uploads/images/
 # Bỏ qua thư mục deployment
 deployment/
 
+*.sh

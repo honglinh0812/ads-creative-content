@@ -210,7 +210,7 @@ export default {
 
 .mobile-card--selected {
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+  box-shadow: 0 0 0 2px rgb(24 119 242 / 20%);
 }
 
 .mobile-card--loading {
@@ -221,11 +221,8 @@ export default {
 /* Loading Overlay */
 .mobile-card-loading {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
+  inset: 0;
+  background: rgb(255 255 255 / 80%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -291,7 +288,7 @@ export default {
   color: var(--color-text);
   margin: 0 0 var(--space-1) 0;
   line-height: var(--leading-tight);
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .mobile-card-subtitle {
@@ -299,7 +296,7 @@ export default {
   color: var(--color-text-secondary);
   margin: 0;
   line-height: var(--leading-relaxed);
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .mobile-card-header-actions {
@@ -422,7 +419,7 @@ export default {
 }
 
 /* Responsive Adjustments */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .mobile-card-header {
     padding: var(--space-3);
   }
@@ -457,7 +454,7 @@ export default {
   }
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .mobile-card-header {
     flex-direction: column;
     align-items: stretch;
@@ -489,7 +486,7 @@ export default {
 }
 
 .dark .mobile-card-loading {
-  background: rgba(0, 0, 0, 0.8);
+  background: rgb(0 0 0 / 80%);
 }
 
 .dark .selection-indicator {

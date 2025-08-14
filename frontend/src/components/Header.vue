@@ -1,38 +1,55 @@
 <template>
-  <header class="header">
-    <div class="header-left"></div>
+  <header class="header bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700 shadow-soft">
+    <div class="header-left">
+      <div class="header-brand">
+        <h1 class="brand-text text-neutral-900 dark:text-neutral-100">Ads Creative</h1>
+      </div>
+    </div>
     <div class="header-right">
-      <DarkModeToggle class="mr-2" />
+      <DarkModeToggle class="mr-3" />
       <div class="notification-dropdown-wrapper" style="position: relative; display: inline-block;">
-        <button class="icon-btn notification-btn" @click="toggleNotificationDropdown" aria-label="Notifications" tabindex="0" title="Notifications">
+        <button class="icon-btn notification-btn text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400" @click="toggleNotificationDropdown" aria-label="Notifications" tabindex="0" title="Notifications">
           <i class="pi pi-bell"></i>
-          <span v-if="notificationCount > 0" class="badge" role="status" aria-live="polite">{{ notificationCount }}</span>
+          <span v-if="notificationCount > 0" class="badge bg-primary-500 text-white" role="status" aria-live="polite">{{ notificationCount }}</span>
         </button>
         <transition name="fade">
-          <div v-if="showNotificationDropdown" class="notification-dropdown" @click.stop>
-            <div v-if="recentNotifications.length > 0">
-              <div v-for="noti in recentNotifications" :key="noti.id" class="notification-item">
-                <span class="noti-icon" :class="noti.type"><i v-if="noti.type==='success'" class="pi pi-check-circle"></i><i v-else-if="noti.type==='error'" class="pi pi-times-circle"></i><i v-else-if="noti.type==='warning'" class="pi pi-exclamation-triangle"></i><i v-else class="pi pi-info-circle"></i></span>
+          <div v-if="showNotificationDropdown" class="notification-dropdown bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-strong" @click.stop>
+            <div class="notification-header">
+              <h3 class="text-neutral-900 dark:text-neutral-100 font-semibold">Thông báo</h3>
+            </div>
+            <div v-if="recentNotifications.length > 0" class="notification-list">
+              <div v-for="noti in recentNotifications" :key="noti.id" class="notification-item hover:bg-neutral-50 dark:hover:bg-neutral-700">
+                <span class="noti-icon" :class="noti.type">
+                  <i v-if="noti.type==='success'" class="pi pi-check-circle text-success-500"></i>
+                  <i v-else-if="noti.type==='error'" class="pi pi-times-circle text-error-500"></i>
+                  <i v-else-if="noti.type==='warning'" class="pi pi-exclamation-triangle text-warning-500"></i>
+                  <i v-else class="pi pi-info-circle text-primary-500"></i>
+                </span>
                 <div class="noti-content">
-                  <div class="noti-title">{{ noti.title || noti.type }}</div>
-                  <div class="noti-message">{{ noti.message }}</div>
-                  <div class="noti-time">{{ formatTime(noti.timestamp) }}</div>
+                  <div class="noti-title text-neutral-900 dark:text-neutral-100">{{ noti.title || noti.type }}</div>
+                  <div class="noti-message text-neutral-600 dark:text-neutral-400">{{ noti.message }}</div>
+                  <div class="noti-time text-neutral-500 dark:text-neutral-500">{{ formatTime(noti.timestamp) }}</div>
                 </div>
               </div>
             </div>
-            <div v-else class="notification-empty">No notifications</div>
-            <div class="notification-footer">
-              <button class="check-all-btn" @click="goAllNotifications">Check all notifications</button>
+            <div v-else class="notification-empty text-neutral-500 dark:text-neutral-400">Không có thông báo nào</div>
+            <div class="notification-footer border-t border-neutral-200 dark:border-neutral-700">
+              <button class="check-all-btn text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20" @click="goAllNotifications">Xem tất cả thông báo</button>
             </div>
           </div>
         </transition>
       </div>
-      <div class="user-menu" @click="toggleDropdown" tabindex="0" aria-label="User menu" @keydown.enter="toggleDropdown" @keydown.esc="closeDropdown">
-        <span class="username">{{ username }}</span>
-        <i class="pi pi-chevron-down"></i>
-        <div v-if="showDropdown" class="dropdown" role="menu" aria-label="User dropdown">
-          <a href="#" @click.prevent="goProfile" tabindex="0" role="menuitem">Profile</a>
-          <a href="#" @click.prevent="confirmLogout" tabindex="0" role="menuitem">Logout</a>
+      <div class="user-menu hover:bg-neutral-100 dark:hover:bg-neutral-800" @click="toggleDropdown" tabindex="0" aria-label="User menu" @keydown.enter="toggleDropdown" @keydown.esc="closeDropdown">
+        <div class="user-avatar">
+          <div class="avatar-circle bg-primary-500 text-white">
+            {{ username.charAt(0).toUpperCase() }}
+          </div>
+        </div>
+        <span class="username text-neutral-900 dark:text-neutral-100">{{ username }}</span>
+        <i class="pi pi-chevron-down text-neutral-500 dark:text-neutral-400"></i>
+        <div v-if="showDropdown" class="dropdown bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-strong" role="menu" aria-label="User dropdown">
+          <a href="#" @click.prevent="goProfile" tabindex="0" role="menuitem" class="text-neutral-900 dark:text-neutral-100 hover:bg-neutral-50 dark:hover:bg-neutral-700">Hồ sơ</a>
+          <a href="#" @click.prevent="confirmLogout" tabindex="0" role="menuitem" class="text-error-600 dark:text-error-400 hover:bg-error-50 dark:hover:bg-error-900/20">Đăng xuất</a>
         </div>
       </div>
     </div>
@@ -136,233 +153,328 @@ export default {
 </script>
 
 <style scoped>
+/* Enhanced header styles */
 .header {
   width: 100%;
-  height: 56px;
-  background: #fff;
-  border-bottom: 1px solid #e1e4e8;
-  box-shadow: 0 1px 4px rgba(27,31,35,0.03);
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem 0 2rem;
+  padding: 0 2rem;
   position: sticky;
   top: 0;
-  z-index: 30;
+  z-index: 40;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.header.dark,
-.dark .header {
-  background: #1f2937;
-  color: #fff;
-  border-bottom: 1px solid #374151;
+
+/* Header brand */
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
+
+.brand-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(135deg, theme('colors.primary.600'), theme('colors.secondary.500'));
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .brand-text {
+  background: linear-gradient(135deg, theme('colors.primary.400'), theme('colors.secondary.400'));
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Header layout */
 .header-left {
   flex: 1;
   display: flex;
   align-items: center;
 }
-.search-bar {
-  width: 260px;
-  padding: 7px 14px;
-  border: 1px solid #d1d5da;
-  border-radius: 6px;
-  font-size: 1rem;
-  background: #f6f8fa;
-  color: #24292f;
-  outline: none;
-  transition: border 0.15s;
-}
-.search-bar:focus {
-  border-color: #0969da;
-  background: #fff;
-}
+
 .header-right {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
+
+/* Icon buttons */
 .icon-btn {
   background: none;
   border: none;
   position: relative;
   cursor: pointer;
-  font-size: 1.3rem;
-  color: #57606a;
-  padding: 0.5rem;
-  border-radius: 50%;
-  transition: background 0.15s;
+  font-size: 1.25rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
 .icon-btn:hover {
-  background: #eaf5ff;
-  color: #0969da;
+  background: theme('colors.neutral.100');
+  transform: translateY(-1px);
 }
+
+.dark .icon-btn:hover {
+  background: theme('colors.neutral.800');
+}
+
+.icon-btn:active {
+  transform: translateY(0);
+}
+
+/* Badge */
 .badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  background: #2da44e;
-  color: #fff;
-  font-size: 0.7rem;
-  border-radius: 999px;
-  padding: 0 6px;
+  top: 4px;
+  right: 4px;
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  padding: 0.125rem 0.375rem;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1;
+  min-width: 1.25rem;
+  text-align: center;
+  border: 2px solid theme('colors.white');
 }
+
+.dark .badge {
+  border-color: theme('colors.neutral.900');
+}
+
+/* User menu */
 .user-menu {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   position: relative;
   cursor: pointer;
-  padding: 0.25rem 0.75rem 0.25rem 0.5rem;
-  border-radius: 6px;
-  transition: background 0.15s;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
 }
+
 .user-menu:hover {
-  background: #eaf5ff;
+  border-color: theme('colors.neutral.200');
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 10%);
 }
-.avatar {
-  width: 32px;
-  height: 32px;
+
+.dark .user-menu:hover {
+  border-color: theme('colors.neutral.700');
+}
+
+/* User avatar */
+.user-avatar {
+  position: relative;
+}
+
+.avatar-circle {
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #e1e4e8;
-}
-.username {
-  font-weight: 500;
-  color: #24292f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
   font-size: 1rem;
+  border: 2px solid theme('colors.white');
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 }
+
+.dark .avatar-circle {
+  border-color: theme('colors.neutral.800');
+}
+
+/* Username */
+.username {
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.025em;
+}
+
+/* Dropdown */
 .dropdown {
   position: absolute;
-  top: 110%;
+  top: calc(100% + 0.5rem);
   right: 0;
-  background: #fff;
-  border: 1px solid #e1e4e8;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(27,31,35,0.08);
-  min-width: 140px;
-  z-index: 100;
+  min-width: 12rem;
+  border-radius: 0.75rem;
+  z-index: 50;
   display: flex;
   flex-direction: column;
-  padding: 0.5rem 0;
+  padding: 0.5rem;
+  animation: slideDown 0.2s ease-out;
 }
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .dropdown a {
-  padding: 0.5rem 1.25rem;
-  color: #24292f;
+  padding: 0.75rem 1rem;
   text-decoration: none;
-  font-size: 1rem;
-  transition: background 0.15s;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
+
 .dropdown a:hover {
-  background: #f6f8fa;
+  transform: translateX(2px);
 }
-.icon-btn:focus, .user-menu:focus, .dropdown a:focus {
-  outline: 2px solid #0969da;
+
+/* Focus styles */
+.icon-btn:focus,
+.user-menu:focus,
+.dropdown a:focus {
+  outline: 2px solid theme('colors.primary.500');
   outline-offset: 2px;
-  background: #eaf5ff;
 }
+
+/* Notification dropdown */
 .notification-dropdown-wrapper {
   position: relative;
 }
-.notification-btn {
-  position: relative;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  margin-right: 1.2rem;
-  cursor: pointer;
-  color: #334155;
-  transition: color 0.15s;
-}
-.notification-btn:hover {
-  color: #2563eb;
-}
+
 .notification-dropdown {
   position: absolute;
-  top: 2.5rem;
+  top: calc(100% + 0.75rem);
   right: 0;
-  min-width: 340px;
-  background: #fff;
-  border-radius: 0.75rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.08);
-  border: 1.5px solid #e5e7eb;
+  min-width: 22rem;
+  max-width: 24rem;
+  border-radius: 1rem;
   z-index: 1000;
-  padding: 0.5rem 0 0.5rem 0;
-  max-height: 420px;
+  max-height: 28rem;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+  backdrop-filter: blur(8px);
+}
+
+.notification-header {
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid theme('colors.neutral.200');
+}
+
+.dark .notification-header {
+  border-bottom-color: theme('colors.neutral.700');
+}
+
+.notification-header h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.notification-list {
+  max-height: 20rem;
   overflow-y: auto;
-  animation: fadeIn 0.18s;
 }
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+
 .notification-item {
   display: flex;
   align-items: flex-start;
-  gap: 0.7rem;
-  padding: 0.7rem 1.2rem 0.7rem 1.2rem;
-  border-bottom: 1px solid #f1f5f9;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid theme('colors.neutral.100');
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
 }
+
+.dark .notification-item {
+  border-bottom-color: theme('colors.neutral.700');
+}
+
 .notification-item:last-child {
   border-bottom: none;
 }
-.noti-icon {
-  font-size: 1.3rem;
-  margin-top: 0.15rem;
+
+.notification-item:hover {
+  transform: translateX(2px);
 }
-.noti-icon.success { color: #10b981; }
-.noti-icon.error { color: #ef4444; }
-.noti-icon.warning { color: #f59e0b; }
-.noti-icon.info { color: #3b82f6; }
+
+.noti-icon {
+  font-size: 1.25rem;
+  margin-top: 0.125rem;
+  flex-shrink: 0;
+}
+
 .noti-content {
   flex: 1;
   min-width: 0;
 }
+
 .noti-title {
-  font-weight: 700;
-  color: #1e293b;
-  font-size: 1.01rem;
-  margin-bottom: 0.1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+  line-height: 1.25;
 }
+
 .noti-message {
-  color: #334155;
-  font-size: 0.97rem;
+  font-size: 0.8125rem;
   line-height: 1.4;
+  margin-bottom: 0.25rem;
 }
+
 .noti-time {
-  color: #64748b;
-  font-size: 0.85rem;
-  margin-top: 0.1rem;
+  font-size: 0.75rem;
+  opacity: 0.8;
 }
+
 .notification-footer {
-  padding: 0.7rem 1.2rem 0.2rem 1.2rem;
-  border-top: 1px solid #f1f5f9;
-  text-align: right;
+  padding: 0.75rem 1.25rem;
+  text-align: center;
 }
+
 .check-all-btn {
   background: none;
   border: none;
-  color: #2563eb;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.875rem;
   cursor: pointer;
-  padding: 0.2rem 0.5rem;
+  padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  transition: background 0.15s;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
 }
+
 .check-all-btn:hover {
-  background: #f1f5f9;
+  transform: translateY(-1px);
 }
+
 .notification-empty {
   text-align: center;
-  color: #64748b;
-  padding: 1.2rem 0.5rem 1.2rem 0.5rem;
-  font-size: 1rem;
+  padding: 2rem 1.25rem;
+  font-size: 0.875rem;
+  opacity: 0.8;
 }
+
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.18s;
 }
+
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
@@ -370,99 +482,141 @@ export default {
 /* Logout Dialog Styles */
 .logout-dialog-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgb(0 0 0 / 60%);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
 }
 
 .logout-dialog {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  max-width: 400px;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 10%), 0 10px 10px -5px rgb(0 0 0 / 4%);
+  max-width: 28rem;
   width: 90%;
-  animation: dialogFadeIn 0.2s ease-out;
+  animation: scaleIn 0.2s ease-out;
+  transform-origin: center;
 }
 
-@keyframes dialogFadeIn {
+.dark .logout-dialog {
+  background: theme('colors.neutral.800');
+  border: 1px solid theme('colors.neutral.700');
+}
+
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(-10px);
   }
+
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
 .logout-dialog-content {
-  padding: 24px;
+  padding: 2rem;
   text-align: center;
 }
 
 .logout-dialog-content h3 {
-  margin: 0 0 12px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: theme('colors.neutral.900');
+  line-height: 1.25;
+}
+
+.dark .logout-dialog-content h3 {
+  color: theme('colors.neutral.100');
 }
 
 .logout-dialog-content p {
-  margin: 0 0 24px 0;
-  color: #6b7280;
-  font-size: 14px;
-  line-height: 1.5;
+  margin: 0 0 2rem;
+  color: theme('colors.neutral.600');
+  font-size: 0.875rem;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.dark .logout-dialog-content p {
+  color: theme('colors.neutral.400');
 }
 
 .logout-dialog-actions {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
   justify-content: center;
 }
 
 .logout-dialog-actions .btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.2s;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 5rem;
 }
 
 .logout-dialog-actions .btn-secondary {
-  background: #f3f4f6;
-  color: #374151;
+  background: theme('colors.neutral.100');
+  color: theme('colors.neutral.700');
 }
 
 .logout-dialog-actions .btn-secondary:hover {
-  background: #e5e7eb;
+  background: theme('colors.neutral.200');
+  transform: translateY(-1px);
+}
+
+.dark .logout-dialog-actions .btn-secondary {
+  background: theme('colors.neutral.700');
+  color: theme('colors.neutral.300');
+}
+
+.dark .logout-dialog-actions .btn-secondary:hover {
+  background: theme('colors.neutral.600');
 }
 
 .logout-dialog-actions .btn-primary {
-  background: #ef4444;
+  background: theme('colors.error.500');
   color: white;
 }
 
 .logout-dialog-actions .btn-primary:hover {
-  background: #dc2626;
+  background: theme('colors.error.600');
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgb(239 68 68 / 40%);
 }
-@media (max-width: 600px) {
+
+@media (width <= 600px) {
   .header {
     padding: 0 0.5rem;
   }
+
   .search-bar {
     width: 120px;
     font-size: 0.95rem;
   }
+
   .username {
     display: none;
   }
 }
-</style> 
+</style>

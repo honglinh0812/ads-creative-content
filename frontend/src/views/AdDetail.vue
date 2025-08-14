@@ -367,7 +367,7 @@ export default {
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
     
-    @media (max-width: 768px) {
+    @media (width <= 768px) {
       grid-template-columns: 1fr;
     }
     
@@ -430,7 +430,7 @@ export default {
           margin: 12px 0;
           
           h3 {
-            margin: 0 0 8px 0;
+            margin: 0 0 8px;
             font-size: 1.1rem;
           }
           

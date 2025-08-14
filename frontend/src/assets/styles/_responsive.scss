@@ -56,7 +56,7 @@
 }
 
 // Tablet styles (640px and up)
-@media (min-width: 640px) {
+@media (width >= 640px) {
   .mobile-optimized {
     .container {
       padding: 0 1.5rem;
@@ -86,7 +86,7 @@
 }
 
 // Desktop styles (1024px and up)
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .mobile-optimized {
     .container {
       padding: 0 2rem;
@@ -107,7 +107,7 @@
 }
 
 // Large desktop styles (1280px and up)
-@media (min-width: 1280px) {
+@media (width >= 1280px) {
   .mobile-optimized {
     .grid {
       grid-template-columns: repeat(4, 1fr);
@@ -125,7 +125,7 @@
     overflow-y: auto;
   }
   
-  @media (min-width: 640px) {
+  @media (width >= 640px) {
     .modal-content {
       width: 80vw;
       max-width: 800px;
@@ -133,7 +133,7 @@
     }
   }
   
-  @media (min-width: 1024px) {
+  @media (width >= 1024px) {
     .modal-content {
       width: 70vw;
       max-width: 1000px;
@@ -169,7 +169,7 @@
   .form-select:focus {
     outline: none;
     border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 10%);
   }
 }
 
@@ -191,12 +191,12 @@
     cursor: not-allowed;
   }
   
-  @media (max-width: 639px) {
+  @media (width <= 639px) {
     width: 100%;
     margin-bottom: 0.5rem;
   }
   
-  @media (min-width: 640px) {
+  @media (width >= 640px) {
     width: auto;
     margin-bottom: 0;
   }
@@ -210,7 +210,7 @@
     transition: background-color 0.2s;
     
     &:hover {
-      background-color: rgba(59, 130, 246, 0.1);
+      background-color: rgb(59 130 246 / 10%);
     }
     
     &.active {
@@ -219,7 +219,7 @@
     }
   }
   
-  @media (max-width: 1023px) {
+  @media (width <= 1023px) {
     .nav-item {
       padding: 1rem;
       border-bottom: 1px solid #e5e7eb;

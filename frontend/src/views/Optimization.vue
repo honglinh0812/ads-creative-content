@@ -580,7 +580,7 @@ export default {
   font-size: 32px;
   font-weight: 700;
   color: #1f2937;
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
 }
 
 .header-content h1 i {
@@ -660,7 +660,7 @@ export default {
 .nav-tab.active {
   background: white;
   color: #374151;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
 }
 
 .nav-tab:hover:not(.active) {
@@ -700,7 +700,7 @@ export default {
   font-size: 24px;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
 }
 
 .section-header p {
@@ -766,7 +766,7 @@ export default {
 }
 
 .category-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
   transform: translateY(-2px);
 }
 
@@ -788,13 +788,13 @@ export default {
   font-size: 18px;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
 }
 
 .category-info p {
   font-size: 14px;
   color: #6b7280;
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
 }
 
 .category-stats {
@@ -862,7 +862,7 @@ export default {
   font-size: 18px;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 16px 0;
+  margin: 0 0 16px;
 }
 
 .history-list {
@@ -914,13 +914,13 @@ export default {
   font-size: 16px;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
 }
 
 .history-content p {
   font-size: 14px;
   color: #6b7280;
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
 }
 
 .history-meta {
@@ -1008,11 +1008,11 @@ export default {
   border-radius: 3px;
   background: #e5e7eb;
   outline: none;
-  -webkit-appearance: none;
+  appearance: none;
 }
 
 .slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
+  appearance: none;
   appearance: none;
   width: 20px;
   height: 20px;
@@ -1092,7 +1092,7 @@ export default {
 .setting-description {
   font-size: 13px;
   color: #6b7280;
-  margin: 8px 0 0 0;
+  margin: 8px 0 0;
 }
 
 .setting-actions {
@@ -1137,7 +1137,7 @@ export default {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .optimization-view {
     padding: 16px;
   }

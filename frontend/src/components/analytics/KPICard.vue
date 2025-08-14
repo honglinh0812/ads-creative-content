@@ -277,13 +277,14 @@ export default {
   from {
     width: 0;
   }
+
   to {
     width: 70%;
   }
 }
 
 /* Responsive Design */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .kpi-card {
     padding: var(--space-4);
   }

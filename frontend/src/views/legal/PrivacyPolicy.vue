@@ -69,22 +69,27 @@ export default {
   font-family: sans-serif;
   line-height: 1.6;
 }
+
 h1 {
   text-align: center;
   margin-bottom: 30px;
 }
+
 h2 {
   margin-top: 30px;
   margin-bottom: 15px;
   border-bottom: 1px solid #eee;
   padding-bottom: 5px;
 }
+
 ul {
   padding-left: 20px;
 }
+
 li {
   margin-bottom: 10px;
 }
+
 strong {
   font-weight: bold;
 }

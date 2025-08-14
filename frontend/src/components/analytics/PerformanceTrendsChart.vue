@@ -390,7 +390,7 @@ export default {
 }
 
 .chart-empty h3 {
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
   font-size: 18px;
   font-weight: 600;
 }
@@ -482,7 +482,7 @@ canvas {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .chart-stats {
     flex-direction: column;
     gap: 12px;

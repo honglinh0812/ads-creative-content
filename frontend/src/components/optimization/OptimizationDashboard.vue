@@ -422,7 +422,7 @@ export default {
   font-size: 32px;
   font-weight: 700;
   color: #1f2937;
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
 }
 
 .header-content h1 i {
@@ -560,7 +560,7 @@ export default {
 }
 
 .summary-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
   transform: translateY(-2px);
 }
 
@@ -675,7 +675,7 @@ export default {
 .view-btn.active {
   background: white;
   color: #374151;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
 }
 
 .view-btn:hover:not(.active) {
@@ -749,7 +749,7 @@ export default {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .optimization-dashboard {
     padding: 16px;
   }

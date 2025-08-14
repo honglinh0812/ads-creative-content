@@ -213,7 +213,7 @@ export default {
 }
 
 .recommendation-list-item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
   border-color: #d1d5db;
 }
 
@@ -285,7 +285,7 @@ export default {
   font-size: 16px;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
   line-height: 1.4;
 }
 
@@ -311,7 +311,7 @@ export default {
   font-size: 14px;
   color: #6b7280;
   line-height: 1.5;
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
 }
 
 .impact-summary {
@@ -472,7 +472,7 @@ export default {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .item-content {
     flex-direction: column;
     gap: 16px;
@@ -511,7 +511,7 @@ export default {
   }
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .recommendation-list-item {
     padding: 16px;
   }

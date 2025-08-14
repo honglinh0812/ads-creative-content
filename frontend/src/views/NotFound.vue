@@ -59,6 +59,7 @@ export default {
   border: none;
   cursor: pointer;
 }
+
 .notfound-btn:hover {
   background-color: var(--color-info);
 }

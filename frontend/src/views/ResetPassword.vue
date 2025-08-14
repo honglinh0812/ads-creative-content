@@ -103,23 +103,27 @@ export default {
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
+
 .reset-card {
   width: 100%;
   max-width: 400px;
   padding: 2rem 1.5rem;
   border-radius: 16px;
   background: #fff;
-  box-shadow: 0 10px 32px rgba(24, 119, 242, 0.08);
+  box-shadow: 0 10px 32px rgb(24 119 242 / 8%);
 }
+
 .reset-header {
   text-align: center;
   margin-bottom: 1.5rem;
 }
+
 .reset-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
+
 .reset-input {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -127,17 +131,20 @@ export default {
   border: 1px solid #e0e0e0;
   font-size: 1rem;
 }
+
 .btn-reset {
   width: 100%;
   padding: 0.75rem;
   border-radius: 8px;
   font-size: 1.1rem;
 }
+
 .reset-error {
   color: #e53e3e;
   margin-top: 1rem;
   text-align: center;
 }
+
 .reset-success {
   color: #2563eb;
   margin-top: 1rem;
