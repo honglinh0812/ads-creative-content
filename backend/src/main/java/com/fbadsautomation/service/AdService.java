@@ -613,3 +613,21 @@ public class AdService {
                 .build();
     }
 }
+
+// Thêm validation method
+private void validateAdForFacebook(Ad ad) {
+    if (ad.getAdType() == AdType.WEBSITE_CONVERSION_AD) {
+        if (StringUtils.isBlank(ad.getWebsiteUrl())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Website URL is required for Website Conversion Ad");
+        }
+        if (!isValidUrl(ad.getWebsiteUrl())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid website URL format");
+        }
+    }
+    
+    if (ad.getAdType() == AdType.LEAD_FORM_AD) {
+        if (StringUtils.isBlank(ad.getLeadFormQuestions())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Lead form questions are required");
+        }
+    }
+}

@@ -53,3 +53,5 @@ backend/uploads/images/
 deployment/
 
 *.sh
+nohup.out
+*.txt

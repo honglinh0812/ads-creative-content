@@ -81,6 +81,16 @@ export default {
     delete: (adId) => apiClient.delete(`/ads/${adId}`),
     extractFromLibrary: (extractionData) => apiClient.post('/ads/extract-from-library', extractionData)
   },
+
+  // Facebook Export endpoints
+  facebookExport: {
+    exportAd: (adId) => apiClient.get(`/facebook-export/ad/${adId}`, {
+      responseType: 'blob'
+    }),
+    exportMultipleAds: (adIds) => apiClient.post('/facebook-export/ads/bulk', adIds, {
+      responseType: 'blob'
+    })
+  },
   
   // Meta Ad Library endpoints
   metaAdLibrary: {

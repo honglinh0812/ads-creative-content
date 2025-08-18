@@ -31,7 +31,7 @@
             </router-link>
           </div>
 
-          <!-- Search Bar -->
+          <!-- Search Bar and Bulk Actions -->
           <div class="mb-8 flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div class="relative w-full sm:w-80">
               <input 
@@ -44,6 +44,35 @@
               <svg class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
+            </div>
+            
+            <!-- Bulk Actions -->
+            <div v-if="selectedAds.length > 0" class="flex items-center gap-4">
+              <span class="text-sm text-blue-700">
+                {{ selectedAds.length }} ads selected
+              </span>
+              <div class="flex gap-2">
+                <button
+                  @click="exportSelectedToFacebook"
+                  :disabled="isExporting"
+                  class="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded text-sm transition-colors duration-200 flex items-center gap-2"
+                >
+                  <svg v-if="!isExporting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>{{ isExporting ? 'Exporting...' : 'Export Selected to Facebook' }}</span>
+                </button>
+                <button
+                  @click="clearSelection"
+                  class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm transition-colors duration-200"
+                >
+                  Clear Selection
+                </button>
+              </div>
             </div>
           </div>
 
@@ -80,6 +109,16 @@
             <div v-for="ad in displayedAds" :key="ad.id" class="group">
               <div class="card hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-0 bg-white shadow-lg group-hover:shadow-3xl overflow-hidden rounded-2xl">
                 <div class="card-body p-0">
+                  <!-- Selection Checkbox -->
+                  <div class="absolute top-4 left-4 z-10">
+                    <input
+                      type="checkbox"
+                      :checked="selectedAds.includes(ad.id)"
+                      @change="toggleAdSelection(ad.id)"
+                      class="w-4 h-4 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                    >
+                  </div>
+                  
                   <!-- Ad Image Preview -->
                   <div v-if="ad.imageUrl || ad.mediaFileUrl" class="relative p-4 flex justify-center">
                     <div class="w-[192px] h-[128px] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden border border-gray-200 shadow-sm rounded-lg cursor-pointer flex items-center justify-center" @click="showAdDetails(ad)">
@@ -154,6 +193,21 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                           </svg>
                           Delete
+                        </button>
+                        <button
+                          @click="exportToFacebook(ad.id)"
+                          :disabled="isExporting"
+                          class="btn btn-xs bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white transition-colors"
+                          title="Export to Facebook Template"
+                        >
+                          <svg v-if="!isExporting" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                          </svg>
+                          <svg v-else class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Export FB
                         </button>
                       </div>
                       <button @click="showAdDetails(ad)" class="btn btn-xs btn-primary group-hover:scale-105 transition-transform">
@@ -279,7 +333,8 @@
       </Dialog>
 
       <!-- Edit Ad Modal -->
-      <Dialog v-model:visible="showEditModal" modal header="Edit Ad" :style="{ width: '90vw', maxWidth: '1200px' }" :breakpoints="{ '960px': '95vw', '641px': '100vw' }">   <div v-if="editingAd">
+      <Dialog v-model:visible="showEditModal" modal header="Edit Ad" :style="{ width: '90vw', maxWidth: '1200px' }" :breakpoints="{ '960px': '95vw', '641px': '100vw' }">
+        <div v-if="editingAd">
           <div class="field mb-4">
             <label for="editAdName" class="block text-sm font-medium text-secondary-700 mb-1">Name:</label>
             <InputText id="editAdName" v-model="editingAd.name" class="w-full" :class="{ 'border-red-500': errors.name }" @blur="validateEditAd()" />
@@ -314,8 +369,6 @@
           <button @click="saveEditedAd" class="btn btn-primary">Save</button>
         </template>
       </Dialog>
-
-
 
       <ConfirmDialog></ConfirmDialog>
       <Toast />
@@ -361,8 +414,10 @@ export default {
       showMediaModal: false,
       searchQuery: '',
       filteredAds: [],
-      errors: {}, // New errors object
+      errors: {},
       standardCTAs: [],
+      selectedAds: [],
+      isExporting: false
     }
   },
   computed: {
@@ -379,8 +434,17 @@ export default {
       }
       return this.filteredAds
     },
+    
     mainContentStyle() {
       return this.sidebarOpen ? { marginLeft: '240px' } : { marginLeft: '0' }
+    },
+    
+    totalPages() {
+      return Math.ceil(this.totalAds / this.size)
+    },
+    
+    totalItems() {
+      return this.totalAds
     }
   },
   async mounted() {
@@ -388,7 +452,7 @@ export default {
     await this.loadCallToActions()
   },
   created() {
-    this.$confirm = this.$root.$confirm; // Ensure $confirm is available
+    this.$confirm = this.$root.$confirm;
   },
   methods: {
     ...mapActions("ad", ["fetchAds", "deleteAd", "updateAd"]),
@@ -403,11 +467,10 @@ export default {
     
     async loadCallToActions() {
       try {
-        const response = await api.providers.getCallToActions('en') // Default to English
+        const response = await api.providers.getCallToActions('en')
         this.standardCTAs = response.data
       } catch (error) {
         console.error("Failed to load call to actions:", error)
-        // Fallback to default CTAs if API fails
         this.standardCTAs = [
           { value: 'SHOP_NOW', label: 'Shop Now' },
           { value: 'LEARN_MORE', label: 'Learn More' },
@@ -439,13 +502,13 @@ export default {
     },
 
     showEditAdModal(ad) {
-      this.editingAd = { ...ad }; // Create a copy to avoid direct mutation
+      this.editingAd = { ...ad };
       this.showEditModal = true;
-      this.errors = {}; // Clear previous errors
+      this.errors = {};
     },
 
     async saveEditedAd() {
-      this.errors = {}; // Clear previous errors
+      this.errors = {};
       let isValid = true;
 
       if (!this.editingAd.name) {
@@ -474,7 +537,6 @@ export default {
       }
 
       try {
-        // Chỉ gửi các trường cho phép update
         const { id, headline, primaryText, description, callToAction, imageUrl, name } = this.editingAd;
         await this.updateAd({
           adId: id,
@@ -485,7 +547,7 @@ export default {
           type: 'success',
           message: 'Ad updated successfully'
         });
-        await this.loadAds(); // Refresh list after update
+        await this.loadAds();
       } catch (error) {
         console.error('Failed to save ad:', error);
         this.$store.dispatch('toast/showToast', {
@@ -494,6 +556,7 @@ export default {
         });
       }
     },
+    
     confirmDeleteAd(adId) {
       this.$confirm.require({
         message: 'Do you really want to delete this ad? This action cannot be undone.',
@@ -507,7 +570,7 @@ export default {
               type: 'success',
               message: 'Ad deleted successfully'
             });
-            await this.loadAds(); // Refresh list after delete
+            await this.loadAds();
           } catch (error) {
             console.error('Failed to delete ad:', error);
             this.$store.dispatch('toast/showToast', {
@@ -524,6 +587,7 @@ export default {
         }
       });
     },
+    
     confirmCancelEdit() {
       this.$confirm.require({
         message: 'Are you sure you want to cancel? Your unsaved changes will be lost.',
@@ -590,12 +654,11 @@ export default {
     },
     
     handleImageError(event) {
-      // Hide image if it fails to load
       event.target.style.display = 'none'
     },
 
     validateEditAd() {
-      this.errors = {}; // Clear previous errors
+      this.errors = {};
       let isValid = true;
 
       if (!this.editingAd.name) {
@@ -617,8 +680,77 @@ export default {
 
       return isValid;
     },
+    
     handleLogout() {
       this.$store.dispatch('auth/logout')
+    },
+    
+    // Facebook Export Methods
+    toggleAdSelection(adId) {
+      const index = this.selectedAds.indexOf(adId)
+      if (index > -1) {
+        this.selectedAds.splice(index, 1)
+      } else {
+        this.selectedAds.push(adId)
+      }
+    },
+    
+    clearSelection() {
+      this.selectedAds = []
+    },
+    
+    async exportAdToFacebook(adId) {
+      try {
+        this.isExporting = true
+        const response = await api.facebookExport.exportAd(adId)
+        
+        // Tạo URL để tải file
+        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `facebook_ad_${adId}.csv`)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(url)
+        
+        this.$toast.success('Đã xuất quảng cáo thành công!')
+      } catch (error) {
+        console.error('Error exporting ad:', error)
+        this.$toast.error('Lỗi khi xuất quảng cáo: ' + (error.response?.data?.message || error.message))
+      } finally {
+        this.isExporting = false
+      }
+    },
+
+    async exportSelectedAdsToFacebook() {
+      if (this.selectedAds.length === 0) {
+        this.$toast.warning('Vui lòng chọn ít nhất một quảng cáo để xuất')
+        return
+      }
+      
+      try {
+        this.isExporting = true
+        const response = await api.facebookExport.exportMultipleAds(this.selectedAds)
+        
+        // Tạo URL để tải file
+        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `facebook_ads_bulk_${Date.now()}.csv`)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(url)
+        
+        this.$toast.success(`Đã xuất ${this.selectedAds.length} quảng cáo thành công!`)
+        this.selectedAds = []
+      } catch (error) {
+        console.error('Error exporting ads:', error)
+        this.$toast.error('Lỗi khi xuất quảng cáo: ' + (error.response?.data?.message || error.message))
+      } finally {
+        this.isExporting = false
+      }
     }
   }
 }
@@ -628,5 +760,18 @@ export default {
 .page-wrapper.sidebar-closed .main-content-wrapper {
   margin-left: 0 !important;
 }
-</style>
 
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>
