@@ -1,7 +1,7 @@
 <template>
   <div class="auth-success-container">
     <div v-if="loading" class="loading-container">
-      <ProgressSpinner />
+      <div class="spinner spinner-lg"></div>
       <h2>Processing login...</h2>
     </div>
   </div>

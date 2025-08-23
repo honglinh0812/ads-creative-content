@@ -1,9 +1,10 @@
 module.exports = {
   devServer: {
     port: 8081,
+    historyApiFallback: true,
     proxy: {
       '/api': {
-        target: 'https://oriole-relaxing-humbly.ngrok-free.app',
+        target: 'http://api.linhnh.site:8080',
         changeOrigin: true
       }
     }
