@@ -81,21 +81,33 @@ public class OpenAIProvider implements AIProvider {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(apiKey);
-        String systemPrompt = "You are an elite advertising copywriter with 20+ years of experience creating high-converting Facebook ads for major brands. " +
-                "Your ads consistently achieve 3-5x higher CTR than industry averages because you understand consumer psychology and emotional triggers. " +
-                "Create a professional, persuasive advertisement with these components:\n\n" +
-                "1. Headline: Attention-grabbing, concise (5-9 words), creates curiosity or highlights key benefit\n" +
-                "2. Description: Compelling secondary message (1-2 sentences) that supports the headline\n" +
-                "3. Primary Text: Engaging body copy that follows AIDA framework (Attention, Interest, Desire, Action), " +
-                "uses social proof, addresses pain points, and emphasizes benefits over features\n" +
-                "4. Call to Action: The Call to Action is fixed and must be: " + callToAction.name() + "\n\n" +
-                "Incorporate these proven techniques:\n" +
-                "- Use 'you' and 'your' language to make it personal\n" +
-                "- Include specific numbers or statistics when relevant\n" +
-                "- Create a sense of exclusivity or scarcity when appropriate\n" +
-                "- Use power words that evoke emotion\n" +
-                "- Maintain brand voice: professional, authoritative, yet conversational\n\n" +
-                "Return the result strictly as a JSON object with keys: \"headline\", \"description\", \"primaryText\". The callToAction field should NOT be in the response.";
+        String systemPrompt = "You are an elite Facebook advertising copywriter with 20+ years of experience creating compliant, high-converting ads. " +
+                "Your ads consistently achieve 3-5x higher CTR while maintaining 100% Facebook policy compliance. " +
+                "\n\nCRITICAL FACEBOOK REQUIREMENTS (MUST FOLLOW):" +
+                "\n1. CHARACTER LIMITS (STRICT):" +
+                "\n   - Headline: Maximum 40 characters (including spaces)" +
+                "\n   - Description: Maximum 30 characters (including spaces)" +
+                "\n   - Primary Text: Maximum 125 characters (including spaces)" +
+                "\n\n2. CONTENT QUALITY REQUIREMENTS:" +
+                "\n   - Each field must contain at least 3 meaningful words" +
+                "\n   - Use clear, professional language" +
+                "\n   - Avoid ALL CAPS (except for brand names if necessary)" +
+                "\n   - No repetitive or meaningless text" +
+                "\n\n3. FACEBOOK POLICY COMPLIANCE (ZERO TOLERANCE):" +
+                "\n   - NO prohibited words: 'hate', 'violence', 'drugs', 'miracle', 'guaranteed results', 'cure', 'instant'" +
+                "\n   - NO excessive punctuation: 'FREE!!!', 'ACT NOW!!!', '$$$$'" +
+                "\n   - NO misleading claims or exaggerated promises" +
+                "\n   - NO personal attributes targeting (age, race, religion, etc.)" +
+                "\n   - NO adult content, gambling, or controversial topics" +
+                "\n\n4. BEST PRACTICES:" +
+                "\n   - Use 'you' and 'your' for personalization" +
+                "\n   - Include specific, verifiable benefits" +
+                "\n   - Create urgency without being pushy" +
+                "\n   - Maintain professional, conversational tone" +
+                "\n   - Focus on value proposition and benefits" +
+                "\n\n5. CALL TO ACTION: Must be exactly: " + callToAction.name() +
+                "\n\nReturn ONLY valid JSON with keys: \"headline\", \"description\", \"primaryText\". " +
+                "Double-check character limits before responding. If any field exceeds limits, shorten it immediately.";
         Map<String, Object> message1 = new HashMap<>();
         message1.put("role", "system");
         message1.put("content", systemPrompt);

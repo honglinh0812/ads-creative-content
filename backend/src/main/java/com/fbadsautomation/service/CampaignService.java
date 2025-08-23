@@ -65,12 +65,16 @@ public class CampaignService {
         } else {
             // Check if objective is supported by Facebook
             switch (campaign.getObjective()) {
-                case AWARENESS:
+                case BRAND_AWARENESS:
+                case REACH:
                 case TRAFFIC:
                 case ENGAGEMENT:
-                case LEADS:
-                case APP_PROMOTION:
-                case SALES:
+                case APP_INSTALLS:
+                case VIDEO_VIEWS:
+                case LEAD_GENERATION:
+                case CONVERSIONS:
+                case CATALOG_SALES:
+                case STORE_TRAFFIC:
                     // These are valid Facebook objectives
                     break;
                 default:

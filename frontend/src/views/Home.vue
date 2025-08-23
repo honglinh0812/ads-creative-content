@@ -2,18 +2,18 @@
   <div class="home">
     <div class="redirect-message">
       <h2>Redirecting...</h2>
-      <ProgressSpinner />
+      <a-spin size="large" />
     </div>
   </div>
 </template>
 
 <script>
-import ProgressSpinner from 'primevue/progressspinner'
+import { Spin } from 'ant-design-vue'
 
 export default {
   name: 'Home',
   components: {
-    ProgressSpinner
+    ASpin: Spin
   },
   mounted() {
     // Check if user is authenticated

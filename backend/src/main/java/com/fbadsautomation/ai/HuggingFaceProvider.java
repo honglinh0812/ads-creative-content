@@ -86,9 +86,15 @@ public class HuggingFaceProvider implements AIProvider {
         headers.setBearerAuth(apiKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
         // Customize prompt for Hugging Face (might need different structure)
-        String hgPrompt = "Generate a professional Facebook ad with a headline, description, and primary text for the following topic: " + prompt;
+        String hgPrompt;
         if ("vi".equalsIgnoreCase(language)) {
-            hgPrompt = "Tạo một quảng cáo Facebook chuyên nghiệp với tiêu đề, mô tả và nội dung chính cho chủ đề sau: " + prompt;
+            hgPrompt = "Tạo quảng cáo Facebook tuân thủ chính sách với: Tiêu đề (tối đa 40 ký tự), Mô tả (tối đa 30 ký tự), Nội dung chính (tối đa 125 ký tự). " +
+                    "Không dùng từ cấm: ghét, bạo lực, ma túy, phép màu, đảm bảo, chữa khỏi, tức thì. " +
+                    "Chủ đề: " + prompt;
+        } else {
+            hgPrompt = "Create Facebook policy-compliant ad with: Headline (max 40 chars), Description (max 30 chars), Primary Text (max 125 chars). " +
+                    "Avoid prohibited words: hate, violence, drugs, miracle, guaranteed, cure, instant. " +
+                    "Topic: " + prompt;
         }
         for (int i = 0; i < numberOfVariations; i++) {
             Map<String, Object> requestBody = new HashMap<>();

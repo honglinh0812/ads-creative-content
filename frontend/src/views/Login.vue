@@ -5,7 +5,7 @@
       <div class="gradient-orb orb-2"></div>
       <div class="gradient-orb orb-3"></div>
     </div>
-    <Card class="login-card glass-effect">
+    <a-card class="login-card glass-effect">
       <template #title>
         <div class="login-header">
           <div class="logo-container">
@@ -14,108 +14,252 @@
           <h1 class="login-title">Facebook Ads Automation</h1>
         </div>
       </template>
-      <template #content>
-        <div class="login-content">
-          <p class="login-description">
-            Create and manage Facebook ads with AI-powered content generation
-          </p>
+      <div class="login-content">
+        <p class="login-description">
+          Create and manage Facebook ads with AI-powered content generation
+        </p>
 
-          <div v-if="error" class="login-error">
-            <i class="pi pi-exclamation-circle"></i>
-            <span>{{ error }}</span>
-          </div>
+        <a-alert
+          v-if="error"
+          :message="error"
+          type="error"
+          show-icon
+          closable
+          style="margin-bottom: 24px;"
+          @close="error = ''"
+        />
 
-          <div v-if="mode === 'login'" class="login-options">
-            <div class="login-methods">
-              <Button 
-                label="Login with Facebook" 
-                icon="pi pi-facebook" 
-                class="facebook-login-button"
-                @click="handleLoginFacebook"
-                :loading="loadingFacebook"
-              />
-              <div class="or-divider">Or</div>
-              <form @submit.prevent="handleLoginApp" class="login-form">
-                <InputText v-model="loginForm.usernameOrEmail" placeholder="Username or Email" class="login-input" autocomplete="username" />
-                <InputText v-model="loginForm.password" type="password" placeholder="Password" class="login-input" autocomplete="current-password" />
-                <Button label="Login" type="submit" class="btn-login" :loading="loadingLoginApp" />
-              </form>
-              <div class="login-links">
-                <a href="#" @click.prevent="mode = 'register'">Register</a>
-                <span>|</span>
-                <a href="#" @click.prevent="mode = 'forgot'">Forgot password?</a>
-              </div>
-            </div>
-          </div>
-
-          <div v-else-if="mode === 'register'" class="register-form-wrapper">
-            <form @submit.prevent="handleRegister" class="register-form">
-              <InputText v-model="registerForm.username" placeholder="Username" class="login-input" autocomplete="username" />
-              <InputText v-model="registerForm.email" placeholder="Email" class="login-input" autocomplete="email" />
-              <InputText v-model="registerForm.password" type="password" placeholder="Password" class="login-input" autocomplete="new-password" />
-              <InputText v-model="registerForm.confirmPassword" type="password" placeholder="Confirm password" class="login-input" autocomplete="new-password" />
-              <Button label="Register" type="submit" class="btn-login" :loading="loadingRegister" />
+        <div v-if="mode === 'login'" class="login-options">
+          <div class="login-methods">
+            <a-button 
+              type="primary"
+              size="large"
+              class="facebook-login-button"
+              @click="handleLoginFacebook"
+              :loading="loadingFacebook"
+              block
+            >
+              <template #icon>
+                <facebook-outlined />
+              </template>
+              Login with Facebook
+            </a-button>
+            
+            <a-divider>Or</a-divider>
+            
+            <form @submit.prevent="handleLoginApp" class="login-form">
+              <a-input 
+                v-model:value="loginForm.usernameOrEmail" 
+                placeholder="Username or Email" 
+                size="large"
+                autocomplete="username"
+              >
+                <template #prefix>
+                  <user-outlined />
+                </template>
+              </a-input>
+              
+              <a-input-password 
+                v-model:value="loginForm.password" 
+                placeholder="Password" 
+                size="large"
+                autocomplete="current-password"
+              >
+                <template #prefix>
+                  <lock-outlined />
+                </template>
+              </a-input-password>
+              
+              <a-button 
+                type="primary" 
+                html-type="submit" 
+                size="large"
+                :loading="loadingLoginApp"
+                block
+              >
+                Login
+              </a-button>
             </form>
+            
             <div class="login-links">
-              <a href="#" @click.prevent="mode = 'login'">Back to login</a>
-            </div>
-          </div>
-
-          <div v-else-if="mode === 'forgot'" class="forgot-form-wrapper">
-            <form @submit.prevent="handleForgotPassword" class="forgot-form">
-              <InputText v-model="forgotForm.email" placeholder="Enter your email" class="login-input" autocomplete="email" />
-              <Button label="Send password reset request" type="submit" class="btn-login" :loading="loadingForgot" />
-            </form>
-            <div class="login-links">
-              <a href="#" @click.prevent="mode = 'login'">Back to login</a>
-            </div>
-            <div v-if="forgotSuccess" class="forgot-success">Email sent to reset password (if email exists).</div>
-          </div>
-
-          <div class="login-features">
-            <h3 class="features-title">Features</h3>
-            <div class="features-grid">
-              <div class="feature-item">
-                <div class="feature-icon">
-                  <i class="pi pi-bolt"></i>
-                </div>
-                <span>AI-powered ad content generation</span>
-              </div>
-              <div class="feature-item">
-                <div class="feature-icon">
-                  <i class="pi pi-chart-line"></i>
-                </div>
-                <span>Automated campaign management</span>
-              </div>
-              <div class="feature-item">
-                <div class="feature-icon">
-                  <i class="pi pi-images"></i>
-                </div>
-                <span>Multiple ad formats support</span>
-              </div>
-              <div class="feature-item">
-                <div class="feature-icon">
-                  <i class="pi pi-shield"></i>
-                </div>
-                <span>Secure Facebook integration</span>
-              </div>
+              <a-space>
+                <a-button type="link" @click="mode = 'register'">Register</a-button>
+                <a-divider type="vertical" />
+                <a-button type="link" @click="mode = 'forgot'">Forgot password?</a-button>
+              </a-space>
             </div>
           </div>
         </div>
-      </template>
-    </Card>
+
+        <div v-else-if="mode === 'register'" class="register-form-wrapper">
+          <form @submit.prevent="handleRegister" class="register-form">
+            <a-input 
+              v-model:value="registerForm.username" 
+              placeholder="Username" 
+              size="large"
+              autocomplete="username"
+            >
+              <template #prefix>
+                <user-outlined />
+              </template>
+            </a-input>
+            
+            <a-input 
+              v-model:value="registerForm.email" 
+              placeholder="Email" 
+              size="large"
+              autocomplete="email"
+            >
+              <template #prefix>
+                <mail-outlined />
+              </template>
+            </a-input>
+            
+            <a-input-password 
+              v-model:value="registerForm.password" 
+              placeholder="Password" 
+              size="large"
+              autocomplete="new-password"
+            >
+              <template #prefix>
+                <lock-outlined />
+              </template>
+            </a-input-password>
+            
+            <a-input-password 
+              v-model:value="registerForm.confirmPassword" 
+              placeholder="Confirm password" 
+              size="large"
+              autocomplete="new-password"
+            >
+              <template #prefix>
+                <lock-outlined />
+              </template>
+            </a-input-password>
+            
+            <a-button 
+              type="primary" 
+              html-type="submit" 
+              size="large"
+              :loading="loadingRegister"
+              block
+            >
+              Register
+            </a-button>
+          </form>
+          
+          <div class="login-links">
+            <a-button type="link" @click="mode = 'login'">Back to login</a-button>
+          </div>
+        </div>
+
+        <div v-else-if="mode === 'forgot'" class="forgot-form-wrapper">
+          <form @submit.prevent="handleForgotPassword" class="forgot-form">
+            <a-input 
+              v-model:value="forgotForm.email" 
+              placeholder="Enter your email" 
+              size="large"
+              autocomplete="email"
+            >
+              <template #prefix>
+                <mail-outlined />
+              </template>
+            </a-input>
+            
+            <a-button 
+              type="primary" 
+              html-type="submit" 
+              size="large"
+              :loading="loadingForgot"
+              block
+            >
+              Send password reset request
+            </a-button>
+          </form>
+          
+          <div class="login-links">
+            <a-button type="link" @click="mode = 'login'">Back to login</a-button>
+          </div>
+          
+          <a-alert
+            v-if="forgotSuccess"
+            message="Email sent to reset password (if email exists)."
+            type="success"
+            show-icon
+            style="margin-top: 16px;"
+          />
+        </div>
+
+        <div class="login-features">
+          <a-typography-title :level="3" class="features-title">Features</a-typography-title>
+          <a-row :gutter="[16, 16]" class="features-grid">
+            <a-col :span="12">
+              <div class="feature-item">
+                <div class="feature-icon">
+                  <thunderbolt-outlined />
+                </div>
+                <span>AI-powered ad content generation</span>
+              </div>
+            </a-col>
+            
+            <a-col :span="12">
+              <div class="feature-item">
+                <div class="feature-icon">
+                  <line-chart-outlined />
+                </div>
+                <span>Automated campaign management</span>
+              </div>
+            </a-col>
+            
+            <a-col :span="12">
+              <div class="feature-item">
+                <div class="feature-icon">
+                  <picture-outlined />
+                </div>
+                <span>Multiple ad formats support</span>
+              </div>
+            </a-col>
+            
+            <a-col :span="12">
+              <div class="feature-item">
+                <div class="feature-icon">
+                  <safety-outlined />
+                </div>
+                <span>Secure Facebook integration</span>
+              </div>
+            </a-col>
+          </a-row>
+        </div>
+      </div>
+    </a-card>
   </div>
 </template>
 
 <script>
-import InputText from 'primevue/inputtext'
-import Button from 'primevue/button'
-import Card from 'primevue/card'
 import { mapActions } from 'vuex'
+import {
+  FacebookOutlined,
+  UserOutlined,
+  LockOutlined,
+  MailOutlined,
+  ThunderboltOutlined,
+  LineChartOutlined,
+  PictureOutlined,
+  SafetyOutlined
+} from '@ant-design/icons-vue'
 
 export default {
   name: 'Login',
-  components: { InputText, Button, Card },
+  components: {
+    FacebookOutlined,
+    UserOutlined,
+    LockOutlined,
+    MailOutlined,
+    ThunderboltOutlined,
+    LineChartOutlined,
+    PictureOutlined,
+    SafetyOutlined
+  },
   data() {
     return {
       mode: 'login', // 'login' | 'register' | 'forgot'
@@ -325,6 +469,15 @@ export default {
     border: 1px solid rgb(255 255 255 / 20%);
     box-shadow: 0 25px 50px rgb(0 0 0 / 10%);
     
+    :deep(.ant-card-head) {
+      border-bottom: none;
+      padding: 24px 24px 0;
+    }
+    
+    :deep(.ant-card-body) {
+      padding: 0 24px 24px;
+    }
+    
     .login-header {
       display: flex;
       flex-direction: column;
@@ -376,29 +529,11 @@ export default {
         line-height: 1.6;
       }
       
-      .login-error {
-        display: flex;
-        align-items: center;
-        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
-        width: 100%;
-        box-shadow: 0 5px 15px rgb(255 107 107 / 30%);
-        
-        i {
-          margin-right: 0.75rem;
-          font-size: 1.2rem;
-        }
-      }
-      
       .facebook-login-button {
         background: linear-gradient(135deg, #1877f2, #42a5f5);
         border: none;
-        width: 100%;
         font-size: 1.1rem;
-        padding: 1rem;
+        height: 48px;
         border-radius: 12px;
         box-shadow: 0 10px 30px rgb(24 119 242 / 30%);
         transition: all 0.3s ease;
@@ -406,6 +541,11 @@ export default {
         &:hover {
           transform: translateY(-2px);
           box-shadow: 0 15px 40px rgb(24 119 242 / 40%);
+          background: linear-gradient(135deg, #1877f2, #42a5f5);
+        }
+        
+        &:focus {
+          background: linear-gradient(135deg, #1877f2, #42a5f5);
         }
       }
       
@@ -422,10 +562,6 @@ export default {
         }
         
         .features-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1rem;
-          
           .feature-item {
             display: flex;
             align-items: center;
@@ -433,6 +569,7 @@ export default {
             background: rgb(24 119 242 / 5%);
             border-radius: 12px;
             transition: all 0.3s ease;
+            height: 100%;
             
             &:hover {
               background: rgb(24 119 242 / 10%);
@@ -450,7 +587,7 @@ export default {
               margin-right: 0.75rem;
               flex-shrink: 0;
               
-              i {
+              .anticon {
                 color: white;
                 font-size: 1.2rem;
               }
@@ -483,15 +620,6 @@ export default {
   align-items: center;
 }
 
-.or-divider {
-  margin: 1.5rem 0 1rem;
-  color: #888;
-  font-weight: 600;
-  text-align: center;
-  width: 100%;
-  position: relative;
-}
-
 .login-form, .register-form, .forgot-form {
   width: 100%;
   display: flex;
@@ -500,33 +628,10 @@ export default {
   margin-bottom: 1rem;
 }
 
-.login-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  font-size: 1rem;
-}
-
-.btn-login {
-  width: 100%;
-  padding: 0.75rem;
-  border-radius: 8px;
-  font-size: 1.1rem;
-}
-
 .login-links {
   display: flex;
   justify-content: center;
-  gap: 0.75rem;
   margin-bottom: 1rem;
-  font-size: 0.95rem;
-}
-
-.forgot-success {
-  color: #2563eb;
-  margin-top: 1rem;
-  text-align: center;
 }
 
 @keyframes float {
@@ -573,7 +678,9 @@ export default {
       .login-content {
         .login-features {
           .features-grid {
-            grid-template-columns: 1fr;
+            :deep(.ant-col) {
+              span: 24 !important;
+            }
           }
         }
       }

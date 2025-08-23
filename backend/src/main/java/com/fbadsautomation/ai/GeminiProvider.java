@@ -48,15 +48,33 @@ public class GeminiProvider implements AIProvider {
         // Updated prompt for JSON output
         String fullPrompt;
         if ("en".equalsIgnoreCase(language)) {
-            fullPrompt = "You are a professional ad copywriter. " +
-                    "Please generate " + numberOfVariations + " different ad variations for: \"" + prompt + "\". " +
-                    "Each ad should include: headline, description, primaryText, and callToAction. " +
-                    "Return the result as a JSON list of " + numberOfVariations + " objects, each with keys: headline, description, primaryText, callToAction.";
+            fullPrompt = "You are an expert Facebook advertising copywriter with deep knowledge of Facebook's advertising policies. " +
+                    "Create " + numberOfVariations + " compliant, high-converting ad variations for: \"" + prompt + "\". " +
+                    "\n\nFACEBOOK COMPLIANCE CHECKLIST:" +
+                    "\n✓ Headline: Exactly 40 characters or less" +
+                    "\n✓ Description: Exactly 30 characters or less" +
+                    "\n✓ Primary Text: Exactly 125 characters or less" +
+                    "\n✓ No prohibited words (hate, violence, drugs, miracle, guaranteed, cure, instant)" +
+                    "\n✓ No excessive punctuation (!!!, $$$, ???)" +
+                    "\n✓ No ALL CAPS (except brand names)" +
+                    "\n✓ Professional, clear language" +
+                    "\n✓ Minimum 3 words per field" +
+                    "\n\nBefore finalizing each ad, count characters and verify compliance. " +
+                    "Return as JSON array of " + numberOfVariations + " objects: {\"headline\": \"...\", \"description\": \"...\", \"primaryText\": \"...\", \"callToAction\": \"...\"}.";
         } else {
-            fullPrompt = "Bạn là một chuyên gia viết quảng cáo. " +
-                    "Hãy tạo " + numberOfVariations + " mẫu quảng cáo khác nhau cho: \"" + prompt + "\". " +
-                    "Mỗi mẫu quảng cáo cần có tiêu đề (headline), mô tả ngắn (description), nội dung chính (primaryText) và lời kêu gọi hành động (callToAction). " +
-                    "Trả về kết quả dưới dạng một danh sách JSON gồm " + numberOfVariations + " đối tượng, mỗi đối tượng có các trường: headline, description, primaryText, callToAction.";
+            fullPrompt = "Bạn là chuyên gia viết quảng cáo Facebook am hiểu sâu về chính sách quảng cáo Facebook. " +
+                    "Tạo " + numberOfVariations + " mẫu quảng cáo tuân thủ và hiệu quả cho: \"" + prompt + "\". " +
+                    "\n\nDANH SÁCH KIỂM TRA TUÂN THỦ FACEBOOK:" +
+                    "\n✓ Tiêu đề: Chính xác 40 ký tự hoặc ít hơn" +
+                    "\n✓ Mô tả: Chính xác 30 ký tự hoặc ít hơn" +
+                    "\n✓ Nội dung chính: Chính xác 125 ký tự hoặc ít hơn" +
+                    "\n✓ Không có từ cấm (ghét, bạo lực, ma túy, phép màu, đảm bảo, chữa khỏi, tức thì)" +
+                    "\n✓ Không dấu câu thừa (!!!, $$$, ???)" +
+                    "\n✓ Không viết hoa toàn bộ (trừ tên thương hiệu)" +
+                    "\n✓ Ngôn ngữ chuyên nghiệp, rõ ràng" +
+                    "\n✓ Tối thiểu 3 từ mỗi trường" +
+                    "\n\nTrước khi hoàn thiện mỗi quảng cáo, hãy đếm ký tự và xác minh tuân thủ. " +
+                    "Trả về dạng JSON array gồm " + numberOfVariations + " đối tượng: {\"headline\": \"...\", \"description\": \"...\", \"primaryText\": \"...\", \"callToAction\": \"...\"}.";
         }
         Map<String, Object> contentPart = new HashMap<>();
         contentPart.put("text", fullPrompt);

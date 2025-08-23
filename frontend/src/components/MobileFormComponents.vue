@@ -14,6 +14,9 @@
           :placeholder="placeholder"
           :disabled="disabled"
           :readonly="readonly"
+          :required="required"
+          :aria-invalid="hasError"
+          :aria-describedby="hasError ? `${fieldId}-error` : helpText ? `${fieldId}-help` : undefined"
           :class="[
             'mobile-input',
             { 'has-error': hasError },
@@ -27,11 +30,11 @@
           <i :class="iconClass"></i>
         </div>
       </div>
-      <div v-if="hasError && errorMessage" class="mobile-error-message">
-        <i class="pi pi-exclamation-triangle"></i>
+      <div v-if="hasError && errorMessage" class="mobile-error-message" :id="`${fieldId}-error`" role="alert" aria-live="polite">
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
         {{ errorMessage }}
       </div>
-      <div v-if="helpText" class="mobile-help-text">
+      <div v-if="helpText" class="mobile-help-text" :id="`${fieldId}-help`">
         {{ helpText }}
       </div>
     </div>
@@ -50,6 +53,10 @@
           :disabled="disabled"
           :readonly="readonly"
           :rows="rows || 4"
+          :required="required"
+          :aria-invalid="hasError"
+          :aria-describedby="hasError ? `${fieldId}-error` : helpText ? `${fieldId}-help` : undefined"
+          :maxlength="maxLength"
           :class="[
             'mobile-textarea',
             { 'has-error': hasError }
@@ -62,11 +69,11 @@
           {{ (modelValue || '').length }} / {{ maxLength }}
         </div>
       </div>
-      <div v-if="hasError && errorMessage" class="mobile-error-message">
-        <i class="pi pi-exclamation-triangle"></i>
+      <div v-if="hasError && errorMessage" class="mobile-error-message" :id="`${fieldId}-error`" role="alert" aria-live="polite">
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
         {{ errorMessage }}
       </div>
-      <div v-if="helpText" class="mobile-help-text">
+      <div v-if="helpText" class="mobile-help-text" :id="`${fieldId}-help`">
         {{ helpText }}
       </div>
     </div>
@@ -82,6 +89,9 @@
           :id="fieldId"
           :value="modelValue"
           :disabled="disabled"
+          :required="required"
+          :aria-invalid="hasError"
+          :aria-describedby="hasError ? `${fieldId}-error` : helpText ? `${fieldId}-help` : undefined"
           :class="[
             'mobile-select',
             { 'has-error': hasError }

@@ -1,16 +1,12 @@
 <template>
   <!-- Nút hamburger ngoài sidebar, chỉ hiện khi sidebar đóng -->
   <button v-if="!sidebarOpen" class="sidebar-hamburger-fixed" @click="$emit('toggle')" aria-label="Mở sidebar">
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-    </svg>
+    <MenuOutlined class="w-6 h-6" />
   </button>
   <aside :class="['app-sidebar', { open: sidebarOpen }]">
     <!-- Nút 3 gạch trong sidebar, chỉ hiện khi sidebar mở -->
     <button v-if="sidebarOpen" class="sidebar-hamburger" @click="$emit('toggle')" aria-label="Đóng sidebar">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-      </svg>
+      <MenuOutlined class="w-6 h-6" />
     </button>
     <div v-if="sidebarOpen" class="sidebar-content">
       <div class="sidebar-header">
@@ -33,13 +29,14 @@
       </nav>
       <div class="sidebar-actions">
         <button v-if="!isDashboard" class="btn btn-sm btn-outline w-full mb-2" @click="goDashboard">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M3 12l6-6m-6 6l6 6"></path>
-          </svg>
+          <ArrowLeftOutlined class="w-4 h-4 mr-1" />
           Back to Dashboard
         </button>
       </div>
       <div class="sidebar-footer">
+        <div class="theme-toggle-section">
+          <DarkModeToggle />
+        </div>
         <div class="user-info">
           <span class="user-avatar">{{ userInitials }}</span>
           <span class="user-name">{{ userName }}</span>
@@ -56,10 +53,19 @@
 import { computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
-import { HomeIcon, SparklesIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
+import { HomeOutlined, ThunderboltOutlined, FileTextOutlined, MenuOutlined, ArrowLeftOutlined } from '@ant-design/icons-vue'
+import DarkModeToggle from '@/components/DarkModeToggle.vue'
 
 export default {
   name: 'AppSidebar',
+  components: {
+    HomeOutlined,
+    ThunderboltOutlined,
+    FileTextOutlined,
+    MenuOutlined,
+    ArrowLeftOutlined,
+    DarkModeToggle
+  },
   props: {
     sidebarOpen: {
       type: Boolean,
@@ -76,9 +82,9 @@ export default {
     const userInitials = computed(() => userName.value.split(' ').map(w => w[0]).join('').toUpperCase())
     // Chỉ 3 mục chính
     const menu = [
-      { label: 'Dashboard', path: '/dashboard', icon: HomeIcon, match: ['dashboard'] },
-      { label: 'Campaigns', path: '/campaigns', icon: SparklesIcon, match: ['campaign', 'campaigns'] },
-      { label: 'Ads', path: '/ads', icon: ChartBarIcon, match: ['ad', 'ads'] }
+      { label: 'Dashboard', path: '/dashboard', icon: HomeOutlined, match: ['dashboard'] },
+      { label: 'Campaigns', path: '/campaigns', icon: ThunderboltOutlined, match: ['campaign', 'campaigns'] },
+      { label: 'Ads', path: '/ads', icon: FileTextOutlined, match: ['ad', 'ads'] }
     ]
     // Xác định active
     function isActive(item) {
@@ -233,6 +239,23 @@ export default {
   margin-top: auto;
 }
 
+.theme-toggle-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.dark .theme-toggle-section {
+  border-bottom-color: #374151;
+}
+
+.dark .sidebar-footer {
+  border-top-color: #374151;
+}
+
 .user-info {
   display: flex;
   align-items: center;
@@ -314,4 +337,4 @@ export default {
   min-width: 300px;
   text-align: center;
 }
-</style> 
+</style>

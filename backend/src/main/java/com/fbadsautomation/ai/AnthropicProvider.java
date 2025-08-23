@@ -45,14 +45,33 @@ public class AnthropicProvider implements AIProvider {
         headers.set("anthropic-version", "2023-06-01");
         String fullPrompt;
         if ("en".equalsIgnoreCase(language)) {
-            fullPrompt = "You are a professional ad copywriter. " +
-                    "Please generate " + numberOfVariations + " different ad variations for: \"" + prompt + "\". " +
-                    "Each ad should include: headline, description, primaryText, and callToAction. " +
-                    "Return the result as a JSON list of " + numberOfVariations + " objects, each with keys: headline, description, primaryText, callToAction."; } else {
-            fullPrompt = "Bạn là một chuyên gia viết quảng cáo. " +
-                    "Hãy tạo " + numberOfVariations + " mẫu quảng cáo khác nhau cho: \"" + prompt + "\". " +
-                    "Mỗi mẫu quảng cáo cần có tiêu đề (headline), mô tả ngắn (description), nội dung chính (primaryText) và lời kêu gọi hành động (callToAction). " +
-                    "Trả về kết quả dưới dạng một danh sách JSON gồm " + numberOfVariations + " đối tượng, mỗi đối tượng có các trường: headline, description, primaryText, callToAction.";
+            fullPrompt = "You are a professional Facebook ad copywriter specializing in policy-compliant, high-converting ads. " +
+                    "Generate " + numberOfVariations + " different ad variations for: \"" + prompt + "\". " +
+                    "\n\nSTRICT FACEBOOK REQUIREMENTS:" +
+                    "\n- Headline: MAX 40 characters (count carefully)" +
+                    "\n- Description: MAX 30 characters (count carefully)" +
+                    "\n- Primary Text: MAX 125 characters (count carefully)" +
+                    "\n- Each field needs minimum 3 meaningful words" +
+                    "\n\nFORBIDDEN CONTENT:" +
+                    "\n- Words: hate, violence, drugs, miracle, guaranteed, cure, instant, free (with exclamation)" +
+                    "\n- Excessive punctuation: !!!, $$$, ???" +
+                    "\n- ALL CAPS text (except brand names)" +
+                    "\n- Misleading or exaggerated claims" +
+                    "\n\nReturn as JSON array of " + numberOfVariations + " objects with keys: headline, description, primaryText, callToAction.";
+        } else {
+            fullPrompt = "Bạn là chuyên gia viết quảng cáo Facebook tuân thủ chính sách và hiệu quả cao. " +
+                    "Tạo " + numberOfVariations + " mẫu quảng cáo khác nhau cho: \"" + prompt + "\". " +
+                    "\n\nYÊU CẦU FACEBOOK NGHIÊM NGẶT:" +
+                    "\n- Tiêu đề (headline): TỐI ĐA 40 ký tự (đếm cẩn thận)" +
+                    "\n- Mô tả (description): TỐI ĐA 30 ký tự (đếm cẩn thận)" +
+                    "\n- Nội dung chính (primaryText): TỐI ĐA 125 ký tự (đếm cẩn thận)" +
+                    "\n- Mỗi trường cần tối thiểu 3 từ có nghĩa" +
+                    "\n\nNỘI DUNG CẤM:" +
+                    "\n- Từ ngữ: ghét, bạo lực, ma túy, phép màu, đảm bảo, chữa khỏi, tức thì, miễn phí (với dấu chấm than)" +
+                    "\n- Dấu câu thừa: !!!, $$$, ???" +
+                    "\n- Viết hoa toàn bộ (trừ tên thương hiệu)" +
+                    "\n- Tuyên bố sai lệch hoặc phóng đại" +
+                    "\n\nTrả về dạng JSON array gồm " + numberOfVariations + " đối tượng với keys: headline, description, primaryText, callToAction.";
         }
 
         Map<String, Object> requestBody = new HashMap<>();

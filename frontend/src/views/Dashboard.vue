@@ -1,420 +1,465 @@
 <template>
-  <div :class="['page-wrapper', { 'sidebar-closed': !sidebarOpen }]">
-    <AppSidebar :sidebarOpen="sidebarOpen" @toggle="toggleSidebar" @logout="handleLogout" />
-    <div class="main-content-wrapper" :style="mainContentStyle">
-          <!-- Page Header -->
-          <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
-            <div>
-              <h1 class="text-3xl font-bold text-secondary-900">Dashboard</h1>
-              <p class="text-secondary-600">Overview of your campaigns and ads</p>
-            </div>
-            <div class="flex gap-2">
-              <router-link to="/campaign/create" class="btn btn-primary btn-lg flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
+  <div class="dashboard-container">
+    <!-- Mobile Header -->
+    <MobileHeader 
+      v-if="isMobile" 
+      @toggle-mobile-menu="toggleMobileMenu"
+    />
+    
+    <!-- Desktop Page Header -->
+    <div v-if="!isMobile" class="page-header">
+      <a-page-header
+        title="Dashboard"
+        sub-title="Overview of your campaigns and ads"
+      >
+        <template #extra>
+          <a-space>
+            <DarkModeToggle @theme-changed="onThemeChanged" />
+            <router-link to="/campaign/create">
+              <a-button type="primary" size="large">
+                <template #icon>
+                  <plus-outlined />
+                </template>
                 New Campaign
-              </router-link>
-              <router-link to="/ad/create" class="btn btn-success btn-lg flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
+              </a-button>
+            </router-link>
+            <router-link to="/ad/create">
+              <a-button type="primary" size="large" style="background: #52c41a; border-color: #52c41a;">
+                <template #icon>
+                  <plus-outlined />
+                </template>
                 New Ad
-              </router-link>
-            </div>
+              </a-button>
+            </router-link>
+          </a-space>
+        </template>
+      </a-page-header>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="dashboardLoading" class="loading-container">
+      <LoadingSkeleton v-if="isMobile" type="card" :rows="3" />
+      <a-row v-else :gutter="[16, 16]">
+        <a-col :span="6" v-for="i in 4" :key="i">
+          <a-skeleton active>
+            <a-skeleton-input style="width: 100%; height: 180px;" active />
+          </a-skeleton>
+        </a-col>
+      </a-row>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="dashboardError" class="error-container">
+      <a-alert
+        message="Error loading dashboard"
+        :description="dashboardError"
+        type="error"
+        show-icon
+        closable
+      >
+        <template #action>
+          <a-button size="small" @click="loadDashboardData">
+            Try Again
+          </a-button>
+        </template>
+      </a-alert>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div v-else-if="hasDashboardData">
+      <!-- Mobile Dashboard Stats -->
+      <MobileDashboardStats 
+        v-if="isMobile"
+        :stats="mobileStats"
+        :quick-actions="quickActions"
+        :recent-activity="recentActivity"
+        @view-all-activity="navigateToActivity"
+      />
+      
+      <!-- Desktop Stats Cards -->
+      <a-row v-else :gutter="[16, 16]" style="margin-bottom: 32px;">
+        <a-col :xs="24" :sm="12" :lg="6">
+          <a-card class="stat-card" hoverable>
+            <a-statistic
+              title="Total Campaigns"
+              :value="stats.totalCampaigns || 0"
+              :value-style="{ color: '#1890ff', fontSize: '32px', fontWeight: 'bold' }"
+            >
+              <template #prefix>
+                <folder-outlined style="color: #1890ff; margin-right: 8px;" />
+              </template>
+            </a-statistic>
+          </a-card>
+        </a-col>
+        
+        <a-col :xs="24" :sm="12" :lg="6">
+          <a-card class="stat-card" hoverable>
+            <a-statistic
+              title="Total Ads"
+              :value="stats.totalAds || 0"
+              :value-style="{ color: '#52c41a', fontSize: '32px', fontWeight: 'bold' }"
+            >
+              <template #prefix>
+                <file-text-outlined style="color: #52c41a; margin-right: 8px;" />
+              </template>
+            </a-statistic>
+          </a-card>
+        </a-col>
+        
+        <a-col :xs="24" :sm="12" :lg="6">
+          <a-card class="stat-card" hoverable>
+            <a-statistic
+              title="Active Campaigns"
+              :value="stats.activeCampaigns || 0"
+              :value-style="{ color: '#fa8c16', fontSize: '32px', fontWeight: 'bold' }"
+            >
+              <template #prefix>
+                <thunderbolt-outlined style="color: #fa8c16; margin-right: 8px;" />
+              </template>
+            </a-statistic>
+          </a-card>
+        </a-col>
+        
+        <a-col :xs="24" :sm="12" :lg="6">
+          <a-card class="stat-card" hoverable>
+            <a-statistic
+              title="Active Ads"
+              :value="stats.activeAds || 0"
+              :value-style="{ color: '#722ed1', fontSize: '32px', fontWeight: 'bold' }"
+            >
+              <template #prefix>
+                <eye-outlined style="color: #722ed1; margin-right: 8px;" />
+              </template>
+            </a-statistic>
+          </a-card>
+        </a-col>
+      </a-row>
+
+      <!-- Quick Actions -->
+      <div class="section" style="margin-bottom: 32px;">
+        <a-typography-title :level="2" style="margin-bottom: 8px;">Quick Actions</a-typography-title>
+        <a-typography-text type="secondary" style="margin-bottom: 24px; display: block;">Get started with creating your campaigns and ads</a-typography-text>
+        
+        <a-row :gutter="[16, 16]">
+          <a-col :xs="24" :sm="12" :md="6" v-for="action in quickActions" :key="action.name">
+            <router-link :to="action.link" style="text-decoration: none;">
+              <a-card class="action-card" hoverable style="height: 100%; border-radius: 12px; border: 1px solid #f0f0f0; transition: all 0.3s ease;">
+                <div class="action-content" style="text-align: center; padding: 24px 16px;">
+                  <div class="action-icon" :style="{ width: '64px', height: '64px', margin: '0 auto 16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: action.color + '20', border: '2px solid ' + action.color + '40' }">
+                    <component :is="action.icon" :style="{ fontSize: '28px', color: action.color }" />
+                  </div>
+                  <a-typography-title :level="4" style="margin-bottom: 8px; color: #262626;">{{ action.name }}</a-typography-title>
+                  <a-typography-text type="secondary" style="font-size: 13px; line-height: 1.4; margin-bottom: 16px; display: block;">{{ action.description }}</a-typography-text>
+                  <a-button :type="action.buttonType" block :style="{ borderColor: action.color, color: action.buttonType === 'primary' ? '#fff' : action.color, backgroundColor: action.buttonType === 'primary' ? action.color : 'transparent' }">
+                    {{ action.buttonText }}
+                  </a-button>
+                </div>
+              </a-card>
+            </router-link>
+          </a-col>
+        </a-row>
+      </div>
+
+      <!-- Recent Campaigns -->
+      <div class="section" style="margin-bottom: 32px;">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+          <div>
+            <a-typography-title :level="2" style="margin-bottom: 8px;">Recent Campaigns</a-typography-title>
+            <a-typography-text type="secondary">Your latest campaigns and their performance</a-typography-text>
           </div>
+          <router-link to="/campaigns">
+            <a-button>View All</a-button>
+          </router-link>
+        </div>
 
-          <!-- Loading State -->
-          <div v-if="dashboardLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <LoadingSkeleton v-for="i in 4" :key="i" type="card" :width="'100%'" :height="'180px'" />
+        <div v-if="campaigns.length === 0">
+          <a-empty description="No campaigns yet">
+            <template #image>
+              <folder-outlined style="font-size: 48px; color: #d9d9d9;" />
+            </template>
+            <router-link to="/campaign/create">
+              <a-button type="primary">Create Your First Campaign</a-button>
+            </router-link>
+          </a-empty>
+        </div>
+
+        <a-row :gutter="[16, 16]" v-else>
+          <a-col :xs="24" :sm="12" :md="8" :lg="6" v-for="campaign in campaigns" :key="campaign.id">
+            <a-card class="campaign-card" hoverable>
+              <div class="campaign-header">
+                <a-typography-title :level="4" style="margin-bottom: 4px;">{{ campaign.name }}</a-typography-title>
+                <a-tag :color="getStatusColor(campaign.status)">{{ campaign.status }}</a-tag>
+              </div>
+              <a-typography-text type="secondary" style="display: block; margin-bottom: 12px;">{{ campaign.objective }}</a-typography-text>
+              
+              <a-row :gutter="16" style="margin-bottom: 12px;">
+                <a-col :span="12">
+                  <a-typography-text type="secondary" style="font-size: 12px;">Budget</a-typography-text>
+                  <div style="font-weight: 500;">${{ campaign.budget }}</div>
+                </a-col>
+                <a-col :span="12">
+                  <a-typography-text type="secondary" style="font-size: 12px;">Ads</a-typography-text>
+                  <div style="font-weight: 500;">{{ campaign.adCount }}</div>
+                </a-col>
+              </a-row>
+              
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+                <a-typography-text type="secondary" style="font-size: 12px;">{{ formatDate(campaign.createdDate) }}</a-typography-text>
+                <router-link :to="`/campaigns/${campaign.id}`">
+                  <a-button size="small" type="primary">View Details</a-button>
+                </router-link>
+              </div>
+            </a-card>
+          </a-col>
+        </a-row>
+      </div>
+
+      <!-- Recent Ads -->
+      <div class="section">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+          <div>
+            <a-typography-title :level="2" style="margin-bottom: 8px;">Recent Ads</a-typography-title>
+            <a-typography-text type="secondary">Your latest ad creations</a-typography-text>
           </div>
+          <router-link to="/ads">
+            <a-button>View All</a-button>
+          </router-link>
+        </div>
 
-          <!-- Error State -->
-          <div v-else-if="dashboardError" class="alert alert-error mb-6">
-            <div class="alert-title">Error loading dashboard</div>
-            <div class="alert-message">{{ dashboardError }}</div>
-            <button @click="loadDashboardData" class="btn btn-sm btn-secondary mt-3">
-              Try Again
-            </button>
-          </div>
+        <!-- Loading State for Recent Ads -->
+        <div v-if="loading">
+          <a-row :gutter="[12, 12]">
+            <a-col :xs="24" :sm="12" :md="8" :lg="6" v-for="i in 8" :key="i">
+              <a-card class="ad-card">
+                <a-skeleton active>
+                  <template #avatar>
+                    <div style="width: 100px; height: 100px; background: #f0f0f0; border-radius: 8px; margin: 0 auto 12px;"></div>
+                  </template>
+                  <template #title>
+                    <div style="height: 16px; background: #f0f0f0; border-radius: 4px; margin-bottom: 8px;"></div>
+                  </template>
+                  <template #paragraph>
+                    <div style="height: 12px; background: #f0f0f0; border-radius: 4px; margin-bottom: 8px; width: 60%;"></div>
+                    <div style="height: 12px; background: #f0f0f0; border-radius: 4px; margin-bottom: 8px; width: 80%;"></div>
+                    <div style="height: 12px; background: #f0f0f0; border-radius: 4px; width: 40%;"></div>
+                  </template>
+                </a-skeleton>
+              </a-card>
+            </a-col>
+          </a-row>
+        </div>
 
-          <!-- Dashboard Content -->
-          <div v-else-if="hasDashboardData">
+        <!-- Empty State -->
+        <div v-else-if="recentAds.length === 0">
+          <a-empty description="No ads yet">
+            <template #image>
+              <file-text-outlined style="font-size: 48px; color: #d9d9d9;" />
+            </template>
+            <router-link to="/ad/create">
+              <a-button type="primary">Create Your First Ad</a-button>
+            </router-link>
+          </a-empty>
+        </div>
 
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div class="card stat-card bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div class="card-body p-6">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="text-sm font-medium text-blue-600 mb-1">Total Campaigns</p>
-                      <p class="text-3xl font-bold text-blue-900">{{ stats.totalCampaigns || 0 }}</p>
-                    </div>
-                    <div class="w-6 h-6 sm:w-8 h-8 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <svg class="w-4 h-4 sm:w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                      </svg>
-                    </div>
+        <!-- Ads Grid -->
+        <a-row :gutter="[12, 12]" v-else>
+          <a-col :xs="24" :sm="12" :md="8" :lg="6" :xl="4" v-for="ad in recentAds" :key="ad.id">
+            <a-card class="ad-card hover:shadow-lg transition-all duration-200 hover:-translate-y-1" hoverable @click="viewAdDetail(ad)">
+              <!-- Ad Image Preview -->
+              <div class="ad-image relative" style="margin-bottom: 12px; text-align: center;">
+                <!-- Status Badge -->
+                <a-tag :color="getStatusColor(ad.status)" class="absolute top-2 right-2 z-10 text-xs">
+                  {{ ad.status }}
+                </a-tag>
+                
+                <!-- Image with Error Handling -->
+                <div class="relative group">
+                  <img 
+                    v-if="ad.imageUrl || ad.mediaFileUrl"
+                    :src="ad.imageUrl || ad.mediaFileUrl" 
+                    :alt="ad.name"
+                    class="w-full h-24 sm:h-28 object-cover rounded-lg border border-gray-200 cursor-pointer transition-transform duration-200 group-hover:scale-105"
+                    @error="handleImageError($event, ad.id)"
+                    :key="ad.id + '-image'"
+                    loading="lazy"
+                  />
+                  <div v-else class="w-full h-24 sm:h-28 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                    {{ ad.name ? ad.name.charAt(0).toUpperCase() : 'A' }}
+                  </div>
+                  
+                  <!-- Overlay on hover -->
+                  <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
                   </div>
                 </div>
-              </div>
-
-              <div class="card stat-card bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div class="card-body p-6">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="text-sm font-medium text-green-600 mb-1">Total Ads</p>
-                      <p class="text-3xl font-bold text-green-900">{{ stats.totalAds || 0 }}</p>
-                    </div>
-                    <div class="w-6 h-6 sm:w-8 h-8 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <svg class="w-4 h-4 sm:w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2"></path>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="card stat-card bg-gradient-to-br from-orange-50 to-orange-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div class="card-body p-6">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="text-sm font-medium text-orange-600 mb-1">Active Campaigns</p>
-                      <p class="text-3xl font-bold text-orange-900">{{ stats.activeCampaigns || 0 }}</p>
-                    </div>
-                    <div class="w-6 h-6 sm:w-8 h-8 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <svg class="w-4 h-4 sm:w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="card stat-card bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div class="card-body p-6">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <p class="text-sm font-medium text-purple-600 mb-1">Active Ads</p>
-                      <p class="text-3xl font-bold text-purple-900">{{ stats.activeAds || 0 }}</p>
-                    </div>
-                    <div class="w-6 h-6 sm:w-8 h-8 bg-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <svg class="w-4 h-4 sm:w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="section mb-8">
-              <div class="section-header mb-6">
-                <h2 class="section-title text-2xl font-bold text-gray-900 mb-2">Quick Actions</h2>
-                <p class="section-description text-gray-600">Get started with creating your campaigns and ads</p>
               </div>
               
-              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                <div v-for="action in quickActions" :key="action.name" class="group">
-                  <div class="card hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-0 bg-white shadow-md group-hover:shadow-2xl">
-                    <div class="card-body p-4">
-                      <div class="flex flex-col items-center text-center">
-                        <div class="w-6 h-6 sm:w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                          <svg class="w-4 h-4 sm:w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="action.icon"></path>
-                          </svg>
-                        </div>
-                        <h3 class="text-sm font-semibold text-gray-900 mb-1 group-hover:text-primary-600 transition-colors">{{ action.name }}</h3>
-                        <p class="text-xs text-gray-500 mb-3 line-clamp-2">{{ action.description }}</p>
-                        <router-link :to="action.link" :class="`btn btn-sm ${action.buttonClass} w-full group-hover:scale-105 transition-transform`">
-                          {{ action.buttonText }}
-                        </router-link>
-                      </div>
-                      </div>
-                    </div>
-                  </div>
+              <!-- Ad Header -->
+              <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-semibold text-sm sm:text-base text-gray-800 truncate mb-1" :title="ad.name">{{ ad.name }}</h3>
+                  <p class="text-xs text-gray-500 truncate" :title="ad.campaignName">{{ ad.campaignName || 'No campaign' }}</p>
                 </div>
               </div>
-
-            <!-- Recent Campaigns -->
-            <div class="section mb-8">
-              <div class="section-header mb-6">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h2 class="section-title">Recent Campaigns</h2>
-                    <p class="section-description">Your latest campaigns and their performance</p>
-                  </div>
-                  <router-link to="/campaigns" class="btn btn-sm btn-secondary">
-                    View All
-                  </router-link>
-                </div>
-              </div>
-
-              <div v-if="campaigns.length === 0" class="card">
-                <div class="card-body text-center py-12">
-                  <svg class="w-10 h-10 sm:w-12 h-12 text-neutral-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+              
+              <!-- Ad Type Badge -->
+              <div class="mb-3">
+                <a-tag size="small" class="text-xs">
+                  <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                   </svg>
-                  <h3 class="text-xl font-semibold text-secondary-900 mb-2">No campaigns yet</h3>
-                  <p class="text-secondary-600 mb-6">Create your first campaign to get started with Facebook Ads</p>
-                  <router-link to="/campaign/create" class="btn btn-sm btn-primary">
-                    Create Your First Campaign
-                  </router-link>
+                  {{ ad.adType?.replace('_', ' ') || 'Unknown' }}
+                </a-tag>
+              </div>
+              
+              <!-- Ad Content Preview -->
+              <div v-if="ad.headline || ad.description || ad.primaryText" class="bg-gray-50 p-2 sm:p-3 rounded-lg mb-3">
+                <div v-if="ad.headline" class="mb-2">
+                  <p class="text-xs font-medium text-gray-600 mb-1">Headline</p>
+                  <p class="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-1" :title="ad.headline">{{ ad.headline }}</p>
+                </div>
+                <div v-if="ad.description" class="mb-2">
+                  <p class="text-xs font-medium text-gray-600 mb-1">Description</p>
+                  <p class="text-xs sm:text-sm text-gray-700 line-clamp-2" :title="ad.description">{{ ad.description }}</p>
+                </div>
+                <div v-if="ad.primaryText">
+                  <p class="text-xs font-medium text-gray-600 mb-1">Primary Text</p>
+                  <p class="text-xs sm:text-sm text-gray-700 line-clamp-2" :title="ad.primaryText">{{ ad.primaryText }}</p>
                 </div>
               </div>
-
-              <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                <div v-for="campaign in campaigns" :key="campaign.id" class="card hover:shadow-lg transition-shadow duration-200 flex flex-col">
-                  <div class="card-body flex flex-col justify-between h-full p-3">
-                    <div>
-                      <div class="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 class="text-base font-semibold text-secondary-900 line-clamp-2">{{ campaign.name }}</h3>
-                          <p class="text-xs text-secondary-600 line-clamp-1">{{ campaign.objective }}</p>
-                        </div>
-                        <span :class="getStatusBadgeClass(campaign.status)">
-                          {{ campaign.status }}
-                        </span>
-                      </div>
-                      
-                      <div class="grid grid-cols-2 gap-2 mb-2">
-                        <div>
-                          <p class="text-xs text-secondary-500 mb-1">Budget</p>
-                          <p class="text-sm font-medium text-secondary-900">
-                            {{ campaign.budgetType === 'DAILY' ? 'Daily' : 'Lifetime' }}: ${{ campaign.budget }}
-                          </p>
-                        </div>
-                        <div>
-                          <p class="text-xs text-secondary-500 mb-1">Ads</p>
-                          <p class="text-sm font-medium text-secondary-900">{{ campaign.adCount }}</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="flex items-center justify-between pt-2 border-t border-neutral-200">
-                      <span class="text-xs text-secondary-500">{{ formatDate(campaign.createdDate) }}</span>
-                      <router-link :to="`/campaigns/${campaign.id}`" class="btn btn-xs btn-primary">
-                        View Details
-                      </router-link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Recent Ads -->
-            <div class="section">
-              <div class="section-header mb-6">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h2 class="section-title">Recent Ads</h2>
-                    <p class="section-description">Your latest ad creations</p>
-                  </div>
-                  <router-link to="/ads" class="btn btn-sm btn-secondary">
-                    View All
-                  </router-link>
-                </div>
-              </div>
-
-              <div v-if="recentAds.length === 0" class="card">
-                <div class="card-body text-center py-12">
-                  <svg class="w-10 h-10 sm:w-12 h-12 text-neutral-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2"></path>
+              
+              <!-- Footer -->
+              <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                <p class="text-xs text-gray-500">{{ formatDate(ad.createdDate) }}</p>
+                <a-button size="small" type="primary" class="text-xs" @click.stop="viewAdDetail(ad)">
+                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                   </svg>
-                  <h3 class="text-xl font-semibold text-secondary-900 mb-2">No ads yet</h3>
-                  <p class="text-secondary-600 mb-6">Create your first ad to start advertising</p>
-                  <router-link to="/ad/create" class="btn btn-sm btn-primary">
-                    Create Your First Ad
-                  </router-link>
-                </div>
+                  View
+                </a-button>
               </div>
-              <div v-else class="flex flex-wrap gap-4 justify-center">
-                <div v-for="ad in recentAds" :key="ad.id" class="card hover:shadow-lg transition-shadow duration-200 flex flex-col items-center max-w-[220px] w-full mx-auto">
-                  <div class="card-body flex flex-col justify-between h-full p-3 w-full">
-                    <div>
-                      <!-- Ad Image Preview - Fixed size 100x100 -->
-                      <div v-if="ad.imageUrl || ad.mediaFileUrl" class="mb-3 flex justify-center">
-                        <div class="w-[100px] h-[100px] bg-neutral-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm cursor-pointer flex items-center justify-center" @click="viewAdDetail(ad)">
-                          <img 
-                            :src="ad.imageUrl || ad.mediaFileUrl" 
-                            :alt="ad.name"
-                            class="max-w-full max-h-full object-contain"
-                            @error="handleImageError"
-                          />
-                        </div>
-                      </div>
-                      <!-- Placeholder when no image -->
-                      <div v-else class="mb-3">
-                        <div class="w-[100px] h-[100px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mx-auto border border-gray-200 shadow-sm flex items-center justify-center">
-                          <svg class="w-4 h-4 sm:w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                          </svg>
-                        </div>
-                      </div>
-                      
-                      <div class="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 class="font-semibold text-base text-secondary-900 line-clamp-2">{{ ad.name }}</h4>
-                          <p class="text-xs text-secondary-500 line-clamp-1">{{ ad.campaignName }}</p>
-                        </div>
-                        <span :class="getStatusBadgeClass(ad.status)">
-                          {{ ad.status }}
-                        </span>
-                      </div>
-                      
-                      <div class="mb-2">
-                        <span class="badge badge-neutral">{{ ad.adType?.replace("_", " ") }}</span>
-                      </div>
-                      
-                      <!-- Ad Content Preview -->
-                      <div v-if="ad.headline || ad.description || ad.primaryText" class="mb-3 p-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
-                        <div v-if="ad.headline" class="mb-1">
-                          <p class="text-xs text-gray-500 mb-1 font-medium">Headline</p>
-                          <p class="text-xs font-semibold text-gray-900 line-clamp-2">{{ ad.headline }}</p>
-                        </div>
-                        <div v-if="ad.description">
-                          <p class="text-xs text-gray-500 mb-1 font-medium">Description</p>
-                          <p class="text-xs text-gray-700 line-clamp-2">{{ ad.description }}</p>
-                        </div>
-                        <div v-if="ad.primaryText">
-                          <p class="text-xs text-gray-500 mb-1 font-medium">Primary Text</p>
-                          <p class="text-xs text-gray-700 line-clamp-3">{{ ad.primaryText }}</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="flex items-center justify-between pt-2 border-t border-neutral-200">
-                      <span class="text-xs text-secondary-500">{{ formatDate(ad.createdDate) }}</span>
-                      <button @click="viewAdDetail(ad)" class="btn btn-xs btn-primary">
-                        View
-                      </button>
-                    </div>
-                  </div>              
-                </div>
-              </div>
-            </div>
-
-            <!-- Ad Detail Modal -->
-            <Dialog v-model:visible="showDetailModal" modal header="Ad Details" :style="{ width: '80vw', maxWidth: '800px' }" :breakpoints="{ '960px': '90vw', '641px': '100vw' }">
-              <div v-if="selectedAd" class="space-y-4">
-                <div class="field mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Name:</label>
-                  <p class="text-gray-900">{{ selectedAd.name }}</p>
-                </div>
-                <div class="field mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Campaign:</label>
-                  <p class="text-gray-900">{{ selectedAd.campaignName || 'N/A' }}</p>
-                </div>
-                <div class="field mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Ad Type:</label>
-                  <p class="text-gray-900">{{ selectedAd.adType?.replace("_", " ") || 'N/A' }}</p>
-                </div>
-                <div class="field mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Status:</label>
-                  <span :class="getStatusBadgeClass(selectedAd.status)">{{ selectedAd.status }}</span>
-                </div>
-                <div class="field mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Headline:</label>
-                  <p class="text-gray-900">{{ selectedAd.headline || 'N/A' }}</p>
-                </div>
-                <div class="field mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Primary Text:</label>
-                  <p class="text-gray-900">{{ selectedAd.primaryText || 'N/A' }}</p>
-                </div>
-                <div class="field mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Description:</label>
-                  <p class="text-gray-900">{{ selectedAd.description || 'N/A' }}</p>
-                </div>
-                <div class="field mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Call to Action:</label>
-                  <p class="text-gray-900">{{ selectedAd.callToAction || 'N/A' }}</p>
-                </div>
-                <div class="field mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Media:</label>
-                  <div v-if="selectedAd.imageUrl || selectedAd.videoUrl" class="space-y-3">
-                    <!-- Image Preview -->
-                    <div v-if="selectedAd.imageUrl" class="flex items-center space-x-3">
-                      <div class="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden border">
-                        <img :src="selectedAd.imageUrl" class="w-full h-full object-cover" />
-                      </div>
-                      <button @click="showMediaModal = true" class="btn btn-sm btn-secondary">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                        </svg>
-                        View ad image/video
-                      </button>
-                    </div>
-                    <!-- Video Preview -->
-                    <div v-else-if="selectedAd.videoUrl" class="flex items-center space-x-3">
-                      <div class="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden border flex items-center justify-center">
-                        <svg class="w-4 h-4 sm:w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                      </div>
-                      <button @click="showMediaModal = true" class="btn btn-sm btn-secondary">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                        </svg>
-                        View ad image/video
-                      </button>
-                    </div>
-                  </div>
-                  <p v-else class="text-gray-900">N/A</p>
-                </div>
-                <div class="field mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Created Date:</label>
-                  <p class="text-gray-900">{{ formatDate(selectedAd.createdDate) }}</p>
-                </div>
-              </div>
-            </Dialog>
-
-            <!-- Media Modal -->
-            <Dialog v-model:visible="showMediaModal" modal header="Ad Image/Video" :style="{ width: '90vw', maxWidth: '1000px' }" :breakpoints="{ '960px': '95vw', '641px': '100vw' }">
-              <div v-if="selectedAd" class="text-center">
-                <!-- Image Display -->
-                <div v-if="selectedAd.imageUrl" class="space-y-4">
-                  <img :src="selectedAd.imageUrl" :alt="selectedAd.name" class="max-w-full h-auto rounded-lg mx-auto shadow-lg" />
-                  <p class="text-sm text-gray-600">{{ selectedAd.name }}</p>
-                </div>
-                <!-- Video Display -->
-                <div v-else-if="selectedAd.videoUrl" class="space-y-4">
-                  <video controls class="max-w-full h-auto rounded-lg mx-auto shadow-lg">
-                    <source :src="selectedAd.videoUrl" type="video/mp4">
-                    <source :src="selectedAd.videoUrl" type="video/webm">
-                    Your browser does not support the video tag.
-                  </video>
-                  <p class="text-sm text-gray-600">{{ selectedAd.name }}</p>
-                </div>
-                <!-- No Media -->
-                <div v-else class="py-8">
-                  <svg class="w-10 h-10 sm:w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
-                  <p class="text-gray-600">No image/video for this ad</p>
-                </div>
-              </div>
-            </Dialog>
-          </div>
+            </a-card>
+          </a-col>
+        </a-row>
+      </div>
     </div>
+
+    <!-- Ad Detail Modal -->
+    <a-modal
+      v-model:visible="showDetailModal"
+      title="Ad Details"
+      width="800px"
+      :footer="null"
+    >
+      <div v-if="selectedAd">
+        <a-descriptions :column="1" bordered>
+          <a-descriptions-item label="Name">{{ selectedAd.name }}</a-descriptions-item>
+          <a-descriptions-item label="Campaign">{{ selectedAd.campaignName || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item label="Ad Type">{{ selectedAd.adType?.replace('_', ' ') || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item label="Status">
+            <a-tag :color="getStatusColor(selectedAd.status)">{{ selectedAd.status }}</a-tag>
+          </a-descriptions-item>
+          <a-descriptions-item label="Headline">{{ selectedAd.headline || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item label="Primary Text">{{ selectedAd.primaryText || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item label="Description">{{ selectedAd.description || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item label="Call to Action">{{ selectedAd.callToAction || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item label="Media">
+            <div v-if="selectedAd.imageUrl || selectedAd.videoUrl">
+              <div v-if="selectedAd.imageUrl" style="display: flex; align-items: center; gap: 12px;">
+                <img :src="selectedAd.imageUrl" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #f0f0f0;" />
+                <a-button @click="showMediaModal = true">
+                  <template #icon>
+                    <eye-outlined />
+                  </template>
+                  View Image
+                </a-button>
+              </div>
+              <div v-else-if="selectedAd.videoUrl" style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 80px; height: 80px; background: #f5f5f5; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                  <play-circle-outlined style="font-size: 24px; color: #1890ff;" />
+                </div>
+                <a-button @click="showMediaModal = true">
+                  <template #icon>
+                    <eye-outlined />
+                  </template>
+                  View Video
+                </a-button>
+              </div>
+            </div>
+            <span v-else>N/A</span>
+          </a-descriptions-item>
+          <a-descriptions-item label="Created Date">{{ formatDate(selectedAd.createdDate) }}</a-descriptions-item>
+        </a-descriptions>
+      </div>
+    </a-modal>
+
+    <!-- Media Modal -->
+    <a-modal
+      v-model:visible="showMediaModal"
+      title="Ad Media"
+      width="1000px"
+      :footer="null"
+    >
+      <div v-if="selectedAd" style="text-align: center;">
+        <div v-if="selectedAd.imageUrl">
+          <img :src="selectedAd.imageUrl" :alt="selectedAd.name" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />
+          <a-typography-text type="secondary" style="display: block; margin-top: 16px;">{{ selectedAd.name }}</a-typography-text>
+        </div>
+        <div v-else-if="selectedAd.videoUrl">
+          <video controls style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+            <source :src="selectedAd.videoUrl" type="video/mp4">
+            <source :src="selectedAd.videoUrl" type="video/webm">
+            Your browser does not support the video tag.
+          </video>
+          <a-typography-text type="secondary" style="display: block; margin-top: 16px;">{{ selectedAd.name }}</a-typography-text>
+        </div>
+        <div v-else style="padding: 48px;">
+          <picture-outlined style="font-size: 48px; color: #d9d9d9; margin-bottom: 16px;" />
+          <a-typography-text type="secondary">No media available for this ad</a-typography-text>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex'
-import Dialog from 'primevue/dialog';
-import LoadingSkeleton from '../components/LoadingSkeleton.vue'
-import AppSidebar from '@/components/AppSidebar.vue'
+import {
+  PlusOutlined,
+  FolderOutlined,
+  FileTextOutlined,
+  ThunderboltOutlined,
+  EyeOutlined,
+  PictureOutlined,
+  PlayCircleOutlined,
+  BarChartOutlined,
+  RocketOutlined
+} from '@ant-design/icons-vue'
+import MobileHeader from '@/components/MobileHeader.vue'
+import MobileDashboardStats from '@/components/MobileDashboardStats.vue'
+import DarkModeToggle from '@/components/DarkModeToggle.vue'
+import LoadingSkeleton from '@/components/LoadingSkeleton.vue'
 
 export default {
   name: 'Dashboard',
   components: {
-    Dialog,
-    LoadingSkeleton,
-    AppSidebar
+    PlusOutlined,
+    FolderOutlined,
+    FileTextOutlined,
+    ThunderboltOutlined,
+    EyeOutlined,
+    PictureOutlined,
+    PlayCircleOutlined,
+    BarChartOutlined,
+    RocketOutlined,
+    MobileHeader,
+    MobileDashboardStats,
+    DarkModeToggle,
+    LoadingSkeleton
   },
   data() {
     return {
@@ -422,24 +467,44 @@ export default {
         {
           name: "Create Campaign",
           description: "Set up a new advertising campaign with your objectives and budget",
-          icon: "M12 6v6m0 0v6m0-6h6m-6 0H6",
+          icon: "FolderOutlined",
           link: "/campaign/create",
           buttonText: "Create Campaign",
-          buttonClass: "btn-primary",
+          buttonType: "primary",
+          color: "#1890ff"
         },
         {
           name: "Create Ad",
           description: "Create ad content with AI for your campaign",
-          icon: "M12 6v6m0 0v6m0-6h6m-6 0H6",
+          icon: "FileTextOutlined",
           link: "/ad/create",
           buttonText: "Create Ad",
-          buttonClass: "btn-success",
+          buttonType: "primary",
+          color: "#52c41a"
+        },
+        {
+          name: "View Analytics",
+          description: "Comprehensive insights and performance metrics for your campaigns",
+          icon: "BarChartOutlined",
+          link: "/analytics",
+          buttonText: "View Analytics",
+          buttonType: "default",
+          color: "#722ed1"
+        },
+        {
+          name: "Optimization Center",
+          description: "AI-powered recommendations to optimize your campaigns",
+          icon: "RocketOutlined",
+          link: "/optimization",
+          buttonText: "Optimize",
+          buttonType: "default",
+          color: "#fa8c16"
         },
       ],
       showDetailModal: false,
       showMediaModal: false,
       selectedAd: null,
-      sidebarOpen: true
+      isMobile: false
     };
   },
   computed: {
@@ -454,29 +519,90 @@ export default {
       return this.error
     },
     
-    // Add computed to check if data exists
     hasDashboardData() {
       return this.stats && this.campaigns && this.recentAds
     },
     
-    userName() {
-      return this.user?.name || this.user?.email || 'User'
+    mobileStats() {
+      return [
+        {
+          key: 'campaigns',
+          label: 'Total Campaigns',
+          value: this.stats?.totalCampaigns || 0,
+          icon: 'pi pi-briefcase',
+          variant: 'primary',
+          change: 12
+        },
+        {
+          key: 'ads',
+          label: 'Active Ads',
+          value: this.stats?.activeAds || 0,
+          icon: 'pi pi-megaphone',
+          variant: 'success',
+          change: 8
+        },
+        {
+          key: 'totalAds',
+          label: 'Total Ads',
+          value: this.stats?.totalAds || 0,
+          icon: 'pi pi-file',
+          variant: 'info',
+          change: -3
+        },
+        {
+          key: 'activeCampaigns',
+          label: 'Active Campaigns',
+          value: this.stats?.activeCampaigns || 0,
+          icon: 'pi pi-bolt',
+          variant: 'warning',
+          change: 5
+        }
+      ]
     },
-    userEmail() {
-      return this.user?.email || ''
-    },
-    userInitials() {
-      if (!this.user?.name && !this.user?.email) return 'U'
-      const name = this.user?.name || this.user?.email
-      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-    },
-    mainContentStyle() {
-      return this.sidebarOpen ? { marginLeft: '240px' } : { marginLeft: '0' }
+    
+    recentActivity() {
+      const activities = []
+      
+      // Add recent campaigns
+      if (this.campaigns) {
+        this.campaigns.slice(0, 3).forEach(campaign => {
+          activities.push({
+            id: `campaign-${campaign.id}`,
+            type: 'campaign',
+            title: 'Campaign Created',
+            description: campaign.name,
+            timestamp: campaign.createdDate,
+            status: campaign.status
+          })
+        })
+      }
+      
+      // Add recent ads
+      if (this.recentAds) {
+        this.recentAds.slice(0, 2).forEach(ad => {
+          activities.push({
+            id: `ad-${ad.id}`,
+            type: 'ad',
+            title: 'Ad Created',
+            description: ad.name,
+            timestamp: ad.createdDate,
+            status: ad.status
+          })
+        })
+      }
+      
+      return activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5)
     }
   },
   async mounted() {
+    this.checkMobile()
+    window.addEventListener('resize', this.checkMobile)
     await this.loadUserData()
     await this.loadDashboardData()
+  },
+  
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkMobile)
   },
   methods: {
     ...mapActions('dashboard', ['fetchDashboardData']),
@@ -500,21 +626,16 @@ export default {
       }
     },
     
-    toggleSidebar() {
-      this.sidebarOpen = !this.sidebarOpen
-    },
-    
-    getStatusBadgeClass(status) {
-      const baseClass = 'badge badge-sm'
+    getStatusColor(status) {
       switch (status?.toLowerCase()) {
         case 'active':
-          return `${baseClass} badge-success`
+          return 'green'
         case 'paused':
-          return `${baseClass} badge-warning`
+          return 'orange'
         case 'draft':
-          return `${baseClass} badge-neutral`
+          return 'default'
         default:
-          return `${baseClass} badge-neutral`
+          return 'default'
       }
     },
     
@@ -534,20 +655,118 @@ export default {
       this.showDetailModal = true;
     },
     
-    handleImageError(event) {
-      // Hide image if it fails to load
-      event.target.style.display = 'none'
+    handleImageError(event, adId) {
+      // Thay thế ảnh bị lỗi bằng placeholder
+      const img = event.target
+      const placeholder = document.createElement('div')
+      placeholder.style.cssText = 'width: 100px; height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;'
+      
+      const ad = this.recentAds.find(a => a.id === adId)
+      placeholder.textContent = ad && ad.name ? ad.name.charAt(0).toUpperCase() : 'A'
+      
+      img.parentNode.replaceChild(placeholder, img)
     },
-    handleLogout() {
-      this.$store.dispatch('auth/logout')
+    
+    checkMobile() {
+      this.isMobile = window.innerWidth <= 768
+    },
+    
+    toggleMobileMenu() {
+      this.$emit('toggle-mobile-menu')
+    },
+    
+    onThemeChanged(theme) {
+      console.log('Theme changed to:', theme)
+    },
+    
+    navigateToActivity() {
+      this.$router.push('/notifications')
     }
   }
 }
 </script>
 
 <style scoped>
-.page-wrapper.sidebar-closed .main-content-wrapper {
-  margin-left: 0 !important;
+.dashboard-container {
+  padding: 24px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.loading-container,
+.error-container {
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.action-card {
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+}
+
+.action-content {
+  text-align: center;
+  padding: 16px;
+}
+
+.action-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 48px;
+  height: 48px;
+  background: #f0f9ff;
+  border-radius: 50%;
+  margin: 0 auto 12px;
+}
+
+.campaign-card,
+.ad-card {
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.campaign-card:hover,
+.ad-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.campaign-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.ad-card {
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 16px;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 16px;
+  }
 }
 </style>
 

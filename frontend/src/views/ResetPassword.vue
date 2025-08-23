@@ -1,39 +1,37 @@
 <template>
   <div class="reset-container">
-    <Card class="reset-card">
-      <template #title>
-        <div class="reset-header">
-          <h2>Reset Password</h2>
+    <a-card class="reset-card" title="Reset Password">
+      <form @submit.prevent="handleReset" class="reset-form">
+        <div v-if="!tokenFromUrl" class="form-group">
+          <a-input v-model:value="token" placeholder="Token from email" class="reset-input" />
         </div>
-      </template>
-      <template #content>
-        <form @submit.prevent="handleReset" class="reset-form">
-          <div v-if="!tokenFromUrl" class="form-group">
-            <InputText v-model="token" placeholder="Token from email" class="reset-input" />
-          </div>
-          <div class="form-group">
-            <InputText v-model="newPassword" type="password" placeholder="New password" class="reset-input" />
-          </div>
-          <div class="form-group">
-            <InputText v-model="confirmPassword" type="password" placeholder="Confirm new password" class="reset-input" />
-          </div>
-          <Button label="Reset Password" type="submit" class="btn-reset" :loading="loading" />
-        </form>
-        <div v-if="error" class="reset-error">{{ error }}</div>
-        <div v-if="success" class="reset-success">Reset password successfully! Redirecting to login page...</div>
-      </template>
-    </Card>
+        <div class="form-group">
+          <a-input-password v-model:value="newPassword" placeholder="New password" class="reset-input" />
+        </div>
+        <div class="form-group">
+          <a-input-password v-model:value="confirmPassword" placeholder="Confirm new password" class="reset-input" />
+        </div>
+        <a-button type="primary" html-type="submit" class="btn-reset" :loading="loading" block>
+          Reset Password
+        </a-button>
+      </form>
+      <div v-if="error" class="reset-error">{{ error }}</div>
+      <div v-if="success" class="reset-success">Reset password successfully! Redirecting to login page...</div>
+    </a-card>
   </div>
 </template>
 
 <script>
-import InputText from 'primevue/inputtext'
-import Button from 'primevue/button'
-import Card from 'primevue/card'
+import { Input, Button, Card } from 'ant-design-vue'
 
 export default {
   name: 'ResetPassword',
-  components: { InputText, Button, Card },
+  components: {
+    AInput: Input,
+    AInputPassword: Input.Password,
+    AButton: Button,
+    ACard: Card
+  },
   data() {
     return {
       token: '',
@@ -150,4 +148,4 @@ export default {
   margin-top: 1rem;
   text-align: center;
 }
-</style> 
+</style>

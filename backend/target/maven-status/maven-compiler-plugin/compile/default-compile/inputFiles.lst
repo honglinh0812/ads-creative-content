@@ -5,6 +5,7 @@
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/controller/DatabasePerformanceController.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/controller/AIProviderController.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/model/Ad.java
+/home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/controller/FacebookExportController.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/config/DatabaseConfig.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/config/RedisConfig.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/Application.java
@@ -53,6 +54,7 @@
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/model/AdContent.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/service/ScrapeCreatorsService.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/exception/ApiException.java
+/home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/constants/FacebookValidationConstants.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/controller/AIMonitoringController.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/controller/OptimizationController.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/service/DashboardService.java
@@ -78,6 +80,7 @@
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/service/MetaAdLibraryService.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/dto/AdGenerationRequest.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/model/AdGenerationResponse.java
+/home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/service/FacebookExportService.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/model/AdResponse.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/config/RateLimitingConfig.java
 /home/linhnh/ads-creative-content/backend/src/main/java/com/fbadsautomation/service/OptimizationService.java

@@ -32,7 +32,12 @@
 
     <!-- Wizard Content -->
     <div class="wizard-content">
-      <transition name="slide-fade" mode="out-in">
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-container">
+        <LoadingSkeleton type="card" :rows="3" />
+      </div>
+      
+      <transition v-else name="slide-fade" mode="out-in">
         <!-- Step 1: Basic Information -->
         <div v-if="currentStep === 1" key="step1" class="wizard-step">
           <div class="step-header">
@@ -214,28 +219,13 @@
             <div class="provider-section">
               <h3 class="provider-title">Text Generation</h3>
               <div class="provider-grid">
-                <div 
+                <AIProviderCard
                   v-for="provider in textProviders" 
                   :key="provider.id"
-                  class="provider-card"
-                  :class="{ 'selected': formData.textProvider === provider.id }"
-                  @click="formData.textProvider = provider.id"
-                >
-                  <div class="provider-header">
-                    <div class="provider-icon">
-                      <component :is="provider.icon" />
-                    </div>
-                    <div class="provider-info">
-                      <div class="provider-name">{{ provider.name }}</div>
-                      <div class="provider-description">{{ provider.description }}</div>
-                    </div>
-                  </div>
-                  <div class="provider-features">
-                    <div v-for="feature in provider.features" :key="feature" class="feature-tag">
-                      {{ feature }}
-                    </div>
-                  </div>
-                </div>
+                  :provider="provider"
+                  :selected="formData.textProvider === provider.id"
+                  @select="formData.textProvider = provider.id"
+                />
               </div>
             </div>
 
@@ -285,31 +275,14 @@
             <div class="provider-section" :class="{ 'disabled': formData.uploadedFile }">
               <h3 class="provider-title">Or Generate with AI</h3>
               <div class="provider-grid">
-                <div 
+                <AIProviderCard
                   v-for="provider in imageProviders" 
                   :key="provider.id"
-                  class="provider-card"
-                  :class="{ 
-                    'selected': formData.imageProvider === provider.id,
-                    'disabled': formData.uploadedFile
-                  }"
-                  @click="!formData.uploadedFile && (formData.imageProvider = provider.id)"
-                >
-                  <div class="provider-header">
-                    <div class="provider-icon">
-                      <component :is="provider.icon" />
-                    </div>
-                    <div class="provider-info">
-                      <div class="provider-name">{{ provider.name }}</div>
-                      <div class="provider-description">{{ provider.description }}</div>
-                    </div>
-                  </div>
-                  <div class="provider-features">
-                    <div v-for="feature in provider.features" :key="feature" class="feature-tag">
-                      {{ feature }}
-                    </div>
-                  </div>
-                </div>
+                  :provider="provider"
+                  :selected="formData.imageProvider === provider.id"
+                  :disabled="formData.uploadedFile"
+                  @select="!formData.uploadedFile && (formData.imageProvider = provider.id)"
+                />
               </div>
               <div v-if="formData.uploadedFile" class="disabled-message">
                 Image provider selection is disabled when you upload your own file
@@ -527,15 +500,36 @@
         {{ loading ? 'Saving...' : 'Save Ad' }}
       </button>
     </div>
+    
+    <!-- Confirm Modal -->
+    <ConfirmModal
+      v-model:visible="showCancelModal"
+      title="Cancel Ad Creation"
+      message="Are you sure you want to cancel? All progress will be lost."
+      confirm-text="Yes, Cancel"
+      cancel-text="Continue Editing"
+      @confirm="confirmCancel"
+    />
   </div>
 </template>
 
 <script>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import AIProviderCard from './AIProviderCard.vue'
+import ConfirmModal from './ConfirmModal.vue'
+import LoadingSkeleton from './LoadingSkeleton.vue'
+import MobileFormComponents from './mobile/MobileFormComponents.vue'
 
 export default {
   name: 'AdCreationWizard',
+  
+  components: {
+    AIProviderCard,
+    ConfirmModal,
+    LoadingSkeleton,
+    MobileFormComponents
+  },
   
   emits: ['ad-created', 'wizard-cancelled'],
   
@@ -550,6 +544,7 @@ export default {
     const contentMode = ref('prompt')
     const selectedVariation = ref(0)
     const adLinks = ref([''])
+    const showCancelModal = ref(false)
     
     // Form data
     const formData = reactive({
@@ -933,6 +928,11 @@ export default {
     }
     
     const cancelWizard = () => {
+      showCancelModal.value = true
+    }
+    
+    const confirmCancel = () => {
+      showCancelModal.value = false
       emit('wizard-cancelled')
     }
     
@@ -950,6 +950,7 @@ export default {
       contentMode,
       selectedVariation,
       adLinks,
+      showCancelModal,
       formData,
       errors,
       campaigns,
@@ -979,7 +980,8 @@ export default {
       clearUploadedFile,
       generatePreview,
       saveAd,
-      cancelWizard
+      cancelWizard,
+      confirmCancel
     }
   }
 }

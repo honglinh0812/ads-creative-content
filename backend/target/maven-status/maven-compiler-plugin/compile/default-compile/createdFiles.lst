@@ -36,6 +36,8 @@ com/fbadsautomation/model/User.class
 com/fbadsautomation/controller/AnalyticsController.class
 com/fbadsautomation/service/AIContentCacheService$ProviderStats.class
 com/fbadsautomation/config/OpenApiConfig.class
+com/fbadsautomation/service/CampaignService$1.class
+com/fbadsautomation/constants/FacebookValidationConstants.class
 com/fbadsautomation/service/OptimizationService.class
 com/fbadsautomation/dto/AdGenerationResponse.class
 com/fbadsautomation/controller/OptimizationController.class
@@ -71,6 +73,7 @@ com/fbadsautomation/config/CircuitBreakerConfig.class
 com/fbadsautomation/model/AdContent$AdContentBuilder.class
 com/fbadsautomation/security/CustomUserDetailsService.class
 com/fbadsautomation/service/AdService.class
+com/fbadsautomation/service/FacebookExportService.class
 com/fbadsautomation/dto/AnalyticsResponse$AIProviderAnalytics$ProviderMetrics.class
 com/fbadsautomation/model/Campaign$CampaignBuilder.class
 com/fbadsautomation/model/AdResponse.class
@@ -84,6 +87,7 @@ com/fbadsautomation/repository/AdRepository.class
 com/fbadsautomation/integration/facebook/FacebookProperties.class
 com/fbadsautomation/dto/OptimizationResponse$Recommendation.class
 com/fbadsautomation/dto/DashboardResponse$DashboardStats.class
+com/fbadsautomation/controller/FacebookExportController.class
 com/fbadsautomation/integration/facebook/FacebookApiClient.class
 com/fbadsautomation/model/Campaign$CampaignStatus.class
 com/fbadsautomation/controller/AIMonitoringController$1.class
@@ -123,6 +127,7 @@ com/fbadsautomation/ai/StableDiffusionProvider.class
 com/fbadsautomation/dto/AnalyticsResponse$BudgetAnalytics$SpendingTrend.class
 com/fbadsautomation/dto/OptimizationResponse$Action.class
 com/fbadsautomation/ai/FalAiProvider.class
+com/fbadsautomation/service/FacebookExportService$1.class
 com/fbadsautomation/service/MetaAdLibraryService.class
 com/fbadsautomation/dto/AdGenerationResponse$AdVariation.class
 com/fbadsautomation/dto/AdGenerationResponse$AdGenerationResponseBuilder.class

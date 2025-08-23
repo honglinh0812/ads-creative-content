@@ -1,61 +1,190 @@
 <template>
-  <div id="app" class="app-layout bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors duration-300">
-    <!-- Enhanced loading screen -->
-    <div v-if="authLoading" class="auth-loading bg-gradient-to-br from-primary-500 to-secondary-600 dark:from-primary-600 dark:to-secondary-700">
+  <div id="app" class="app-layout">
+    <!-- Loading screen với Ant Design -->
+    <div v-if="authLoading" class="auth-loading">
       <div class="loading-content">
-        <div class="loading-logo animate-pulse">
-          <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
+        <div class="loading-logo">
+          <a-icon type="thunderbolt" style="font-size: 48px; color: #1890ff;" />
         </div>
-        <ProgressSpinner class="custom-spinner" />
+        <a-spin size="large" />
         <p class="loading-text">Đang tải ứng dụng...</p>
       </div>
     </div>
     
-    <!-- Enhanced main layout for authenticated users -->
+    <!-- Layout chính cho người dùng đã đăng nhập -->
     <template v-else-if="isAuthenticated">
-      <MobileHeader @toggle-mobile-menu="toggleMobileMenu" />
-      <div class="main-content bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700" role="main" aria-label="Main content">
-        <Header @search="onHeaderSearch" />
-        <main class="content-area">
-          <transition name="fade-slide" mode="out-in">
-            <router-view />
-          </transition>
-        </main>
-        <ToastNotifications />
-      </div>
+      <a-layout class="main-layout">
+        <!-- Sidebar -->
+        <a-layout-sider 
+          v-model:collapsed="collapsed" 
+          :trigger="null" 
+          collapsible
+          class="sidebar"
+          :width="240"
+          theme="light"
+        >
+          <div class="logo">
+            <img src="/logo.svg" alt="Logo" class="logo-img" />
+            <span v-if="!collapsed" class="logo-text">Ads Creative</span>
+          </div>
+          
+          <a-menu 
+            mode="inline" 
+            :selected-keys="selectedKeys"
+            :open-keys="openKeys"
+            @select="onMenuSelect"
+            class="sidebar-menu"
+          >
+            <a-menu-item key="dashboard">
+              <template #icon><a-icon type="dashboard" /></template>
+              <span>Dashboard</span>
+            </a-menu-item>
+            
+            <a-sub-menu key="campaigns">
+              <template #icon><a-icon type="project" /></template>
+              <template #title>Campaigns</template>
+              <a-menu-item key="campaigns-list">All Campaigns</a-menu-item>
+              <a-menu-item key="campaigns-create">Create Campaign</a-menu-item>
+            </a-sub-menu>
+            
+            <a-sub-menu key="ads">
+              <template #icon><a-icon type="picture" /></template>
+              <template #title>Ads</template>
+              <a-menu-item key="ads-list">All Ads</a-menu-item>
+              <a-menu-item key="ads-create">Create Ad</a-menu-item>
+            </a-sub-menu>
+            
+            <a-menu-item key="analytics">
+              <template #icon><a-icon type="bar-chart" /></template>
+              <span>Analytics</span>
+            </a-menu-item>
+            
+            <a-menu-item key="optimization">
+              <template #icon><a-icon type="rocket" /></template>
+              <span>Optimization</span>
+            </a-menu-item>
+            
+            <a-menu-item key="notifications">
+              <template #icon><a-icon type="bell" /></template>
+              <span>Notifications</span>
+            </a-menu-item>
+          </a-menu>
+        </a-layout-sider>
+        
+        <!-- Main content -->
+        <a-layout>
+          <!-- Header -->
+          <a-layout-header class="header">
+            <div class="header-left">
+              <a-button 
+                type="text" 
+                @click="collapsed = !collapsed"
+                class="trigger"
+              >
+                <template #icon>
+                  <a-icon :type="collapsed ? 'menu-unfold' : 'menu-fold'" />
+                </template>
+              </a-button>
+              
+              <a-breadcrumb class="breadcrumb">
+                <a-breadcrumb-item v-for="item in breadcrumbs" :key="item.path">
+                  <router-link v-if="item.path" :to="item.path">{{ item.name }}</router-link>
+                  <span v-else>{{ item.name }}</span>
+                </a-breadcrumb-item>
+              </a-breadcrumb>
+            </div>
+            
+            <div class="header-right">
+              <!-- Search -->
+              <a-input-search 
+                placeholder="Tìm kiếm..."
+                style="width: 200px; margin-right: 16px;"
+                @search="onHeaderSearch"
+              />
+              
+              <!-- Notifications -->
+              <a-badge :count="notificationCount" class="notification-badge">
+                <a-button type="text" shape="circle" @click="showNotifications">
+                  <template #icon><a-icon type="bell" /></template>
+                </a-button>
+              </a-badge>
+              
+              <!-- User menu -->
+              <a-dropdown>
+                <a-button type="text" class="user-menu">
+                  <a-avatar size="small" :style="{ backgroundColor: '#1890ff' }">
+                    {{ username.charAt(0).toUpperCase() }}
+                  </a-avatar>
+                  <span class="username">{{ username }}</span>
+                  <a-icon type="down" />
+                </a-button>
+                <template #overlay>
+                  <a-menu @click="onUserMenuClick">
+                    <a-menu-item key="profile">
+                      <a-icon type="user" />
+                      Profile
+                    </a-menu-item>
+                    <a-menu-item key="settings">
+                      <a-icon type="setting" />
+                      Settings
+                    </a-menu-item>
+                    <a-menu-divider />
+                    <a-menu-item key="logout">
+                      <a-icon type="logout" />
+                      Logout
+                    </a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </div>
+          </a-layout-header>
+          
+          <!-- Content -->
+          <a-layout-content class="content">
+            <div class="content-wrapper">
+              <transition name="fade-slide" mode="out-in">
+                <router-view />
+              </transition>
+            </div>
+          </a-layout-content>
+        </a-layout>
+      </a-layout>
     </template>
 
-    <!-- Enhanced simple layout for unauthenticated users -->
+    <!-- Layout cho người dùng chưa đăng nhập -->
     <template v-else>
-      <div class="auth-layout bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-neutral-900 dark:to-neutral-800">
+      <div class="auth-layout">
         <transition name="fade-slide" mode="out-in">
           <router-view />
         </transition>
-        <ToastNotifications />
       </div>
     </template>
 
-    <!-- Modern Toast Container -->
-    <ToastContainer />
+    <!-- Toast notifications -->
+    <ToastNotifications />
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
-import Header from './components/Header.vue'
-import MobileHeader from './components/MobileHeader.vue'
 import ToastNotifications from './components/ToastNotifications.vue'
-import ToastContainer from './components/ToastContainer.vue'
 
 export default {
   name: 'App',
   components: {
-    Header,
-    MobileHeader,
-    ToastNotifications,
-    ToastContainer
+    ToastNotifications
+  },
+  data() {
+    return {
+      collapsed: false,
+      selectedKeys: ['dashboard'],
+      openKeys: [],
+      breadcrumbs: [
+        { name: 'Dashboard', path: '/dashboard' }
+      ],
+      notificationCount: 3,
+      username: 'User'
+    }
   },
   computed: {
     ...mapGetters('auth', ['isAuthenticated', 'loading']),
@@ -68,7 +197,35 @@ export default {
       // Xử lý logic search toàn cục ở đây (ví dụ: chuyển trang search, filter, ...)
       console.log('Header search:', query)
     },
-
+    onMenuSelect({ key }) {
+      this.selectedKeys = [key]
+      // Handle menu navigation
+      if (key === 'campaigns-list') {
+        this.$router.push('/campaigns')
+      } else if (key === 'campaigns-create') {
+        this.$router.push('/campaign/create')
+      } else if (key === 'ads-list') {
+        this.$router.push('/ads')
+      } else if (key === 'ads-create') {
+        this.$router.push('/ad/create')
+      } else {
+        this.$router.push(`/${key}`)
+      }
+    },
+    showNotifications() {
+      // Show notifications modal or drawer
+      console.log('Show notifications')
+    },
+    onUserMenuClick({ key }) {
+      if (key === 'logout') {
+        this.$store.dispatch('auth/logout')
+        this.$router.push('/login')
+      } else if (key === 'profile') {
+        this.$router.push('/profile')
+      } else if (key === 'settings') {
+        this.$router.push('/settings')
+      }
+    },
     toggleMobileMenu() {
       // Toggle mobile menu through sidebar component
       if (this.$refs.sidebar) {
@@ -82,13 +239,11 @@ export default {
 <style>
 /* Global app styles */
 #app.app-layout {
-  display: flex;
   min-height: 100vh;
   font-family: Inter, sans-serif;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Enhanced auth loading styles */
+/* Auth loading styles */
 .auth-loading {
   position: fixed;
   top: 0;
@@ -99,6 +254,7 @@ export default {
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  background: linear-gradient(135deg, #1890ff, #722ed1);
 }
 
 .loading-content {
@@ -120,13 +276,6 @@ export default {
   opacity: 0.9;
 }
 
-.custom-spinner {
-  --p-progressspinner-color-1: rgb(255 255 255 / 80%);
-  --p-progressspinner-color-2: rgb(255 255 255 / 40%);
-  --p-progressspinner-color-3: rgb(255 255 255 / 20%);
-  --p-progressspinner-color-4: rgb(255 255 255 / 10%);
-}
-
 /* Auth layout for unauthenticated users */
 .auth-layout {
   min-height: 100vh;
@@ -134,238 +283,203 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  background: #f0f2f5;
 }
 
-/* Enhanced main layout styles */
-.main-content {
-  flex: 1;
-  margin-left: 240px;
+/* Ant Design Layout Styles */
+.main-layout {
   min-height: 100vh;
+}
+
+.sidebar {
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.logo {
   display: flex;
-  flex-direction: column;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.content-area {
-  flex: 1;
-  padding: 2rem 2.5rem;
-  overflow-x: hidden;
-  background: transparent;
+.logo-img {
+  width: 32px;
+  height: 32px;
 }
 
-/* Content spacing and typography */
-.content-area h1,
-.content-area h2,
-.content-area h3 {
+.logo-text {
+  margin-left: 12px;
+  font-size: 18px;
   font-weight: 600;
-  line-height: 1.25;
-  margin-bottom: 1rem;
+  color: #1890ff;
 }
 
-.content-area h1 {
-  font-size: 2.25rem;
-  color: theme('colors.neutral.900');
+.sidebar-menu {
+  border-right: none;
 }
 
-.content-area h2 {
-  font-size: 1.875rem;
-  color: theme('colors.neutral.800');
+.header {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 99;
 }
 
-.content-area h3 {
-  font-size: 1.5rem;
-  color: theme('colors.neutral.700');
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.dark .content-area h1 {
-  color: theme('colors.neutral.100');
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.dark .content-area h2 {
-  color: theme('colors.neutral.200');
+.trigger {
+  font-size: 18px;
+  line-height: 64px;
+  cursor: pointer;
+  transition: color 0.3s;
 }
 
-.dark .content-area h3 {
-  color: theme('colors.neutral.300');
+.trigger:hover {
+  color: #1890ff;
 }
 
-/* Enhanced Mobile Responsiveness */
-
-/* Large desktop */
-@media (width >= 1440px) {
-  .content-area {
-    padding: 2.5rem 3rem;
-  }
+.breadcrumb {
+  margin: 0;
 }
 
-/* Tablet and small desktop adjustments */
-@media (width <= 1024px) {
-  .content-area {
-    padding: 1.5rem 2rem;
-  }
+.notification-badge {
+  margin-right: 8px;
 }
 
-/* Tablet portrait */
-@media (width <= 768px) {
-  #app.app-layout {
-    flex-direction: column;
-  }
-
-  .main-content {
-    margin-left: 0;
-    width: 100%;
-    min-height: calc(100vh - 60px);
-  }
-
-  .content-area {
-    padding: 1rem 1.5rem;
-  }
-
-  /* Hide desktop header on mobile */
-  .main-content > header {
-    display: none;
-  }
-
-  /* Adjust typography for mobile */
-  .content-area h1 {
-    font-size: 1.875rem;
-  }
-
-  .content-area h2 {
-    font-size: 1.5rem;
-  }
-
-  .content-area h3 {
-    font-size: 1.25rem;
-  }
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: auto;
+  padding: 8px 12px;
 }
 
-/* Mobile phones */
-@media (width <= 640px) {
-  .content-area {
-    padding: 1rem;
-  }
-
-  .content-area h1 {
-    font-size: 1.75rem;
-  }
-
-  .content-area h2 {
-    font-size: 1.375rem;
-  }
+.username {
+  margin-left: 8px;
+  margin-right: 4px;
 }
 
-/* Small mobile phones */
-@media (width <= 480px) {
-  .content-area {
-    padding: 0.75rem;
-  }
-
-  .content-area h1 {
-    font-size: 1.5rem;
-  }
+.content {
+  margin: 24px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
-/* Landscape mobile adjustments */
-@media (width <= 768px) and (orientation: landscape) {
-  .main-content {
-    min-height: calc(100vh - 50px);
-  }
-
-  .content-area {
-    padding: 0.75rem 1rem;
-  }
+.content-wrapper {
+  padding: 24px;
+  min-height: calc(100vh - 112px);
 }
 
-/* Touch-friendly improvements */
-@media (hover: none) and (pointer: coarse) {
-  /* Increase touch targets */
-  button,
-  .btn,
-  .clickable,
-  a {
-    min-height: 44px;
-    min-width: 44px;
-    padding: 0.75rem;
-  }
-
-  /* Remove hover effects on touch devices */
-  .hover\:shadow-lg:hover,
-  .hover\:transform:hover,
-  .hover\:scale-105:hover {
-    box-shadow: none;
-    transform: none;
-  }
-
-  /* Improve scrolling on touch devices */
-  .content-area {
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-  }
-}
-
-/* Enhanced transition effects */
+/* Transition effects */
 .fade-slide-enter-active {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease-out;
 }
 
 .fade-slide-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease-in;
 }
 
 .fade-slide-enter-from {
   opacity: 0;
-  transform: translateY(20px) scale(0.98);
+  transform: translateY(20px);
 }
 
 .fade-slide-leave-to {
   opacity: 0;
-  transform: translateY(-10px) scale(1.02);
+  transform: translateY(-20px);
 }
 
 .fade-slide-enter-to,
 .fade-slide-leave-from {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
 }
 
-/* Accessibility improvements */
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 16px;
+  }
+  
+  .content {
+    margin: 16px;
+  }
+  
+  .content-wrapper {
+    padding: 16px;
+  }
+  
+  .sidebar {
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+  }
+  
+  .logo-text {
+    display: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .header {
+    padding: 0 12px;
+  }
+  
+  .content {
+    margin: 12px;
+  }
+  
+  .content-wrapper {
+    padding: 12px;
+  }
+  
+  .header-right .ant-input-search {
+    display: none;
+  }
+}
+
+/* Accessibility */
 @media (prefers-reduced-motion: reduce) {
   .fade-slide-enter-active,
   .fade-slide-leave-active {
     transition: opacity 0.2s ease;
   }
-
+  
   .fade-slide-enter-from,
   .fade-slide-leave-to {
     transform: none;
   }
-
+  
   .loading-logo {
     animation: none;
-  }
-}
-
-/* Focus management */
-.content-area:focus-within {
-  outline: 2px solid theme('colors.primary.500');
-  outline-offset: 4px;
-}
-
-/* Print styles */
-@media print {
-  .auth-loading,
-  .loading-content {
-    display: none;
-  }
-
-  .main-content {
-    margin-left: 0;
-    box-shadow: none;
-  }
-
-  .content-area {
-    padding: 1rem;
   }
 }
 </style>

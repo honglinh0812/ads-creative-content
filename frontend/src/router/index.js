@@ -1,25 +1,25 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import store from '../store'
 
-// Views
-import Home from '../views/Home.vue'
-import Login from '../views/Login.vue'
-import Dashboard from '../views/Dashboard.vue'
-import Analytics from '../views/Analytics.vue'
-import Optimization from '../views/Optimization.vue'
-import CampaignPage from '../views/CampaignPage.vue'
-import CampaignCreate from '../views/CampaignCreate.vue'
-import CampaignDetail from '../views/CampaignDetail.vue'
-import Ads from '../views/Ads.vue'
-import AdCreate from '../views/AdCreate.vue'
-import AdDetail from '../views/AdDetail.vue'
-import NotFound from '../views/NotFound.vue'
-import PrivacyPolicy from '../views/legal/PrivacyPolicy.vue'
-import TermsOfService from '../views/legal/TermsOfService.vue'
-import DataDeletion from '../views/legal/DataDeletion.vue'
-import AuthSuccess from '../views/AuthSuccess.vue'
-import NotificationPage from '../views/NotificationPage.vue'
-import ResetPassword from '../views/ResetPassword.vue'
+// Lazy-loaded Views for better performance
+const Home = () => import('../views/Home.vue')
+const Login = () => import('../views/Login.vue')
+const Dashboard = () => import('../views/Dashboard.vue')
+const Analytics = () => import('../views/Analytics.vue')
+const Optimization = () => import('../views/Optimization.vue')
+const CampaignPage = () => import('../views/CampaignPage.vue')
+const CampaignCreate = () => import('../views/CampaignCreate.vue')
+const CampaignDetail = () => import('../views/CampaignDetail.vue')
+const Ads = () => import('../views/Ads.vue')
+const AdCreate = () => import('../views/AdCreate.vue')
+const AdDetail = () => import('../views/AdDetail.vue')
+const NotFound = () => import('../views/NotFound.vue')
+const PrivacyPolicy = () => import('../views/legal/PrivacyPolicy.vue')
+const TermsOfService = () => import('../views/legal/TermsOfService.vue')
+const DataDeletion = () => import('../views/legal/DataDeletion.vue')
+const AuthSuccess = () => import('../views/AuthSuccess.vue')
+const NotificationPage = () => import('../views/NotificationPage.vue')
+const ResetPassword = () => import('../views/ResetPassword.vue')
 
 const routes = [
   {

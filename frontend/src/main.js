@@ -3,31 +3,9 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 
-// PrimeVue
-import PrimeVue from 'primevue/config'
-import 'primevue/resources/themes/saga-blue/theme.css'
-import 'primevue/resources/primevue.min.css'
-import 'primeicons/primeicons.css'
-import 'primeflex/primeflex.css'
-
-// PrimeVue Components
-import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
-import Textarea from 'primevue/textarea'
-import Dropdown from 'primevue/dropdown'
-import Card from 'primevue/card'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import Dialog from 'primevue/dialog'
-import ConfirmationService from 'primevue/confirmationservice';
-import ConfirmDialog from 'primevue/confirmdialog';
-import Calendar from 'primevue/calendar';
-import ProgressSpinner from 'primevue/progressspinner'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
-import FileUpload from 'primevue/fileupload'
-import Divider from 'primevue/divider'
-import InputNumber from 'primevue/inputnumber'
+// Ant Design Vue
+import Antd from 'ant-design-vue'
+import 'ant-design-vue/dist/reset.css'
 
 // Global CSS
 import './assets/styles/main.scss'
@@ -43,26 +21,11 @@ const app = createApp(App)
 // Use plugins
 app.use(store)
 app.use(router)
-app.use(PrimeVue, { ripple: true })
-app.use(ConfirmationService)
+app.use(Antd)
 app.use(ToastService)
 app.use(ApiService)
 
-// Register PrimeVue components
-app.component('Button', Button)
-app.component('InputText', InputText)
-app.component('Textarea', Textarea)
-app.component('Dropdown', Dropdown)
-app.component('Card', Card)
-app.component('DataTable', DataTable)
-app.component('Column', Column)
-app.component('Dialog', Dialog)
-app.component('ProgressSpinner', ProgressSpinner)
-app.component('TabView', TabView)
-app.component('TabPanel', TabPanel)
-app.component('FileUpload', FileUpload)
-app.component('Divider', Divider)
-app.component('InputNumber', InputNumber)
+// Ant Design Vue is globally registered, no need for individual component registration
 
 // Global error handler
 app.config.errorHandler = (err, vm, info) => {
@@ -74,8 +37,7 @@ app.config.errorHandler = (err, vm, info) => {
   })
 }
 
-app.component("ConfirmDialog", ConfirmDialog);
-app.component("PvcCalendar", Calendar);
+// All Ant Design Vue components are available globally
 
 // Initialize authentication before mounting app
 async function initializeApp() {

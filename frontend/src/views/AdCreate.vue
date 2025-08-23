@@ -1,974 +1,821 @@
 <template>
-  <div :class="['page-wrapper', { 'sidebar-closed': !sidebarOpen }]">
-    <AppSidebar :sidebarOpen="sidebarOpen" @toggle="toggleSidebar" @logout="handleLogout" />
-    <div class="main-content-wrapper" :style="mainContentStyle">
+  <div class="ad-create-page">
+    <!-- Sidebar -->
+    <div class="sidebar" :class="{ 'sidebar-open': sidebarOpen }">
+      <div class="sidebar-header">
+        <div class="logo">
+          <h2>AdCreative</h2>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <router-link to="/dashboard" class="nav-item">
+          <i class="pi pi-home"></i>
+          <span>Dashboard</span>
+        </router-link>
+        <router-link to="/campaigns" class="nav-item">
+          <i class="pi pi-folder"></i>
+          <span>Campaigns</span>
+        </router-link>
+        <router-link to="/ads" class="nav-item">
+          <i class="pi pi-file"></i>
+          <span>Ads</span>
+        </router-link>
+        <router-link to="/ad-create" class="nav-item active">
+          <i class="pi pi-plus"></i>
+          <span>Create Ad</span>
+        </router-link>
+      </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
       <!-- Mobile Header -->
-      <div class="mobile-header lg:hidden">
-        <button @click="toggleSidebar" class="btn btn-sm btn-ghost hover:bg-gray-100 transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
-        </button>
-        <h1 class="text-lg font-semibold text-secondary-900">Create Ad</h1>
+      <div class="mobile-header">
+        <a-button type="text" @click="toggleSidebar" class="sidebar-toggle">
+          <template #icon><menu-outlined /></template>
+        </a-button>
+        <h1>Create New Ad</h1>
+        <a-dropdown>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item @click="handleLogout">
+                <template #icon><logout-outlined /></template>
+                Logout
+              </a-menu-item>
+            </a-menu>
+          </template>
+          <a-button type="text">
+            <template #icon><user-outlined /></template>
+          </a-button>
+        </a-dropdown>
       </div>
 
-      <div class="content-wrapper">
-        <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <!-- Header -->
-          <div class="mb-8">
-            <div class="flex items-center justify-between">
-              <div>
-                <h1 class="text-3xl font-bold text-secondary-900">Create New Ad</h1>
-                <p class="text-secondary-600 mt-2">Create compelling Facebook ads with AI assistance</p>
-              </div>
-              <div class="flex gap-2">
-                <router-link to="/ads" class="btn btn-secondary">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                  </svg>
-                  Back to Ads
-                </router-link>
-                <button @click="showHelp = true" class="btn btn-ghost" aria-label="Help">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
+      <!-- Page Header -->
+      <a-page-header title="Create New Ad" sub-title="Generate compelling ads with AI assistance">
+        <template #extra>
+          <a-button @click="$router.push('/dashboard')">
+            <template #icon><arrow-left-outlined /></template>
+            Back to Dashboard
+          </a-button>
+        </template>
+      </a-page-header>
 
-          <!-- Progress Steps -->
-          <div class="wizard-progress">
-            <div class="progress-container">
-              <div 
-                v-for="(step, index) in steps" 
-                :key="step.id"
-                class="progress-step"
-                :class="{
-                  'active': currentStep === index + 1,
-                  'completed': currentStep > index + 1,
-                  'upcoming': currentStep < index + 1
-                }"
+      <!-- Progress Steps -->
+      <div class="wizard-progress">
+        <a-steps :current="currentStep - 1" size="small">
+          <a-step title="Basic Information" description="Campaign details and ad type" />
+          <a-step title="AI Configuration" description="Choose AI providers and settings" />
+          <a-step title="Preview & Save" description="Review and save your ad" />
+        </a-steps>
+      </div>
+
+      <!-- Step 1: Basic Information -->
+      <div v-if="currentStep === 1" class="step-content">
+        <a-card title="Basic Information" class="enhanced-card">
+          <a-form layout="vertical">
+            <!-- Campaign Selection -->
+            <a-form-item label="Campaign" required>
+              <a-select 
+                v-model:value="formData.campaignId" 
+                placeholder="Select a campaign"
+                :loading="loadingCampaigns"
+                show-search
+                :filter-option="false"
+                @search="loadCampaigns"
               >
-                <div class="step-indicator">
-                  <div class="step-number" v-if="currentStep <= index + 1">
-                    {{ index + 1 }}
-                  </div>
-                  <svg v-else class="step-check" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-                <div class="step-content">
-                  <div class="step-title">{{ step.title }}</div>
-                  <div class="step-description">{{ step.description }}</div>
-                </div>
-                <div v-if="index < steps.length - 1" class="step-connector"></div>
-              </div>
-            </div>
-          </div>
-          <!-- End Progress Steps -->
+                <a-select-option 
+                  v-for="campaign in campaigns" 
+                  :key="campaign.id" 
+                  :value="campaign.id"
+                >
+                  {{ campaign.name }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
 
-          <!-- Step 1: Basic Information -->
-          <div v-if="currentStep === 1" class="card">
-            <div class="card-header">
-              <h2 class="text-xl font-semibold text-secondary-900">Step 1: Basic Information</h2>
-              <p class="text-secondary-600">Fill in the basic details for your ad</p>
-            </div>
-            <div class="card-body">
-              <div class="form-grid">
-                <!-- Campaign Selection -->
-                <div class="form-field">
-                  <label class="field-label">
-                    <span class="label-text">Campaign</span>
-                    <span class="label-required">*</span>
-                  </label>
-                  <select v-model="formData.campaignId" class="form-input" :class="{ 'error': showValidation && !formData.campaignId }">
-                    <option value="">Select a campaign</option>
-                    <option v-for="campaign in campaigns" :key="campaign.id" :value="campaign.id">
-                      {{ campaign.name }}
-                    </option>
-                  </select>
-                  <div v-if="showValidation && !formData.campaignId" class="error-message">Please select a campaign</div>
-                </div>
+            <!-- Ad Type Selection -->
+            <a-form-item>
+              <template #label>
+                <span>Ad Type</span>
+                <a-button type="text" size="small" @click="showAdTypeHelp = true">
+                  <template #icon><question-circle-outlined /></template>
+                </a-button>
+              </template>
+              <a-radio-group v-model:value="formData.adType" @change="onAdTypeChange">
+                <a-radio 
+                  v-for="type in adTypes" 
+                  :key="type.value" 
+                  :value="type.value"
+                  class="ad-type-radio"
+                >
+                  {{ type.label }}
+                </a-radio>
+              </a-radio-group>
+            </a-form-item>
 
-                <!-- Ad Type -->
-                <div class="form-field">
-                  <label class="field-label">
-                    <span class="label-text">Ad Type</span>
-                    <span class="label-required">*</span>
-                    <button 
-                      type="button" 
-                      @click="showAdTypeHelp = true" 
-                      class="help-btn ml-2"
-                      title="Learn more about ad types"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                    </button>
-                  </label>
-                  <select v-model="formData.adType" class="form-input" @change="onAdTypeChange">
-                    <option v-for="type in adTypes" :key="type.value" :value="type.value">
-                      {{ type.label }}
-                    </option>
-                  </select>
-                  <div v-if="selectedAdType" class="ad-type-description mt-2 p-3 bg-blue-50 rounded-lg">
-                    <div class="flex items-start">
-                      <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                      <div>
-                        <p class="text-sm font-medium text-blue-900">{{ selectedAdType.label }}</p>
-                        <p class="text-sm text-blue-700">{{ selectedAdType.description }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <!-- Ad Name -->
+            <a-form-item label="Ad Name" required>
+              <a-input 
+                v-model:value="formData.name" 
+                placeholder="Enter ad name"
+                :maxlength="100"
+                show-count
+              />
+            </a-form-item>
 
-                <!-- Ad Name -->
-                <div class="form-field md:col-span-2">
-                  <label class="field-label">
-                    <span class="label-text">Ad Name</span>
-                    <span class="label-required">*</span>
-                  </label>
-                  <input v-model="formData.name" type="text" class="form-input" :class="{ 'error': showValidation && !formData.name }" placeholder="Enter ad name">
-                  <div v-if="showValidation && !formData.name" class="error-message">Please enter an ad name</div>
-                </div>
+            <!-- Number of Variations -->
+            <a-form-item label="Number of Variations">
+              <a-input-number 
+                v-model:value="formData.numberOfVariations" 
+                :min="1" 
+                :max="5" 
+                style="width: 100%"
+              />
+            </a-form-item>
 
-                <!-- Number of Variations -->
-                <div class="form-field">
-                  <label class="field-label">
-                    <span class="label-text">Number of Variations</span>
-                    <span class="label-required">*</span>
-                  </label>
-                  <input v-model.number="formData.numberOfVariations" type="number" min="1" max="5" class="form-input" :class="{ 'error': showValidation && !formData.numberOfVariations }">
-                  <div v-if="showValidation && !formData.numberOfVariations" class="error-message">Please enter number of variations</div>
-                </div>
+            <!-- Language -->
+            <a-form-item label="Language">
+              <a-select v-model:value="formData.language" placeholder="Select language">
+                <a-select-option value="vi">Vietnamese</a-select-option>
+                <a-select-option value="en">English</a-select-option>
+              </a-select>
+            </a-form-item>
 
-                <!-- Language -->
-                <div class="form-field">
-                  <label class="field-label">Language</label>
-                  <select v-model="formData.language" class="form-input">
-                    <option value="vi">Vietnamese</option>
-                    <option value="en">English</option>
-                  </select>
-                </div>
+            <!-- Call to Action -->
+            <a-form-item label="Call to Action">
+              <a-select 
+                v-model:value="formData.callToAction" 
+                placeholder="Select call to action"
+                :loading="loadingCTAs"
+              >
+                <a-select-option 
+                  v-for="cta in standardCTAs" 
+                  :key="cta.value" 
+                  :value="cta.value"
+                >
+                  {{ cta.label }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
 
-                <!-- Call to Action -->
-                <div class="form-field">
-                  <label class="field-label">
-                    <span class="label-text">Call to Action</span>
-                    <span class="label-required">*</span>
-                  </label>
-                  <select v-model="formData.callToAction" class="form-input" :class="{ 'error': showValidation && !formData.callToAction }">
-                    <option value="">Select Call to Action</option>
-                    <option v-for="cta in availableCTAs" :key="cta.value" :value="cta.value">
-                      {{ cta.label }}
-                    </option>
-                  </select>
-                  <div v-if="showValidation && !formData.callToAction" class="error-message">Please select a Call to Action</div>
-                </div>
+            <!-- Website URL (for website conversion ads) -->
+            <a-form-item 
+              v-if="formData.adType === 'website_conversion'" 
+              label="Website URL" 
+              required
+            >
+              <a-input 
+                v-model:value="formData.websiteUrl" 
+                placeholder="https://example.com"
+                type="url"
+              />
+            </a-form-item>
 
-                <!-- Website URL (for Website Conversion Ad) -->
-                <div v-if="formData.adType === 'WEBSITE_CONVERSION_AD'" class="form-field md:col-span-2">
-                  <label class="field-label">
-                    <span class="label-text">Website URL</span>
-                    <span class="label-required">*</span>
-                  </label>
-                  <input 
-                    v-model="formData.websiteUrl" 
-                    type="url" 
-                    class="form-input" 
-                    :class="{ 'error': showValidation && formData.adType === 'WEBSITE_CONVERSION_AD' && !formData.websiteUrl }" 
-                    placeholder="https://your-website.com"
+            <!-- Lead Form Questions (for lead generation ads) -->
+            <a-form-item 
+              v-if="formData.adType === 'lead_generation'" 
+              label="Lead Form Questions"
+            >
+              <div class="lead-form-questions">
+                <div 
+                  v-for="(question, index) in formData.leadFormQuestions" 
+                  :key="index" 
+                  class="question-item"
+                >
+                  <a-input 
+                    v-model:value="formData.leadFormQuestions[index]" 
+                    placeholder="Enter question"
                   >
-                  <div v-if="showValidation && formData.adType === 'WEBSITE_CONVERSION_AD' && !formData.websiteUrl" class="error-message">
-                    Please enter your website URL
-                  </div>
+                    <template #suffix>
+                      <a-button 
+                        type="text" 
+                        size="small" 
+                        @click="removeLeadFormQuestion(index)"
+                        danger
+                      >
+                        <template #icon><delete-outlined /></template>
+                      </a-button>
+                    </template>
+                  </a-input>
                 </div>
-
-                <!-- Lead Form Questions (for Lead Form Ad) -->
-                <div v-if="formData.adType === 'LEAD_FORM_AD'" class="form-field md:col-span-2">
-                  <label class="field-label">
-                    <span class="label-text">Lead Form Questions</span>
-                    <span class="label-required">*</span>
-                  </label>
-                  <div class="lead-form-questions">
-                    <div v-for="(question, index) in formData.leadFormQuestions" :key="index" class="question-item mb-3">
-                      <div class="flex gap-2">
-                        <select v-model="question.type" class="form-input flex-1">
-                          <option value="FULL_NAME">Full Name</option>
-                          <option value="EMAIL">Email</option>
-                          <option value="PHONE">Phone Number</option>
-                          <option value="COMPANY">Company</option>
-                          <option value="JOB_TITLE">Job Title</option>
-                          <option value="CUSTOM">Custom Question</option>
-                        </select>
-                        <input 
-                          v-if="question.type === 'CUSTOM'"
-                          v-model="question.customText" 
-                          type="text" 
-                          class="form-input flex-1" 
-                          placeholder="Enter your question"
-                        >
-                        <button 
-                          v-if="formData.leadFormQuestions.length > 1"
-                          @click="removeLeadFormQuestion(index)" 
-                          type="button" 
-                          class="btn btn-sm btn-danger"
-                        >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    <button @click="addLeadFormQuestion" type="button" class="btn btn-sm btn-secondary">
-                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                      </svg>
-                      Add Question
-                    </button>
-                  </div>
-                  <div v-if="showValidation && formData.adType === 'LEAD_FORM_AD' && formData.leadFormQuestions.length === 0" class="error-message">
-                    Please add at least one question to your lead form
-                  </div>
-                </div>
-
-                <!-- Prompt or Ad Links -->
-                <div class="form-field md:col-span-2">
-                  <label class="field-label">Ad Content</label>
-                  <textarea v-model="formData.prompt" rows="4" class="form-input" placeholder="Describe your ad content or provide a prompt for AI generation"></textarea>
-                  <div class="mb-2"></div>
-                  <label class="field-label">Or provide Facebook Ad Library links:</label>
-                  <div v-for="(link, index) in adLinks" :key="index" class="flex gap-2 mb-2">
-                    <input v-model="adLinks[index]" type="url" class="form-input flex-1" placeholder="https://www.facebook.com/ads/library/...">
-                    <button v-if="adLinks.length > 1" @click="removeAdLink(index)" type="button" class="btn btn-sm btn-danger">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                    </button>
-                  </div>
-                  <button @click="addAdLink" type="button" class="btn btn-sm btn-secondary">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Add Link
-                  </button>
-                  <div v-if="promptOrAdLinksError" class="error-message">
-                    Please provide either a prompt or at least one ad link
-                  </div>
-                </div>
+                <a-button 
+                  type="dashed" 
+                  @click="addLeadFormQuestion" 
+                  block
+                  style="margin-top: 8px"
+                >
+                  <template #icon><plus-outlined /></template>
+                  Add Question
+                </a-button>
               </div>
+            </a-form-item>
 
-              <!-- Navigation -->
-              <div class="flex justify-end mt-8">
-                <button @click="nextStep" class="btn btn-primary">
-                  Next Step
-                  <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
+            <!-- Prompt -->
+            <a-form-item>
+              <template #label>
+                <span>Prompt</span>
+                <a-button type="text" size="small" @click="showHelpDialog = true">
+                  <template #icon><question-circle-outlined /></template>
+                </a-button>
+              </template>
+              <a-textarea 
+                v-model:value="formData.prompt" 
+                placeholder="Describe your product/service or enter specific instructions for the AI..."
+                :rows="4"
+                :maxlength="2000"
+                show-count
+              />
+            </a-form-item>
 
-          <!-- Step 2: AI Configuration -->
-          <div v-if="currentStep === 2" class="card">
-            <div class="card-header">
-              <h2 class="text-xl font-semibold text-secondary-900">Step 2: AI Configuration</h2>
-              <p class="text-secondary-600">Choose your AI providers for content generation</p>
-            </div>
-            <div class="card-body">
-              <div class="ai-provider-grid">
-                <!-- Text Provider -->
-                <div class="ai-provider-card" :class="{ 'selected': formData.textProvider }">
-                  <div>
-                    <h3 class="text-lg font-semibold mb-2">Text Generation</h3>
-                    <p class="text-secondary-600 mb-4">Choose an AI provider for generating ad text</p>
-                  </div>
-                  <select v-model="formData.textProvider" class="form-input" :class="{ 'error': showValidation && !formData.textProvider }">
-                    <option value="">Select text provider</option>
-                    <option v-for="provider in textProviders" :key="provider.id" :value="provider.id">
-                      {{ provider.name }} - {{ provider.description }}
-                    </option>
-                  </select>
-                  <div v-if="showValidation && !formData.textProvider" class="error-message">Please select a text provider</div>
-                  <div v-if="formData.textProvider" class="mt-2">
-                    <div class="text-sm text-secondary-600">
-                      <strong>Capabilities:</strong> 
-                      <span v-for="capability in getSelectedTextProvider?.capabilities" :key="capability" 
-                            class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-1 mb-1">
-                        {{ capability }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Image Provider -->
-                <div class="ai-provider-card" :class="{ 'selected': formData.imageProvider, 'disabled': uploadedFile }">
-                  <div>
-                    <h3 class="text-lg font-semibold mb-2">Image Generation</h3>
-                    <p class="text-secondary-600 mb-4">Choose an AI provider for generating images</p>
-                  </div>
-                  <select 
-                    v-model="formData.imageProvider" 
-                    class="form-input" 
-                    :class="{ 'error': showValidation && !formData.imageProvider && !uploadedFile }"
-                    :disabled="uploadedFile"
+            <!-- Ad Links -->
+            <a-form-item label="Ad Links (Optional)">
+              <div class="ad-links-container">
+                <div 
+                  v-for="(link, index) in adLinks" 
+                  :key="index" 
+                  class="ad-link-item"
+                >
+                  <a-input 
+                    v-model:value="adLinks[index]" 
+                    placeholder="https://example.com/ad"
+                    ref="adLinkInput"
                   >
-                    <option value="">Select image provider</option>
-                    <option v-for="provider in imageProviders" :key="provider.id" :value="provider.id">
-                      {{ provider.name }} - {{ provider.description }}
-                    </option>
-                  </select>
-                  <div v-if="showValidation && !formData.imageProvider && !uploadedFile" class="error-message">
-                    Please either upload a file or select an image provider
-                  </div>
-                  <div v-if="uploadedFile" class="text-sm text-amber-600 mt-2">
-                    Image provider selection is disabled when you upload your own file
-                  </div>
+                    <template #suffix>
+                      <a-button 
+                        type="text" 
+                        size="small" 
+                        @click="removeAdLink(index)"
+                        danger
+                      >
+                        <template #icon><delete-outlined /></template>
+                      </a-button>
+                    </template>
+                  </a-input>
+                </div>
+                <a-button 
+                  type="dashed" 
+                  @click="addAdLink" 
+                  block
+                  style="margin-top: 8px"
+                >
+                  <template #icon><plus-outlined /></template>
+                  Add Link
+                </a-button>
+                <a-button 
+                  type="primary" 
+                  @click="extractFromLibrary" 
+                  :loading="extracting"
+                  style="margin-top: 8px"
+                  block
+                >
+                  <template #icon><download-outlined /></template>
+                  Extract Content from Links
+                </a-button>
+              </div>
+            </a-form-item>
+          </a-form>
+
+          <!-- Navigation -->
+          <div class="step-navigation">
+            <a-button 
+              type="primary" 
+              @click="nextStep" 
+              :disabled="!validateStep1()"
+              size="large"
+            >
+              Next: AI Configuration
+              <template #icon><arrow-right-outlined /></template>
+            </a-button>
+          </div>
+        </a-card>
+      </div>
+
+      <!-- Step 2: AI Configuration -->
+      <div v-if="currentStep === 2" class="step-content">
+        <a-card title="AI Configuration" class="enhanced-card">
+          <!-- Text Provider Selection -->
+          <a-form-item label="Text Generation Provider">
+            <a-radio-group v-model:value="formData.textProvider" class="ai-provider-grid">
+              <div 
+                v-for="provider in textProviders" 
+                :key="provider.value" 
+                class="ai-provider-card" 
+                :class="{ 
+                  selected: formData.textProvider === provider.value,
+                  disabled: !provider.enabled 
+                }"
+                @click="formData.textProvider = provider.value"
+              >
+                <a-radio :value="provider.value" style="display: none" />
+                <div class="provider-header">
+                  <h3>{{ provider.name }}</h3>
+                  <a-tag v-if="!provider.enabled" color="red">Disabled</a-tag>
+                </div>
+                <p>{{ provider.description }}</p>
+                <div class="provider-features">
+                  <a-tag v-for="feature in provider.features" :key="feature" color="blue">
+                    {{ feature }}
+                  </a-tag>
                 </div>
               </div>
+            </a-radio-group>
+          </a-form-item>
 
-              <!-- File Upload -->
-              <div class="mt-8">
-                <h3 class="text-lg font-semibold mb-4">Upload Media (Optional)</h3>
-                <div class="border-2 border-dashed border-secondary-300 rounded-lg p-6 text-center">
-                  <input ref="fileInput" type="file" @change="handleFileUpload" accept="image/*" class="hidden">
-                  <div v-if="!uploadedFile" @click="$refs.fileInput.click()" class="cursor-pointer">
-                    <svg class="w-12 h-12 text-secondary-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    <p class="text-secondary-600">Click to upload an image or drag and drop</p>
-                    <p class="text-sm text-secondary-500 mt-2">PNG, JPG up to 10MB</p>
-                  </div>
-                  <div v-else class="text-center">
-                    <img :src="uploadedFileUrl" alt="Uploaded file" class="w-32 h-32 object-cover mx-auto mb-4 rounded">
-                    <p class="text-secondary-600">{{ uploadedFile.name }}</p>
-                    <p class="text-sm text-secondary-500">{{ formatFileSize(uploadedFile.size) }}</p>
-                    <button @click="removeFile" class="btn btn-sm btn-danger mt-2">Remove</button>
-                  </div>
+          <!-- Image Provider Selection -->
+          <a-form-item label="Image Generation Provider">
+            <a-radio-group v-model:value="formData.imageProvider" class="ai-provider-grid">
+              <div 
+                v-for="provider in imageProviders" 
+                :key="provider.value" 
+                class="ai-provider-card" 
+                :class="{ 
+                  selected: formData.imageProvider === provider.value,
+                  disabled: !provider.enabled 
+                }"
+                @click="formData.imageProvider = provider.value"
+              >
+                <a-radio :value="provider.value" style="display: none" />
+                <div class="provider-header">
+                  <h3>{{ provider.name }}</h3>
+                  <a-tag v-if="!provider.enabled" color="red">Disabled</a-tag>
+                </div>
+                <p>{{ provider.description }}</p>
+                <div class="provider-features">
+                  <a-tag v-for="feature in provider.features" :key="feature" color="blue">
+                    {{ feature }}
+                  </a-tag>
                 </div>
               </div>
+            </a-radio-group>
+          </a-form-item>
 
-              <!-- Navigation -->
-              <div class="flex justify-between mt-8">
-                <button @click="prevStep" class="btn btn-secondary">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                  </svg>
-                  Previous
-                </button>
-                <button @click="generateAd" :disabled="isGenerating" class="btn btn-primary">
-                  <svg v-if="isGenerating" class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  {{ isGenerating ? 'Generating...' : 'Generate Ad' }}
-                </button>
+          <!-- Optional Media Upload -->
+          <a-form-item label="Upload Media (Optional)">
+            <a-upload
+              :file-list="uploadedFiles"
+              :before-upload="handleFileUpload"
+              @remove="removeFile"
+              accept="image/*,video/*"
+              list-type="picture-card"
+            >
+              <div v-if="uploadedFiles.length < 1">
+                <plus-outlined />
+                <div style="margin-top: 8px">Upload</div>
+              </div>
+            </a-upload>
+          </a-form-item>
+
+          <!-- Navigation -->
+          <div class="step-navigation">
+            <a-button @click="prevStep" size="large">
+              <template #icon><arrow-left-outlined /></template>
+              Previous
+            </a-button>
+            <a-button 
+              type="primary" 
+              @click="generateAd" 
+              :loading="isGenerating"
+              :disabled="!validateStep2()"
+              size="large"
+            >
+              <template #icon><thunderbolt-outlined /></template>
+              Generate Ad
+            </a-button>
+          </div>
+        </a-card>
+      </div>
+
+      <!-- Step 3: Preview & Save -->
+      <div v-if="currentStep === 3" class="step-content">
+        <a-card title="Preview & Save" class="enhanced-card">
+          <div v-if="adVariations.length > 0" class="ad-preview-container">
+            <p class="preview-instruction">Select your preferred ad variation:</p>
+            <div class="ad-preview-grid">
+              <div 
+                v-for="variation in adVariations" 
+                :key="variation.id" 
+                class="ad-preview-card" 
+                :class="{ selected: selectedVariation?.id === variation.id }"
+                @click="selectVariation(variation)"
+              >
+                <div class="ad-preview-content">
+                  <div 
+                    v-if="variation.imageUrl" 
+                    class="ad-preview-image"
+                    @click.stop="openMediaModal(variation.imageUrl)"
+                  >
+                    <img :src="variation.imageUrl" :alt="variation.headline" />
+                  </div>
+                  <div class="ad-preview-text">
+                    <h3 class="ad-preview-headline">{{ variation.headline }}</h3>
+                    <p class="ad-preview-primary-text">{{ variation.primaryText }}</p>
+                    <p class="ad-preview-description">{{ variation.description }}</p>
+                    <div class="ad-preview-cta">{{ variation.callToAction }}</div>
+                  </div>
+                </div>
+                <div class="ad-preview-actions">
+                  <a-button 
+                    type="text" 
+                    @click.stop="editVariation(variation)"
+                    size="small"
+                  >
+                    <template #icon><edit-outlined /></template>
+                    Edit
+                  </a-button>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Step 3: Preview -->
-          <div v-if="currentStep === 3" class="card">
-            <div class="card-header">
-              <h2 class="text-xl font-semibold text-secondary-900">Step 3: Preview & Save</h2>
-              <p class="text-secondary-600">Review your generated ads and save the best one</p>
-            </div>
-            <div class="card-body">
-              <div v-if="adVariations.length === 0" class="text-center py-12">
-                <div class="text-secondary-400 mb-4">
-                  <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                  </svg>
-                </div>
-                <h3 class="text-lg font-semibold text-secondary-900 mb-2">No ads generated yet</h3>
-                <p class="text-secondary-600">Go back to step 2 and generate your ads</p>
-              </div>
+          <a-empty v-else description="No ad variations generated yet" />
 
-              <div v-else class="ad-preview-grid">
-                <div v-for="(variation, index) in adVariations" :key="index" 
-                     class="ad-preview-card" 
-                     :class="{ 'selected': selectedVariation === variation }"
-                     @click="selectVariation(variation)">
-                  <div class="ad-preview-header">
-                    <h3 class="text-lg font-semibold">Variation {{ index + 1 }}</h3>
-                    <div class="flex gap-2">
-                      <button @click.stop="editVariation(variation)" class="btn btn-sm btn-secondary">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div class="ad-preview-content">
-                    <div v-if="variation.imageUrl || uploadedFileUrl" class="ad-image mb-4">
-                      <img :src="variation.imageUrl || uploadedFileUrl" :alt="variation.headline" class="w-full h-48 object-cover rounded">
-                    </div>
-                    
-                    <div class="ad-text">
-                      <h4 class="font-semibold text-lg mb-2">{{ variation.headline }}</h4>
-                      <p class="text-secondary-600 mb-3">{{ variation.body }}</p>
-                      <div class="flex items-center justify-between">
-                        <span class="text-sm text-secondary-500">{{ variation.callToAction }}</span>
-                        <span v-if="selectedVariation === variation" class="text-primary">
-                          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                          </svg>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Navigation -->
-              <div class="flex justify-between mt-8">
-                <button @click="prevStep" class="btn btn-secondary">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                  </svg>
-                  Previous
-                </button>
-                <button @click="saveAd" :disabled="!selectedVariation || isSaving" class="btn btn-primary">
-                  <svg v-if="isSaving" class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  {{ isSaving ? 'Saving...' : 'Save Ad' }}
-                </button>
-              </div>
-            </div>
+          <!-- Navigation -->
+          <div class="step-navigation">
+            <a-button @click="prevStep" size="large">
+              <template #icon><arrow-left-outlined /></template>
+              Previous
+            </a-button>
+            <a-button 
+              type="primary" 
+              @click="saveAd" 
+              :disabled="!selectedVariation"
+              :loading="isSaving"
+              size="large"
+            >
+              <template #icon><save-outlined /></template>
+              Save Ad
+            </a-button>
           </div>
-        </div>
+        </a-card>
       </div>
     </div>
 
     <!-- Edit Modal -->
-    <Dialog v-model:visible="showEditModal" header="Edit Ad Variation" :modal="true" :closable="true" class="w-full max-w-2xl">
-      <div v-if="editingVariation" class="space-y-4">
-        <div class="form-group">
-          <label class="form-label">Headline</label>
-          <input v-model="editingVariation.headline" type="text" class="form-input">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Body</label>
-          <textarea v-model="editingVariation.body" rows="4" class="form-textarea"></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Call to Action</label>
-          <select v-model="editingVariation.callToAction" class="form-select">
-            <option v-for="cta in standardCTAs" :key="cta.value" :value="cta.value">
-              {{ cta.label }}
-            </option>
-          </select>
-        </div>
-      </div>
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <button @click="cancelEdit" class="btn btn-secondary">Cancel</button>
-          <button @click="saveEdit" class="btn btn-primary">Save Changes</button>
-        </div>
-      </template>
-    </Dialog>
+    <a-modal 
+      v-model:open="showEditModal" 
+      title="Edit Ad Variation" 
+      width="600px"
+      @ok="saveEdit"
+      @cancel="cancelEdit"
+    >
+      <a-form v-if="editingVariation" layout="vertical">
+        <a-form-item label="Headline">
+          <a-input v-model:value="editingVariation.headline" />
+        </a-form-item>
+        <a-form-item label="Primary Text">
+          <a-textarea v-model:value="editingVariation.primaryText" :rows="3" />
+        </a-form-item>
+        <a-form-item label="Description">
+          <a-textarea v-model:value="editingVariation.description" :rows="2" />
+        </a-form-item>
+        <a-form-item label="Call to Action">
+          <a-input v-model:value="editingVariation.callToAction" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
 
     <!-- Confirm Save Modal -->
-    <Dialog v-model:visible="showConfirmModal" header="Confirm Save" :modal="true" :closable="true">
-      <p>Are you sure you want to save this ad?</p>
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <button @click="showConfirmModal = false" class="btn btn-secondary">Cancel</button>
-          <button @click="confirmSave" :disabled="isSaving" class="btn btn-primary">
-            {{ isSaving ? 'Saving...' : 'Save Ad' }}
-          </button>
-        </div>
-      </template>
-    </Dialog>
+    <a-modal 
+      v-model:open="showConfirmModal" 
+      title="Confirm Save" 
+      @ok="confirmSave"
+      @cancel="showConfirmModal = false"
+    >
+      <p>Are you sure you want to save this ad variation?</p>
+      <div v-if="selectedVariation" class="confirm-preview">
+        <h4>{{ selectedVariation.headline }}</h4>
+        <p>{{ selectedVariation.primaryText }}</p>
+      </div>
+    </a-modal>
 
     <!-- Extract Error Dialog -->
-    <Dialog v-model:visible="showExtractErrorDialog" header="Extraction Failed" :modal="true" :closable="true">
-      <p>Failed to extract content from the provided ad links. Would you like to continue without extracted content?</p>
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <button @click="showExtractErrorDialog = false" class="btn btn-secondary">Go Back</button>
-          <button @click="generateAdContinueWithoutExtract" class="btn btn-primary">Continue</button>
-        </div>
-      </template>
-    </Dialog>
+    <a-modal 
+      v-model:open="showExtractErrorDialog" 
+      title="Content Extraction Failed" 
+      @ok="onExtractErrorYes"
+      @cancel="onExtractErrorNo"
+      ok-text="Continue Anyway"
+      cancel-text="Go Back"
+    >
+      <p>We couldn't extract content from the provided ad links. Would you like to continue generating the ad with just your prompt, or go back to fix the links?</p>
+    </a-modal>
 
     <!-- Media Modal -->
-    <Dialog v-model:visible="showMediaModal" header="Media Preview" :modal="true" :closable="true" class="w-full max-w-4xl">
-      <div class="text-center">
-        <img :src="selectedMediaUrl" alt="Media preview" class="max-w-full max-h-96 mx-auto">
+    <a-modal 
+      v-model:open="showMediaModal" 
+      title="Media Preview" 
+      :footer="null"
+      width="80%"
+      centered
+    >
+      <div class="media-modal-content">
+        <img 
+          v-if="selectedMediaUrl" 
+          :src="selectedMediaUrl" 
+          alt="Media preview" 
+          style="max-width: 100%; height: auto;"
+        />
       </div>
-    </Dialog>
+    </a-modal>
 
     <!-- Ad Type Help Dialog -->
-    <Dialog v-model:visible="showAdTypeHelp" header="Loại quảng cáo Facebook" :modal="true" :closable="true" class="help-dialog">
-      <div class="help-content">
-        <div class="help-section">
-          <h3 class="help-title">3 Loại quảng cáo chính</h3>
-          <div class="ad-types-help">
-            <div class="ad-type-help-item">
-              <h4 class="ad-type-title">📱 Page Post Ad</h4>
-              <p class="ad-type-desc">Quảng cáo hiển thị như bài đăng trên trang Facebook. Phù hợp cho:</p>
-              <ul class="ad-type-features">
-                <li>Brand awareness và engagement</li>
-                <li>Tương tác với cộng đồng</li>
-                <li>Chia sẻ thông tin, tin tức</li>
-                <li>Giới thiệu sản phẩm/dịch vụ</li>
-              </ul>
-            </div>
-            
-            <div class="ad-type-help-item">
-              <h4 class="ad-type-title">🌐 Website Conversion Ad</h4>
-              <p class="ad-type-desc">Quảng cáo dẫn người dùng đến website để thực hiện hành động. Phù hợp cho:</p>
-              <ul class="ad-type-features">
-                <li>Bán hàng online</li>
-                <li>Đăng ký dịch vụ</li>
-                <li>Tải ứng dụng</li>
-                <li>Thu thập leads qua website</li>
-              </ul>
-            </div>
-            
-            <div class="ad-type-help-item">
-              <h4 class="ad-type-title">📋 Lead Form Ad</h4>
-              <p class="ad-type-desc">Quảng cáo thu thập thông tin khách hàng trực tiếp trên Facebook. Phù hợp cho:</p>
-              <ul class="ad-type-features">
-                <li>Thu thập thông tin liên hệ</li>
-                <li>Đăng ký nhận báo giá</li>
-                <li>Đăng ký webinar/event</li>
-                <li>Khảo sát, nghiên cứu thị trường</li>
-              </ul>
-            </div>
-          </div>
+    <a-modal 
+      v-model:open="showAdTypeHelp" 
+      title="Ad Types Guide" 
+      :footer="null"
+      width="700px"
+    >
+      <div class="ad-types-help">
+        <div v-for="type in adTypes" :key="type.value" class="ad-type-help-item">
+          <h3 class="ad-type-title">{{ type.label }}</h3>
+          <p class="ad-type-desc">{{ type.description }}</p>
+          <ul class="ad-type-features">
+            <li v-for="feature in type.features" :key="feature">{{ feature }}</li>
+          </ul>
         </div>
       </div>
-    </Dialog>
+    </a-modal>
 
     <!-- Help Dialog -->
-    <Dialog v-model:visible="showHelp" header="Hướng dẫn tạo quảng cáo" :modal="true" :closable="true" class="help-dialog">
+    <a-modal 
+      v-model:open="showHelpDialog" 
+      title="How to Write Effective Prompts" 
+      :footer="null"
+      width="700px"
+    >
       <div class="help-content">
         <div class="help-section">
-          <h3 class="help-title">Bắt đầu</h3>
+          <h3 class="help-title">What is a Prompt?</h3>
           <p class="help-text">
-            Trình hướng dẫn này sẽ giúp bạn tạo quảng cáo Facebook chuyên nghiệp với AI qua 3 bước đơn giản.
+            A prompt is a description or instruction that tells the AI what kind of ad content you want to create. 
+            The more specific and detailed your prompt, the better the AI can understand your needs.
           </p>
         </div>
+        
         <div class="help-section">
-          <h3 class="help-title">Các bước thực hiện</h3>
+          <h3 class="help-title">Tips for Writing Great Prompts</h3>
           <div class="help-steps">
             <div class="help-step">
               <div class="step-number">1</div>
               <div class="step-content">
-                <h4>Thông tin cơ bản</h4>
-                <p>Chọn chiến dịch, loại quảng cáo, đặt tên cho quảng cáo.</p>
+                <h4>Describe Your Product/Service</h4>
+                <p>Clearly explain what you're selling, its main benefits, and target audience.</p>
               </div>
             </div>
             <div class="help-step">
               <div class="step-number">2</div>
               <div class="step-content">
-                <h4>Tạo nội dung</h4>
-                <p>Nhập mô tả quảng cáo hoặc cung cấp link mẫu từ Facebook Ad Library.</p>
+                <h4>Specify the Tone</h4>
+                <p>Mention if you want the ad to be professional, casual, exciting, trustworthy, etc.</p>
               </div>
             </div>
             <div class="help-step">
               <div class="step-number">3</div>
               <div class="step-content">
-                <h4>Cấu hình AI</h4>
-                <p>Chọn AI tạo text và hình ảnh cho quảng cáo.</p>
+                <h4>Include Key Features</h4>
+                <p>List the most important features or benefits you want to highlight.</p>
               </div>
             </div>
             <div class="help-step">
               <div class="step-number">4</div>
               <div class="step-content">
-                <h4>Xem trước & Lưu</h4>
-                <p>Xem trước các phiên bản quảng cáo và lưu lại phiên bản tốt nhất.</p>
+                <h4>Mention Your Audience</h4>
+                <p>Describe who your ideal customers are (age, interests, problems they face).</p>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </Dialog>
+    </a-modal>
   </div>
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
+import { 
+  MenuOutlined, 
+  UserOutlined, 
+  LogoutOutlined,
+  ArrowLeftOutlined,
+  ArrowRightOutlined,
+  QuestionCircleOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  DownloadOutlined,
+  ThunderboltOutlined,
+  EditOutlined,
+  SaveOutlined
+} from '@ant-design/icons-vue'
 import api from '@/services/api'
-import '@/assets/styles/adcreate.css'
-import Dialog from 'primevue/dialog'
-
-import AppSidebar from '@/components/AppSidebar.vue'
 
 export default {
   name: 'AdCreate',
-  components: { 
-    AppSidebar,
-    Dialog
+  components: {
+    MenuOutlined,
+    UserOutlined,
+    LogoutOutlined,
+    ArrowLeftOutlined,
+    ArrowRightOutlined,
+    QuestionCircleOutlined,
+    DeleteOutlined,
+    PlusOutlined,
+    DownloadOutlined,
+    ThunderboltOutlined,
+    EditOutlined,
+    SaveOutlined
   },
   data() {
     return {
-      sidebarOpen: true,
+      sidebarOpen: false,
       currentStep: 1,
-      showValidation: false,
-      isGenerating: false,
-      isSaving: false,
-      showEditModal: false,
-      showConfirmModal: false,
-      showHelp: false,
-      
       formData: {
         campaignId: null,
-        adType: 'PAGE_POST_AD',
+        adType: 'website_conversion',
         name: '',
-        prompt: '',
+        numberOfVariations: 3,
         language: 'vi',
-        textProvider: '',
-        imageProvider: '',
-        numberOfVariations: 1,
-        callToAction: '', // Thêm callToAction vào formData
-        websiteUrl: '', // For Website Conversion Ad
-        leadFormQuestions: [{ type: 'FULL_NAME' }] // For Lead Form Ad
+        callToAction: '',
+        websiteUrl: '',
+        leadFormQuestions: [''],
+        prompt: '',
+        textProvider: 'openai',
+        imageProvider: 'dalle'
       },
-      
-      uploadedFile: null,
-      uploadedFileUrl: null,
-      
       steps: [
-        {
-          id: 1,
-          title: 'Basic Info',
-          description: 'Thông tin cơ bản cho quảng cáo'
-        },
-        {
-          id: 2,
-          title: 'AI Setup',
-          description: 'Cấu hình AI tạo nội dung'
-        },
-        {
-          id: 3,
-          title: 'Preview',
-          description: 'Xem trước và lưu quảng cáo'
-        }
+        { title: 'Basic Information', description: 'Campaign details and ad type' },
+        { title: 'AI Configuration', description: 'Choose AI providers and settings' },
+        { title: 'Preview & Save', description: 'Review and save your ad' }
       ],
-      
       adTypes: [
         {
-          value: 'PAGE_POST_AD',
-          label: 'Page Post Ad',
-          description: 'Quảng cáo hiển thị như bài đăng trên trang Facebook. Phù hợp cho brand awareness, engagement và tương tác với cộng đồng.',
-          fields: ['headline', 'description', 'primaryText', 'image'],
-          ctaOptions: ['LEARN_MORE', 'SHOP_NOW', 'SIGN_UP', 'CONTACT_US']
+          value: 'website_conversion',
+          label: 'Website Conversion',
+          description: 'Drive traffic to your website and increase conversions',
+          features: ['Website URL required', 'Conversion tracking', 'Traffic optimization']
         },
         {
-          value: 'WEBSITE_CONVERSION_AD',
-          label: 'Website Conversion Ad',
-          description: 'Quảng cáo dẫn người dùng đến website để thực hiện hành động cụ thể như mua hàng, đăng ký, tải app.',
-          fields: ['headline', 'description', 'primaryText', 'image', 'websiteUrl'],
-          ctaOptions: ['SHOP_NOW', 'LEARN_MORE', 'SIGN_UP', 'DOWNLOAD', 'GET_QUOTE']
+          value: 'lead_generation',
+          label: 'Lead Generation',
+          description: 'Collect leads directly through Facebook forms',
+          features: ['Custom form questions', 'Lead collection', 'Contact information']
         },
         {
-          value: 'LEAD_FORM_AD',
-          label: 'Lead Form Ad',
-          description: 'Quảng cáo thu thập thông tin khách hàng tiềm năng trực tiếp trên Facebook, không cần chuyển đến website.',
-          fields: ['headline', 'description', 'primaryText', 'image', 'leadFormQuestions'],
-          ctaOptions: ['SIGN_UP', 'GET_QUOTE', 'CONTACT_US', 'APPLY_NOW']
+          value: 'brand_awareness',
+          label: 'Brand Awareness',
+          description: 'Increase brand visibility and recognition',
+          features: ['Reach optimization', 'Brand exposure', 'Awareness metrics']
         }
       ],
-      
       campaigns: [],
-      textProviders: [],
-      imageProviders: [],
+      textProviders: [
+        {
+          value: 'openai',
+          name: 'OpenAI GPT',
+          description: 'Advanced language model for high-quality ad copy',
+          features: ['Creative writing', 'Multiple languages', 'Context awareness'],
+          enabled: true
+        },
+        {
+          value: 'claude',
+          name: 'Anthropic Claude',
+          description: 'Reliable and safe AI for professional ad content',
+          features: ['Professional tone', 'Safety focused', 'Detailed responses'],
+          enabled: true
+        }
+      ],
+      imageProviders: [
+        {
+          value: 'dalle',
+          name: 'DALL-E',
+          description: 'Create stunning, original images for your ads',
+          features: ['High quality', 'Creative styles', 'Custom prompts'],
+          enabled: true
+        },
+        {
+          value: 'midjourney',
+          name: 'Midjourney',
+          description: 'Artistic and creative image generation',
+          features: ['Artistic style', 'High resolution', 'Creative freedom'],
+          enabled: false
+        }
+      ],
       adVariations: [],
       selectedVariation: null,
       editingVariation: null,
-      adId: null,
-      promptTemplates: [],
-      customPromptAddition: '',
-      saveCustomPrompt: false,
-      savedPrompts: [],
-      promptOrAdLinksError: false,
-      adLinks: [''],
-      selectedPromptTemplate: '',
-      showExtractErrorDialog: false, // Thêm biến trạng thái cho dialog lỗi extract
-      failedExtractLinkIndex: 0, // Lưu index ad link lỗi để focus
-      promptTemplateOptions: [
-        { label: 'Dynamic & Energetic', value: 'dynamic' },
-        { label: 'Creative & Innovative', value: 'creative' },
-        { label: 'Professional & Serious', value: 'professional' },
-        { label: 'Friendly & Approachable', value: 'friendly' },
-        { label: 'Urgent & Action-oriented', value: 'urgent' },
-        { label: 'Luxury & Premium', value: 'luxury' },
-        { label: 'Educational & Informative', value: 'educational' },
-      ],
-      showMediaModal: false,
-      selectedMediaUrl: '',
-      placeholderImageUrl: '/img/placeholder.png',
-      showAdTypeHelp: false,
-      // Thêm danh sách CTA chuẩn của Facebook
       standardCTAs: [],
-
+      adLinks: [''],
+      uploadedFiles: [],
+      uploadedFileUrl: '',
+      selectedMediaUrl: '',
+      
+      // Loading states
+      loadingCampaigns: false,
+      loadingCTAs: false,
+      isGenerating: false,
+      isSaving: false,
+      extracting: false,
+      
+      // Modal states
+      showEditModal: false,
+      showConfirmModal: false,
+      showExtractErrorDialog: false,
+      showMediaModal: false,
+      showAdTypeHelp: false,
+      showHelpDialog: false,
+      
+      // Other states
+      showValidation: false,
+      adId: null,
+      selectedPromptTemplate: '',
+      customPromptAddition: '',
+      savedPrompts: []
     }
   },
-  
   computed: {
-    ...mapState('auth', ['user']),
-    
-    userInitials() {
-      if (!this.user?.name) return 'U'
-      return this.user.name.split(' ').map(n => n[0]).join('').toUpperCase()
-    },
-    
-    userName() {
-      return this.user?.name || 'User'
-    },
-    
-    userEmail() {
-      return this.user?.email || ''
-    },
-    mainContentStyle() {
-      return this.sidebarOpen ? { marginLeft: '240px' } : { marginLeft: '0' }
-    },
-    
-    getSelectedTextProvider() {
-      return this.textProviders.find(p => p.id === this.formData.textProvider)
-    },
-    
-    selectedAdType() {
-      return this.adTypes.find(type => type.value === this.formData.adType)
-    },
-    
-    availableCTAs() {
-      if (!this.selectedAdType) return this.standardCTAs
-      return this.standardCTAs.filter(cta => 
-        this.selectedAdType.ctaOptions.includes(cta.value)
-      )
-    },
-    
-    getSelectedImageProvider() {
-      return this.imageProviders.find(p => p.id === this.formData.imageProvider)
-    }
+    // Add any computed properties here
   },
-  
   async mounted() {
     await this.loadData()
-    await this.loadCallToActions()
-    this.loadSavedPrompts()
-    // Initialize adLinks with at least one empty item
-    if (this.adLinks.length === 0) {
-      this.adLinks = ['']
-    }
   },
-  
-  watch: {
-    'formData.language': {
-      handler(newLanguage) {
-        if (newLanguage) {
-          this.loadCallToActions()
-        }
-      },
-      immediate: false
-    }
-  },
-  
   methods: {
-    ...mapActions('auth', ['logout']),
-    ...mapActions('toast', ['showToast']),
-    
     async loadData() {
+      await Promise.all([
+        this.loadCampaigns(),
+        this.loadCallToActions()
+      ])
+    },
+    
+    async loadCampaigns() {
+      this.loadingCampaigns = true
       try {
-        // Load campaigns
-        const campaignsResponse = await api.campaigns.getAll(0, 100); // Get more campaigns to ensure we find them
-        this.campaigns = campaignsResponse.data.content || campaignsResponse.data || []
-        
-        // Load AI providers
-        const [textResponse, imageResponse] = await Promise.all([
-          api.providers.getTextProviders(),
-          api.providers.getImageProviders()
-        ])
-        
-        this.textProviders = textResponse.data
-        this.imageProviders = imageResponse.data
-        
+        const response = await api.campaigns.getAll()
+        this.campaigns = response.data.campaigns || []
       } catch (error) {
-        console.error('Error loading data:', error)
-        this.showToast({
-          type: 'error',
-          message: 'Unable to load data. Please try again.'
-        })
+        console.error('Error loading campaigns:', error)
+        this.$message.error('Failed to load campaigns')
+      } finally {
+        this.loadingCampaigns = false
       }
     },
     
     async loadCallToActions() {
+      this.loadingCTAs = true
       try {
-        const language = this.formData.language || 'en'
-        const response = await api.providers.getCallToActions(language)
-        this.standardCTAs = response.data
+        const response = await api.ads.getCallToActions()
+        this.standardCTAs = response.data.ctas || []
       } catch (error) {
-        console.error('Failed to load call to actions:', error)
-        // Fallback to default CTAs if API fails
-        this.standardCTAs = [
-          { value: 'SHOP_NOW', label: 'Shop Now' },
-          { value: 'LEARN_MORE', label: 'Learn More' },
-          { value: 'SIGN_UP', label: 'Sign Up' },
-          { value: 'DOWNLOAD', label: 'Download' },
-          { value: 'CONTACT_US', label: 'Contact Us' },
-          { value: 'APPLY_NOW', label: 'Apply Now' },
-          { value: 'BOOK_NOW', label: 'Book Now' },
-          { value: 'GET_OFFER', label: 'Get Offer' },
-          { value: 'MESSAGE_PAGE', label: 'Message Page' },
-          { value: 'SUBSCRIBE', label: 'Subscribe' }
-        ]
+        console.error('Error loading CTAs:', error)
+        this.$message.error('Failed to load call to actions')
+      } finally {
+        this.loadingCTAs = false
       }
     },
     
     nextStep() {
-      console.log('[DEBUG] nextStep called, currentStep:', this.currentStep);
-      if (this.currentStep === 1) {
-        const valid = this.validateStep1();
-        console.log('[DEBUG] validateStep1 result:', valid);
-        if (!valid) {
-          this.showValidation = true
-          return
-        }
-      }
       if (this.currentStep < 3) {
         this.currentStep++
-        this.showValidation = false
       }
     },
     
     prevStep() {
       if (this.currentStep > 1) {
         this.currentStep--
-        this.showValidation = false
       }
     },
     
     onAdTypeChange() {
-      // Reset ad-specific fields when ad type changes
-      if (this.formData.adType !== 'WEBSITE_CONVERSION_AD') {
-        this.formData.websiteUrl = ''
-      }
-      if (this.formData.adType !== 'LEAD_FORM_AD') {
-        this.formData.leadFormQuestions = [{ type: 'FULL_NAME' }]
-      }
-      // Reset CTA to empty when ad type changes
-      this.formData.callToAction = ''
+      // Reset type-specific fields when ad type changes
+      this.formData.websiteUrl = ''
+      this.formData.leadFormQuestions = ['']
     },
     
     addLeadFormQuestion() {
-      this.formData.leadFormQuestions.push({ type: 'EMAIL' })
+      this.formData.leadFormQuestions.push('')
     },
     
     removeLeadFormQuestion(index) {
-      if (this.formData.leadFormQuestions.length > 1) {
-        this.formData.leadFormQuestions.splice(index, 1)
-      }
+      this.formData.leadFormQuestions.splice(index, 1)
     },
     
     validateStep1() {
-      const hasPrompt = !!this.formData.prompt && this.formData.prompt.trim() !== ''
-      const hasAdLinks = Array.isArray(this.adLinks) && this.adLinks.some(link => link && link.trim() !== '')
-      const basicValid = this.formData.campaignId && 
-                         this.formData.adType && 
-                         this.formData.name && 
-                         this.formData.numberOfVariations &&
-                         this.formData.callToAction
-      
-      // Validate ad-specific fields
-      let adSpecificValid = true
-      if (this.formData.adType === 'WEBSITE_CONVERSION_AD' && !this.formData.websiteUrl) {
-        adSpecificValid = false
-      }
-      if (this.formData.adType === 'LEAD_FORM_AD' && this.formData.leadFormQuestions.length === 0) {
-        adSpecificValid = false
-      }
-      
-      this.promptOrAdLinksError = false
-      if (!hasPrompt && !hasAdLinks) {
-        this.promptOrAdLinksError = true
-      }
-      
-      console.log('[DEBUG] validateStep1 fields:', {
-        campaignId: this.formData.campaignId,
-        adType: this.formData.adType,
-        name: this.formData.name,
-        numberOfVariations: this.formData.numberOfVariations,
-        callToAction: this.formData.callToAction,
-        websiteUrl: this.formData.websiteUrl,
-        leadFormQuestions: this.formData.leadFormQuestions,
-        prompt: this.formData.prompt,
-        adLinks: this.adLinks,
-        hasPrompt,
-        hasAdLinks,
-        basicValid,
-        adSpecificValid,
-        promptOrAdLinksError: this.promptOrAdLinksError
-      });
-      
-      return basicValid && (hasPrompt || hasAdLinks)
+      return this.formData.campaignId && 
+             this.formData.name && 
+             this.formData.adType &&
+             (this.formData.prompt || this.adLinks.some(link => link.trim()))
     },
     
     validateStep2() {
-      if (this.uploadedFile) {
-        return this.formData.textProvider
-      }
       return this.formData.textProvider && this.formData.imageProvider
     },
     
-    async handleFileUpload(event) {
-      const file = event.target.files[0]
-      if (!file) return
-      
-      // Validate file size (10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        this.showToast({
-          type: 'error',
-          message: 'File too large. Please select a file smaller than 10MB.'
-        })
-        return
-      }
-      
-      try {
-        const formData = new FormData()
-        formData.append('file', file)
-        
-        const response = await api.post('/upload/media', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
-        
-        if (response.data.success) {
-          this.uploadedFile = file
-          this.uploadedFileUrl = response.data.fileUrl
-          // Clear image provider when file is uploaded
-          this.formData.imageProvider = ''
-          this.showToast({
-            type: 'success',
-            message: 'File uploaded successfully!'
-          })
-        }
-      } catch (error) {
-        console.error('Error uploading file:', error)
-        this.showToast({
-          type: 'error',
-          message: 'Unable to upload file. Please try again.'
-        })
-      }
+    handleFileUpload(file) {
+      // Handle file upload logic
+      this.uploadedFiles = [file]
+      return false // Prevent automatic upload
     },
     
     removeFile() {
-      this.uploadedFile = null
+      this.uploadedFiles = []
       this.uploadedFileUrl = ''
-      this.$refs.fileInput.value = ''
-      // Re-enable image provider selection when file is removed
-      this.formData.imageProvider = ''
     },
     
     formatFileSize(bytes) {
@@ -980,15 +827,22 @@ export default {
     },
     
     async generateAd() {
-      if (!this.validateStep2()) {
-        this.showValidation = true
-        return
-      }
       this.isGenerating = true
+      
       try {
+        // Validate required fields
+        if (!this.formData.prompt && !this.adLinks.some(link => link.trim())) {
+          this.$message.error('Please enter prompt content or provide ad links')
+          this.currentStep = 1
+          this.showValidation = true
+          return
+        }
+        
+        // Extract content from ad links if provided
         const validLinks = this.adLinks.filter(link => link.trim())
-        let extractedContent = null
+        let extractedContent = ''
         let extractFailed = false
+        
         if (validLinks.length > 0) {
           try {
             const extractionResponse = await api.ads.extractFromLibrary({
@@ -996,15 +850,7 @@ export default {
               promptStyle: this.selectedPromptTemplate || 'Dynamic',
               customPrompt: this.customPromptAddition
             })
-            // Thêm log debug dữ liệu trả về
-            console.log('extractionResponse.data', extractionResponse.data)
-            if (Array.isArray(extractionResponse.data)) {
-              extractionResponse.data.forEach((item, idx) => {
-                console.log(`item[${idx}] body:`, item.body, 'snapshot.body:', item.snapshot?.body)
-              })
-            } else {
-              console.log('body:', extractionResponse.data.body, 'snapshot.body:', extractionResponse.data.snapshot?.body)
-            }
+            
             let success = false
             if (Array.isArray(extractionResponse.data)) {
               success = extractionResponse.data.some(this.hasAdBody)
@@ -1023,20 +869,21 @@ export default {
             extractFailed = true
           }
         }
-        // Nếu có ad link và extract thất bại hoặc không có nội dung, hiện dialog xác nhận
+        
+        // If extraction failed, show dialog
         if (validLinks.length > 0 && extractFailed) {
           this.showExtractErrorDialog = true
           this.isGenerating = false
           return
         }
-
-        // Tạo preview quảng cáo (không lưu vào database)
-        // Bổ sung hướng dẫn CTA vào prompt
-        let promptWithCTA = this.formData.prompt || '';
+        
+        // Generate ad preview
+        let promptWithCTA = this.formData.prompt || ''
         if (promptWithCTA.indexOf('Call to Action') === -1) {
-          const ctaList = this.standardCTAs.map(cta => cta.label.split(' - ')[0]).join(', ');
-          promptWithCTA += `\n\nLưu ý: Chỉ sử dụng một trong các Call to Action sau cho quảng cáo: ${ctaList}. Không tạo CTA khác.`;
+          const ctaList = this.standardCTAs.map(cta => cta.label.split(' - ')[0]).join(', ')
+          promptWithCTA += `\n\nLưu ý: Chỉ sử dụng một trong các Call to Action sau cho quảng cáo: ${ctaList}. Không tạo CTA khác.`
         }
+        
         const requestData = {
           campaignId: this.formData.campaignId,
           adType: this.formData.adType,
@@ -1051,33 +898,21 @@ export default {
           numberOfVariations: this.formData.numberOfVariations,
           mediaFileUrl: this.uploadedFileUrl,
           callToAction: this.formData.callToAction,
-          extractedContent: extractedContent, // Add extracted content if available
-          isPreview: true // Flag để backend biết đây là preview
+          extractedContent: extractedContent,
+          isPreview: true
         }
         
-        // Gọi API để tạo preview (không lưu database)
         const response = await api.post('/ads/generate', requestData)
         
         if (response.data.status === 'success') {
-          console.log('Response variations:', response.data.variations)
-          console.log('Uploaded file URL:', this.uploadedFileUrl)
+          this.adVariations = response.data.variations.map(v => ({
+            ...v,
+            imageUrl: v.imageUrl || this.uploadedFileUrl || v.mediaFileUrl || ''
+          }))
           
-          this.adVariations = response.data.variations.map(v => {
-            const imageUrl = v.imageUrl || this.uploadedFileUrl || v.mediaFileUrl || ''
-            console.log('Variation imageUrl:', imageUrl, 'for variation:', v.headline)
-            return {
-              ...v,
-              imageUrl: imageUrl
-            }
-          })
-          
-          console.log('Final adVariations:', this.adVariations)
-          this.adId = response.data.adId // Lưu adId tạm thời cho việc save sau
+          this.adId = response.data.adId
           this.currentStep = 3
-          this.showToast({
-            type: 'success',
-            message: 'Ad created successfully! Please preview and save.'
-          })
+          this.$message.success('Ad created successfully! Please preview and save.')
         } else {
           throw new Error(response.data.message)
         }
@@ -1085,12 +920,8 @@ export default {
         console.error('Error generating ad:', error)
         const errorMessage = error.response?.data?.message || 'Could not create ad. Please try again.'
         
-        this.showToast({
-          type: 'error',
-          message: errorMessage
-        })
+        this.$message.error(errorMessage)
         
-        // If it's a validation error (no prompt and no ad link content), go back to step 1
         if (errorMessage.includes('Please enter prompt content') || errorMessage.includes('valid ad link')) {
           this.currentStep = 1
           this.showValidation = true
@@ -1130,15 +961,12 @@ export default {
     
     saveAd() {
       if (!this.selectedVariation) {
-        this.showToast({
-          type: 'warning',
-          message: 'Vui lòng chọn một quảng cáo để lưu'
-        })
+        this.$message.warning('Vui lòng chọn một quảng cáo để lưu')
         return
       }
       this.showConfirmModal = true
     },
-
+    
     addAdLink() {
       this.adLinks.push('')
     },
@@ -1147,47 +975,11 @@ export default {
       this.adLinks.splice(index, 1)
     },
     
-    getPromptTemplate(style) {
-      const templates = {
-        dynamic: "Create an energetic and dynamic ad that captures attention with bold language, exciting benefits, and a strong call-to-action. Use power words and create urgency.",
-        creative: "Develop a creative and innovative ad that stands out with unique angles, storytelling elements, and imaginative approaches. Think outside the box.",
-        professional: "Write a professional and serious ad that builds trust through credibility, expertise, and clear value propositions. Use formal tone and industry authority.",
-        friendly: "Create a friendly and approachable ad that connects personally with the audience using conversational tone, relatability, and warm messaging.",
-        urgent: "Generate an urgent and action-oriented ad that drives immediate response with time-sensitive offers, scarcity, and compelling reasons to act now.",
-        luxury: "Craft a luxury and premium ad that emphasizes exclusivity, quality, sophistication, and prestige. Use elegant language and highlight premium benefits.",
-        educational: "Develop an educational and informative ad that teaches while selling, providing valuable insights, tips, or knowledge that positions your brand as an expert."
-      }
-      return templates[style] || ''
-    },
-    
-    useCustomPrompt(prompt) {
-      this.formData.prompt = prompt.content
-      this.customPromptAddition = ''
-      this.selectedPromptTemplate = ''
-    },
-    
-    deleteCustomPrompt(index) {
-      this.savedPrompts.splice(index, 1)
-      this.saveSavedPrompts()
-    },
-    
-    saveSavedPrompts() {
-      localStorage.setItem('savedPrompts', JSON.stringify(this.savedPrompts))
-    },
-    
-    loadSavedPrompts() {
-      const saved = localStorage.getItem('savedPrompts')
-      if (saved) {
-        this.savedPrompts = JSON.parse(saved)
-      }
-    },
-    
     async confirmSave() {
       this.showConfirmModal = false
       this.isSaving = true
       
       try {
-        // Lưu quảng cáo với nội dung đã được chọn (không tạo mới)
         const requestData = {
           campaignId: this.formData.campaignId,
           adType: this.formData.adType,
@@ -1201,19 +993,15 @@ export default {
           imageProvider: this.formData.imageProvider,
           numberOfVariations: this.formData.numberOfVariations,
           mediaFileUrl: this.uploadedFileUrl,
-          selectedVariation: this.selectedVariation, // Gửi variation được chọn
-          isPreview: false, // Flag để backend biết đây là save thực sự
-          saveExistingContent: true // Flag để backend biết chỉ lưu nội dung hiện tại
+          selectedVariation: this.selectedVariation,
+          isPreview: false,
+          saveExistingContent: true
         }
         
-        // Gọi API để lưu quảng cáo với nội dung đã có
         const response = await api.ads.saveExisting(requestData)
         
         if (response.data.status === 'success') {
-          this.showToast({
-            type: 'success',
-            message: 'Ad saved successfully!'
-          })
+          this.$message.success('Ad saved successfully!')
           await this.$store.dispatch('dashboard/fetchDashboardData', null, { root: true })
           this.$router.push('/dashboard')
         } else {
@@ -1221,23 +1009,15 @@ export default {
         }
       } catch (error) {
         console.error('Error saving ad:', error)
-        this.showToast({
-          type: 'error',
-          message: error.response?.data?.message || 'Could not save ad. Please try again.'
-        })
+        this.$message.error(error.response?.data?.message || 'Could not save ad. Please try again.')
       } finally {
         this.isSaving = false
       }
     },
     
-
-    
     async extractFromLibrary() {
       if (!this.adLinks.length || !this.adLinks[0].trim()) {
-        this.showToast({
-          type: 'warning',
-          message: 'Vui lòng nhập ít nhất một link quảng cáo'
-        })
+        this.$message.warning('Vui lòng nhập ít nhất một link quảng cáo')
         return
       }
       
@@ -1250,6 +1030,7 @@ export default {
           promptStyle: this.selectedPromptTemplate || 'Dynamic',
           customPrompt: this.customPromptAddition
         })
+        
         let success = false
         let content = ''
         if (Array.isArray(response.data)) {
@@ -1264,37 +1045,27 @@ export default {
             content = response.data.body || (response.data.snapshot && response.data.snapshot.body) || response.data.text || ''
           }
         }
+        
         if (success) {
           this.formData.prompt = content
-          this.showToast({
-            type: 'success',
-            message: 'Đã trích xuất nội dung thành công!'
-          })
+          this.$message.success('Đã trích xuất nội dung thành công!')
         } else {
-          this.showToast({
-            type: 'warning',
-            message: response.data.message || 'Không thể trích xuất nội dung'
-          })
+          this.$message.warning(response.data.message || 'Không thể trích xuất nội dung')
         }
       } catch (error) {
         console.error('Error extracting from library:', error)
-        this.showToast({
-          type: 'error',
-          message: 'Lỗi khi trích xuất nội dung: ' + (error.response?.data?.message || error.message)
-        })
+        this.$message.error('Lỗi khi trích xuất nội dung: ' + (error.response?.data?.message || error.message))
       } finally {
         this.extracting = false
       }
     },
     
-
-    // Thêm 2 method xử lý dialog xác nhận
     onExtractErrorYes() {
       this.showExtractErrorDialog = false
-      // Tiếp tục sang bước 3 (preview)
       this.isGenerating = true
       this.generateAdContinueWithoutExtract()
     },
+    
     onExtractErrorNo() {
       this.showExtractErrorDialog = false
       this.currentStep = 1
@@ -1304,7 +1075,7 @@ export default {
         }
       })
     },
-    // Hàm tiếp tục generateAd bỏ qua extract
+    
     async generateAdContinueWithoutExtract() {
       try {
         const validLinks = this.adLinks.filter(link => link.trim())
@@ -1321,10 +1092,12 @@ export default {
           imageProvider: this.formData.imageProvider,
           numberOfVariations: this.formData.numberOfVariations,
           mediaFileUrl: this.uploadedFileUrl,
-          extractedContent: null, // Không có nội dung extract
+          extractedContent: null,
           isPreview: true
         }
+        
         const response = await api.post('/ads/generate', requestData)
+        
         if (response.data.status === 'success') {
           this.adVariations = response.data.variations.map(v => ({
             ...v,
@@ -1332,19 +1105,14 @@ export default {
           }))
           this.adId = response.data.adId
           this.currentStep = 3
-          this.showToast({
-            type: 'success',
-            message: 'Ad created successfully! Please preview and save.'
-          })
+          this.$message.success('Ad created successfully! Please preview and save.')
         } else {
           throw new Error(response.data.message)
         }
       } catch (error) {
         const errorMessage = error.response?.data?.message || 'Could not create ad. Please try again.'
-        this.showToast({
-          type: 'error',
-          message: errorMessage
-        })
+        this.$message.error(errorMessage)
+        
         if (errorMessage.includes('Please enter prompt content') || errorMessage.includes('valid ad link')) {
           this.currentStep = 1
           this.showValidation = true
@@ -1353,24 +1121,29 @@ export default {
         this.isGenerating = false
       }
     },
+    
     hasAdBody(ad) {
       return (
         (ad.body && ad.body.trim() !== '') ||
         (ad.snapshot && ad.snapshot.body && ad.snapshot.body.trim() !== '') ||
         (ad.text && ad.text.trim() !== '')
-      );
+      )
     },
+    
     openMediaModal(url) {
-      this.selectedMediaUrl = url;
-      this.showMediaModal = true;
+      this.selectedMediaUrl = url
+      this.showMediaModal = true
     },
+    
     closeMediaModal() {
-      this.showMediaModal = false;
-      this.selectedMediaUrl = '';
+      this.showMediaModal = false
+      this.selectedMediaUrl = ''
     },
+    
     toggleSidebar() {
       this.sidebarOpen = !this.sidebarOpen
     },
+    
     handleLogout() {
       this.$store.dispatch('auth/logout')
     }
@@ -1380,8 +1153,104 @@ export default {
 
 <style lang="scss" scoped>
 /* Enhanced AdCreate Styles */
+.ad-create-page {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
 
-/* Step 2 - AI Provider Selection */
+.sidebar {
+  width: 250px;
+  background: white;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  height: 100vh;
+  left: -250px;
+  transition: left 0.3s ease;
+  z-index: 1000;
+}
+
+.sidebar-open {
+  left: 0;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.logo h2 {
+  margin: 0;
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.sidebar-nav {
+  padding: 1rem 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  color: #666;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  gap: 0.75rem;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: #e6f7ff;
+  color: #1890ff;
+  border-right: 3px solid #1890ff;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 0;
+  transition: margin-left 0.3s ease;
+}
+
+.mobile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.mobile-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.step-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.wizard-progress {
+  padding: 2rem;
+  background: white;
+  margin-bottom: 2rem;
+}
+
+.step-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #f0f0f0;
+}
+
 .ai-provider-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -1403,24 +1272,55 @@ export default {
 }
 
 .ai-provider-card:hover {
-  border-color: #8b5cf6;
-  box-shadow: 0 10px 25px rgb(139 92 246 / 10%);
+  border-color: #1890ff;
+  box-shadow: 0 10px 25px rgba(24, 144, 255, 0.1);
   transform: translateY(-2px);
 }
 
 .ai-provider-card.selected {
-  border-color: #8b5cf6;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  box-shadow: 0 10px 25px rgb(139 92 246 / 20%);
+  border-color: #1890ff;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+  box-shadow: 0 10px 25px rgba(24, 144, 255, 0.2);
   transform: scale(1.02);
 }
 
-/* Step 3 - Ad Preview */
+.ai-provider-card.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.provider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.provider-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.provider-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
 .ad-preview-container {
   width: 100%;
   max-width: none;
   margin: 0;
   padding: 0;
+}
+
+.preview-instruction {
+  font-size: 1.125rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
 .ad-preview-grid {
@@ -1440,19 +1340,19 @@ export default {
   min-height: 400px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 6px rgb(0 0 0 / 5%);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .ad-preview-card:hover {
-  border-color: #10b981;
-  box-shadow: 0 20px 40px rgb(16 185 129 / 10%);
+  border-color: #52c41a;
+  box-shadow: 0 20px 40px rgba(82, 196, 26, 0.1);
   transform: translateY(-4px);
 }
 
 .ad-preview-card.selected {
-  border-color: #10b981;
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  box-shadow: 0 20px 40px rgb(16 185 129 / 20%);
+  border-color: #52c41a;
+  background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+  box-shadow: 0 20px 40px rgba(82, 196, 26, 0.2);
   transform: scale(1.02);
 }
 
@@ -1511,204 +1411,73 @@ export default {
 }
 
 .ad-preview-cta {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
   font-weight: 600;
   text-align: center;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgb(59 130 246 / 20%);
+  box-shadow: 0 4px 6px rgba(24, 144, 255, 0.2);
 }
 
 .ad-preview-cta:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 12px rgb(59 130 246 / 30%);
+  box-shadow: 0 8px 12px rgba(24, 144, 255, 0.3);
 }
 
-/* Responsive Design */
-@media (width <= 768px) {
-  .ai-provider-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .ad-preview-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .ad-preview-card {
-    min-height: 350px;
-  }
-}
-
-@media (width >= 1024px) {
-  .ai-provider-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .ad-preview-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (width >= 1280px) {
-  .ad-preview-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* Enhanced Card Styles */
-.enhanced-card {
-  border: none;
-  border-radius: 1.5rem;
-  box-shadow: 0 10px 25px rgb(0 0 0 / 10%);
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.enhanced-card:hover {
-  box-shadow: 0 20px 40px rgb(0 0 0 / 15%);
-  transform: translateY(-2px);
-}
-
-.enhanced-card-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 2rem;
-  border-radius: 1.5rem 1.5rem 0 0;
-}
-
-.enhanced-card-body {
-  padding: 2rem;
-  background: white;
-}
-
-/* Form Enhancements */
-.enhanced-form-group {
-  margin-bottom: 2rem;
-}
-
-.enhanced-form-label {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.75rem;
+.ad-preview-actions {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f0f0;
 }
 
-.enhanced-form-input {
-  width: 100%;
+.lead-form-questions {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
   padding: 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 0.75rem;
-  font-size: 1rem;
-  transition: all 0.3s ease;
+  background: #f9fafb;
+}
+
+.question-item {
   background: white;
-}
-
-.enhanced-form-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgb(59 130 246 / 10%);
-  outline: none;
-}
-
-/* Help Dialog Styles */
-.help-dialog {
-  max-width: 700px !important;
-}
-
-.help-dialog .p-dialog-header {
-  font-size: 1.5rem !important;
-  font-weight: 600 !important;
-  padding: 1.5rem !important;
-}
-
-.help-dialog .p-dialog-content {
-  font-size: 1rem !important;
-  line-height: 1.6 !important;
-  padding: 1.5rem !important;
-}
-
-.help-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.help-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.help-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
   margin-bottom: 0.5rem;
 }
 
-.help-text {
-  font-size: 1rem;
-  color: #6b7280;
-  line-height: 1.6;
-}
-
-.help-steps {
+.ad-links-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
-.help-step {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
+.ad-link-item {
+  margin-bottom: 0.5rem;
 }
 
-.help-step .step-number {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background: #3b82f6;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 700;
-  flex-shrink: 0;
+.confirm-preview {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
 }
 
-.help-step .step-content h4 {
-  font-size: 1.125rem;
+.confirm-preview h4 {
+  margin: 0 0 0.5rem 0;
   font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.25rem;
 }
 
-.help-step .step-content p {
-  font-size: 0.875rem;
-  color: #6b7280;
-  line-height: 1.5;
+.confirm-preview p {
+  margin: 0;
+  color: #666;
 }
 
-/* Ad Type Help Styles */
-.help-btn {
-  background: none;
-  border: none;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 0.375rem;
-  transition: all 0.2s;
-}
-
-.help-btn:hover {
-  background: #f3f4f6;
-  color: #374151;
+.media-modal-content {
+  text-align: center;
 }
 
 .ad-types-help {
@@ -1756,210 +1525,124 @@ export default {
   content: "✓";
   position: absolute;
   left: 0;
-  color: #10b981;
+  color: #52c41a;
   font-weight: bold;
 }
 
-/* Lead Form Questions Styles */
-.lead-form-questions {
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  background: #f9fafb;
+.help-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.question-item {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  padding: 0.75rem;
+.help-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-/* Disabled state for AI provider cards */
-.ai-provider-card.disabled {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.ai-provider-card.disabled .form-input {
-  background-color: #f3f4f6;
-  cursor: not-allowed;
-}
-
-.enhanced-form-textarea {
-  width: 100%;
-  padding: 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 0.75rem;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: white;
-  resize: vertical;
-  min-height: 120px;
-}
-
-.enhanced-form-textarea:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgb(59 130 246 / 10%);
-  outline: none;
-}
-
-/* Button Enhancements */
-.enhanced-btn {
-  padding: 1rem 2rem;
-  border-radius: 0.75rem;
+.help-title {
+  font-size: 1.25rem;
   font-weight: 600;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  border: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.enhanced-btn-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  box-shadow: 0 4px 6px rgb(59 130 246 / 20%);
-}
-
-.enhanced-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 12px rgb(59 130 246 / 30%);
-}
-
-.enhanced-btn-secondary {
-  background: white;
   color: #374151;
-  border: 2px solid #e5e7eb;
+  margin-bottom: 0.5rem;
 }
 
-.enhanced-btn-secondary:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+.help-text {
+  font-size: 1rem;
+  color: #6b7280;
+  line-height: 1.6;
 }
 
-.enhanced-btn-success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  box-shadow: 0 4px 6px rgb(16 185 129 / 20%);
-}
-
-.enhanced-btn-success:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 12px rgb(16 185 129 / 30%);
-}
-
-/* Progress Indicator Styles */
-.wizard-progress {
-  margin-bottom: 2rem;
-}
-
-.progress-container {
+.help-steps {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 800px;
-  margin: 0 auto;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.progress-step {
+.help-step {
   display: flex;
-  align-items: center;
-  flex: 1;
-  position: relative;
+  gap: 1rem;
+  align-items: flex-start;
 }
 
-.step-indicator {
-  width: 40px;
-  height: 40px;
+.help-step .step-number {
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
+  background: #1890ff;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
   font-size: 0.875rem;
-  transition: all 0.3s ease;
-  z-index: 2;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
-.step-number {
-  color: #6b7280;
-  background: #f3f4f6;
-  border: 2px solid #e5e7eb;
-}
-
-.step-check {
-  width: 20px;
-  height: 20px;
-  color: white;
-}
-
-.progress-step.active .step-indicator {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
-  box-shadow: 0 0 0 4px rgb(59 130 246 / 20%);
-}
-
-.progress-step.completed .step-indicator {
-  background: #10b981;
-  border-color: #10b981;
-  color: white;
-}
-
-.progress-step.upcoming .step-indicator {
-  background: #f3f4f6;
-  border-color: #e5e7eb;
-  color: #6b7280;
-}
-
-.step-content {
-  margin-left: 1rem;
-  flex: 1;
-}
-
-.step-title {
+.help-step .step-content h4 {
+  font-size: 1.125rem;
   font-weight: 600;
-  font-size: 0.875rem;
   color: #374151;
   margin-bottom: 0.25rem;
 }
 
-.step-description {
-  font-size: 0.75rem;
+.help-step .step-content p {
+  font-size: 0.875rem;
   color: #6b7280;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
-.progress-step.active .step-title {
-  color: #3b82f6;
+/* Responsive Design */
+@media (max-width: 768px) {
+  .ai-provider-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .ad-preview-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .ad-preview-card {
+    min-height: 350px;
+  }
+  
+  .step-navigation {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .step-content {
+    padding: 1rem;
+  }
 }
 
-.progress-step.completed .step-title {
-  color: #10b981;
+@media (min-width: 1024px) {
+  .main-content {
+    margin-left: 250px;
+  }
+  
+  .sidebar {
+    position: relative;
+    left: 0;
+  }
+  
+  .mobile-header {
+    display: none;
+  }
+  
+  .ai-provider-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .ad-preview-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.progress-step.upcoming .step-title {
-  color: #6b7280;
-}
-
-.step-connector {
-  flex: 1;
-  height: 2px;
-  background: #e5e7eb;
-  margin: 0 1rem;
-  position: relative;
-  z-index: 1;
-}
-
-.progress-step.completed .step-connector {
-  background: #10b981;
-}
-
-.progress-step.active .step-connector {
-  background: linear-gradient(to right, #10b981 50%, #e5e7eb 50%);
+@media (min-width: 1280px) {
+  .ad-preview-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 </style>

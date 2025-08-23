@@ -80,16 +80,19 @@ public class OpenAIContentGenerator implements AIContentGenerator {
     }
     
     private String getSystemPrompt(AdContent.ContentType contentType) {
-        return "You are an expert Facebook advertising copywriter. "
-            + "Create compelling ad content for a Facebook " 
-            + (contentType == AdContent.ContentType.TEXT ? "text ad" : "image ad")
-            + ". Your response should be in JSON format with the following structure: "
-            + "{\n"
-            + "  \"primaryText\": \"The main text of the ad (no strict character limit)\",\n"
-            + "  \"headline\": \"The headline (max 40 characters)\",\n"
-            + "  \"description\": \"The description (max 125 characters)\"\n"
-            + "}\n"
-            + "Make sure the content is engaging, concise, and follows Facebook's best practices.";
+        return "You are an expert Facebook advertising copywriter specializing in policy-compliant ads. " +
+            "Create compelling ad content for a Facebook " + 
+            (contentType == AdContent.ContentType.TEXT ? "text ad" : "image ad") +
+            ". CRITICAL REQUIREMENTS: " +
+            "Headline: MAX 40 characters, Description: MAX 30 characters, Primary Text: MAX 125 characters. " +
+            "AVOID: hate, violence, drugs, miracle, guaranteed, cure, instant, excessive punctuation (!!!, $$$), ALL CAPS. " +
+            "Your response must be valid JSON: " +
+            "{\n" +
+            "  \"primaryText\": \"Main ad text (max 125 chars)\",\n" +
+            "  \"headline\": \"Attention-grabbing title (max 40 chars)\",\n" +
+            "  \"description\": \"Supporting message (max 30 chars)\"\n" +
+            "}\n" +
+            "Count characters carefully and ensure Facebook policy compliance.";
     }
     
     private AdContent parseContent(String content, AdContent.ContentType contentType) {

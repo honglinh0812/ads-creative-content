@@ -55,12 +55,11 @@
                     <span class="label-text">Campaign Name</span>
                     <span class="label-required">*</span>
                   </label>
-                  <InputText 
-                    v-model="form.name" 
+                  <a-input 
+                    v-model:value="form.name" 
                     class="form-input w-full h-12 text-lg" 
                     :class="{ 'error': errors.name }" 
                     placeholder="Enter a memorable campaign name..." 
-                    required 
                     @blur="validateForm()"
                   />
                   <div v-if="errors.name" class="error-message flex items-center gap-2 mt-2">
@@ -75,15 +74,16 @@
                     <span class="label-text">Campaign Objective</span>
                     <span class="label-required">*</span>
                   </label>
-                  <Dropdown 
-                    v-model="form.objective" 
-                    :options="objectives" 
-                    optionLabel="label" 
-                    optionValue="value" 
+                  <a-select 
+                    v-model:value="form.objective" 
                     placeholder="Select your campaign objective..." 
                     class="form-input w-full h-12 text-lg" 
-                    :class="{ 'error': errors.objective }" 
-                  />
+                    :class="{ 'error': errors.objective }"
+                  >
+                    <a-select-option v-for="option in objectives" :key="option.value" :value="option.value">
+                      {{ option.label }}
+                    </a-select-option>
+                  </a-select>
                   <div v-if="errors.objective" class="error-message flex items-center gap-2 mt-2">
                     <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     {{ errors.objective }}
@@ -96,15 +96,16 @@
                     <span class="label-text">Budget Type</span>
                     <span class="label-required">*</span>
                   </label>
-                  <Dropdown 
-                    v-model="form.budgetType" 
-                    :options="budgetTypes" 
-                    optionLabel="label" 
-                    optionValue="value" 
+                  <a-select 
+                    v-model:value="form.budgetType" 
                     placeholder="Select budget type..." 
                     class="form-input w-full h-12 text-lg" 
-                    :class="{ 'error': errors.budgetType }" 
-                  />
+                    :class="{ 'error': errors.budgetType }"
+                  >
+                    <a-select-option v-for="option in budgetTypes" :key="option.value" :value="option.value">
+                      {{ option.label }}
+                    </a-select-option>
+                  </a-select>
                   <div v-if="errors.budgetType" class="error-message flex items-center gap-2 mt-2">
                     <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     {{ errors.budgetType }}
@@ -117,8 +118,8 @@
                     <span class="label-text">Daily Budget</span>
                     <span class="label-required">*</span>
                   </label>
-                  <InputNumber 
-                    v-model="form.dailyBudget" 
+                  <a-input-number 
+                    v-model:value="form.dailyBudget" 
                     :min="1" 
                     class="form-input w-full h-12 text-lg" 
                     :class="{ 'error': errors.dailyBudget }" 
@@ -136,8 +137,8 @@
                     <span class="label-text">Total Budget</span>
                     <span class="label-required">*</span>
                   </label>
-                  <InputNumber 
-                    v-model="form.totalBudget" 
+                  <a-input-number 
+                    v-model:value="form.totalBudget" 
                     :min="1" 
                     class="form-input w-full h-12 text-lg" 
                     :class="{ 'error': errors.totalBudget }" 
@@ -155,14 +156,11 @@
                     <span class="label-text">Start Date & Time</span>
                     <span class="label-required">*</span>
                   </label>
-                  <Calendar 
-                    v-model="form.startDate" 
-                    :minDate="new Date()"
-                    :showTime="true"
-                    :showSeconds="false"
-                    :showIcon="true"
-                    dateFormat="dd/mm/yy"
-                    hourFormat="24"
+                  <a-date-picker 
+                    v-model:value="form.startDate" 
+                    :disabled-date="(current) => current && current < new Date().setHours(0,0,0,0)"
+                    show-time
+                    format="DD/MM/YYYY HH:mm"
                     class="form-input w-full h-12 text-lg" 
                     :class="{ 'error': errors.startDate }" 
                     placeholder="Select start date and time..." 
@@ -179,14 +177,11 @@
                     <span class="label-text">End Date & Time</span>
                     <span class="label-required">*</span>
                   </label>
-                  <Calendar 
-                    v-model="form.endDate" 
-                    :minDate="form.startDate || new Date()"
-                    :showTime="true"
-                    :showSeconds="false"
-                    :showIcon="true"
-                    dateFormat="dd/mm/yy"
-                    hourFormat="24"
+                  <a-date-picker 
+                    v-model:value="form.endDate" 
+                    :disabled-date="(current) => current && current < (form.startDate || new Date().setHours(0,0,0,0))"
+                    show-time
+                    format="DD/MM/YYYY HH:mm"
                     class="form-input w-full h-12 text-lg" 
                     :class="{ 'error': errors.endDate }" 
                     placeholder="Select end date and time..." 
@@ -216,7 +211,7 @@
         </div>
       </div>
     </div>
-    <Dialog v-model:visible="showHelp" header="Hướng dẫn tạo chiến dịch" :modal="true" :closable="true" class="help-dialog">
+    <a-modal v-model:open="showHelp" title="Hướng dẫn tạo chiến dịch" :footer="null" class="help-dialog">
       <div class="help-content">
         <div class="help-section">
           <h3 class="help-title">Bắt đầu</h3>
@@ -251,7 +246,7 @@
           </div>
         </div>
       </div>
-    </Dialog>
+    </a-modal>
   </div>
 </template>
 
@@ -259,22 +254,18 @@
 import { mapState, mapActions } from 'vuex'
 import api from '@/services/api'
 
-import InputNumber from 'primevue/inputnumber';
+import { InputNumber, Modal, Input, Select, DatePicker } from 'ant-design-vue';
 import AppSidebar from '@/components/AppSidebar.vue'
-import Dialog from 'primevue/dialog';
-import InputText from 'primevue/inputtext';
-import Dropdown from 'primevue/dropdown';
-import Calendar from 'primevue/calendar';
 
 export default {
   name: 'CampaignCreate',
   components: {
-    InputNumber,
+    AInputNumber: InputNumber,
     AppSidebar,
-    Dialog,
-    InputText,
-    Dropdown,
-    Calendar
+    AModal: Modal,
+    AInput: Input,
+    ASelect: Select,
+    ADatePicker: DatePicker
   },
   data() {
     return {

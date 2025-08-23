@@ -1,9 +1,9 @@
 <template>
-  <div v-if="show" class="modal-overlay z-50">
+  <div v-if="visible" class="modal-overlay z-50">
     <div class="modal max-w-md w-full">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold">{{ title }}</h3>
-        <button @click="$emit('cancel')" class="btn btn-sm btn-ghost">
+        <button @click="$emit('update:visible', false)" class="btn btn-sm btn-ghost">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
@@ -13,10 +13,10 @@
         <p class="text-base text-secondary-700 dark:text-gray-300">{{ message }}</p>
       </div>
       <div class="flex justify-end space-x-3">
-        <button @click="$emit('cancel')" class="btn btn-secondary">
+        <button @click="$emit('update:visible', false)" class="btn btn-secondary">
           {{ cancelText || 'Cancel' }}
         </button>
-        <button @click="$emit('confirm')" class="btn btn-primary">
+        <button @click="handleConfirm" class="btn btn-primary">
           {{ confirmText || 'Confirm' }}
         </button>
       </div>
@@ -28,15 +28,21 @@
 export default {
   name: 'ConfirmModal',
   props: {
-    show: Boolean,
+    visible: Boolean,
     title: String,
     message: String,
     confirmText: String,
     cancelText: String
+  },
+  emits: ['update:visible', 'confirm'],
+  methods: {
+    handleConfirm() {
+      this.$emit('update:visible', false)
+      this.$emit('confirm')
+    }
   }
-}
-</script>
+}</script>
 
 <style scoped>
 /* Modal style used globally in the system */
-</style> 
+</style>

@@ -47,16 +47,26 @@
       <section class="kpi-section">
         <h2 class="section-title">Key Performance Indicators</h2>
         <div class="kpi-grid">
-          <KPICard
+          <Card
             v-for="kpi in kpiCards"
             :key="kpi.key"
             :title="kpi.title"
-            :value="kpi.value"
-            :change="kpi.change"
-            :icon="kpi.icon"
-            :color="kpi.color"
-            :format="kpi.format"
-          />
+            variant="elevated"
+            class="kpi-card"
+          >
+            <div class="kpi-content">
+              <div class="kpi-icon" :class="`kpi-${kpi.color}`">
+                <i :class="`pi ${kpi.icon}`"></i>
+              </div>
+              <div class="kpi-details">
+                <div class="kpi-value">{{ formatValue(kpi.value, kpi.format) }}</div>
+                <div class="kpi-change" :class="kpi.change >= 0 ? 'positive' : 'negative'">
+                  <i :class="kpi.change >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i>
+                  {{ Math.abs(kpi.change) }}%
+                </div>
+              </div>
+            </div>
+          </Card>
         </div>
       </section>
 
@@ -181,7 +191,7 @@
 <script>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useStore } from 'vuex'
-import KPICard from './analytics/KPICard.vue'
+import Card from './ui/Card.vue'
 import PerformanceTrendsChart from './analytics/PerformanceTrendsChart.vue'
 import CampaignAnalyticsTable from './analytics/CampaignAnalyticsTable.vue'
 import AIProviderChart from './analytics/AIProviderChart.vue'
@@ -193,7 +203,7 @@ import { analyticsAPI } from '@/services/api'
 export default {
   name: 'AnalyticsDashboard',
   components: {
-    KPICard,
+    Card,
     PerformanceTrendsChart,
     CampaignAnalyticsTable,
     AIProviderChart,
@@ -305,6 +315,27 @@ export default {
       }))
     })
     
+    // Helper methods
+    const formatValue = (value, format) => {
+      if (!value && value !== 0) return 'N/A'
+      
+      switch (format) {
+        case 'currency':
+          return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+          }).format(value)
+        case 'percentage':
+          return `${value.toFixed(1)}%`
+        case 'number':
+          return new Intl.NumberFormat('en-US').format(value)
+        default:
+          return value.toString()
+      }
+    }
+
     // Methods
     const fetchAnalytics = async () => {
       try {
@@ -410,7 +441,8 @@ export default {
       updateTrendsChart,
       exportCampaignData,
       onCampaignClick,
-      onContentClick
+      onContentClick,
+      formatValue
     }
   }
 }
@@ -524,6 +556,90 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--space-4);
+}
+
+.kpi-card {
+  transition: transform 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+}
+
+.kpi-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+}
+
+.kpi-icon.kpi-blue {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.kpi-icon.kpi-green {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.kpi-icon.kpi-purple {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+
+.kpi-icon.kpi-orange {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+}
+
+.kpi-icon.kpi-teal {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.kpi-icon.kpi-indigo {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.kpi-icon.kpi-pink {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.kpi-icon.kpi-cyan {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.kpi-details {
+  flex: 1;
+}
+
+.kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.kpi-change {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.kpi-change.positive {
+  color: #10b981;
+}
+
+.kpi-change.negative {
+  color: #ef4444;
 }
 
 .trends-section .section-header {
