@@ -36,5 +36,28 @@ module.exports = {
         }
       }
     }
+  },
+
+  chainWebpack: config => {
+    config.plugin("html").tap(args => {
+      const deployHash = Date.now().toString();
+      args[0].meta = {
+        ...(args[0].meta || {}),
+        "deploy-hash": deployHash,
+        "cache-control": "no-cache, no-store, must-revalidate"
+      };
+      return args;
+    });
+  },
+
+  // Xoá service worker nếu tồn tại sau build
+  pluginOptions: {
+    afterBuild: () => {
+      const swPath = path.resolve(__dirname, "dist", "service-worker.js");
+      if (fs.existsSync(swPath)) {
+        console.log("Removing old service-worker.js...");
+        fs.unlinkSync(swPath);
+      }
+    }
   }
 }

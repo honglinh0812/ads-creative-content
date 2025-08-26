@@ -194,8 +194,21 @@ export default {
   },
   methods: {
     onHeaderSearch(query) {
-      // Xử lý logic search toàn cục ở đây (ví dụ: chuyển trang search, filter, ...)
-      console.log('Header search:', query)
+      if (!query.trim()) return
+      
+      // Tìm kiếm theo route hiện tại
+      const currentRoute = this.$route.name
+      
+      if (currentRoute === 'CampaignPage' || currentRoute === 'Dashboard') {
+        // Tìm kiếm campaigns
+        this.$store.dispatch('campaign/searchCampaigns', query)
+      } else if (currentRoute === 'Ads') {
+        // Tìm kiếm ads
+        this.$store.dispatch('ad/searchAds', query)
+      } else {
+        // Tìm kiếm toàn cục - chuyển đến trang search
+        this.$router.push({ path: '/search', query: { q: query } })
+      }
     },
     onMenuSelect({ key }) {
       this.selectedKeys = [key]
@@ -213,8 +226,10 @@ export default {
       }
     },
     showNotifications() {
-      // Show notifications modal or drawer
-      console.log('Show notifications')
+      // Chuyển đến trang notifications
+      this.$router.push('/notifications')
+      // Hoặc có thể mở drawer notifications
+      // this.$store.dispatch('notifications/toggleDrawer')
     },
     onUserMenuClick({ key }) {
       if (key === 'logout') {

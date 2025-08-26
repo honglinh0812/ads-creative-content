@@ -1,45 +1,30 @@
 <template>
-  <div :class="['page-wrapper', { 'sidebar-closed': !sidebarOpen }]">
-    <AppSidebar :sidebarOpen="sidebarOpen" @toggle="toggleSidebar" @logout="handleLogout" />
-    <div class="app-layout">
-      <div class="main-content-wrapper" :style="mainContentStyle">
-          <!-- Mobile Header -->
-          <div class="mobile-header lg:hidden">
-            <button 
-              @click="toggleSidebar" 
-              class="btn btn-ghost"
-              aria-label="Toggle menu"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-              </svg>
-            </button>
-            <h1 class="text-lg font-semibold text-secondary-900">Ads</h1>
-          </div>
+  <div class="ads-page">
+    <div class="ads-content">
 
-          <!-- Page Header -->
-          <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
-            <div>
-              <h1 class="text-3xl font-bold text-secondary-900">Ads</h1>
-              <p class="text-secondary-600">Manage your advertising content</p>
-            </div>
-            <a-button type="primary" size="large" @click="$router.push('/ad/create')">
-              <template #icon><plus-outlined /></template>
-              New Ad
-            </a-button>
-          </div>
+      <!-- Page Header -->
+      <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-secondary-900">Ads</h1>
+          <p class="text-secondary-600">Manage your advertising content</p>
+        </div>
+        <a-button type="primary" size="large" @click="$router.push('/ad/create')">
+          <template #icon><plus-outlined /></template>
+          New Ad
+        </a-button>
+      </div>
 
-          <!-- Ad Table Component -->
-          <AdTable
-            :ads="ads"
-            :campaigns="campaigns"
-            :loading="loading"
-            @view-details="showAdDetails"
-            @edit-ad="showEditAdModal"
-            @delete-ad="confirmDeleteAd"
-            @duplicate-ad="duplicateAd"
-            @export-ad="exportAdToFacebook"
-          />
+      <!-- Ad Table Component -->
+      <AdTable
+        :ads="ads"
+        :campaigns="campaigns"
+        :loading="loading"
+        @view-details="showAdDetails"
+        @edit-ad="showEditAdModal"
+        @delete-ad="confirmDeleteAd"
+        @duplicate-ad="duplicateAd"
+        @export-ad="exportAdToFacebook"
+      />
 
           <!-- Error State -->
           <div v-if="error" class="mb-6">
@@ -183,7 +168,6 @@
           <a-button type="primary" @click="saveEditedAd">Save</a-button>
         </template>
       </a-modal>
-      </div>
     </div>
 </template>
 
@@ -191,7 +175,7 @@
 import { mapState, mapActions } from "vuex"
 import { Modal, Input, Select, Button, message, Empty } from "ant-design-vue"
 import { PlusOutlined } from "@ant-design/icons-vue"
-import AppSidebar from '@/components/AppSidebar.vue'
+
 import AdTable from '@/components/AdTable.vue'
 import api from '@/services/api'
 
@@ -205,12 +189,11 @@ export default {
     AButton: Button,
     AEmpty: Empty,
     PlusOutlined,
-    AppSidebar,
+
     AdTable
   },
   data() {
     return {
-      sidebarOpen: true,
       page: 0,
       size: 5,
       showDetailModal: false,
@@ -244,9 +227,7 @@ export default {
       return this.filteredAds
     },
     
-    mainContentStyle() {
-      return this.sidebarOpen ? { marginLeft: '240px' } : { marginLeft: '0' }
-    },
+
     
     totalPages() {
       return Math.ceil(this.totalAds / this.size)
@@ -602,5 +583,11 @@ export default {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.ads-page {
+  padding: 24px;
+  background: #f5f5f5;
+  min-height: 100vh;
 }
 </style>

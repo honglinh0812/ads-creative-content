@@ -1,22 +1,6 @@
 <template>
-  <div :class="['page-wrapper', { 'sidebar-closed': !sidebarOpen }]">
-    <AppSidebar :sidebarOpen="sidebarOpen" @toggle="toggleSidebar" @logout="handleLogout" />
-    <!-- phần còn lại của trang -->
-    <div class="app-main flex-1" :style="mainContentStyle">
-        <div class="content-wrapper">
-          <!-- Mobile Header -->
-          <div class="mobile-header lg:hidden">
-            <button 
-              @click="toggleSidebar" 
-              class="btn btn-ghost"
-              aria-label="Toggle menu"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-              </svg>
-            </button>
-            <h1 class="text-lg font-semibold text-secondary-900">Campaign Details</h1>
-          </div>
+  <div class="campaign-detail-page">
+    <div class="campaign-detail-content">
 
           <!-- Breadcrumb Navigation -->
           <nav class="breadcrumb mb-6" aria-label="Breadcrumb">
@@ -388,16 +372,15 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex'
-import AppSidebar from '@/components/AppSidebar.vue'
+
 
 export default {
   name: 'CampaignDetail',
-  components: { AppSidebar },
+  components: {},
   props: {
     id: {
       type: String,
@@ -410,8 +393,7 @@ export default {
       showDeleteAdModal: false,
       adToDelete: null,
       adsLoading: false,
-      deleting: false,
-      sidebarOpen: true
+      deleting: false
     }
   },
   computed: {
@@ -420,9 +402,7 @@ export default {
     campaign() {
       return this.currentCampaign || this.campaigns.find(c => c.id === parseInt(this.id)) || null
     },
-    mainContentStyle() {
-      return this.sidebarOpen ? { marginLeft: '240px' } : { marginLeft: '0' }
-    }
+
   },
   async mounted() {
     await this.loadCampaign()
@@ -433,9 +413,7 @@ export default {
     ...mapActions('ad', ['fetchAds', 'deleteAd']),
     ...mapActions('toast', ['showSuccess', 'showError']),
     
-    toggleSidebar() {
-      this.sidebarOpen = !this.sidebarOpen
-    },
+
     
     async loadCampaign() {
       try {
@@ -583,8 +561,10 @@ export default {
 </script>
 
 <style scoped>
-.page-wrapper.sidebar-closed .app-main {
-  margin-left: 0 !important;
+.campaign-detail-page {
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
 }
 </style>
 

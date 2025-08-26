@@ -53,7 +53,11 @@ export default {
     login: () => `${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api'}/auth/oauth2/authorize/facebook`,
     callback: () => '/auth/oauth2/callback/facebook',
     logout: () => apiClient.post('/auth/logout'),
-    getUser: () => apiClient.get('/auth/user')
+    getUser: () => apiClient.get('/auth/user'),
+    getProfile: () => apiClient.get('/auth/profile'),
+    updateProfile: (profileData) => apiClient.put('/auth/profile', profileData),
+    changePassword: (passwordData) => apiClient.put('/auth/change-password', passwordData),
+    deleteAccount: () => apiClient.delete('/auth/account')
   },
   
   // Campaign endpoints
@@ -133,5 +137,44 @@ export default {
         onUploadProgress
       })
     }
+  },
+
+  // Settings endpoints
+  settings: {
+    get: () => apiClient.get('/settings'),
+    update: (settingsData) => apiClient.put('/settings', settingsData)
+  },
+
+  // Data management endpoints
+  data: {
+    export: () => apiClient.get('/data/export', { responseType: 'blob' }),
+    import: (file) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      return apiClient.post('/data/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+    },
+    clearCache: () => apiClient.delete('/data/cache')
+  },
+
+  // Analytics endpoints
+  analyticsAPI: {
+    getDashboard: (timeRange = '30d') => apiClient.get(`/analytics/dashboard?timeRange=${timeRange}`),
+    exportData: (type, params, format) => apiClient.get(`/analytics/export/${type}`, {
+      params: { ...params, format },
+      responseType: 'blob'
+    })
+  },
+
+  // Optimization endpoints
+  optimizationAPI: {
+    getOptimizationSummary: () => apiClient.get('/optimization/summary'),
+    getHighPriorityRecommendations: () => apiClient.get('/optimization/recommendations/high-priority'),
+    acceptRecommendation: (id) => apiClient.post(`/optimization/recommendations/${id}/accept`),
+    dismissRecommendation: (id, reason) => apiClient.post(`/optimization/recommendations/${id}/dismiss`, { reason }),
+    updateRecommendationSettings: (settings) => apiClient.put('/optimization/settings', settings)
   }
 }

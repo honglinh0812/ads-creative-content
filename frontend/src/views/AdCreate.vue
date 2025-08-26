@@ -1,54 +1,6 @@
 <template>
   <div class="ad-create-page">
-    <!-- Sidebar -->
-    <div class="sidebar" :class="{ 'sidebar-open': sidebarOpen }">
-      <div class="sidebar-header">
-        <div class="logo">
-          <h2>AdCreative</h2>
-        </div>
-      </div>
-      <nav class="sidebar-nav">
-        <router-link to="/dashboard" class="nav-item">
-          <i class="pi pi-home"></i>
-          <span>Dashboard</span>
-        </router-link>
-        <router-link to="/campaigns" class="nav-item">
-          <i class="pi pi-folder"></i>
-          <span>Campaigns</span>
-        </router-link>
-        <router-link to="/ads" class="nav-item">
-          <i class="pi pi-file"></i>
-          <span>Ads</span>
-        </router-link>
-        <router-link to="/ad-create" class="nav-item active">
-          <i class="pi pi-plus"></i>
-          <span>Create Ad</span>
-        </router-link>
-      </nav>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Mobile Header -->
-      <div class="mobile-header">
-        <a-button type="text" @click="toggleSidebar" class="sidebar-toggle">
-          <template #icon><menu-outlined /></template>
-        </a-button>
-        <h1>Create New Ad</h1>
-        <a-dropdown>
-          <template #overlay>
-            <a-menu>
-              <a-menu-item @click="handleLogout">
-                <template #icon><logout-outlined /></template>
-                Logout
-              </a-menu-item>
-            </a-menu>
-          </template>
-          <a-button type="text">
-            <template #icon><user-outlined /></template>
-          </a-button>
-        </a-dropdown>
-      </div>
+    <div class="ad-create-content">
 
       <!-- Page Header -->
       <a-page-header title="Create New Ad" sub-title="Generate compelling ads with AI assistance">
@@ -587,7 +539,7 @@
         </div>
       </div>
     </a-modal>
-  </div>
+    </div>
 </template>
 
 <script>
@@ -625,7 +577,6 @@ export default {
   },
   data() {
     return {
-      sidebarOpen: false,
       currentStep: 1,
       formData: {
         campaignId: null,
@@ -666,6 +617,9 @@ export default {
         }
       ],
       campaigns: [],
+      loadingCampaigns: false,
+      loadingCTAs: false,
+      standardCTAs: [],
       textProviders: [
         {
           value: 'openai',
@@ -760,8 +714,8 @@ export default {
     async loadCallToActions() {
       this.loadingCTAs = true
       try {
-        const response = await api.ads.getCallToActions()
-        this.standardCTAs = response.data.ctas || []
+        const response = await api.providers.getCallToActions(this.formData.language)
+        this.standardCTAs = response.data.ctas || response.data || []
       } catch (error) {
         console.error('Error loading CTAs:', error)
         this.$message.error('Failed to load call to actions')
@@ -1138,15 +1092,12 @@ export default {
     closeMediaModal() {
       this.showMediaModal = false
       this.selectedMediaUrl = ''
-    },
-    
-    toggleSidebar() {
-      this.sidebarOpen = !this.sidebarOpen
-    },
-    
-    handleLogout() {
-      this.$store.dispatch('auth/logout')
     }
+  },
+  
+  async mounted() {
+    await this.loadCampaigns()
+    await this.loadCallToActions()
   }
 }
 </script>
@@ -1154,49 +1105,9 @@ export default {
 <style lang="scss" scoped>
 /* Enhanced AdCreate Styles */
 .ad-create-page {
-  display: flex;
-  min-height: 100vh;
+  padding: 20px;
   background: #f5f5f5;
-}
-
-.sidebar {
-  width: 250px;
-  background: white;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  position: fixed;
-  height: 100vh;
-  left: -250px;
-  transition: left 0.3s ease;
-  z-index: 1000;
-}
-
-.sidebar-open {
-  left: 0;
-}
-
-.sidebar-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.logo h2 {
-  margin: 0;
-  color: #1890ff;
-  font-weight: 600;
-}
-
-.sidebar-nav {
-  padding: 1rem 0;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1.5rem;
-  color: #666;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  gap: 0.75rem;
+  min-height: 100vh;
 }
 
 .nav-item:hover,

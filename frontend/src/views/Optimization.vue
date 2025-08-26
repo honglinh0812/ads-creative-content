@@ -278,7 +278,7 @@
 import { ref, computed, onMounted } from 'vue'
 import OptimizationDashboard from '@/components/optimization/OptimizationDashboard.vue'
 import RecommendationCard from '@/components/optimization/RecommendationCard.vue'
-import { optimizationAPI } from '@/services/api'
+import api from '@/services/api'
 
 export default {
   name: 'OptimizationView',
@@ -396,7 +396,7 @@ export default {
     // Methods
     const fetchOptimizationSummary = async () => {
       try {
-        const response = await optimizationAPI.getOptimizationSummary()
+        const response = await api.optimizationAPI.getOptimizationSummary()
         optimizationSummary.value = response.data
       } catch (error) {
         console.error('Error fetching optimization summary:', error)
@@ -406,7 +406,7 @@ export default {
     const fetchHighPriorityRecommendations = async () => {
       try {
         highPriorityLoading.value = true
-        const response = await optimizationAPI.getHighPriorityRecommendations()
+        const response = await api.optimizationAPI.getHighPriorityRecommendations()
         highPriorityRecommendations.value = response.data
       } catch (error) {
         console.error('Error fetching high priority recommendations:', error)
@@ -447,7 +447,7 @@ export default {
     
     const handleAcceptRecommendation = async (recommendation) => {
       try {
-        await optimizationAPI.acceptRecommendation(recommendation.id)
+        await api.optimizationAPI.acceptRecommendation(recommendation.id)
         recommendation.status = 'ACCEPTED'
       } catch (error) {
         console.error('Error accepting recommendation:', error)
@@ -456,7 +456,7 @@ export default {
     
     const handleDismissRecommendation = async (recommendation, reason) => {
       try {
-        await optimizationAPI.dismissRecommendation(recommendation.id, reason)
+        await api.optimizationAPI.dismissRecommendation(recommendation.id, reason)
         recommendation.status = 'DISMISSED'
       } catch (error) {
         console.error('Error dismissing recommendation:', error)
@@ -478,7 +478,7 @@ export default {
     const saveSettings = async () => {
       try {
         savingSettings.value = true
-        await optimizationAPI.updateRecommendationSettings(settings.value)
+        await api.optimizationAPI.updateRecommendationSettings(settings.value)
         // Show success message
       } catch (error) {
         console.error('Error saving settings:', error)

@@ -9,7 +9,7 @@ export default {
     error: null
   },
   getters: {
-    isAuthenticated: state => !!state.token && !!state.user,
+    isAuthenticated: state => !!state.token,
     user: state => state.user,
     loading: state => state.loading,
     error: state => state.error

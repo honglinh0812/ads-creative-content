@@ -215,6 +215,54 @@ export default {
       } finally {
         commit("SET_LOADING", false);
       }
+    },
+    
+    async searchAds({ commit }, query) {
+      commit("SET_LOADING", true);
+      commit("SET_ERROR", null);
+      
+      try {
+        // Tìm kiếm local trong ads hiện tại
+        // Hoặc có thể gọi API search nếu backend hỗ trợ
+        const response = await api.ads.getAll(0, 100); // Lấy nhiều hơn để search
+        const allAds = response.data.content;
+        const filteredAds = allAds.filter(ad => 
+          ad.name?.toLowerCase().includes(query.toLowerCase()) ||
+          ad.headline?.toLowerCase().includes(query.toLowerCase()) ||
+          ad.description?.toLowerCase().includes(query.toLowerCase()) ||
+          ad.primaryText?.toLowerCase().includes(query.toLowerCase())
+        );
+        
+        commit("SET_ADS", {
+          content: filteredAds,
+          totalElements: filteredAds.length,
+          totalPages: 1,
+          number: 0
+        });
+      } catch (error) {
+        console.error("Search ads error:", error);
+        commit("SET_ERROR", error.message || "Failed to search ads");
+        throw error;
+      } finally {
+        commit("SET_LOADING", false);
+      }
+    },
+    
+    async createAd({ commit }, adData) {
+      commit("SET_LOADING", true);
+      commit("SET_ERROR", null);
+      
+      try {
+        const response = await api.ads.create(adData);
+        commit("ADD_AD", response.data);
+        return response.data;
+      } catch (error) {
+        console.error("Create ad error:", error);
+        commit("SET_ERROR", error.message || "Failed to create ad");
+        throw error;
+      } finally {
+        commit("SET_LOADING", false);
+      }
     }
   }
 }

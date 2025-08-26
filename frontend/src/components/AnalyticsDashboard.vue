@@ -198,7 +198,7 @@ import AIProviderChart from './analytics/AIProviderChart.vue'
 import BudgetAnalyticsChart from './analytics/BudgetAnalyticsChart.vue'
 import ContentAnalyticsChart from './analytics/ContentAnalyticsChart.vue'
 import TopContentCard from './analytics/TopContentCard.vue'
-import { analyticsAPI } from '@/services/api'
+import api from '@/services/api'
 
 export default {
   name: 'AnalyticsDashboard',
@@ -342,7 +342,7 @@ export default {
         loading.value = true
         error.value = null
         
-        const response = await analyticsAPI.getDashboard(selectedTimeRange.value)
+        const response = await api.analyticsAPI.getDashboard(selectedTimeRange.value)
         analytics.value = response.data
         
       } catch (err) {

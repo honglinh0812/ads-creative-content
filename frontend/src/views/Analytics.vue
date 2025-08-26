@@ -179,7 +179,7 @@
 <script>
 import { ref, onMounted, onUnmounted } from 'vue'
 import AnalyticsDashboard from '@/components/AnalyticsDashboard.vue'
-import { analyticsAPI } from '@/services/api'
+import api from '@/services/api'
 
 export default {
   name: 'AnalyticsView',
@@ -246,7 +246,7 @@ export default {
     const performExport = async () => {
       exporting.value = true
       try {
-        const response = await analyticsAPI.exportData(
+        const response = await api.analyticsAPI.exportData(
           selectedExportType.value,
           { timeRange: selectedExportTimeRange.value },
           selectedExportFormat.value

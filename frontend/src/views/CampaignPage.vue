@@ -1,21 +1,6 @@
 <template>
-  <div :class="['page-wrapper', { 'sidebar-closed': !sidebarOpen }]">
-    <AppSidebar :sidebarOpen="sidebarOpen" @toggle="toggleSidebar" @logout="handleLogout" />
-    <div class="app-layout">
-      <div class="main-content-wrapper" :style="mainContentStyle">
-        <!-- Mobile Header -->
-        <div class="mobile-header lg:hidden">
-          <a-button 
-            @click="toggleSidebar" 
-            type="text"
-            aria-label="Toggle menu"
-          >
-            <template #icon>
-              <MenuOutlined />
-            </template>
-          </a-button>
-          <a-typography-title :level="4" style="margin: 0;">Campaigns</a-typography-title>
-        </div>
+  <div class="campaign-page">
+    <div class="campaign-content">
 
         <!-- Page Header -->
         <a-page-header
@@ -161,7 +146,6 @@
         </div>
       </a-modal>
     </div>
-  </div>
 </template>
 
 <script>
@@ -172,7 +156,7 @@ import {
   FolderOpenOutlined
 } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
-import AppSidebar from '@/components/AppSidebar.vue'
+
 import CampaignTable from '@/components/CampaignTable.vue'
 
 export default {
@@ -181,12 +165,10 @@ export default {
     MenuOutlined,
     PlusOutlined,
     FolderOpenOutlined,
-    AppSidebar,
     CampaignTable
   },
   data() {
     return {
-      sidebarOpen: true,
       currentPage: 1,
       size: 5,
       showDetailModal: false,
@@ -212,9 +194,7 @@ export default {
       }
       return this.filteredCampaigns
     },
-    mainContentStyle() {
-      return this.sidebarOpen ? { marginLeft: '240px' } : { marginLeft: '0' }
-    }
+
   },
   async mounted() {
     await this.loadCampaigns()
@@ -238,9 +218,7 @@ export default {
       this.size = size;
       this.loadCampaigns();
     },
-    toggleSidebar() {
-      this.sidebarOpen = !this.sidebarOpen
-    },
+
     showCampaignDetails(campaign) {
       this.selectedCampaign = campaign;
       this.showDetailModal = true;
@@ -360,36 +338,9 @@ export default {
 </script>
 
 <style scoped>
-.page-wrapper.sidebar-closed .main-content-wrapper {
-  margin-left: 0 !important;
-}
-
-.campaign-card {
-  transition: all 0.3s ease;
-  border-radius: 12px;
-}
-
-.campaign-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.campaign-header {
-  margin-bottom: 12px;
-}
-
-.mobile-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
-  margin-bottom: 24px;
-}
-
-@media (min-width: 1024px) {
-  .mobile-header {
-    display: none;
-  }
+.campaign-page {
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
 }
 </style>

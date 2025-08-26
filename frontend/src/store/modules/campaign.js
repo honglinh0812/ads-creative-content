@@ -142,17 +142,40 @@ export default {
         await api.campaigns.delete(campaignId)
         commit('REMOVE_CAMPAIGN', campaignId)
         
-        // Also refresh dashboard data if available
-        try {
-          await dispatch('dashboard/fetchDashboardData', null, { root: true })
-        } catch (dashboardError) {
-          console.warn('Failed to refresh dashboard after campaign deletion:', dashboardError)
-        }
-        
-        return true
+        // Refresh campaigns list to get updated pagination
+        await dispatch('fetchCampaigns')
       } catch (error) {
         console.error('Delete campaign error:', error)
         commit('SET_ERROR', error.message || 'Failed to delete campaign')
+        throw error
+      } finally {
+        commit('SET_LOADING', false)
+      }
+    },
+    
+    async searchCampaigns({ commit }, query) {
+      commit('SET_LOADING', true)
+      commit('SET_ERROR', null)
+      
+      try {
+        // Tìm kiếm local trong campaigns hiện tại
+        // Hoặc có thể gọi API search nếu backend hỗ trợ
+        const response = await api.campaigns.getAll(0, 100) // Lấy nhiều hơn để search
+        const allCampaigns = response.data.content
+        const filteredCampaigns = allCampaigns.filter(campaign => 
+          campaign.name.toLowerCase().includes(query.toLowerCase()) ||
+          campaign.status.toLowerCase().includes(query.toLowerCase())
+        )
+        
+        commit('SET_CAMPAIGNS', {
+          content: filteredCampaigns,
+          totalElements: filteredCampaigns.length,
+          totalPages: 1,
+          number: 0
+        })
+      } catch (error) {
+        console.error('Search campaigns error:', error)
+        commit('SET_ERROR', error.message || 'Failed to search campaigns')
         throw error
       } finally {
         commit('SET_LOADING', false)

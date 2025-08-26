@@ -20,6 +20,8 @@ const DataDeletion = () => import('../views/legal/DataDeletion.vue')
 const AuthSuccess = () => import('../views/AuthSuccess.vue')
 const NotificationPage = () => import('../views/NotificationPage.vue')
 const ResetPassword = () => import('../views/ResetPassword.vue')
+const Profile = () => import('../views/Profile.vue')
+const Settings = () => import('../views/Settings.vue')
 
 const routes = [
   {
@@ -114,6 +116,18 @@ const routes = [
     name: 'ResetPassword',
     component: ResetPassword,
     meta: { public: true }
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: Profile,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: Settings,
+    meta: { requiresAuth: true }
   },
   // Legacy routes for backward compatibility
   {
