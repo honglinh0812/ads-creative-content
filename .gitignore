@@ -5,6 +5,7 @@
 *.war
 *.iml
 *.log
+/backend/target
 
 # Config files
 .env
