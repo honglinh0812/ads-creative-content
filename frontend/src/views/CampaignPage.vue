@@ -151,7 +151,6 @@
 <script>
 import { mapState, mapActions } from 'vuex'
 import { 
-  MenuOutlined, 
   PlusOutlined, 
   FolderOpenOutlined
 } from '@ant-design/icons-vue'
@@ -162,7 +161,6 @@ import CampaignTable from '@/components/CampaignTable.vue'
 export default {
   name: "CampaignPage",
   components: {
-    MenuOutlined,
     PlusOutlined,
     FolderOpenOutlined,
     CampaignTable

@@ -188,7 +188,7 @@ import {
 import api from '@/services/api'
 
 export default {
-  name: 'Profile',
+  name: 'UserProfile',
   components: {
     LogoutOutlined
   },

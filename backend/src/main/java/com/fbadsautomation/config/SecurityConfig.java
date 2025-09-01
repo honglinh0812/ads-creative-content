@@ -59,6 +59,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 "/api/auth/oauth2/**",
                 "/api/public/**",
                 "/api/ai-providers/**",
+                "/api/images/**",
                 "/swagger-ui/**",
                 "/v3/api-docs/**"
             ).permitAll()

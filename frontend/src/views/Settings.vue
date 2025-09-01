@@ -205,7 +205,7 @@ import {
 import api from '@/services/api'
 
 export default {
-  name: 'Settings',
+  name: 'AppSettings',
   components: {
     LogoutOutlined,
     DownloadOutlined,

@@ -544,9 +544,6 @@
 
 <script>
 import { 
-  MenuOutlined, 
-  UserOutlined, 
-  LogoutOutlined,
   ArrowLeftOutlined,
   ArrowRightOutlined,
   QuestionCircleOutlined,
@@ -562,9 +559,6 @@ import api from '@/services/api'
 export default {
   name: 'AdCreate',
   components: {
-    MenuOutlined,
-    UserOutlined,
-    LogoutOutlined,
     ArrowLeftOutlined,
     ArrowRightOutlined,
     QuestionCircleOutlined,
@@ -617,8 +611,6 @@ export default {
         }
       ],
       campaigns: [],
-      loadingCampaigns: false,
-      loadingCTAs: false,
       standardCTAs: [],
       textProviders: [
         {
@@ -655,7 +647,6 @@ export default {
       adVariations: [],
       selectedVariation: null,
       editingVariation: null,
-      standardCTAs: [],
       adLinks: [''],
       uploadedFiles: [],
       uploadedFileUrl: '',
@@ -1093,11 +1084,6 @@ export default {
       this.showMediaModal = false
       this.selectedMediaUrl = ''
     }
-  },
-  
-  async mounted() {
-    await this.loadCampaigns()
-    await this.loadCallToActions()
   }
 }
 </script>
