@@ -1,14 +1,9 @@
 package com.fbadsautomation.integration.ai;
 
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
-@Data
-
 public class AIProperties {
     
     @Value("${ai.openai.api-key}")
@@ -22,6 +17,20 @@ public class AIProperties {
     
     @Value("gemini-1.5-pro")
     private String geminiModel;
+    
+    // Getter and setter methods
+    public String getOpenaiApiKey() { return openaiApiKey; }
+    public void setOpenaiApiKey(String openaiApiKey) { this.openaiApiKey = openaiApiKey; }
+    
+    public String getOpenaiModel() { return openaiModel; }
+    public void setOpenaiModel(String openaiModel) { this.openaiModel = openaiModel; }
+    
+    public String getGeminiApiKey() { return geminiApiKey; }
+    public void setGeminiApiKey(String geminiApiKey) { this.geminiApiKey = geminiApiKey; }
+    
+    public String getGeminiModel() { return geminiModel; }
+    public void setGeminiModel(String geminiModel) { this.geminiModel = geminiModel; }
+    
     // @Value("${ai.provider}")
     // private String provider;
-    }
+}

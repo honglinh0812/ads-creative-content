@@ -6,7 +6,9 @@ import com.fbadsautomation.model.AdType;
 import com.fbadsautomation.repository.AdRepository;
 import com.fbadsautomation.exception.ApiException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+// import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -31,9 +33,10 @@ import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
+// @Slf4j
 public class FacebookExportService {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(FacebookExportService.class);
     private final AdRepository adRepository;
     private final CampaignService campaignService;
     
@@ -375,148 +378,9 @@ public class FacebookExportService {
         return URL_PATTERN.matcher(url.trim()).matches();
     }
     
-    public ResponseEntity<byte[]> exportAdToFacebookTemplate(Long adId) {
-        try {
-            Optional<Ad> adOpt = adRepository.findById(adId);
-            if (adOpt.isPresent()) {
-                Ad ad = adOpt.get();
-                
-                // Validate ad content before export
-                validateAdContentForFacebook(ad);
-                
-                Campaign campaign = ad.getCampaign();
-                
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                OutputStreamWriter writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
-                
-                // Write BOM for Excel UTF-8 support
-                outputStream.write(0xEF);
-                outputStream.write(0xBB);
-                outputStream.write(0xBF);
-                
-                // Write CSV headers
-                writer.write(String.join(",", CSV_HEADERS));
-                writer.write("\n");
-                
-                // Write ad data
-                String[] rowData = {
-                    escapeCsvValue(campaign.getName()),
-                    escapeCsvValue(mapCampaignObjective(campaign.getObjective())),
-                    escapeCsvValue(mapBudgetType(campaign.getBudgetType())),
-                    formatBudget(campaign.getDailyBudget()),
-                    formatBudget(campaign.getTotalBudget()),
-                    formatDate(campaign.getStartDate()),
-                    formatDate(campaign.getEndDate()),
-                    escapeCsvValue(ad.getName() + "_AdSet"),
-                    formatBudget(campaign.getDailyBudget()),
-                    escapeCsvValue(campaign.getTargetAudience()),
-                    escapeCsvValue(ad.getName()),
-                    escapeCsvValue(mapAdType(ad.getAdType())),
-                    escapeCsvValue(ad.getHeadline()),
-                    escapeCsvValue(ad.getPrimaryText()),
-                    escapeCsvValue(ad.getDescription()),
-                    escapeCsvValue(mapCallToAction(ad.getCallToAction())),
-                    escapeCsvValue(ad.getWebsiteUrl()),
-                    escapeCsvValue(ad.getImageUrl()),
-                    escapeCsvValue(ad.getVideoUrl()),
-                    escapeCsvValue("PAUSED")
-                };
-                
-                writer.write(String.join(",", rowData));
-                writer.write("\n");
-                writer.flush();
-                writer.close();
-                
-                byte[] csvData = outputStream.toByteArray();
-                
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.parseMediaType("text/csv"));
-                headers.setContentDispositionFormData("attachment", 
-                    "facebook_ads_template_" + ad.getName().replaceAll("[^a-zA-Z0-9]", "_") + ".csv");
-                headers.setContentLength(csvData.length);
-                
-                return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(csvData);
-            } else {
-                throw new ApiException(HttpStatus.NOT_FOUND, "Ad not found with id: " + adId);
-            }
-        } catch (IOException e) {
-            log.error("Error creating CSV export for ad {}: {}", adId, e.getMessage());
-            throw new RuntimeException("Failed to create CSV export", e);
-        }
-    }
+
     
-    public ResponseEntity<byte[]> exportMultipleAdsToFacebookTemplate(List<Long> adIds) {
-        try {
-            List<Ad> ads = adRepository.findAllById(adIds);
-            if (ads.isEmpty()) {
-                throw new RuntimeException("No ads found for the provided IDs");
-            }
-            
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            OutputStreamWriter writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
-            
-            // Write BOM for Excel UTF-8 support
-            outputStream.write(0xEF);
-            outputStream.write(0xBB);
-            outputStream.write(0xBF);
-            
-            // Write CSV headers
-            writer.write(String.join(",", CSV_HEADERS));
-            writer.write("\n");
-            
-            // Write data for each ad
-            for (Ad ad : ads) {
-                Campaign campaign = ad.getCampaign();
-                
-                String[] rowData = {
-                    escapeCsvValue(campaign.getName()),
-                    escapeCsvValue(mapCampaignObjective(campaign.getObjective())),
-                    escapeCsvValue(mapBudgetType(campaign.getBudgetType())),
-                    formatBudget(campaign.getDailyBudget()),
-                    formatBudget(campaign.getTotalBudget()),
-                    formatDate(campaign.getStartDate()),
-                    formatDate(campaign.getEndDate()),
-                    escapeCsvValue(ad.getName() + "_AdSet"),
-                    formatBudget(campaign.getDailyBudget()),
-                    escapeCsvValue(campaign.getTargetAudience()),
-                    escapeCsvValue(ad.getName()),
-                    escapeCsvValue(mapAdType(ad.getAdType())),
-                    escapeCsvValue(ad.getHeadline()),
-                    escapeCsvValue(ad.getPrimaryText()),
-                    escapeCsvValue(ad.getDescription()),
-                    escapeCsvValue(mapCallToAction(ad.getCallToAction())),
-                    escapeCsvValue(ad.getWebsiteUrl()),
-                    escapeCsvValue(ad.getImageUrl()),
-                    escapeCsvValue(ad.getVideoUrl()),
-                    escapeCsvValue("PAUSED")
-                };
-                
-                writer.write(String.join(",", rowData));
-                writer.write("\n");
-            }
-            
-            writer.flush();
-            writer.close();
-            
-            byte[] csvData = outputStream.toByteArray();
-            
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType("text/csv"));
-            headers.setContentDispositionFormData("attachment", 
-                "facebook_ads_template_bulk_export.csv");
-            headers.setContentLength(csvData.length);
-            
-            return ResponseEntity.ok()
-                .headers(headers)
-                .body(csvData);
-                
-        } catch (IOException e) {
-            log.error("Error creating bulk CSV export: {}", e.getMessage());
-            throw new RuntimeException("Failed to create bulk CSV export", e);
-        }
-    }
+
     
     private String escapeCsvValue(String value) {
         if (value == null) {
@@ -757,4 +621,128 @@ public class FacebookExportService {
         
         return preview;
     }
+    
+    /**
+     * Export single ad to Facebook CSV template
+     */
+    public ResponseEntity<byte[]> exportAdToFacebookTemplate(Long adId) {
+        try {
+            log.info("Exporting ad {} to Facebook template", adId);
+            
+            Optional<Ad> adOptional = adRepository.findById(adId);
+            if (!adOptional.isPresent()) {
+                throw new ApiException(HttpStatus.NOT_FOUND, "Không tìm thấy quảng cáo với ID: " + adId);
+            }
+            
+            Ad ad = adOptional.get();
+            
+            // Validate ad before export
+            validateAdContentForFacebook(ad);
+            
+            // Generate CSV content
+            String csvContent = generateFacebookCsvContent(Arrays.asList(ad));
+            byte[] csvBytes = csvContent.getBytes(StandardCharsets.UTF_8);
+            
+            // Create response headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", "facebook_ad_" + adId + ".csv");
+            headers.setContentLength(csvBytes.length);
+            
+            return new ResponseEntity<>(csvBytes, headers, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            log.error("Error exporting ad {} to Facebook template: {}", adId, e.getMessage(), e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi xuất quảng cáo: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Export multiple ads to Facebook CSV template
+     */
+    public ResponseEntity<byte[]> exportMultipleAdsToFacebookTemplate(List<Long> adIds) {
+        try {
+            log.info("Exporting {} ads to Facebook template", adIds.size());
+            
+            if (adIds == null || adIds.isEmpty()) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Danh sách ID quảng cáo không được để trống");
+            }
+            
+            List<Ad> ads = adRepository.findAllById(adIds);
+            if (ads.isEmpty()) {
+                throw new ApiException(HttpStatus.NOT_FOUND, "Không tìm thấy quảng cáo nào với các ID đã cung cấp");
+            }
+            
+            // Validate all ads before export
+            for (Ad ad : ads) {
+                validateAdContentForFacebook(ad);
+            }
+            
+            // Generate CSV content
+            String csvContent = generateFacebookCsvContent(ads);
+            byte[] csvBytes = csvContent.getBytes(StandardCharsets.UTF_8);
+            
+            // Create response headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", "facebook_ads_bulk_" + System.currentTimeMillis() + ".csv");
+            headers.setContentLength(csvBytes.length);
+            
+            return new ResponseEntity<>(csvBytes, headers, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            log.error("Error exporting multiple ads to Facebook template: {}", e.getMessage(), e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi xuất quảng cáo: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Generate Facebook CSV content from ads
+     */
+    private String generateFacebookCsvContent(List<Ad> ads) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             OutputStreamWriter writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8)) {
+            
+            // Write CSV headers
+            writer.write(String.join(",", CSV_HEADERS) + "\n");
+            
+            // Write data for each ad
+            for (Ad ad : ads) {
+                Campaign campaign = ad.getCampaign();
+                
+                List<String> csvRow = Arrays.asList(
+                    escapeCsvValue(campaign.getName()),
+                    escapeCsvValue(mapCampaignObjective(campaign.getObjective())),
+                    escapeCsvValue(mapBudgetType(campaign.getBudgetType())),
+                    escapeCsvValue(formatBudget(campaign.getDailyBudget())),
+                    escapeCsvValue(formatBudget(campaign.getTotalBudget())),
+                    escapeCsvValue(formatDate(campaign.getStartDate())),
+                    escapeCsvValue(formatDate(campaign.getEndDate())),
+                    escapeCsvValue(campaign.getName() + " - Ad Set"),
+                    escapeCsvValue(formatBudget(campaign.getDailyBudget())),
+                    escapeCsvValue(campaign.getTargetAudience()),
+                    escapeCsvValue(ad.getName()),
+                    escapeCsvValue(mapAdType(ad.getAdType())),
+                    escapeCsvValue(ad.getHeadline()),
+                    escapeCsvValue(ad.getPrimaryText()),
+                    escapeCsvValue(ad.getDescription()),
+                    escapeCsvValue(mapCallToAction(ad.getCallToAction())),
+                    escapeCsvValue(ad.getWebsiteUrl()),
+                    escapeCsvValue(ad.getImageUrl()),
+                    escapeCsvValue(ad.getVideoUrl()),
+                    escapeCsvValue("Active")
+                );
+                
+                writer.write(String.join(",", csvRow) + "\n");
+            }
+            
+            writer.flush();
+            return baos.toString(StandardCharsets.UTF_8.name());
+            
+        } catch (IOException e) {
+            log.error("Error generating CSV content: {}", e.getMessage(), e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi tạo file CSV: " + e.getMessage());
+        }
+    }
+    
 }

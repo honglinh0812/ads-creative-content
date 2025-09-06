@@ -17,7 +17,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class OpenApiConfig implements WebMvcConfigurer {
 
     @Bean
-    public OpenAPI customOpenAPI() {
+    public OpenAPI openApiConfiguration() {
         return new OpenAPI()
                 .components(new Components()
                         .addSecuritySchemes("bearer-jwt",

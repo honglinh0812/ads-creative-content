@@ -1,5 +1,10 @@
 package com.fbadsautomation.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,14 +25,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/images")
 @CrossOrigin(origins = "*")
-
+@Tag(name = "Images", description = "Image serving endpoints")
 public class ImageController {
 
     @Value("${app.image.storage.location}")
     private String imageStorageLocation;
     
+    @Operation(summary = "Serve image file", description = "Serves an image file by filename")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Image file served successfully"),
+            @ApiResponse(responseCode = "404", description = "Image file not found")
+    })
     @GetMapping("/{filename:.+}")
-    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
+    public ResponseEntity<Resource> serveFile(
+            @Parameter(description = "Image filename to serve") @PathVariable String filename) {
         try {
             Path file = Paths.get(imageStorageLocation).resolve(filename);
             Resource resource = new UrlResource(file.toUri());

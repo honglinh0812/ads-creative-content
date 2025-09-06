@@ -2,9 +2,16 @@ package com.fbadsautomation.controller;
 import com.fbadsautomation.dto.AnalyticsResponse;
 import com.fbadsautomation.dto.ApiResponse;
 import com.fbadsautomation.service.AnalyticsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -13,22 +20,31 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/analytics")
-@RequiredArgsConstructor
-
+@Tag(name = "Analytics", description = "Analytics and reporting endpoints")
+@SecurityRequirement(name = "bearerAuth")
 public class AnalyticsController {
 
+    private static final Logger log = LoggerFactory.getLogger(AnalyticsController.class);
+    
     private final AnalyticsService analyticsService;
 
-    /**
-     * Get comprehensive analytics dashboard
-     */
+    @Autowired
+    public AnalyticsController(AnalyticsService analyticsService) {
+        this.analyticsService = analyticsService;
+    }
+
+    @Operation(summary = "Get analytics dashboard", description = "Retrieves comprehensive analytics dashboard data for the authenticated user")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Analytics dashboard data retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/dashboard")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<AnalyticsResponse>> getAnalyticsDashboard(
-            @RequestParam(defaultValue = "30d") String timeRange,
+            @Parameter(description = "Time range for analytics (e.g., 7d, 30d, 90d)") @RequestParam(defaultValue = "30d") String timeRange,
             Authentication authentication) {
         
         try {
@@ -43,13 +59,16 @@ public class AnalyticsController {
         }
     }
 
-    /**
-     * Get KPI metrics only
-     */
+    @Operation(summary = "Get KPI metrics", description = "Retrieves key performance indicator metrics for the authenticated user")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "KPI metrics retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/kpis")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<AnalyticsResponse.KPIMetrics>> getKPIMetrics(
-            @RequestParam(defaultValue = "30d") String timeRange,
+            @Parameter(description = "Time range for KPI metrics (e.g., 7d, 30d, 90d)") @RequestParam(defaultValue = "30d") String timeRange,
             Authentication authentication) {
         
         try {
@@ -64,14 +83,17 @@ public class AnalyticsController {
         }
     }
 
-    /**
-     * Get performance trends
-     */
+    @Operation(summary = "Get performance trends", description = "Retrieves performance trends over time for the authenticated user")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Performance trends retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/trends")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<java.util.List<AnalyticsResponse.TimeSeriesData>>> getPerformanceTrends(
-            @RequestParam(defaultValue = "30d") String timeRange,
-            @RequestParam(required = false) String metric,
+            @Parameter(description = "Time range for trends (e.g., 7d, 30d, 90d)") @RequestParam(defaultValue = "30d") String timeRange,
+            @Parameter(description = "Specific metric to analyze") @RequestParam(required = false) String metric,
             Authentication authentication) {
         
         try {
@@ -88,15 +110,18 @@ public class AnalyticsController {
         }
     }
 
-    /**
-     * Get campaign analytics
-     */
+    @Operation(summary = "Get campaign analytics", description = "Retrieves detailed analytics for campaigns")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Campaign analytics retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/campaigns")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<java.util.List<AnalyticsResponse.CampaignAnalytics>>> getCampaignAnalytics(
-            @RequestParam(defaultValue = "30d") String timeRange,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String objective,
+            @Parameter(description = "Time range for campaign analytics (e.g., 7d, 30d, 90d)") @RequestParam(defaultValue = "30d") String timeRange,
+            @Parameter(description = "Filter by campaign status") @RequestParam(required = false) String status,
+            @Parameter(description = "Filter by campaign objective") @RequestParam(required = false) String objective,
             Authentication authentication) {
         
         try {
@@ -126,16 +151,19 @@ public class AnalyticsController {
         }
     }
 
-    /**
-     * Get ad analytics
-     */
+    @Operation(summary = "Get ad analytics", description = "Retrieves detailed analytics for ads")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ad analytics retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/ads")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<java.util.List<AnalyticsResponse.AdAnalytics>>> getAdAnalytics(
-            @RequestParam(defaultValue = "30d") String timeRange,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String adType,
-            @RequestParam(required = false) String aiProvider,
+            @Parameter(description = "Time range for ad analytics (e.g., 7d, 30d, 90d)") @RequestParam(defaultValue = "30d") String timeRange,
+            @Parameter(description = "Filter by ad status") @RequestParam(required = false) String status,
+            @Parameter(description = "Filter by ad type") @RequestParam(required = false) String adType,
+            @Parameter(description = "Filter by AI provider") @RequestParam(required = false) String aiProvider,
             Authentication authentication) {
         
         try {
@@ -171,13 +199,16 @@ public class AnalyticsController {
         }
     }
 
-    /**
-     * Get AI provider analytics
-     */
+    @Operation(summary = "Get AI provider analytics", description = "Retrieves analytics for AI providers usage and performance")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "AI provider analytics retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/ai-providers")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<AnalyticsResponse.AIProviderAnalytics>> getAIProviderAnalytics(
-            @RequestParam(defaultValue = "30d") String timeRange,
+            @Parameter(description = "Time range for AI provider analytics (e.g., 7d, 30d, 90d)") @RequestParam(defaultValue = "30d") String timeRange,
             Authentication authentication) {
         
         try {
@@ -193,13 +224,16 @@ public class AnalyticsController {
         }
     }
 
-    /**
-     * Get budget analytics
-     */
+    @Operation(summary = "Get budget analytics", description = "Retrieves budget utilization and spending analytics")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Budget analytics retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/budget")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<AnalyticsResponse.BudgetAnalytics>> getBudgetAnalytics(
-            @RequestParam(defaultValue = "30d") String timeRange,
+            @Parameter(description = "Time range for budget analytics (e.g., 7d, 30d, 90d)") @RequestParam(defaultValue = "30d") String timeRange,
             Authentication authentication) {
         
         try {
@@ -215,13 +249,16 @@ public class AnalyticsController {
         }
     }
 
-    /**
-     * Get content analytics
-     */
+    @Operation(summary = "Get content analytics", description = "Retrieves analytics for content performance and engagement")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Content analytics retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/content")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<AnalyticsResponse.ContentAnalytics>> getContentAnalytics(
-            @RequestParam(defaultValue = "30d") String timeRange,
+            @Parameter(description = "Time range for content analytics (e.g., 7d, 30d, 90d)") @RequestParam(defaultValue = "30d") String timeRange,
             Authentication authentication) {
         
         try {
@@ -237,13 +274,16 @@ public class AnalyticsController {
         }
     }
 
-    /**
-     * Get analytics summary for quick overview
-     */
+    @Operation(summary = "Get analytics summary", description = "Retrieves a comprehensive summary of all analytics data")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Analytics summary retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/summary")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAnalyticsSummary(
-            @RequestParam(defaultValue = "30d") String timeRange,
+            @Parameter(description = "Time range for analytics summary (e.g., 7d, 30d, 90d)") @RequestParam(defaultValue = "30d") String timeRange,
             Authentication authentication) {
         
         try {
@@ -274,9 +314,12 @@ public class AnalyticsController {
         }
     }
 
-    /**
-     * Get available filter options
-     */
+    @Operation(summary = "Get filter options", description = "Retrieves available filter options for analytics endpoints")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Filter options retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/filters")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getFilterOptions(Authentication authentication) {

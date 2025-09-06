@@ -20,7 +20,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -32,10 +33,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-@Slf4j
 @Service
-
 public class HuggingFaceProvider implements AIProvider {
+    
+    private static final Logger log = LoggerFactory.getLogger(HuggingFaceProvider.class);
     private final RestTemplate restTemplate;
     private final String apiKey;
     private final String textApiUrl;

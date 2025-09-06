@@ -2,8 +2,9 @@ package com.fbadsautomation.service;
 
 import java.util.HashMap;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -11,13 +12,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
-
 public class MetaAdLibraryApiService {
 
+    private static final Logger log = LoggerFactory.getLogger(MetaAdLibraryApiService.class);
+    
     private final RestTemplate restTemplate;
+    
+    @Autowired
+    public MetaAdLibraryApiService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
     private static final String META_API_BASE_URL = "https://graph.facebook.com/v18.0";
     /**
      * Extract ad content using Meta Ad Library API
@@ -127,4 +132,4 @@ public class MetaAdLibraryApiService {
         return url != null && url.contains("facebook.com/ads/library") && 
                url.contains("id=");
     }
-} 
+}

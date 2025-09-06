@@ -1,30 +1,40 @@
 package com.fbadsautomation.controller;
 
 import com.fbadsautomation.service.MetaAdLibraryApiService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/meta-ad-library")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+@Tag(name = "Meta Ad Library", description = "API endpoints for extracting content from Meta Ad Library")
 
 public class MetaAdLibraryController {
 
+    private static final Logger log = LoggerFactory.getLogger(MetaAdLibraryController.class);
     private final MetaAdLibraryApiService metaAdLibraryApiService;
 
-    /**
-     * Extract ad content from Meta Ad Library URL
-     */
+    @Operation(summary = "Extract ad content", description = "Extract ad content from Meta Ad Library URL")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Ad content extracted successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid URL or extraction error"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping("/extract")
     public ResponseEntity<Map<String, Object>> extractAdContent(
-            @RequestParam String url,
-            @RequestParam(required = false) String accessToken) {
+            @Parameter(description = "Meta Ad Library URL") @RequestParam String url,
+            @Parameter(description = "Facebook access token (optional)") @RequestParam(required = false) String accessToken) {
         
         log.info("Extracting ad content from URL: {}", url);
         
@@ -56,11 +66,15 @@ public class MetaAdLibraryController {
         }
     }
 
-    /**
-     * Validate Meta Ad Library URL
-     */
+    @Operation(summary = "Validate Meta Ad Library URL", description = "Validates if the provided URL is a valid Meta Ad Library URL")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "URL validation result"),
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping("/validate-url")
-    public ResponseEntity<Map<String, Object>> validateUrl(@RequestParam String url) {
+    public ResponseEntity<Map<String, Object>> validateUrl(
+            @Parameter(description = "Meta Ad Library URL to validate") @RequestParam String url) {
         boolean isValid = metaAdLibraryApiService.isValidAdLibraryUrl(url);
         String adId = isValid ? metaAdLibraryApiService.extractAdIdFromUrl(url) : null;
         

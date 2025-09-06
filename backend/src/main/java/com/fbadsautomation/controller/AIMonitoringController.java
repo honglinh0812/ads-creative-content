@@ -5,34 +5,54 @@ import com.fbadsautomation.service.AIContentCacheService;
 import com.fbadsautomation.service.AIProviderService;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+// Removed conflicting import - using fully qualified name instead
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/ai/monitoring")
-@RequiredArgsConstructor
-
+@Tag(name = "AI Monitoring", description = "AI provider monitoring and management endpoints")
+@SecurityRequirement(name = "bearerAuth")
 public class AIMonitoringController {
+
+    private static final Logger log = LoggerFactory.getLogger(AIMonitoringController.class);
 
     private final AIProviderService aiProviderService;
     private final AIContentCacheService cacheService;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
 
-    /**
-     * Get AI provider statistics
-     */
+    @Autowired
+    public AIMonitoringController(AIProviderService aiProviderService, 
+                                 AIContentCacheService cacheService,
+                                 CircuitBreakerRegistry circuitBreakerRegistry) {
+        this.aiProviderService = aiProviderService;
+        this.cacheService = cacheService;
+        this.circuitBreakerRegistry = circuitBreakerRegistry;
+    }
+
+    @Operation(summary = "Get AI provider statistics", description = "Retrieves statistics for all AI providers")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Provider statistics retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/providers/stats")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getProviderStats(
-            @RequestParam(defaultValue = "24") int hoursBack) {
+            @Parameter(description = "Number of hours to look back for statistics") @RequestParam(defaultValue = "24") int hoursBack) {
         
         try {
             Map<String, Object> stats = new HashMap<>(); // Get stats for all known providers
@@ -57,9 +77,12 @@ public class AIMonitoringController {
         }
     }
 
-    /**
-     * Get circuit breaker status for all providers
-     */
+    @Operation(summary = "Get circuit breaker status", description = "Retrieves circuit breaker status for all AI providers")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Circuit breaker status retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/circuit-breakers")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCircuitBreakerStatus() {
@@ -95,9 +118,12 @@ public class AIMonitoringController {
         }
     }
 
-    /**
-     * Get cache statistics
-     */
+    @Operation(summary = "Get cache statistics", description = "Retrieves AI content cache statistics")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cache statistics retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/cache/stats")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCacheStats() {
@@ -118,12 +144,17 @@ public class AIMonitoringController {
         }
     }
 
-    /**
-     * Clear cache for specific provider
-     */
+    @Operation(summary = "Clear provider cache", description = "Clears cache for a specific AI provider")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Provider cache cleared successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @DeleteMapping("/cache/provider/{providerId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<String>> clearProviderCache(@PathVariable String providerId) {
+    public ResponseEntity<ApiResponse<String>> clearProviderCache(
+            @Parameter(description = "ID of the AI provider") @PathVariable String providerId) {
         
         try {
             aiProviderService.clearProviderCache(providerId);
@@ -139,9 +170,13 @@ public class AIMonitoringController {
         }
     }
 
-    /**
-     * Clear all AI content cache
-     */
+    @Operation(summary = "Clear all cache", description = "Clears all AI content cache")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "All cache cleared successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @DeleteMapping("/cache/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> clearAllCache() {
@@ -158,9 +193,12 @@ public class AIMonitoringController {
         }
     }
 
-    /**
-     * Get provider health status
-     */
+    @Operation(summary = "Get provider health status", description = "Retrieves health status of all AI providers")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Provider health status retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/health")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getProviderHealth() {
@@ -199,13 +237,16 @@ public class AIMonitoringController {
         }
     }
 
-    /**
-     * Get cost analysis for AI providers
-     */
+    @Operation(summary = "Get cost analysis", description = "Retrieves cost analysis for AI providers")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cost analysis retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/costs")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCostAnalysis(
-            @RequestParam(defaultValue = "24") int hoursBack) {
+            @Parameter(description = "Number of hours to look back for cost analysis") @RequestParam(defaultValue = "24") int hoursBack) {
         
         try {
             Map<String, Object> costAnalysis = new HashMap<>();
@@ -236,14 +277,19 @@ public class AIMonitoringController {
         }
     }
 
-    /**
-     * Force circuit breaker state transition (for testing/maintenance)
-     */
+    @Operation(summary = "Force circuit breaker transition", description = "Forces circuit breaker state transition for testing/maintenance")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Circuit breaker state changed successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid state parameter"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping("/circuit-breaker/{providerId}/transition/{state}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> forceCircuitBreakerTransition(
-            @PathVariable String providerId,
-            @PathVariable String state) {
+            @Parameter(description = "ID of the AI provider") @PathVariable String providerId,
+            @Parameter(description = "Target state (OPEN, CLOSED, HALF_OPEN)") @PathVariable String state) {
         
         try {
             CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker(providerId);

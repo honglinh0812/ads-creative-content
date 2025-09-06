@@ -5,7 +5,9 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.util.Properties;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
-import lombok.extern.slf4j.Slf4j;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,10 +21,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = "com.fbadsautomation.repository")
-@Slf4j
 @Configuration
 
 public class DatabaseConfig {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DatabaseConfig.class);
 
     @Value("${spring.datasource.url}")
     private String jdbcUrl;

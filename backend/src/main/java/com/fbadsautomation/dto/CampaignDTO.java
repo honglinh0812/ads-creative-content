@@ -1,15 +1,6 @@
 package com.fbadsautomation.dto;
 
 import java.time.LocalDate;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 
 public class CampaignDTO {
     private Long id;
@@ -23,19 +14,53 @@ public class CampaignDTO {
     private LocalDate startDate;
     private LocalDate endDate;
 
-    /*
     // Constructors
-    public CampaignDTO() {;
+    public CampaignDTO() {
     }
 
     public CampaignDTO(Long id, String name, String status, String objective, String budgetType,
                        Double dailyBudget, Double totalBudget, String targetAudience,
                        LocalDate startDate, LocalDate endDate) {
-        this.id = idthis.name = name;
-        this.status = statusthis.objective = objective;
-        this.budgetType = budgetTypethis.dailyBudget = dailyBudget;
-        this.totalBudget = totalBudgetthis.targetAudience = targetAudience;
-        this.startDate = startDatethis.endDate = endDate;
+        this.id = id;
+        this.name = name;
+        this.status = status;
+        this.objective = objective;
+        this.budgetType = budgetType;
+        this.dailyBudget = dailyBudget;
+        this.totalBudget = totalBudget;
+        this.targetAudience = targetAudience;
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
-    */;
-    }
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    
+    public String getObjective() { return objective; }
+    public void setObjective(String objective) { this.objective = objective; }
+    
+    public String getBudgetType() { return budgetType; }
+    public void setBudgetType(String budgetType) { this.budgetType = budgetType; }
+    
+    public Double getDailyBudget() { return dailyBudget; }
+    public void setDailyBudget(Double dailyBudget) { this.dailyBudget = dailyBudget; }
+    
+    public Double getTotalBudget() { return totalBudget; }
+    public void setTotalBudget(Double totalBudget) { this.totalBudget = totalBudget; }
+    
+    public String getTargetAudience() { return targetAudience; }
+    public void setTargetAudience(String targetAudience) { this.targetAudience = targetAudience; }
+    
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+    
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+}

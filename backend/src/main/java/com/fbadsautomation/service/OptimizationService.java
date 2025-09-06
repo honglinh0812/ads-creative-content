@@ -8,20 +8,29 @@ import com.fbadsautomation.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
-
 public class OptimizationService {
 
+    private static final Logger log = LoggerFactory.getLogger(OptimizationService.class);
+    
     private final AnalyticsService analyticsService;
     private final OptimizationRulesEngine rulesEngine;
     private final UserRepository userRepository;
+
+    @Autowired
+    public OptimizationService(AnalyticsService analyticsService, 
+                              OptimizationRulesEngine rulesEngine,
+                              UserRepository userRepository) {
+        this.analyticsService = analyticsService;
+        this.rulesEngine = rulesEngine;
+        this.userRepository = userRepository;
+    }
 
     /**
      * Generate comprehensive optimization recommendations for a user

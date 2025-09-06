@@ -4,24 +4,29 @@ import com.fbadsautomation.exception.ApiException;
 
 import java.util.Map;
 
-import lombok.RequiredArgsConstructor;
-
-import lombok.extern.slf4j.Slf4j;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 import org.springframework.stereotype.Component;
 
 import org.springframework.web.client.RestTemplate;
 
-@Slf4j
 @Component
-@RequiredArgsConstructor
 
 public class FacebookApiClient {
 
+    private static final Logger log = LoggerFactory.getLogger(FacebookApiClient.class);
+    
     private final RestTemplate restTemplate;
     private final FacebookProperties facebookProperties;
+    
+    @Autowired
+    public FacebookApiClient(RestTemplate restTemplate, FacebookProperties facebookProperties) {
+        this.restTemplate = restTemplate;
+        this.facebookProperties = facebookProperties;
+    }
 
     public String getAccessToken(String code, String redirectUri) {
         String tokenUrl = String.format("%s/v%s/oauth/access_token?client_id=%s&redirect_uri=%s&client_secret=%s&code=%s",

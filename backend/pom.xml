@@ -117,7 +117,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>false</optional>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -195,6 +195,26 @@
     <build>
         <plugins>
             <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <source>17</source>
+                        <target>17</target>
+                        <parameters>true</parameters>
+                        <compilerArgs>
+                            <arg>-XprintProcessorInfo</arg>
+                            <arg>-Xlint:processing</arg>
+                        </compilerArgs>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>1.18.24</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
@@ -205,19 +225,6 @@
                         </exclude>
                     </excludes>
                 </configuration>
-	    </plugin>
-	    <plugin>
-    		<groupId>org.projectlombok</groupId>
-    		<artifactId>lombok-maven-plugin</artifactId>
-    		<version>1.18.20.0</version>
-    		<executions>
-        	    <execution>
-            		<phase>generate-sources</phase>
-            		<goals>
-                	    <goal>delombok</goal>
-            		</goals>
-        	    </execution>
-    		</executions>
 	    </plugin>	
         </plugins>
     </build>

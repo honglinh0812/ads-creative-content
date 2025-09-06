@@ -7,14 +7,16 @@ import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import java.time.Duration;
 import java.util.function.Predicate;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Slf4j
 @Configuration
 
 public class CircuitBreakerConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(CircuitBreakerConfig.class);
 
     @Bean
     public CircuitBreakerRegistry circuitBreakerRegistry() {

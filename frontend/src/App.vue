@@ -63,11 +63,6 @@
               <template #icon><a-icon type="rocket" /></template>
               <span>Optimization</span>
             </a-menu-item>
-            
-            <a-menu-item key="notifications">
-              <template #icon><a-icon type="bell" /></template>
-              <span>Notifications</span>
-            </a-menu-item>
           </a-menu>
         </a-layout-sider>
         
@@ -95,13 +90,6 @@
             </div>
             
             <div class="header-right">
-              <!-- Search -->
-              <a-input-search 
-                placeholder="Tìm kiếm..."
-                style="width: 200px; margin-right: 16px;"
-                @search="onHeaderSearch"
-              />
-              
               <!-- Notifications -->
               <a-badge :count="notificationCount" class="notification-badge">
                 <a-button type="text" shape="circle" @click="showNotifications">
@@ -182,34 +170,21 @@ export default {
       breadcrumbs: [
         { name: 'Dashboard', path: '/dashboard' }
       ],
-      notificationCount: 3,
-      username: 'User'
+      notificationCount: 3
     }
   },
   computed: {
-    ...mapGetters('auth', ['isAuthenticated', 'loading']),
+    ...mapGetters('auth', ['isAuthenticated', 'loading', 'user']),
     authLoading() {
       return this.loading
+    },
+    username() {
+      if (!this.user) return 'Người dùng'
+      return this.user.name || this.user.username || this.user.email?.split('@')[0] || 'Người dùng'
     }
   },
   methods: {
-    onHeaderSearch(query) {
-      if (!query.trim()) return
-      
-      // Tìm kiếm theo route hiện tại
-      const currentRoute = this.$route.name
-      
-      if (currentRoute === 'CampaignPage' || currentRoute === 'Dashboard') {
-        // Tìm kiếm campaigns
-        this.$store.dispatch('campaign/searchCampaigns', query)
-      } else if (currentRoute === 'Ads') {
-        // Tìm kiếm ads
-        this.$store.dispatch('ad/searchAds', query)
-      } else {
-        // Tìm kiếm toàn cục - chuyển đến trang search
-        this.$router.push({ path: '/search', query: { q: query } })
-      }
-    },
+
     onMenuSelect({ key }) {
       this.selectedKeys = [key]
       // Handle menu navigation
@@ -226,10 +201,8 @@ export default {
       }
     },
     showNotifications() {
-      // Chuyển đến trang notifications
-      this.$router.push('/notifications')
-      // Hoặc có thể mở drawer notifications
-      // this.$store.dispatch('notifications/toggleDrawer')
+      // Notifications are now handled in Header component modal only
+      // Notifications page has been removed
     },
     onUserMenuClick({ key }) {
       if (key === 'logout') {
@@ -245,6 +218,16 @@ export default {
       // Toggle mobile menu through sidebar component
       if (this.$refs.sidebar) {
         this.$refs.sidebar.toggleMobileMenu()
+      }
+    }
+  },
+  async created() {
+    // Fetch user data if authenticated
+    if (this.isAuthenticated && !this.user) {
+      try {
+        await this.$store.dispatch('auth/fetchUser')
+      } catch (error) {
+        console.error('Failed to fetch user data:', error)
       }
     }
   }

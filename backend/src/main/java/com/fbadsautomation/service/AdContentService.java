@@ -9,8 +9,9 @@ import com.fbadsautomation.service.AIContentService;
 import com.fbadsautomation.repository.AdContentRepository;
 import com.fbadsautomation.repository.AdRepository;
 import com.fbadsautomation.repository.CampaignRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,15 +21,24 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class AdContentService {
+
+    private static final Logger log = LoggerFactory.getLogger(AdContentService.class);
 
     private final AdRepository adRepository;
     private final AdContentRepository adContentRepository;
     private final CampaignRepository campaignRepository;
     private final AIContentService aiContentService; // Service layer for AI interaction
     private static final int DEFAULT_VARIATIONS_FOR_AD = 1; // Default variations when generating for an ad
+
+    @Autowired
+    public AdContentService(AdRepository adRepository, AdContentRepository adContentRepository, 
+                           CampaignRepository campaignRepository, AIContentService aiContentService) {
+        this.adRepository = adRepository;
+        this.adContentRepository = adContentRepository;
+        this.campaignRepository = campaignRepository;
+        this.aiContentService = aiContentService;
+    }
 
     /**
      * Generate content variations for an ad using AI.

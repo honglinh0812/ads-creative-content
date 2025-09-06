@@ -52,7 +52,6 @@
 
 <script>
 import { inject, computed } from 'vue'
-// eslint-disable-next-line no-unused-vars
 import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, InformationCircleIcon } from '@heroicons/vue/24/outline'
 
 export default {

@@ -5,13 +5,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
 
 public class AIContentValidationService {
+
+    private static final Logger log = LoggerFactory.getLogger(AIContentValidationService.class);
 
     // Inappropriate content patterns
     private static final List<String> INAPPROPRIATE_KEYWORDS = Arrays.asList("hate", "violence", "discrimination", "illegal", "drugs", "weapons",

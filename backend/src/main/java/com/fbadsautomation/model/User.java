@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -18,7 +17,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Slf4j
 public class User {
     
     @Id
@@ -53,4 +51,86 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    // Getter methods
+    public Long getId() {
+        return id;
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public String getFacebookId() {
+        return facebookId;
+    }
+    
+    public String getFacebookToken() {
+        return facebookToken;
+    }
+    
+    public String getUsername() {
+        return username;
+    }
+    
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+    
+    public Set<Campaign> getCampaigns() {
+        return campaigns;
+    }
+    
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+    
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+    
+    // Setter methods
+    public void setId(Long id) {
+        this.id = id;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public void setFacebookId(String facebookId) {
+        this.facebookId = facebookId;
+    }
+    
+    public void setFacebookToken(String facebookToken) {
+        this.facebookToken = facebookToken;
+    }
+    
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+    
+    public void setCampaigns(Set<Campaign> campaigns) {
+        this.campaigns = campaigns;
+    }
+    
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+    
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

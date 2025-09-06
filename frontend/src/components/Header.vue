@@ -4,6 +4,7 @@
       <div class="header-brand">
         <h1 class="brand-text text-neutral-900 dark:text-neutral-100">Ads Creative</h1>
       </div>
+      <!-- Search functionality removed as requested -->
     </div>
     <div class="header-right">
       <DarkModeToggle class="mr-3" />
@@ -21,7 +22,7 @@
           tabindex="0" 
           title="Notifications"
         >
-          <i class="pi pi-bell" aria-hidden="true"></i>
+          <i class="fas fa-bell" aria-hidden="true"></i>
           <span 
             v-if="notificationCount > 0" 
             id="notification-count"
@@ -30,7 +31,7 @@
             aria-live="polite"
             :aria-label="`${notificationCount} unread notifications`"
           >
-            {{ notificationCount }}
+            {{ notificationCount > 99 ? '99+' : notificationCount }}
           </span>
         </button>
         <transition name="fade">
@@ -55,7 +56,7 @@
                 @keydown.enter="handleNotificationClick(noti)"
                 @keydown.space.prevent="handleNotificationClick(noti)"
                 @click="handleNotificationClick(noti)"
-                :aria-label="`Notification: ${noti.title || noti.type}. ${noti.message}. ${formatTime(noti.timestamp)}`"
+                :aria-label="`Thông báo: ${noti.title || noti.type}. ${noti.message}. ${formatTime(noti.timestamp)}`"
               >
                 <span class="noti-icon" :class="noti.type" aria-hidden="true">
                   <i v-if="noti.type==='success'" class="pi pi-check-circle text-success-500"></i>
@@ -70,17 +71,21 @@
                 </div>
               </div>
             </div>
-            <div v-else class="notification-empty text-neutral-500 dark:text-neutral-400" role="status">Không có thông báo nào</div>
-            <div class="notification-footer border-t border-neutral-200 dark:border-neutral-700">
+            <div v-else class="notification-empty text-neutral-500 dark:text-neutral-400" role="status">
+              <i class="fas fa-bell-slash mb-2 text-2xl"></i>
+              <p>Chưa có thông báo nào</p>
+              <p class="text-xs mt-1">Các thông báo về chiến dịch và quảng cáo sẽ hiển thị ở đây</p>
+            </div>
+            <div v-if="recentNotifications.length > 0" class="notification-footer border-t border-neutral-200 dark:border-neutral-700">
               <button 
                 class="check-all-btn text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20" 
-                @click="goAllNotifications"
-                @keydown.enter="goAllNotifications"
-                @keydown.space.prevent="goAllNotifications"
+                @click="markAllAsRead"
+                @keydown.enter="markAllAsRead"
+                @keydown.space.prevent="markAllAsRead"
                 role="menuitem"
-                aria-label="View all notifications"
+                aria-label="Mark all as read"
               >
-                Xem tất cả thông báo
+                Đánh dấu tất cả đã đọc
               </button>
             </div>
           </div>
@@ -207,7 +212,8 @@ export default {
       return this.user && this.user.avatar ? this.user.avatar : this.defaultAvatar
     },
     username() {
-      return this.user && (this.user.username || this.user.name) ? (this.user.username || this.user.name) : 'User'
+      if (!this.user) return 'Người dùng'
+      return this.user.fullName || this.user.username || this.user.name || this.user.email?.split('@')[0] || 'Người dùng'
     },
     notificationCount() {
       return this.toasts.length
@@ -252,7 +258,20 @@ export default {
     },
     goAllNotifications() {
       this.showNotificationDropdown = false
-      this.$router.push('/notifications')
+      // Notifications page has been removed, notifications are now handled in header modal only
+    },
+    markAllAsRead() {
+      this.showNotificationDropdown = false
+      this.$store.dispatch('toast/clearAll')
+    },
+    getNotificationIcon(type) {
+      const iconMap = {
+        success: 'pi pi-check-circle text-success-500',
+        error: 'pi pi-times-circle text-error-500',
+        warning: 'pi pi-exclamation-triangle text-warning-500',
+        info: 'pi pi-info-circle text-primary-500'
+      }
+      return iconMap[type] || iconMap.info
     },
     formatTime(ts) {
       if (!ts) return ''

@@ -13,20 +13,29 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
-
 public class AIProviderService {
 
+    private static final Logger log = LoggerFactory.getLogger(AIProviderService.class);
+    
     private final List<AIProvider> aiProviders;
     private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final RetryRegistry retryRegistry;
     private final AIContentCacheService cacheService;
+    
+    @Autowired
+    public AIProviderService(List<AIProvider> aiProviders, CircuitBreakerRegistry circuitBreakerRegistry, 
+                           RetryRegistry retryRegistry, AIContentCacheService cacheService) {
+        this.aiProviders = aiProviders;
+        this.circuitBreakerRegistry = circuitBreakerRegistry;
+        this.retryRegistry = retryRegistry;
+        this.cacheService = cacheService;
+    }
 
     private final Map<String, AIProvider> providerMap = new HashMap<>();
     private final Map<String, List<String>> providerFallbacks = new HashMap<>();

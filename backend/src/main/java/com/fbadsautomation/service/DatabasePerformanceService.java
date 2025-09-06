@@ -1,19 +1,24 @@
 package com.fbadsautomation.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
-
 public class DatabasePerformanceService {
+    
+    private static final Logger log = LoggerFactory.getLogger(DatabasePerformanceService.class);
 
     private final JdbcTemplate jdbcTemplate;
+    
+    public DatabasePerformanceService(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     /**
      * Get database connection pool statistics

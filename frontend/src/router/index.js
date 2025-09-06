@@ -18,7 +18,7 @@ const PrivacyPolicy = () => import('../views/legal/PrivacyPolicy.vue')
 const TermsOfService = () => import('../views/legal/TermsOfService.vue')
 const DataDeletion = () => import('../views/legal/DataDeletion.vue')
 const AuthSuccess = () => import('../views/AuthSuccess.vue')
-const NotificationPage = () => import('../views/NotificationPage.vue')
+// NotificationPage removed as requested
 const ResetPassword = () => import('../views/ResetPassword.vue')
 const Profile = () => import('../views/Profile.vue')
 const Settings = () => import('../views/Settings.vue')
@@ -105,12 +105,7 @@ const routes = [
     props: true,
     meta: { requiresAuth: true }
   },
-  {
-    path: '/notifications',
-    name: 'Notifications',
-    component: NotificationPage,
-    meta: { requiresAuth: true }
-  },
+  // Notifications route removed - notifications are now handled in header modal only
   {
     path: '/reset-password',
     name: 'ResetPassword',

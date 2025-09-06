@@ -225,7 +225,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import RecommendationCard from './RecommendationCard.vue'
 import RecommendationListItem from './RecommendationListItem.vue'
-import { optimizationAPI } from '@/services/api'
+import api from '@/services/api'
+const { optimizationAPI } = api
 
 export default {
   name: 'OptimizationDashboard',

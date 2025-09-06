@@ -11,8 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,10 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Optional;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
-
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -50,7 +46,16 @@ public class AuthService {
     @Value("${app.reset-password.base-url:https://linhnh.site/reset-password}")
     private String resetPasswordBaseUrl;
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+    
+    @Autowired
+    public AuthService(UserRepository userRepository, FacebookApiClient facebookApiClient, 
+                      FacebookProperties facebookProperties, JwtTokenProvider jwtTokenProvider) {
+        this.userRepository = userRepository;
+        this.facebookApiClient = facebookApiClient;
+        this.facebookProperties = facebookProperties;
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
 
     // Đăng ký tài khoản mới
     public void registerUser(String username, String email, String password) {
@@ -72,32 +77,32 @@ public class AuthService {
     // Đăng nhập bằng username/password hoặc email/password
     public String loginWithUsernamePassword(String usernameOrEmail, String password) {
         String input = usernameOrEmail.trim();
-        logger.info("Login attempt with: '{}'", input);
+        log.info("Login attempt with: '{}'", input);
 
         Optional<User> userByUsername = userRepository.findByUsernameIgnoreCase(input);
         if (userByUsername.isPresent()) {
-            logger.info("Found user by username: {}", userByUsername.get().getUsername());
+            log.info("Found user by username: {}", userByUsername.get().getUsername());
         } else {
-            logger.info("No user found by username: {}", input);
+            log.info("No user found by username: {}", input);
         }
 
         Optional<User> userByEmail = userRepository.findByEmailIgnoreCase(input.toLowerCase());
         if (userByEmail.isPresent()) {
-            logger.info("Found user by email: {}", userByEmail.get().getEmail());
+            log.info("Found user by email: {}", userByEmail.get().getEmail());
         } else {
-            logger.info("No user found by email: {}", input.toLowerCase());
+            log.info("No user found by email: {}", input.toLowerCase());
         }
 
         User user = userByUsername.orElse(userByEmail.orElse(null));
         if (user == null) {
-            logger.warn("Login failed: User not found for input '{}'", input);
+            log.warn("Login failed: User not found for input '{}'", input);
             throw new ApiException(HttpStatus.UNAUTHORIZED, "User not found");
         }
         if (user.getPasswordHash() == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
-            logger.warn("Login failed: Invalid password for user '{}'", user.getUsername());
+            log.warn("Login failed: Invalid password for user '{}'", user.getUsername());
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid password");
         }
-        logger.info("Login successful for user '{}'", user.getUsername());
+        log.info("Login successful for user '{}'", user.getUsername());
         return generateJwtToken(user);
     }
 

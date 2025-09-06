@@ -7,18 +7,6 @@ import java.util.List;
 import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Slf4j
-
 public class AdGenerationRequest {
     
     @NotNull(message = "Campaign ID is required")
@@ -64,12 +52,21 @@ public class AdGenerationRequest {
     private List<LeadFormQuestion> leadFormQuestions; // For LEAD_FORM_AD
     
     // Inner class for lead form questions
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class LeadFormQuestion {
         private String type; // FULL_NAME, EMAIL, PHONE, COMPANY, JOB_TITLE, CUSTOM
         private String customText; // For CUSTOM type
+        
+        public LeadFormQuestion() {}
+        
+        public LeadFormQuestion(String type, String customText) {
+            this.type = type;
+            this.customText = customText;
+        }
+        
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
+        public String getCustomText() { return customText; }
+        public void setCustomText(String customText) { this.customText = customText; }
     }
     
     @AssertTrue(message = "Could not create ads. Please check the ad prompt / ad link and try again.")
@@ -80,11 +77,61 @@ public class AdGenerationRequest {
         return hasPrompt || hasAdLinks || hasExtractedContent;
     }
 
-    public FacebookCTA getCallToAction() {
-        return this.callToAction;
-    }
-
-    public void setCallToAction(FacebookCTA callToAction) {
-        this.callToAction = callToAction;
-    }
+    // Getter and Setter methods
+    public Long getCampaignId() { return campaignId; }
+    public void setCampaignId(Long campaignId) { this.campaignId = campaignId; }
+    
+    public String getAdType() { return adType; }
+    public void setAdType(String adType) { this.adType = adType; }
+    
+    public String getPrompt() { return prompt; }
+    public void setPrompt(String prompt) { this.prompt = prompt; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public String getMediaFileUrl() { return mediaFileUrl; }
+    public void setMediaFileUrl(String mediaFileUrl) { this.mediaFileUrl = mediaFileUrl; }
+    
+    public String getTextProvider() { return textProvider; }
+    public void setTextProvider(String textProvider) { this.textProvider = textProvider; }
+    
+    public String getImageProvider() { return imageProvider; }
+    public void setImageProvider(String imageProvider) { this.imageProvider = imageProvider; }
+    
+    public Integer getNumberOfVariations() { return numberOfVariations; }
+    public void setNumberOfVariations(Integer numberOfVariations) { this.numberOfVariations = numberOfVariations; }
+    
+    public String getLanguage() { return language; }
+    public void setLanguage(String language) { this.language = language; }
+    
+    public List<String> getAdLinks() { return adLinks; }
+    public void setAdLinks(List<String> adLinks) { this.adLinks = adLinks; }
+    
+    public String getPromptStyle() { return promptStyle; }
+    public void setPromptStyle(String promptStyle) { this.promptStyle = promptStyle; }
+    
+    public String getCustomPrompt() { return customPrompt; }
+    public void setCustomPrompt(String customPrompt) { this.customPrompt = customPrompt; }
+    
+    public FacebookCTA getCallToAction() { return this.callToAction; }
+    public void setCallToAction(FacebookCTA callToAction) { this.callToAction = callToAction; }
+    
+    public String getExtractedContent() { return extractedContent; }
+    public void setExtractedContent(String extractedContent) { this.extractedContent = extractedContent; }
+    
+    public Boolean getIsPreview() { return isPreview; }
+    public void setIsPreview(Boolean isPreview) { this.isPreview = isPreview; }
+    
+    public AdVariation getSelectedVariation() { return selectedVariation; }
+    public void setSelectedVariation(AdVariation selectedVariation) { this.selectedVariation = selectedVariation; }
+    
+    public Boolean getSaveExistingContent() { return saveExistingContent; }
+    public void setSaveExistingContent(Boolean saveExistingContent) { this.saveExistingContent = saveExistingContent; }
+    
+    public String getWebsiteUrl() { return websiteUrl; }
+    public void setWebsiteUrl(String websiteUrl) { this.websiteUrl = websiteUrl; }
+    
+    public List<LeadFormQuestion> getLeadFormQuestions() { return leadFormQuestions; }
+    public void setLeadFormQuestions(List<LeadFormQuestion> leadFormQuestions) { this.leadFormQuestions = leadFormQuestions; }
 }

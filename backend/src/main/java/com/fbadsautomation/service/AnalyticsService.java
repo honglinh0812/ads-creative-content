@@ -14,20 +14,30 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class AnalyticsService {
+
+    private static final Logger log = LoggerFactory.getLogger(AnalyticsService.class);
 
     private final UserRepository userRepository;
     private final CampaignRepository campaignRepository;
     private final AdRepository adRepository;
     private final AdContentRepository adContentRepository;
+
+    @Autowired
+    public AnalyticsService(UserRepository userRepository, CampaignRepository campaignRepository,
+                           AdRepository adRepository, AdContentRepository adContentRepository) {
+        this.userRepository = userRepository;
+        this.campaignRepository = campaignRepository;
+        this.adRepository = adRepository;
+        this.adContentRepository = adContentRepository;
+    }
 
     /**
      * Get comprehensive analytics for a user

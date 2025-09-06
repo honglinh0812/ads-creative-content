@@ -6,13 +6,15 @@ import com.fbadsautomation.dto.OptimizationResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
 
 public class OptimizationRulesEngine {
+
+    private static final Logger log = LoggerFactory.getLogger(OptimizationRulesEngine.class);
 
     // Configuration thresholds
     private static final double LOW_ROI_THRESHOLD = 10.0;

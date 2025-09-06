@@ -2,10 +2,16 @@ package com.fbadsautomation.controller;
 
 import com.fbadsautomation.dto.ApiResponse;
 import com.fbadsautomation.service.DatabasePerformanceService;
+import io.swagger.v3.oas.annotations.Operation;
+// Removed conflicting import - using fully qualified name instead
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,18 +19,28 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/database/performance")
-@RequiredArgsConstructor
-
+@Tag(name = "Database Performance", description = "Database performance monitoring and optimization endpoints")
+@SecurityRequirement(name = "bearerAuth")
 public class DatabasePerformanceController {
 
+    private static final Logger log = LoggerFactory.getLogger(DatabasePerformanceController.class);
+    
     private final DatabasePerformanceService performanceService;
 
-    /**
-     * Get comprehensive database performance report
-     */
+    @Autowired
+    public DatabasePerformanceController(DatabasePerformanceService performanceService) {
+        this.performanceService = performanceService;
+    }
+
+    @Operation(summary = "Get performance report", description = "Retrieves comprehensive database performance report (Admin only)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Performance report generated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/report")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPerformanceReport() {
@@ -38,9 +54,13 @@ public class DatabasePerformanceController {
         }
     }
 
-    /**
-     * Get connection pool statistics
-     */
+    @Operation(summary = "Get connection pool statistics", description = "Retrieves database connection pool statistics (Admin only)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Connection pool statistics retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/connection-pool")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConnectionPoolStats() {
@@ -54,9 +74,13 @@ public class DatabasePerformanceController {
         }
     }
 
-    /**
-     * Get slow query statistics
-     */
+    @Operation(summary = "Get slow queries", description = "Retrieves list of slow database queries (Admin only)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Slow queries retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/slow-queries")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getSlowQueries() {

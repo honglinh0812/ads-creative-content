@@ -92,8 +92,8 @@ public class AnalyticsResponse {
         private double budgetGrowth;
         private double impressionGrowth;
 
-        public KPIMetrics() {;
-    }
+        public KPIMetrics() {
+        }
 
         public KPIMetrics(long totalCampaigns, long totalAds, long activeCampaigns, long activeAds,
                          double totalBudget, double totalSpent, double averageCTR, double averageCPC,
@@ -168,7 +168,7 @@ public class AnalyticsResponse {
         public void setBudgetGrowth(double budgetGrowth) { this.budgetGrowth = budgetGrowth; }
 
         public double getImpressionGrowth() { return impressionGrowth; }
-        public void setImpressionGrowth(double impressionGrowth) { this.impressionGrowth = impressionGrowth; };
+        public void setImpressionGrowth(double impressionGrowth) { this.impressionGrowth = impressionGrowth; }
     }
 
     public static class TimeSeriesData {
@@ -176,8 +176,8 @@ public class AnalyticsResponse {
         private String period; // "day", "week", "month"
         private Map<String, Double> metrics;
 
-        public TimeSeriesData() {;
-    }
+        public TimeSeriesData() {
+        }
 
         public TimeSeriesData(LocalDateTime timestamp, String period, Map<String, Double> metrics) {
             this.timestamp = timestamp;
@@ -193,7 +193,7 @@ public class AnalyticsResponse {
         public void setPeriod(String period) { this.period = period; }
 
         public Map<String, Double> getMetrics() { return metrics; }
-        public void setMetrics(Map<String, Double> metrics) { this.metrics = metrics; };
+        public void setMetrics(Map<String, Double> metrics) { this.metrics = metrics; }
     }
 
     public static class CampaignAnalytics {

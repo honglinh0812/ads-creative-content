@@ -8,12 +8,21 @@ import com.fbadsautomation.model.AdResponse;
 import com.fbadsautomation.service.AIContentService;
 import com.fbadsautomation.service.AdService;
 import com.fbadsautomation.service.MetaAdLibraryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,22 +32,35 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/ads")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-
+@Tag(name = "Ads", description = "API endpoints for advertisement management and AI content generation")
+@SecurityRequirement(name = "Bearer Authentication")
 public class AdController {
 
+    private static final Logger log = LoggerFactory.getLogger(AdController.class);
+    
     private final AdService adService;
     private final AIContentService aiContentService;
     private final MetaAdLibraryService metaAdLibraryService;
 
+    @Autowired
+    public AdController(AdService adService, AIContentService aiContentService, MetaAdLibraryService metaAdLibraryService) {
+        this.adService = adService;
+        this.aiContentService = aiContentService;
+        this.metaAdLibraryService = metaAdLibraryService;
+    }
+
+    @Operation(summary = "Get all ads", description = "Retrieve paginated list of ads for the current user")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Ads retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token")
+    })
     @GetMapping
     public ResponseEntity<Page<AdResponse>> getAllAds(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "5") int size,
             Authentication authentication) {
         log.info("Getting all ads for user: {} with page {} and size {}", authentication.getName(), page, size);
         Long userId = Long.parseLong(authentication.getName());
@@ -53,13 +75,28 @@ public class AdController {
         }
     }
 
+    @Operation(summary = "Get ad by ID", description = "Retrieve a specific ad by its ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Ad retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Ad not found"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<Ad> getAd(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<Ad> getAd(
+            @Parameter(description = "Ad ID") @PathVariable Long id, 
+            Authentication authentication) {
         log.info("Getting ad: {} for user: {}", id, authentication.getName());
         Long userId = Long.parseLong(authentication.getName());
         return ResponseEntity.ok(adService.getAdByIdAndUser(id, userId));
     }
 
+    @Operation(summary = "Generate ad content", description = "Generate AI-powered ad content based on the provided request")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Ad content generated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token"),
+        @ApiResponse(responseCode = "500", description = "Internal server error during generation")
+    })
     @PostMapping("/generate")
     public ResponseEntity<AdGenerationResponse> generateAdContent(
             @Valid @RequestBody AdGenerationRequest request,
@@ -220,6 +257,12 @@ public class AdController {
     /**
      * Save existing ad content without regenerating
      */
+    @Operation(summary = "Save existing ad", description = "Save an existing ad with updated content")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Ad saved successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token")
+    })
     @PostMapping("/save-existing")
     public ResponseEntity<AdGenerationResponse> saveExistingAd(@RequestBody AdGenerationRequest request, Authentication authentication) {
         log.info("Saving existing ad content for user: {}", authentication.getName());
@@ -272,10 +315,16 @@ public class AdController {
         }
     }
 
+    @Operation(summary = "Select ad content", description = "Select specific content for an ad")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Content selected successfully"),
+        @ApiResponse(responseCode = "404", description = "Ad or content not found"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token")
+    })
     @PostMapping("/{adId}/select-content")
     public ResponseEntity<Map<String, Object>> selectAdContent(
-            @PathVariable Long adId,
-            @RequestParam Long contentId,
+            @Parameter(description = "Ad ID") @PathVariable Long adId,
+            @Parameter(description = "Content ID") @RequestParam Long contentId,
             Authentication authentication) {
         
         log.info("Selecting content {} for ad {} by user: {}", contentId, adId, authentication.getName());
@@ -297,9 +346,15 @@ public class AdController {
         }
     }
 
+    @Operation(summary = "Get ad contents", description = "Retrieve all content variations for a specific ad")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Ad contents retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Ad not found"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token")
+    })
     @GetMapping("/{adId}/contents")
     public ResponseEntity<List<AdContent>> getAdContents(
-            @PathVariable Long adId,
+            @Parameter(description = "Ad ID") @PathVariable Long adId,
             Authentication authentication) {
         
         log.info("Getting contents for ad {} by user: {}", adId, authentication.getName());
@@ -307,9 +362,15 @@ public class AdController {
         return ResponseEntity.ok(adService.getAdContents(adId, userId));
     }
 
+    @Operation(summary = "Delete ad", description = "Delete a specific ad by its ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Ad deleted successfully"),
+        @ApiResponse(responseCode = "404", description = "Ad not found"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> deleteAd(
-            @PathVariable Long id,
+            @Parameter(description = "Ad ID") @PathVariable Long id,
             Authentication authentication) {
         
         log.info("Deleting ad: {} for user: {}", id, authentication.getName());
@@ -330,6 +391,12 @@ public class AdController {
         }
     }
 
+    @Operation(summary = "Save selected ad", description = "Save the selected ad content")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Selected ad saved successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token")
+    })
     @PostMapping("/save-selected")
     public ResponseEntity<Map<String, Object>> saveSelectedAd(@RequestBody AdContent adContent, Authentication authentication) {
         log.info("Saving selected ad content for user: {}", authentication.getName());
@@ -353,15 +420,50 @@ public class AdController {
         }
     }
 
+    @Operation(summary = "Create ad", description = "Create a new advertisement")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Ad created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token")
+    })
+    @PostMapping
+    public ResponseEntity<Ad> createAd(
+            @RequestBody Ad adData,
+            Authentication authentication) {
+        log.info("Creating new ad for user: {}", authentication.getName());
+        Long userId = Long.parseLong(authentication.getName());
+        try {
+            Ad createdAd = adService.createAd(adData, userId);
+            return ResponseEntity.ok(createdAd);
+        } catch (Exception e) {
+            log.error("Failed to create ad for user {}: {}", userId, e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @Operation(summary = "Update ad", description = "Update an existing advertisement")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Ad updated successfully"),
+        @ApiResponse(responseCode = "404", description = "Ad not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<Ad> updateAd(
-            @PathVariable Long id,
+            @Parameter(description = "Ad ID") @PathVariable Long id,
             @RequestBody Ad updatedAd,
             Authentication authentication) {
         Long userId = Long.parseLong(authentication.getName());
         Ad ad = adService.updateAd(id, updatedAd, userId);
         return ResponseEntity.ok(ad);
     }
+    @Operation(summary = "Extract from Meta Ad Library", description = "Extract ad data from Meta Ad Library")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Data extracted successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token"),
+        @ApiResponse(responseCode = "500", description = "External service error")
+    })
     @PostMapping("/extract-from-library")
     public ResponseEntity<List<Map<String, Object>>> extractFromMetaAdLibrary(
             @RequestBody Map<String, Object> request,

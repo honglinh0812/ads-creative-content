@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -14,13 +15,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
-
 public class ScrapeCreatorsService {
 
+    private static final Logger log = LoggerFactory.getLogger(ScrapeCreatorsService.class);
+
     private final RestTemplate restTemplate;
+    
+    @Autowired
+    public ScrapeCreatorsService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
     
     @Value("${scrape.creators.api.key:your-api-key-here}")
     private String apiKey;
@@ -96,4 +101,4 @@ public class ScrapeCreatorsService {
         
         return results;
     }
-} 
+}

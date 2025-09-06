@@ -26,8 +26,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -43,12 +44,11 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
-
 public class AdService {
 
+    private static final Logger log = LoggerFactory.getLogger(AdService.class);
+    
     private final AdRepository adRepository;
     private final CampaignRepository campaignRepository;
     private final AdContentRepository adContentRepository;
@@ -56,6 +56,20 @@ public class AdService {
     private final RestTemplate restTemplate;
     private final AIContentService aiContentService;
     private final List<AIProvider> aiProviders;
+
+    @Autowired
+    public AdService(AdRepository adRepository, CampaignRepository campaignRepository,
+                     AdContentRepository adContentRepository, UserRepository userRepository,
+                     RestTemplate restTemplate, AIContentService aiContentService,
+                     List<AIProvider> aiProviders) {
+        this.adRepository = adRepository;
+        this.campaignRepository = campaignRepository;
+        this.adContentRepository = adContentRepository;
+        this.userRepository = userRepository;
+        this.restTemplate = restTemplate;
+        this.aiContentService = aiContentService;
+        this.aiProviders = aiProviders;
+    }
 
     @Value("${app.image.storage.location:uploads/images}")
     private String imageStorageLocation;
@@ -294,11 +308,29 @@ public class AdService {
             Ad ad = adRepository.findByIdAndUser(adId, user)
                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Ad not found"));
 
-            ad.setHeadline(updatedAd.getHeadline());
-            ad.setPrimaryText(updatedAd.getPrimaryText());
-            ad.setDescription(updatedAd.getDescription());
-            ad.setCallToAction(updatedAd.getCallToAction());
-            ad.setImageUrl(updatedAd.getImageUrl());
+            // Update all editable fields
+            if (updatedAd.getName() != null) {
+                ad.setName(updatedAd.getName());
+            }
+            if (updatedAd.getHeadline() != null) {
+                ad.setHeadline(updatedAd.getHeadline());
+            }
+            if (updatedAd.getPrimaryText() != null) {
+                ad.setPrimaryText(updatedAd.getPrimaryText());
+            }
+            if (updatedAd.getDescription() != null) {
+                ad.setDescription(updatedAd.getDescription());
+            }
+            if (updatedAd.getCallToAction() != null) {
+                ad.setCallToAction(updatedAd.getCallToAction());
+            }
+            if (updatedAd.getImageUrl() != null) {
+                ad.setImageUrl(updatedAd.getImageUrl());
+            }
+            if (updatedAd.getStatus() != null) {
+                ad.setStatus(updatedAd.getStatus());
+            }
+            
             ad.setUpdatedBy(user.getId().toString());
             ad.setUpdatedAt(LocalDateTime.now());
 
@@ -511,6 +543,32 @@ public class AdService {
                 .filter(p -> p.getName().equalsIgnoreCase(providerName))
                 .findFirst()
                 .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Invalid AI provider: " + providerName));
+    }
+
+    /**
+     * Create a new ad
+     * @param adData The ad data
+     * @param userId The user ID
+     * @return The created ad
+     */
+    @Transactional
+    public Ad createAd(Ad adData, Long userId) {
+        log.info("Creating new ad for user ID: {}", userId);
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+        
+        adData.setUser(user);
+        adData.setCreatedDate(LocalDateTime.now());
+        adData.setUpdatedAt(LocalDateTime.now());
+        adData.setCreatedBy(user.getId().toString());
+        adData.setUpdatedBy(user.getId().toString());
+        
+        if (adData.getStatus() == null) {
+            adData.setStatus("DRAFT");
+        }
+        
+        return adRepository.save(adData);
     }
 
     private Ad createAdFromRequest(AdGenerationRequest request, User user, Campaign campaign) {
