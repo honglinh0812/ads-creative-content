@@ -177,7 +177,7 @@
         <h2 class="section-title">Top Performing Content</h2>
         <div class="top-content-grid">
           <TopContentCard
-            v-for="content in analytics.contentAnalytics.topPerformingContent"
+            v-for="content in topPerformingContent"
             :key="content.contentId"
             :content="content"
             @content-click="onContentClick"
@@ -314,6 +314,8 @@ export default {
         period: trend.period
       }))
     })
+    
+    const topPerformingContent = computed(() => analytics.value?.contentAnalytics?.topPerformingContent || [])
     
     // Helper methods
     const formatValue = (value, format) => {

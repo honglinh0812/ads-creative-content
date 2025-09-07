@@ -96,6 +96,22 @@
                   <template #icon><a-icon type="bell" /></template>
                 </a-button>
               </a-badge>
+              <transition name="fade">
+                <div v-if="showNotificationDropdown" class="notification-dropdown">
+                  <div class="notification-header">Thông báo</div>
+                  <div v-if="recentNotifications.length > 0" class="notification-list">
+                    <div v-for="noti in recentNotifications" :key="noti.id" class="notification-item">
+                      <span :class="noti.type">{{ noti.title || noti.type }}</span>
+                      <div>{{ noti.message }}</div>
+                      <div>{{ formatTime(noti.timestamp) }}</div>
+                    </div>
+                  </div>
+                  <div v-else>Chưa có thông báo nào</div>
+                  <div class="notification-footer">
+                    <button @click="markAllAsRead">Đánh dấu tất cả đã đọc</button>
+                  </div>
+                </div>
+              </transition>
               
               <!-- User menu -->
               <a-dropdown>
@@ -170,11 +186,19 @@ export default {
       breadcrumbs: [
         { name: 'Dashboard', path: '/dashboard' }
       ],
-      notificationCount: 3
+      showNotificationDropdown: false,
+      notificationCount: 0
     }
   },
   computed: {
     ...mapGetters('auth', ['isAuthenticated', 'loading', 'user']),
+    ...mapGetters('toast', ['toasts']),
+    notificationCount() {
+      return this.toasts.length
+    },
+    recentNotifications() {
+      return [...this.toasts].sort((a, b) => b.timestamp - a.timestamp).slice(0, 5)
+    },
     authLoading() {
       return this.loading
     },
@@ -201,8 +225,15 @@ export default {
       }
     },
     showNotifications() {
-      // Notifications are now handled in Header component modal only
-      // Notifications page has been removed
+      this.showNotificationDropdown = !this.showNotificationDropdown
+    },
+    closeNotificationDropdown(event) {
+      if (!event.target.closest('.notification-badge')) {
+        this.showNotificationDropdown = false
+      }
+    },
+    formatTime(timestamp) {
+      return new Date(timestamp).toLocaleString()
     },
     onUserMenuClick({ key }) {
       if (key === 'logout') {

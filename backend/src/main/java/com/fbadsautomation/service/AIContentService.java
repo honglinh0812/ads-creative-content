@@ -2,6 +2,7 @@ package com.fbadsautomation.service;
 
 import com.fbadsautomation.dto.ProviderResponse;
 import com.fbadsautomation.integration.ai.AIContentServiceImpl;
+import com.fbadsautomation.ai.AIProvider;
 import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.AdContent;
 import com.fbadsautomation.model.AdType;
@@ -115,6 +116,14 @@ import org.springframework.stereotype.Service;
     * @param adType The ad type
     * @return The content type
     */
+   public String enhanceImage(String imagePath, String enhancementType, String provider, java.util.Map<String, Object> params) throws Exception {
+       AIProvider aiProvider = aiProviderService.getProvider(provider);
+       if (aiProvider == null) {
+           throw new Exception("Provider not found: " + provider);
+       }
+       return aiProvider.enhanceImage(imagePath, enhancementType, params);
+   }
+
    private AdContent.ContentType determineContentType(AdType adType) {
        return switch (adType) {
            case PAGE_POST_AD -> AdContent.ContentType.PAGE_POST;

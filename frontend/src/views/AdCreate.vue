@@ -317,6 +317,26 @@
             </a-upload>
           </a-form-item>
 
+          <!-- Enhancement Options -->
+          <a-form-item label="Image Enhancement Options" v-if="uploadedFiles.length > 0">
+            <a-checkbox-group v-model:value="formData.enhancementOptions">
+              <a-checkbox value="upscale">Upscale Image</a-checkbox>
+              <a-checkbox value="remove_background">Remove Background</a-checkbox>
+              <a-checkbox value="style_transfer">Style Transfer</a-checkbox>
+            </a-checkbox-group>
+            <a-button @click="enhanceImages" :loading="isEnhancing" style="margin-top: 10px;">Apply Enhancements & Preview</a-button>
+          </a-form-item>
+
+          <!-- Enhancement Previews -->
+          <a-form-item label="Enhanced Images Preview" v-if="enhancedImages.length > 0">
+            <div class="enhanced-previews">
+              <div v-for="(img, index) in enhancedImages" :key="index" class="preview-item">
+                <img :src="img.url" alt="Enhanced Preview" style="max-width: 300px;" />
+                <p>Original: {{ img.originalName }}</p>
+              </div>
+            </div>
+          </a-form-item>
+
           <!-- Navigation -->
           <div class="step-navigation">
             <a-button @click="prevStep" size="large">
@@ -583,7 +603,8 @@ export default {
         leadFormQuestions: [''],
         prompt: '',
         textProvider: 'openai',
-        imageProvider: 'dalle'
+        imageProvider: 'dalle',
+        enhancementOptions: []
       },
       steps: [
         { title: 'Basic Information', description: 'Campaign details and ad type' },
@@ -672,7 +693,9 @@ export default {
       adId: null,
       selectedPromptTemplate: '',
       customPromptAddition: '',
-      savedPrompts: []
+      savedPrompts: [],
+      enhancedImages: [],
+      isEnhancing: false
     }
   },
   computed: {
@@ -682,6 +705,41 @@ export default {
     await this.loadData()
   },
   methods: {
+    async enhanceImages() {
+      if (!this.formData.enhancementOptions.length) {
+        this.$message.warning('Please select at least one enhancement option');
+        return;
+      }
+      if (!this.uploadedFiles.length) {
+        this.$message.warning('Please upload images first');
+        return;
+      }
+      this.isEnhancing = true;
+      this.enhancedImages = [];
+      try {
+        const enhancementPromises = this.uploadedFiles.map(async (file) => {
+          const formData = new FormData();
+          formData.append('file', file.originFileObj || file);
+          const uploadResponse = await api.post('/upload/media', formData);
+          const imageUrl = uploadResponse.data.fileUrl;
+          const enhanceResponse = await api.post('/ads/enhance-image', {
+            imageUrl,
+            provider: this.formData.imageProvider,
+            enhancementTypes: this.formData.enhancementOptions
+          });
+          return {
+            url: enhanceResponse.data.enhancedUrl,
+            originalName: file.name
+          };
+        });
+        this.enhancedImages = await Promise.all(enhancementPromises);
+        this.$message.success('Images enhanced successfully with real-time preview');
+      } catch (error) {
+        this.$message.error('Failed to enhance images');
+      } finally {
+        this.isEnhancing = false;
+      }
+    },
     async loadData() {
       await Promise.all([
         this.loadCampaigns(),
@@ -693,7 +751,7 @@ export default {
       this.loadingCampaigns = true
       try {
         const response = await api.campaigns.getAll()
-        this.campaigns = response.data.campaigns || []
+        this.campaigns = response.data.content || []
       } catch (error) {
         console.error('Error loading campaigns:', error)
         this.$message.error('Failed to load campaigns')
@@ -752,10 +810,23 @@ export default {
       return this.formData.textProvider && this.formData.imageProvider
     },
     
-    handleFileUpload(file) {
-      // Handle file upload logic
-      this.uploadedFiles = [file]
-      return false // Prevent automatic upload
+    async handleFileUpload(file) {
+      this.uploadedFiles = [file];
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await api.post('/upload/media', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        if (response.data.success) {
+          this.uploadedFileUrl = response.data.fileUrl;
+          this.$message.success('File uploaded successfully');
+        }
+      } catch (error) {
+        this.$message.error('Failed to upload file');
+        this.uploadedFiles = [];
+      }
+      return false;
     },
     
     removeFile() {

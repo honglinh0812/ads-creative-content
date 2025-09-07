@@ -28,6 +28,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.core.io.FileSystemResource;
 
 @Service
 
@@ -224,6 +227,55 @@ public class OpenAIProvider implements AIProvider {
     public boolean supportsImageGeneration() {
         // Image generation is supported only if an API key is provided
         return apiKey != null && !apiKey.isEmpty();
+    }
+
+    @Override
+    public String enhanceImage(String imagePath, String enhancementType, Map<String, Object> params) throws Exception {
+        if (!supportsImageGeneration()) {
+            throw new UnsupportedOperationException("Image enhancement not supported without API key.");
+        }
+        String editsUrl = "https://api.openai.com/v1/images/edits";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(apiKey);
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        String enhancementPrompt = switch (enhancementType) {
+            case "upscale" -> "Upscale this image to higher resolution, maintain details.";
+            case "remove_background" -> "Remove the background from this image, keep subject intact.";
+            case "color_correct" -> "Apply color correction and enhancement to this image.";
+            default -> throw new IllegalArgumentException("Unsupported enhancement type: " + enhancementType);
+        };
+        if (params != null && !params.isEmpty()) {
+            enhancementPrompt += " Additional instructions: " + params.toString();
+        }
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("image", new FileSystemResource(imagePath));
+        body.add("prompt", enhancementPrompt);
+        body.add("n", 1);
+        body.add("size", "1024x1024");
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+        try {
+            Map<String, Object> response = restTemplate.postForObject(editsUrl, requestEntity, Map.class);
+            if (response != null && response.containsKey("data")) {
+                List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
+                if (!data.isEmpty() && data.get(0).containsKey("url")) {
+                    String enhancedUrl = (String) data.get(0).get("url");
+                    try (InputStream in = new URL(enhancedUrl).openStream()) {
+                        String filename = UUID.randomUUID().toString() + ".png";
+                        Path uploadPath = Paths.get(imageStorageLocation);
+                        if (!Files.exists(uploadPath)) {
+                            Files.createDirectories(uploadPath);
+                        }
+                        Path filePath = uploadPath.resolve(filename);
+                        Files.copy(in, filePath);
+                        return "/api/images/" + filename;
+                    }
+                }
+            }
+            throw new Exception("Failed to get enhanced image URL from OpenAI.");
+        } catch (Exception e) {
+            log.error("Error enhancing image with OpenAI: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     // Mock Ad Content Generation (Corrected return type)

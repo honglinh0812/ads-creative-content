@@ -11,7 +11,7 @@ export const optimizationAPI = {
    */
   async getRecommendations(timeRange = '30d') {
     try {
-      const response = await api.get('/optimization/recommendations', {
+      const response = await api.get('/api/optimization/recommendations', {
         params: { timeRange }
       })
       return response.data
@@ -29,7 +29,7 @@ export const optimizationAPI = {
    */
   async getRecommendationsByType(type, timeRange = '30d') {
     try {
-      const response = await api.get(`/optimization/recommendations/type/${type}`, {
+      const response = await api.get(`/api/optimization/recommendations/type/${type}`, {
         params: { timeRange }
       })
       return response.data
@@ -46,7 +46,7 @@ export const optimizationAPI = {
    */
   async getHighPriorityRecommendations(timeRange = '30d') {
     try {
-      const response = await api.get('/optimization/recommendations/priority/high', {
+      const response = await api.get('/api/optimization/recommendations/priority/high', {
         params: { timeRange }
       })
       return response.data
@@ -64,7 +64,7 @@ export const optimizationAPI = {
    */
   async acceptRecommendation(recommendationId, parameters = {}) {
     try {
-      const response = await api.post(`/optimization/recommendations/${recommendationId}/accept`, parameters)
+      const response = await api.post(`/api/optimization/recommendations/${recommendationId}/accept`, parameters)
       return response.data
     } catch (error) {
       console.error('Error accepting recommendation:', error)
@@ -80,7 +80,7 @@ export const optimizationAPI = {
    */
   async dismissRecommendation(recommendationId, reason = '') {
     try {
-      const response = await api.post(`/optimization/recommendations/${recommendationId}/dismiss`, {
+      const response = await api.post(`/api/optimization/recommendations/${recommendationId}/dismiss`, {
         reason: reason
       })
       return response.data
@@ -98,7 +98,7 @@ export const optimizationAPI = {
    */
   async scheduleRecommendation(recommendationId, scheduleData) {
     try {
-      const response = await api.post(`/optimization/recommendations/${recommendationId}/schedule`, scheduleData)
+      const response = await api.post(`/api/optimization/recommendations/${recommendationId}/schedule`, scheduleData)
       return response.data
     } catch (error) {
       console.error('Error scheduling recommendation:', error)
@@ -113,7 +113,7 @@ export const optimizationAPI = {
    */
   async getRecommendationStatus(recommendationId) {
     try {
-      const response = await api.get(`/optimization/recommendations/${recommendationId}/status`)
+      const response = await api.get(`/api/optimization/recommendations/${recommendationId}/status`)
       return response.data
     } catch (error) {
       console.error('Error fetching recommendation status:', error)
@@ -128,7 +128,7 @@ export const optimizationAPI = {
    */
   async getOptimizationSummary(timeRange = '30d') {
     try {
-      const response = await api.get('/optimization/summary', {
+      const response = await api.get('/api/optimization/summary', {
         params: { timeRange }
       })
       return response.data
@@ -144,7 +144,7 @@ export const optimizationAPI = {
    */
   async getRecommendationTypes() {
     try {
-      const response = await api.get('/optimization/types')
+      const response = await api.get('/api/optimization/types')
       return response.data
     } catch (error) {
       console.error('Error fetching recommendation types:', error)
@@ -286,7 +286,7 @@ export const optimizationAPI = {
         format
       }
 
-      const response = await api.get('/optimization/export', {
+      const response = await api.get('/api/optimization/export', {
         params,
         responseType: 'blob' // For file downloads
       })

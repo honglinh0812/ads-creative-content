@@ -14,4 +14,6 @@ public interface AIProvider {
     List<AdContent> generateAdContent(String prompt, int numberOfVariations, String language, FacebookCTA callToAction);
     String generateImage(String prompt);
     boolean supportsImageGeneration();
+
+    String enhanceImage(String imagePath, String enhancementType, java.util.Map<String, Object> params) throws Exception;
 }

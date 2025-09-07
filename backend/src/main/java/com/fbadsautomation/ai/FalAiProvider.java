@@ -155,6 +155,56 @@ public class FalAiProvider implements AIProvider {
         return apiKey != null && !apiKey.isEmpty();
     }
 
+    public String enhanceImage(String imageUrl, String enhancementType, Map<String, Object> params) {
+        String endpoint = getEnhancementEndpoint(enhancementType);
+        if (endpoint == null) {
+            throw new IllegalArgumentException("Unsupported enhancement type: " + enhancementType);
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Key " + apiKey);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("image_url", imageUrl);
+        requestBody.putAll(params);
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        log.debug("Calling Fal.ai enhancement API at: {} with type: {}", endpoint, enhancementType);
+
+        try {
+            Map<String, Object> response = restTemplate.postForObject(endpoint, request, Map.class);
+            if (response != null && response.containsKey("image")) {
+                Map<String, Object> imageData = (Map<String, Object>) response.get("image");
+                String enhancedUrl = (String) imageData.get("url");
+                // Save to local storage similar to generateImage
+                try (InputStream in = new URL(enhancedUrl).openStream()) {
+                    String filename = UUID.randomUUID().toString() + ".png";
+                    Path uploadPath = Paths.get(imageStorageLocation);
+                    if (!Files.exists(uploadPath)) {
+                        Files.createDirectories(uploadPath);
+                    }
+                    Path filePath = uploadPath.resolve(filename);
+                    Files.copy(in, filePath);
+                    String localUrl = "/api/images/" + filename;
+                    log.info("Saved enhanced image to local: {} | URL: {}", filePath, localUrl);
+                    return localUrl;
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error calling Fal.ai enhancement API: {}", e.getMessage(), e);
+        }
+        return imageUrl; // Fallback to original
+    }
+
+    private String getEnhancementEndpoint(String type) {
+        switch (type) {
+            case "upscale": return "https://fal.run/fal-ai/esrgan";
+            case "style_transfer": return "https://fal.run/fal-ai/flux/dev/image-to-image";
+            default: return null;
+        }
+    }
+
     private List<AdContent> generateMockAdContents(String prompt, int numberOfVariations) {
         List<AdContent> mockContents = new ArrayList<>();
         for (int i = 0; i < numberOfVariations; i++) {

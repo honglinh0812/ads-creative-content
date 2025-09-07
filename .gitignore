@@ -24,6 +24,19 @@ application-*.properties
 *.project
 .settings/
 
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/extensions.json
+.vscode/java-formatter.xml
+# Keep workspace settings but ignore user-specific ones
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+!.vscode/java-formatter.xml
+
 # === Node.js Frontend ===
 node_modules/
 dist/
@@ -58,3 +71,6 @@ nohup.out
 .txt
 docs/
 backend/target/
+.editorconfig
+.vscode/
+README-INDEXING.md

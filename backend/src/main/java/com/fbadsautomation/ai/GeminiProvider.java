@@ -165,6 +165,11 @@ public class GeminiProvider implements AIProvider {
         return false;
     }
 
+    @Override
+    public String enhanceImage(String imagePath, String enhancementType, java.util.Map<String, Object> params) throws Exception {
+        throw new UnsupportedOperationException("Image enhancement not supported by Gemini");
+    }
+
     // Mock Ad Content Generation (Corrected return type)
     private List<AdContent> generateMockAdContents(String prompt, int numberOfVariations, com.fbadsautomation.model.FacebookCTA callToAction) {
         List<AdContent> mockContents = new ArrayList<>();

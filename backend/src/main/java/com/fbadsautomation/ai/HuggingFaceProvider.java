@@ -180,6 +180,11 @@ public class HuggingFaceProvider implements AIProvider {
         return textApiUrl;
     }
     @Override
+    public String enhanceImage(String imagePath, String enhancementType, java.util.Map<String, Object> params) throws Exception {
+        throw new UnsupportedOperationException("Image enhancement not supported by HuggingFace");
+    }
+
+    @Override
     public boolean supportsImageGeneration() {
         return apiKey != null && !apiKey.isEmpty();
     }

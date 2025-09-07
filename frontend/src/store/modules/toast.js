@@ -6,11 +6,18 @@ const state = {
 const mutations = {
   ADD_TOAST(state, toast) {
     const id = Date.now() + Math.random()
-    state.toasts.push({
+    const fullToast = {
       id,
       ...toast,
       timestamp: Date.now()
-    })
+    }
+    state.toasts.push(fullToast)
+    const duration = toast.duration || 5000
+    if (duration > 0) {
+      setTimeout(() => {
+        state.toasts = state.toasts.filter(t => t.id !== id)
+      }, duration)
+    }
   },
   
   REMOVE_TOAST(state, toastId) {

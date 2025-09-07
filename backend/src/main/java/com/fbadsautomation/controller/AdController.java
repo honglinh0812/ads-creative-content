@@ -97,6 +97,31 @@ public class AdController {
         @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing token"),
         @ApiResponse(responseCode = "500", description = "Internal server error during generation")
     })
+    @PostMapping("/enhance-image")
+    public ResponseEntity<Map<String, String>> enhanceImage(
+            @RequestBody Map<String, Object> requestBody,
+            Authentication authentication) {
+        log.info("Enhancing image for user: {}", authentication.getName());
+        String imageUrl = (String) requestBody.get("imageUrl");
+        String providerName = (String) requestBody.get("provider");
+        List<String> enhancementTypes = (List<String>) requestBody.getOrDefault("enhancementTypes", new ArrayList<>());
+
+        if (imageUrl == null || providerName == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Missing required parameters"));
+        }
+
+        try {
+            String enhancedUrl = imageUrl;
+            for (String type : enhancementTypes) {
+                enhancedUrl = aiContentService.enhanceImage(enhancedUrl, providerName, type, Map.of());
+            }
+            return ResponseEntity.ok(Map.of("enhancedUrl", enhancedUrl));
+        } catch (Exception e) {
+            log.error("Error enhancing image: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to enhance image"));
+        }
+    }
+
     @PostMapping("/generate")
     public ResponseEntity<AdGenerationResponse> generateAdContent(
             @Valid @RequestBody AdGenerationRequest request,

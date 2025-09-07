@@ -134,6 +134,11 @@ public class AnthropicProvider implements AIProvider {
     }
 
     @Override
+    public String enhanceImage(String imagePath, String enhancementType, java.util.Map<String, Object> params) throws Exception {
+        throw new UnsupportedOperationException("Image enhancement not supported by Anthropic");
+    }
+
+    @Override
     public String getName() {
         return "Anthropic";
     }

@@ -144,6 +144,56 @@ public class StableDiffusionProvider implements AIProvider {
         return "/img/placeholder.png";
     }
 
+    public String enhanceImage(String imageUrl, String enhancementType, Map<String, Object> params) {
+        if (!supportsImageGeneration()) {
+            log.warn("Stable Diffusion enhancement not supported (likely missing API key)."); 
+            return imageUrl;
+        }
+        String endpoint = getEnhancementEndpoint(enhancementType);
+        if (endpoint == null) {
+            throw new IllegalArgumentException("Unsupported enhancement type: " + enhancementType);
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
+        headers.set("Authorization", "Bearer " + apiKey);
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("inputs", imageUrl); // For upscale, inputs might need to be the image data or URL, but HF API typically expects data
+        requestBody.putAll(params);
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        log.debug("Calling Stable Diffusion enhancement API at: {} with type: {}", endpoint, enhancementType);
+
+        try {
+            ResponseEntity<byte[]> responseEntity = restTemplate.exchange(endpoint, HttpMethod.POST, request, byte[].class);
+            if (responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
+                byte[] imageBytes = responseEntity.getBody();
+                String filename = UUID.randomUUID().toString() + ".png";
+                Path uploadPath = Paths.get(imageStorageLocation);
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                Path filePath = uploadPath.resolve(filename);
+                Files.write(filePath, imageBytes);
+                String imageUrlEnhanced = "/api/images/" + filename;
+                log.info("Saved enhanced image to: {} | URL: {}", filePath, imageUrlEnhanced);
+                return imageUrlEnhanced;
+            }
+        } catch (Exception e) {
+            log.error("Error calling Stable Diffusion enhancement API: {}", e.getMessage(), e);
+        }
+        return imageUrl; // Fallback
+    }
+
+    private String getEnhancementEndpoint(String type) {
+        switch (type) {
+            case "upscale": return "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-x4-upscaler";
+            default: return null;
+        }
+    }
+
     @Override
     public String getName() {
         return "Stable Diffusion";
