@@ -91,7 +91,7 @@
             
             <div class="header-right">
               <!-- Notifications -->
-              <a-badge :count="notificationCount" class="notification-badge">
+              <a-badge :count="notificationCountFunc" class="notification-badge">
                 <a-button type="text" shape="circle" @click="showNotifications">
                   <template #icon><a-icon type="bell" /></template>
                 </a-button>
@@ -193,7 +193,7 @@ export default {
   computed: {
     ...mapGetters('auth', ['isAuthenticated', 'loading', 'user']),
     ...mapGetters('toast', ['toasts']),
-    notificationCount() {
+    notificationCountFunc() {
       return this.toasts.length
     },
     recentNotifications() {

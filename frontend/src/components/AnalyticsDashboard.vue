@@ -315,8 +315,8 @@ export default {
       }))
     })
     
-    const topPerformingContent = computed(() => analytics.value?.contentAnalytics?.topPerformingContent || [])
-    
+    /* const topPerformingContent = computed(() => analytics.value?.contentAnalytics?.topPerformingContent || [])
+    */
     // Helper methods
     const formatValue = (value, format) => {
       if (!value && value !== 0) return 'N/A'
