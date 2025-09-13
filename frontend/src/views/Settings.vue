@@ -71,17 +71,25 @@
               >
                 <a-form-item label="Default Text Provider">
                   <a-select v-model:value="aiSettings.defaultTextProvider" style="width: 100%">
-                    <a-select-option value="openai">OpenAI GPT</a-select-option>
-                    <a-select-option value="claude">Anthropic Claude</a-select-option>
-                    <a-select-option value="gemini">Google Gemini</a-select-option>
+                    <a-select-option 
+                      v-for="provider in textProviderOptions" 
+                      :key="provider.value" 
+                      :value="provider.value"
+                    >
+                      {{ provider.label }}
+                    </a-select-option>
                   </a-select>
                 </a-form-item>
 
                 <a-form-item label="Default Image Provider">
                   <a-select v-model:value="aiSettings.defaultImageProvider" style="width: 100%">
-                    <a-select-option value="dalle">DALL-E</a-select-option>
-                    <a-select-option value="midjourney">Midjourney</a-select-option>
-                    <a-select-option value="stable-diffusion">Stable Diffusion</a-select-option>
+                    <a-select-option 
+                      v-for="provider in imageProviderOptions" 
+                      :key="provider.value" 
+                      :value="provider.value"
+                    >
+                      {{ provider.label }}
+                    </a-select-option>
                   </a-select>
                 </a-form-item>
 
@@ -223,10 +231,21 @@ export default {
       },
       aiSettings: {
         defaultTextProvider: 'openai',
-        defaultImageProvider: 'dalle',
+        defaultImageProvider: 'openai',
         defaultVariations: 3,
         autoGenerateImages: true
       },
+      textProviderOptions: [
+        { value: 'openai', label: 'OpenAI GPT' },
+        { value: 'gemini', label: 'Google Gemini' },
+        { value: 'anthropic', label: 'Anthropic Claude' },
+        { value: 'huggingface', label: 'Hugging Face' }
+      ],
+      imageProviderOptions: [
+        { value: 'openai', label: 'OpenAI DALL-E' },
+        { value: 'fal-ai', label: 'FAL AI' },
+        { value: 'stable-diffusion', label: 'Stable Diffusion' }
+      ],
       notificationSettings: {
         emailCampaignUpdates: true,
         emailAdGeneration: true,
@@ -243,7 +262,10 @@ export default {
     }
   },
   async mounted() {
-    await this.loadSettings()
+    await Promise.all([
+      this.loadSettings(),
+      this.loadProviders()
+    ])
   },
   methods: {
     async loadSettings() {
@@ -266,6 +288,28 @@ export default {
         this.$message.error('Failed to load settings')
       } finally {
         this.loading = false
+      }
+    },
+
+    async loadProviders() {
+      try {
+        // Load text providers for dropdown options
+        const textResponse = await api.providers.getTextProviders()
+        this.textProviderOptions = textResponse.data.map(provider => ({
+          value: provider.id,
+          label: provider.name
+        }))
+        
+        // Load image providers for dropdown options
+        const imageResponse = await api.providers.getImageProviders()
+        this.imageProviderOptions = imageResponse.data.map(provider => ({
+          value: provider.id,
+          label: provider.name
+        }))
+        
+      } catch (error) {
+        console.error('Error loading providers:', error)
+        // Keep default options as fallback
       }
     },
 

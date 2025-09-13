@@ -603,7 +603,7 @@ export default {
         leadFormQuestions: [''],
         prompt: '',
         textProvider: 'openai',
-        imageProvider: 'dalle',
+        imageProvider: 'openai',
         enhancementOptions: []
       },
       steps: [
@@ -651,17 +651,24 @@ export default {
       ],
       imageProviders: [
         {
-          value: 'dalle',
-          name: 'DALL-E',
+          value: 'openai',
+          name: 'OpenAI DALL-E',
           description: 'Create stunning, original images for your ads',
           features: ['High quality', 'Creative styles', 'Custom prompts'],
           enabled: true
         },
         {
-          value: 'midjourney',
-          name: 'Midjourney',
-          description: 'Artistic and creative image generation',
-          features: ['Artistic style', 'High resolution', 'Creative freedom'],
+          value: 'fal-ai',
+          name: 'FAL AI',
+          description: 'Advanced AI image generation',
+          features: ['High resolution', 'Fast generation', 'Multiple models'],
+          enabled: false
+        },
+        {
+          value: 'stable-diffusion',
+          name: 'Stable Diffusion',
+          description: 'Open-source image generation',
+          features: ['Open source', 'Customizable', 'Fast generation'],
           enabled: false
         }
       ],
@@ -743,7 +750,8 @@ export default {
     async loadData() {
       await Promise.all([
         this.loadCampaigns(),
-        this.loadCallToActions()
+        this.loadCallToActions(),
+        this.loadProviders()
       ])
     },
     
@@ -770,6 +778,43 @@ export default {
         this.$message.error('Failed to load call to actions')
       } finally {
         this.loadingCTAs = false
+      }
+    },
+    
+    async loadProviders() {
+      try {
+        // Load text providers
+        const textResponse = await api.providers.getTextProviders()
+        this.textProviders = textResponse.data.map(provider => ({
+          value: provider.id,
+          name: provider.name,
+          description: provider.description,
+          features: ['AI-powered content', 'Multiple languages', 'High quality'],
+          enabled: true
+        }))
+        
+        // Load image providers
+        const imageResponse = await api.providers.getImageProviders()
+        this.imageProviders = imageResponse.data.map(provider => ({
+          value: provider.id,
+          name: provider.name,
+          description: provider.description,
+          features: ['AI-generated images', 'High resolution', 'Creative styles'],
+          enabled: true
+        }))
+        
+        // Set default providers if not already set
+        if (this.textProviders.length > 0 && !this.formData.textProvider) {
+          this.formData.textProvider = this.textProviders[0].value
+        }
+        if (this.imageProviders.length > 0 && !this.formData.imageProvider) {
+          this.formData.imageProvider = this.imageProviders[0].value
+        }
+        
+      } catch (error) {
+        console.error('Error loading providers:', error)
+        this.$message.warning('Failed to load AI providers, using default options')
+        // Keep the hardcoded providers as fallback
       }
     },
     
