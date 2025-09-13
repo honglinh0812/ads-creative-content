@@ -118,7 +118,6 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import moment from 'moment'
 import api from '@/services/api'
 
 export default {

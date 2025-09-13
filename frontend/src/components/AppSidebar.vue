@@ -34,9 +34,6 @@
         </button>
       </div>
       <div class="sidebar-footer">
-        <div class="theme-toggle-section">
-          <DarkModeToggle />
-        </div>
         <div class="user-info">
           <span class="user-avatar">{{ userInitials }}</span>
           <span class="user-name">{{ userName }}</span>
@@ -54,7 +51,6 @@ import { computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
 import { HomeOutlined, ThunderboltOutlined, FileTextOutlined, MenuOutlined, ArrowLeftOutlined } from '@ant-design/icons-vue'
-import DarkModeToggle from '@/components/DarkModeToggle.vue'
 
 export default {
   name: 'AppSidebar',
@@ -64,7 +60,6 @@ export default {
     FileTextOutlined,
     MenuOutlined,
     ArrowLeftOutlined,
-    DarkModeToggle
   },
   props: {
     sidebarOpen: {

@@ -75,6 +75,27 @@ public class AdService {
     private String imageStorageLocation;
 
     /**
+     * Map frontend ad type values to backend AdType enum
+     * @param frontendAdType The ad type from frontend
+     * @return The corresponding AdType enum
+     */
+    private AdType mapFrontendAdTypeToEnum(String frontendAdType) {
+        if (frontendAdType == null) {
+            return AdType.PAGE_POST_AD; // Default
+        }
+        
+        return switch (frontendAdType.toLowerCase()) {
+            case "website_conversion" -> AdType.WEBSITE_CONVERSION_AD;
+            case "lead_generation" -> AdType.LEAD_FORM_AD;
+            case "page_post" -> AdType.PAGE_POST_AD;
+            default -> {
+                log.warn("Unknown ad type from frontend: {}, defaulting to PAGE_POST_AD", frontendAdType);
+                yield AdType.PAGE_POST_AD;
+            }
+        };
+    }
+
+    /**
      * Get ad by ID and user
      * @param adId The ad ID
      * @param userId The user ID
@@ -112,7 +133,7 @@ public class AdService {
         // Create ad
         Ad ad = new Ad();
         ad.setName(name);
-        ad.setAdType(com.fbadsautomation.model.AdType.valueOf(adType));
+        ad.setAdType(mapFrontendAdTypeToEnum(adType));
         ad.setPrompt(prompt);
         ad.setCampaign(campaign);
         ad.setUser(user);
@@ -482,7 +503,7 @@ public class AdService {
         // Create ad
         Ad ad = new Ad();
         ad.setName(name);
-        ad.setAdType(com.fbadsautomation.model.AdType.valueOf(adType));
+        ad.setAdType(mapFrontendAdTypeToEnum(adType));
         ad.setPrompt(prompt);
         ad.setCampaign(campaign);
         ad.setUser(user);
@@ -577,7 +598,7 @@ public class AdService {
         ad.setCampaign(campaign);
         ad.setName(request.getName());
         ad.setPrompt(request.getPrompt());
-        ad.setAdType(com.fbadsautomation.model.AdType.valueOf(request.getAdType()));
+        ad.setAdType(mapFrontendAdTypeToEnum(request.getAdType()));
         ad.setCallToAction(request.getCallToAction()); // Gán CTA từ request
         ad.setMediaFilePath(request.getMediaFileUrl());
         ad.setCreatedDate(LocalDateTime.now());

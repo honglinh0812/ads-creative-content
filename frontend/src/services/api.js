@@ -28,11 +28,21 @@ apiClient.interceptors.response.use(
     return response
   },
   error => {
-    // Handle session expiration - don't redirect directly, let Vue router handle it
+    // Handle session expiration - redirect to login
     if (error.response && error.response.status === 401) {
-      // Clear token but don't redirect - let the component handle the redirect
+      // Clear token and redirect to login
       localStorage.removeItem('token')
-      console.log('Token expired, cleared from localStorage')
+      console.log('Token expired, redirecting to login')
+      
+      // Clear auth state in store if available
+      if (window.store) {
+        window.store.dispatch('auth/clearAuth')
+      }
+      
+      // Redirect to login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     // Extract error message
     const message = error.response?.data?.message || error.message || 'An error occurred'
@@ -58,6 +68,19 @@ export default {
     updateProfile: (profileData) => apiClient.put('/auth/profile', profileData),
     changePassword: (passwordData) => apiClient.put('/auth/change-password', passwordData),
     deleteAccount: () => apiClient.delete('/auth/account')
+  },
+  
+  // Settings endpoints
+  settings: {
+    getSettings: () => apiClient.get('/settings'),
+    updateGeneralSettings: (generalSettings) => apiClient.put('/settings/general', generalSettings),
+    updateAISettings: (aiSettings) => apiClient.put('/settings/ai', aiSettings),
+    updateNotificationSettings: (notificationSettings) => apiClient.put('/settings/notifications', notificationSettings),
+    exportData: () => apiClient.get('/settings/export', { responseType: 'blob' }),
+    importData: (formData) => apiClient.post('/settings/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    clearCache: () => apiClient.post('/settings/cache/clear')
   },
   
   // Campaign endpoints
@@ -139,11 +162,6 @@ export default {
     }
   },
 
-  // Settings endpoints
-  settings: {
-    get: () => apiClient.get('/settings'),
-    update: (settingsData) => apiClient.put('/settings', settingsData)
-  },
 
   // Data management endpoints
   data: {

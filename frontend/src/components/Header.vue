@@ -7,7 +7,6 @@
       <!-- Search functionality removed as requested -->
     </div>
     <div class="header-right">
-      <DarkModeToggle class="mr-3" />
       <div class="notification-dropdown-wrapper" style="position: relative; display: inline-block;">
         <button 
           class="icon-btn notification-btn text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400" 
@@ -191,11 +190,9 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import DarkModeToggle from './DarkModeToggle.vue'
 export default {
   name: 'AppHeader',
   components: {
-    DarkModeToggle
   },
   data() {
     return {

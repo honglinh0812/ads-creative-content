@@ -1,298 +1,342 @@
 <template>
   <div class="optimization-view">
-    <!-- Page Header -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1 class="page-title">
-          <i class="pi pi-lightbulb"></i>
-          Optimization Center
-        </h1>
-        <p class="page-description">
-          AI-powered recommendations to optimize your campaigns, reduce costs, and maximize performance
-        </p>
-      </div>
-      
-      <!-- Quick Stats -->
-      <div class="quick-stats" v-if="optimizationSummary">
-        <div class="stat-item">
-          <span class="stat-value">{{ optimizationSummary.totalRecommendations }}</span>
-          <span class="stat-label">Active Recommendations</span>
-        </div>
-        <div class="stat-item high-priority">
-          <span class="stat-value">{{ optimizationSummary.highPriorityCount }}</span>
-          <span class="stat-label">High Priority</span>
-        </div>
-        <div class="stat-item potential-impact">
-          <span class="stat-value">+{{ optimizationSummary.totalPotentialImpact.toFixed(1) }}%</span>
-          <span class="stat-label">Potential Impact</span>
-        </div>
-      </div>
+    <!-- Mobile Header -->
+    <MobileHeader 
+      v-if="isMobile" 
+      @toggle-mobile-menu="toggleMobileMenu"
+    />
+    
+    <!-- Desktop Page Header -->
+    <div v-if="!isMobile" class="page-header">
+      <a-page-header
+        title="Optimization Center"
+        sub-title="AI-powered recommendations to optimize your campaigns, reduce costs, and maximize performance"
+      >
+        <template #extra>
+          <a-space>
+            <a-button @click="refreshData" :loading="loading">
+              <template #icon>
+                <reload-outlined />
+              </template>
+              Refresh
+            </a-button>
+            <a-button @click="exportData">
+              <template #icon>
+                <download-outlined />
+              </template>
+              Export
+            </a-button>
+          </a-space>
+        </template>
+      </a-page-header>
+    </div>
+
+    <!-- Mobile Page Header -->
+    <div v-if="isMobile" class="mobile-header">
+      <h1>Optimization Center</h1>
+      <a-button type="text" @click="refreshData" :loading="loading">
+        <template #icon><reload-outlined /></template>
+      </a-button>
     </div>
 
     <!-- Navigation Tabs -->
     <div class="nav-tabs">
-      <button 
-        v-for="tab in tabs" 
-        :key="tab.id"
-        @click="activeTab = tab.id"
-        :class="['nav-tab', { active: activeTab === tab.id }]"
-      >
-        <i :class="tab.icon"></i>
-        <span>{{ tab.label }}</span>
-        <span v-if="tab.count > 0" class="tab-count">{{ tab.count }}</span>
-      </button>
-    </div>
-
-    <!-- Tab Content -->
-    <div class="tab-content">
-      <!-- All Recommendations Tab -->
-      <div v-if="activeTab === 'all'" class="tab-panel">
-        <OptimizationDashboard />
-      </div>
-
-      <!-- High Priority Tab -->
-      <div v-else-if="activeTab === 'priority'" class="tab-panel">
-        <div class="priority-section">
-          <div class="section-header">
-            <h2>High Priority Recommendations</h2>
-            <p>These recommendations require immediate attention and can significantly impact your performance.</p>
-          </div>
-          
-          <div v-if="highPriorityLoading" class="loading-state">
-            <div class="loading-spinner"></div>
-            <p>Loading high priority recommendations...</p>
-          </div>
-          
-          <div v-else-if="highPriorityRecommendations.length === 0" class="empty-state">
-            <i class="pi pi-check-circle"></i>
-            <h3>Great job!</h3>
-            <p>You don't have any high priority recommendations at the moment.</p>
-          </div>
-          
-          <div v-else class="recommendations-grid">
-            <RecommendationCard
-              v-for="recommendation in highPriorityRecommendations"
-              :key="recommendation.id"
-              :recommendation="recommendation"
-              @accept="handleAcceptRecommendation"
-              @dismiss="handleDismissRecommendation"
-              @schedule="handleScheduleRecommendation"
-              @view-details="handleViewDetails"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- By Category Tab -->
-      <div v-else-if="activeTab === 'category'" class="tab-panel">
-        <div class="category-section">
-          <div class="section-header">
-            <h2>Recommendations by Category</h2>
-            <p>Explore recommendations organized by optimization category.</p>
-          </div>
-          
-          <div class="category-grid">
-            <div 
-              v-for="category in recommendationCategories" 
-              :key="category.name"
-              class="category-card"
-              @click="selectCategory(category)"
-            >
-              <div class="category-icon" :style="{ backgroundColor: category.color + '20', color: category.color }">
-                <i :class="category.icon"></i>
-              </div>
-              <div class="category-info">
-                <h3>{{ category.name }}</h3>
-                <p>{{ category.description }}</p>
-                <div class="category-stats">
-                  <span class="recommendation-count">{{ category.count }} recommendations</span>
-                  <span class="potential-impact">+{{ category.impact.toFixed(1) }}% potential impact</span>
-                </div>
-              </div>
-              <div class="category-arrow">
-                <i class="pi pi-chevron-right"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Performance Tracking Tab -->
-      <div v-else-if="activeTab === 'tracking'" class="tab-panel">
-        <div class="tracking-section">
-          <div class="section-header">
-            <h2>Implementation Tracking</h2>
-            <p>Monitor the effectiveness of implemented recommendations.</p>
-          </div>
-          
-          <!-- Implementation Stats -->
-          <div class="implementation-stats">
-            <div class="stat-card">
-              <div class="stat-icon">
-                <i class="pi pi-check-circle"></i>
-              </div>
-              <div class="stat-content">
-                <span class="stat-number">{{ implementationStats.totalImplemented }}</span>
-                <span class="stat-label">Recommendations Implemented</span>
-              </div>
+      <a-tabs v-model:activeKey="activeTab" type="card" class="optimization-tabs">
+        <a-tab-pane key="all" tab="All Recommendations">
+          <OptimizationDashboard />
+        </a-tab-pane>
+        
+        <a-tab-pane key="priority" tab="High Priority">
+          <div class="priority-section">
+            <div class="section-header">
+              <h2>High Priority Recommendations</h2>
+              <p>These recommendations require immediate attention and can significantly impact your performance.</p>
             </div>
             
-            <div class="stat-card">
-              <div class="stat-icon">
-                <i class="pi pi-chart-line"></i>
-              </div>
-              <div class="stat-content">
-                <span class="stat-number">{{ implementationStats.averageImpact.toFixed(1) }}%</span>
-                <span class="stat-label">Average Impact Achieved</span>
-              </div>
+            <div v-if="highPriorityLoading" class="loading-state">
+              <a-spin size="large" />
+              <p>Loading high priority recommendations...</p>
             </div>
             
-            <div class="stat-card">
-              <div class="stat-icon">
-                <i class="pi pi-trophy"></i>
-              </div>
-              <div class="stat-content">
-                <span class="stat-number">{{ implementationStats.successRate.toFixed(1) }}%</span>
-                <span class="stat-label">Success Rate</span>
-              </div>
+            <div v-else-if="highPriorityRecommendations.length === 0" class="empty-state">
+              <a-empty description="Great job! You don't have any high priority recommendations at the moment.">
+                <template #image>
+                  <check-circle-outlined style="font-size: 48px; color: #52c41a;" />
+                </template>
+              </a-empty>
+            </div>
+            
+            <div v-else class="recommendations-grid">
+              <RecommendationCard
+                v-for="recommendation in highPriorityRecommendations"
+                :key="recommendation.id"
+                :recommendation="recommendation"
+                @accept="handleAcceptRecommendation"
+                @dismiss="handleDismissRecommendation"
+                @schedule="handleScheduleRecommendation"
+                @view-details="handleViewDetails"
+              />
             </div>
           </div>
-          
-          <!-- Implementation History -->
-          <div class="implementation-history">
-            <h3>Recent Implementations</h3>
-            <div class="history-list">
-              <div 
-                v-for="implementation in implementationHistory" 
-                :key="implementation.id"
-                class="history-item"
+        </a-tab-pane>
+        
+        <a-tab-pane key="category" tab="By Category">
+          <div class="category-section">
+            <div class="section-header">
+              <h2>Recommendations by Category</h2>
+              <p>Explore recommendations organized by optimization category.</p>
+            </div>
+            
+            <a-row :gutter="[16, 16]">
+              <a-col 
+                v-for="category in recommendationCategories" 
+                :key="category.name"
+                :xs="24" :sm="12" :lg="8"
               >
-                <div class="history-icon" :class="`status-${implementation.status.toLowerCase()}`">
-                  <i :class="getImplementationStatusIcon(implementation.status)"></i>
-                </div>
-                <div class="history-content">
-                  <h4>{{ implementation.title }}</h4>
-                  <p>{{ implementation.description }}</p>
-                  <div class="history-meta">
-                    <span class="implementation-date">{{ formatDate(implementation.implementedAt) }}</span>
-                    <span class="implementation-impact" :class="getImpactClass(implementation.actualImpact)">
-                      {{ implementation.actualImpact > 0 ? '+' : '' }}{{ implementation.actualImpact.toFixed(1) }}% impact
-                    </span>
+                <a-card 
+                  class="category-card" 
+                  hoverable
+                  @click="selectCategory(category)"
+                >
+                  <template #title>
+                    <div class="category-title">
+                      <div class="category-icon" :style="{ backgroundColor: category.color + '20', color: category.color }">
+                        <i :class="category.icon"></i>
+                      </div>
+                      <span>{{ category.name }}</span>
+                    </div>
+                  </template>
+                  <template #extra>
+                    <right-outlined />
+                  </template>
+                  <p>{{ category.description }}</p>
+                  <div class="category-stats">
+                    <a-statistic 
+                      :value="category.count" 
+                      suffix="recommendations"
+                      :value-style="{ fontSize: '16px', color: category.color }"
+                    />
+                    <a-statistic 
+                      :value="category.impact" 
+                      suffix="% potential impact"
+                      :value-style="{ fontSize: '16px', color: '#52c41a' }"
+                    />
                   </div>
-                </div>
-                <div class="history-status" :class="`status-${implementation.status.toLowerCase()}`">
-                  {{ formatStatus(implementation.status) }}
-                </div>
-              </div>
-            </div>
+                </a-card>
+              </a-col>
+            </a-row>
           </div>
-        </div>
-      </div>
-
-      <!-- Settings Tab -->
-      <div v-else-if="activeTab === 'settings'" class="tab-panel">
-        <div class="settings-section">
-          <div class="section-header">
-            <h2>Optimization Settings</h2>
-            <p>Configure how recommendations are generated and delivered.</p>
-          </div>
-          
-          <div class="settings-form">
-            <div class="setting-group">
-              <label class="setting-label">Recommendation Frequency</label>
-              <select v-model="settings.frequency" class="setting-select">
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-              <p class="setting-description">How often should we generate new recommendations?</p>
+        </a-tab-pane>
+        
+        <a-tab-pane key="tracking" tab="Performance">
+          <div class="tracking-section">
+            <div class="section-header">
+              <h2>Implementation Tracking</h2>
+              <p>Monitor the effectiveness of implemented recommendations.</p>
             </div>
             
-            <div class="setting-group">
-              <label class="setting-label">Minimum Confidence Level</label>
-              <div class="confidence-slider">
-                <input 
-                  type="range" 
-                  v-model="settings.minConfidence" 
-                  min="0.5" 
-                  max="1" 
-                  step="0.05"
-                  class="slider"
-                >
-                <span class="confidence-value">{{ (settings.minConfidence * 100).toFixed(0) }}%</span>
-              </div>
-              <p class="setting-description">Only show recommendations with this confidence level or higher.</p>
-            </div>
-            
-            <div class="setting-group">
-              <label class="setting-label">Auto-Accept Low Risk Recommendations</label>
-              <div class="setting-toggle">
-                <input 
-                  type="checkbox" 
-                  id="autoAccept" 
-                  v-model="settings.autoAccept"
-                  class="toggle-input"
-                >
-                <label for="autoAccept" class="toggle-label">
-                  <span class="toggle-slider"></span>
-                </label>
-                <span class="toggle-text">{{ settings.autoAccept ? 'Enabled' : 'Disabled' }}</span>
-              </div>
-              <p class="setting-description">Automatically implement low-risk recommendations with high confidence.</p>
-            </div>
-            
-            <div class="setting-group">
-              <label class="setting-label">Excluded Recommendation Types</label>
-              <div class="checkbox-group">
-                <label v-for="type in recommendationTypes" :key="type.value" class="checkbox-item">
-                  <input 
-                    type="checkbox" 
-                    :value="type.value"
-                    v-model="settings.excludedTypes"
+            <!-- Implementation Stats -->
+            <a-row :gutter="[16, 16]" style="margin-bottom: 24px;">
+              <a-col :xs="24" :sm="8">
+                <a-card class="stat-card">
+                  <a-statistic
+                    title="Recommendations Implemented"
+                    :value="implementationStats.totalImplemented"
+                    :value-style="{ color: '#1890ff' }"
                   >
-                  <span class="checkbox-label">{{ type.label }}</span>
-                </label>
-              </div>
-              <p class="setting-description">Select recommendation types you don't want to receive.</p>
-            </div>
+                    <template #prefix>
+                      <check-circle-outlined />
+                    </template>
+                  </a-statistic>
+                </a-card>
+              </a-col>
+              
+              <a-col :xs="24" :sm="8">
+                <a-card class="stat-card">
+                  <a-statistic
+                    title="Average Impact Achieved"
+                    :value="implementationStats.averageImpact"
+                    suffix="%"
+                    :value-style="{ color: '#52c41a' }"
+                  >
+                    <template #prefix>
+                      <line-chart-outlined />
+                    </template>
+                  </a-statistic>
+                </a-card>
+              </a-col>
+              
+              <a-col :xs="24" :sm="8">
+                <a-card class="stat-card">
+                  <a-statistic
+                    title="Success Rate"
+                    :value="implementationStats.successRate"
+                    suffix="%"
+                    :value-style="{ color: '#fa8c16' }"
+                  >
+                    <template #prefix>
+                      <trophy-outlined />
+                    </template>
+                  </a-statistic>
+                </a-card>
+              </a-col>
+            </a-row>
             
-            <div class="setting-actions">
-              <button @click="saveSettings" class="btn btn-primary" :disabled="savingSettings">
-                <i v-if="savingSettings" class="pi pi-spin pi-spinner"></i>
-                <i v-else class="pi pi-save"></i>
-                {{ savingSettings ? 'Saving...' : 'Save Settings' }}
-              </button>
-              <button @click="resetSettings" class="btn btn-secondary">
-                <i class="pi pi-refresh"></i>
-                Reset to Defaults
-              </button>
-            </div>
-          </div>
-        </div>
+            <!-- Implementation History -->
+            <a-card title="Recent Implementations">
+              <a-list
+                :data-source="implementationHistory"
+                item-layout="horizontal"
+              >
+                <template #renderItem="{ item }">
+                  <a-list-item>
+                <template #actions>
+                  <a-tag :color="getStatusColor(item.status)">
+                    {{ formatStatus(item.status) }}
+                  </a-tag>
+                </template>
+                <a-list-item-meta>
+                  <template #avatar>
+                    <a-avatar :style="{ backgroundColor: getStatusColor(item.status) }">
+                      <i :class="getImplementationStatusIcon(item.status)"></i>
+                    </a-avatar>
+                  </template>
+                  <template #title>
+                    {{ item.title }}
+                  </template>
+                  <template #description>
+                    {{ item.description }}
+                    <div class="history-meta">
+                      <span class="implementation-date">{{ formatDate(item.implementedAt) }}</span>
+                      <span class="implementation-impact" :class="getImpactClass(item.actualImpact)">
+                        {{ item.actualImpact > 0 ? '+' : '' }}{{ item.actualImpact.toFixed(1) }}% impact
+                      </span>
+                    </div>
+                  </template>
+                </a-list-item-meta>
+              </a-list-item>
+            </template>
+          </a-list>
+        </a-card>
       </div>
-    </div>
-  </div>
+    </a-tab-pane>
+    
+    <a-tab-pane key="settings" tab="Settings">
+      <div class="settings-section">
+        <div class="section-header">
+          <h2>Optimization Settings</h2>
+          <p>Configure how recommendations are generated and delivered.</p>
+        </div>
+        
+        <a-card>
+          <a-form
+            :model="settings"
+            layout="vertical"
+            @finish="saveSettings"
+          >
+            <a-row :gutter="16">
+              <a-col :xs="24" :sm="12">
+                <a-form-item label="Recommendation Frequency">
+                  <a-select v-model:value="settings.frequency">
+                    <a-select-option value="daily">Daily</a-select-option>
+                    <a-select-option value="weekly">Weekly</a-select-option>
+                    <a-select-option value="monthly">Monthly</a-select-option>
+                  </a-select>
+                </a-form-item>
+              </a-col>
+              
+              <a-col :xs="24" :sm="12">
+                <a-form-item label="Minimum Confidence Level">
+                  <a-slider
+                    v-model:value="settings.minConfidence"
+                    :min="0.5"
+                    :max="1"
+                    :step="0.05"
+                    :marks="{ 0.5: '50%', 0.7: '70%', 0.9: '90%', 1: '100%' }"
+                  />
+                </a-form-item>
+              </a-col>
+            </a-row>
+            
+            <a-form-item label="Auto-Accept Low Risk Recommendations">
+              <a-switch v-model:checked="settings.autoAccept" />
+              <span style="margin-left: 8px;">Automatically implement low-risk recommendations with high confidence</span>
+            </a-form-item>
+            
+            <a-form-item label="Excluded Recommendation Types">
+              <a-checkbox-group v-model:value="settings.excludedTypes">
+                <a-row>
+                  <a-col :span="8" v-for="type in recommendationTypes" :key="type.value">
+                    <a-checkbox :value="type.value">{{ type.label }}</a-checkbox>
+                  </a-col>
+                </a-row>
+              </a-checkbox-group>
+            </a-form-item>
+            
+            <a-form-item>
+              <a-space>
+                <a-button type="primary" html-type="submit" :loading="savingSettings">
+                  <template #icon>
+                    <save-outlined />
+                  </template>
+                  Save Settings
+                </a-button>
+                <a-button @click="resetSettings">
+                  <template #icon>
+                    <reload-outlined />
+                  </template>
+                  Reset to Defaults
+                </a-button>
+              </a-space>
+            </a-form-item>
+          </a-form>
+        </a-card>
+      </div>
+    </a-tab-pane>
+  </a-tabs>
+</div>
+</div>
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import OptimizationDashboard from '@/components/optimization/OptimizationDashboard.vue'
 import RecommendationCard from '@/components/optimization/RecommendationCard.vue'
+import MobileHeader from '@/components/MobileHeader.vue'
+import {
+  ReloadOutlined,
+  DownloadOutlined,
+  CheckCircleOutlined,
+  RightOutlined,
+  LineChartOutlined,
+  TrophyOutlined,
+  SaveOutlined
+} from '@ant-design/icons-vue'
 import api from '@/services/api'
 
 export default {
   name: 'OptimizationView',
   components: {
     OptimizationDashboard,
-    RecommendationCard
+    RecommendationCard,
+    MobileHeader,
+    ReloadOutlined,
+    DownloadOutlined,
+    CheckCircleOutlined,
+    RightOutlined,
+    LineChartOutlined,
+    TrophyOutlined,
+    SaveOutlined
   },
   
   setup() {
     // Reactive data
     const activeTab = ref('all')
+    const loading = ref(false)
     const optimizationSummary = ref(null)
     const highPriorityRecommendations = ref([])
     const highPriorityLoading = ref(false)
+    const isMobile = ref(false)
     const implementationStats = ref({
       totalImplemented: 15,
       averageImpact: 12.5,
@@ -306,40 +350,6 @@ export default {
       excludedTypes: []
     })
     const savingSettings = ref(false)
-    
-    // Static data
-    const tabs = computed(() => [
-      { 
-        id: 'all', 
-        label: 'All Recommendations', 
-        icon: 'pi pi-list',
-        count: optimizationSummary.value?.totalRecommendations || 0
-      },
-      { 
-        id: 'priority', 
-        label: 'High Priority', 
-        icon: 'pi pi-exclamation-triangle',
-        count: optimizationSummary.value?.highPriorityCount || 0
-      },
-      { 
-        id: 'category', 
-        label: 'By Category', 
-        icon: 'pi pi-th-large',
-        count: 0
-      },
-      { 
-        id: 'tracking', 
-        label: 'Performance', 
-        icon: 'pi pi-chart-line',
-        count: 0
-      },
-      { 
-        id: 'settings', 
-        label: 'Settings', 
-        icon: 'pi pi-cog',
-        count: 0
-      }
-    ])
     
     const recommendationCategories = ref([
       {
@@ -394,6 +404,22 @@ export default {
     ])
     
     // Methods
+    const refreshData = async () => {
+      loading.value = true
+      try {
+        await fetchOptimizationSummary()
+        await fetchHighPriorityRecommendations()
+      } catch (error) {
+        console.error('Error refreshing data:', error)
+      } finally {
+        loading.value = false
+      }
+    }
+    
+    const exportData = () => {
+      console.log('Export data functionality')
+    }
+    
     const fetchOptimizationSummary = async () => {
       try {
         const response = await api.optimizationAPI.getOptimizationSummary()
@@ -505,6 +531,15 @@ export default {
       return icons[status] || 'pi pi-question-circle'
     }
     
+    const getStatusColor = (status) => {
+      const colors = {
+        'SUCCESS': 'green',
+        'PARTIAL': 'orange',
+        'FAILED': 'red'
+      }
+      return colors[status] || 'default'
+    }
+    
     const getImpactClass = (impact) => {
       if (impact > 0) return 'impact-positive'
       if (impact < 0) return 'impact-negative'
@@ -523,8 +558,18 @@ export default {
       return status.toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
     }
     
+    const toggleMobileMenu = () => {
+      console.log('Toggle mobile menu')
+    }
+    
+    const checkMobile = () => {
+      isMobile.value = window.innerWidth <= 768
+    }
+    
     // Lifecycle
     onMounted(() => {
+      checkMobile()
+      window.addEventListener('resize', checkMobile)
       fetchOptimizationSummary()
       fetchHighPriorityRecommendations()
       loadImplementationHistory()
@@ -532,16 +577,19 @@ export default {
     
     return {
       activeTab,
-      tabs,
+      loading,
       optimizationSummary,
       highPriorityRecommendations,
       highPriorityLoading,
+      isMobile,
       recommendationCategories,
       implementationStats,
       implementationHistory,
       settings,
       savingSettings,
       recommendationTypes,
+      refreshData,
+      exportData,
       handleAcceptRecommendation,
       handleDismissRecommendation,
       handleScheduleRecommendation,
@@ -550,9 +598,11 @@ export default {
       saveSettings,
       resetSettings,
       getImplementationStatusIcon,
+      getStatusColor,
       getImpactClass,
       formatDate,
-      formatStatus
+      formatStatus,
+      toggleMobileMenu
     }
   }
 }
@@ -560,136 +610,36 @@ export default {
 
 <style scoped>
 .optimization-view {
-  padding: 24px;
-  background: #f8fafc;
+  background: #f5f5f5;
   min-height: 100vh;
 }
 
-.page-header {
+.mobile-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-  gap: 24px;
-}
-
-.header-content h1 {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 32px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 8px;
-}
-
-.header-content h1 i {
-  color: #f59e0b;
-}
-
-.header-content p {
-  font-size: 16px;
-  color: #6b7280;
-  margin: 0;
-  max-width: 600px;
-}
-
-.quick-stats {
-  display: flex;
-  gap: 24px;
-  flex-shrink: 0;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 16px;
+  padding: 1rem;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #6b7280;
-  text-align: center;
-}
-
-.high-priority .stat-value {
-  color: #dc2626;
-}
-
-.potential-impact .stat-value {
-  color: #059669;
+.mobile-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
 .nav-tabs {
-  display: flex;
-  gap: 4px;
-  background: #f3f4f6;
-  padding: 4px;
-  border-radius: 8px;
-  margin-bottom: 24px;
-  overflow-x: auto;
-}
-
-.nav-tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: #6b7280;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.nav-tab.active {
-  background: white;
-  color: #374151;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
-}
-
-.nav-tab:hover:not(.active) {
-  color: #374151;
-}
-
-.tab-count {
-  background: #ef4444;
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 10px;
-  min-width: 18px;
-  text-align: center;
-}
-
-.nav-tab.active .tab-count {
-  background: #3b82f6;
-}
-
-.tab-content {
-  background: white;
-  border-radius: 12px;
-  min-height: 600px;
-}
-
-.tab-panel {
   padding: 24px;
+}
+
+.optimization-tabs {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .section-header {
@@ -709,8 +659,7 @@ export default {
   margin: 0;
 }
 
-.loading-state,
-.empty-state {
+.loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -720,25 +669,13 @@ export default {
   color: #6b7280;
 }
 
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e5e7eb;
-  border-top: 3px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+.loading-state p {
+  margin-top: 16px;
+  font-size: 16px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.empty-state i {
-  font-size: 48px;
-  color: #10b981;
-  margin-bottom: 16px;
+.empty-state {
+  padding: 64px;
 }
 
 .recommendations-grid {
@@ -747,141 +684,22 @@ export default {
   gap: 24px;
 }
 
-.category-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 20px;
-}
-
 .category-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .category-card:hover {
-  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
   transform: translateY(-2px);
 }
 
+.category-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .category-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  font-size: 20px;
-}
-
-.category-info {
-  flex: 1;
-}
-
-.category-info h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 4px;
-}
-
-.category-info p {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0 0 8px;
-}
-
-.category-stats {
-  display: flex;
-  gap: 16px;
-  font-size: 12px;
-}
-
-.recommendation-count {
-  color: #6b7280;
-}
-
-.potential-impact {
-  color: #059669;
-  font-weight: 500;
-}
-
-.category-arrow {
-  color: #9ca3af;
-  font-size: 16px;
-}
-
-.implementation-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-}
-
-.stat-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: #3b82f6;
-  color: white;
-  border-radius: 12px;
-  font-size: 20px;
-}
-
-.stat-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stat-number {
-  font-size: 24px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.implementation-history h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 16px;
-}
-
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.history-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 16px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-}
-
-.history-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -891,42 +709,21 @@ export default {
   font-size: 18px;
 }
 
-.history-icon.status-success {
-  background: #dcfce7;
-  color: #166534;
+.category-stats {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
 }
 
-.history-icon.status-partial {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.history-icon.status-failed {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.history-content {
-  flex: 1;
-}
-
-.history-content h4 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 4px;
-}
-
-.history-content p {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0 0 8px;
+.stat-card {
+  text-align: center;
 }
 
 .history-meta {
   display: flex;
   gap: 16px;
   font-size: 12px;
+  margin-top: 8px;
 }
 
 .implementation-date {
@@ -938,245 +735,30 @@ export default {
 }
 
 .impact-positive {
-  color: #059669;
+  color: #52c41a;
 }
 
 .impact-negative {
-  color: #dc2626;
+  color: #ff4d4f;
 }
 
 .impact-neutral {
   color: #6b7280;
 }
 
-.history-status {
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-
-.history-status.status-success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.history-status.status-partial {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.history-status.status-failed {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.settings-form {
-  max-width: 600px;
-}
-
-.setting-group {
-  margin-bottom: 24px;
-}
-
-.setting-label {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 8px;
-}
-
-.setting-select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
-}
-
-.confidence-slider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.slider {
-  flex: 1;
-  height: 6px;
-  border-radius: 3px;
-  background: #e5e7eb;
-  outline: none;
-  appearance: none;
-}
-
-.slider::-webkit-slider-thumb {
-  appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #3b82f6;
-  cursor: pointer;
-}
-
-.confidence-value {
-  font-weight: 600;
-  color: #374151;
-  min-width: 40px;
-}
-
-.setting-toggle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.toggle-input {
-  display: none;
-}
-
-.toggle-label {
-  position: relative;
-  width: 48px;
-  height: 24px;
-  background: #d1d5db;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.toggle-slider {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.2s ease;
-}
-
-.toggle-input:checked + .toggle-label {
-  background: #3b82f6;
-}
-
-.toggle-input:checked + .toggle-label .toggle-slider {
-  transform: translateX(24px);
-}
-
-.toggle-text {
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.checkbox-label {
-  font-size: 14px;
-  color: #374151;
-}
-
-.setting-description {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 8px 0 0;
-}
-
-.setting-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 32px;
-}
-
-.btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-}
-
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #2563eb;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.btn-secondary:hover {
-  background: #e5e7eb;
-}
-
 /* Responsive Design */
-@media (width <= 768px) {
-  .optimization-view {
-    padding: 16px;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-  
-  .quick-stats {
-    justify-content: space-between;
-  }
-  
-  .stat-item {
-    min-width: auto;
-    flex: 1;
-  }
-  
+@media (max-width: 768px) {
   .nav-tabs {
-    overflow-x: auto;
-  }
-  
-  .tab-panel {
     padding: 16px;
   }
   
-  .recommendations-grid,
-  .category-grid {
+  .recommendations-grid {
     grid-template-columns: 1fr;
   }
   
-  .implementation-stats {
-    grid-template-columns: 1fr;
-  }
-  
-  .history-item {
+  .category-stats {
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
   }
   
   .history-meta {

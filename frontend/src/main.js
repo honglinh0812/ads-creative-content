@@ -25,6 +25,9 @@ app.use(Antd)
 app.use(ToastService)
 app.use(ApiService)
 
+// Expose store globally for API interceptors
+window.store = store
+
 // Ant Design Vue is globally registered, no need for individual component registration
 
 // Global error handler

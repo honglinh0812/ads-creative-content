@@ -44,11 +44,12 @@
                 </a-form-item>
 
                 <a-form-item label="Theme">
-                  <a-radio-group v-model:value="generalSettings.theme">
+                  <a-radio-group v-model:value="generalSettings.theme" @change="onThemeChange">
                     <a-radio value="light">Light</a-radio>
                     <a-radio value="dark">Dark</a-radio>
                     <a-radio value="auto">Auto</a-radio>
                   </a-radio-group>
+                  <p class="help-text">Choose your preferred theme. Auto will follow your system preference.</p>
                 </a-form-item>
 
                 <a-form-item>
@@ -248,15 +249,21 @@ export default {
     async loadSettings() {
       this.loading = true
       try {
-        const response = await api.get('/settings')
+        const response = await api.settings.getSettings()
         if (response.data) {
           this.generalSettings = { ...this.generalSettings, ...response.data.general }
           this.aiSettings = { ...this.aiSettings, ...response.data.ai }
           this.notificationSettings = { ...this.notificationSettings, ...response.data.notifications }
         }
+        
+        // Load theme from localStorage
+        const savedTheme = localStorage.getItem('theme')
+        if (savedTheme) {
+          this.generalSettings.theme = savedTheme
+        }
       } catch (error) {
         console.error('Error loading settings:', error)
-        // Use default settings if API fails
+        this.$message.error('Failed to load settings')
       } finally {
         this.loading = false
       }
@@ -265,7 +272,7 @@ export default {
     async updateGeneralSettings() {
       this.updatingGeneral = true
       try {
-        await api.put('/settings/general', this.generalSettings)
+        await api.settings.updateGeneralSettings(this.generalSettings)
         this.$message.success('General settings updated successfully')
       } catch (error) {
         console.error('Error updating general settings:', error)
@@ -278,7 +285,7 @@ export default {
     async updateAISettings() {
       this.updatingAI = true
       try {
-        await api.put('/settings/ai', this.aiSettings)
+        await api.settings.updateAISettings(this.aiSettings)
         this.$message.success('AI settings updated successfully')
       } catch (error) {
         console.error('Error updating AI settings:', error)
@@ -291,7 +298,7 @@ export default {
     async updateNotificationSettings() {
       this.updatingNotifications = true
       try {
-        await api.put('/settings/notifications', this.notificationSettings)
+        await api.settings.updateNotificationSettings(this.notificationSettings)
         this.$message.success('Notification settings updated successfully')
       } catch (error) {
         console.error('Error updating notification settings:', error)
@@ -345,13 +352,33 @@ export default {
     async clearCache() {
       this.clearingCache = true
       try {
-        await api.post('/cache/clear')
+        await api.settings.clearCache()
         this.$message.success('Cache cleared successfully')
       } catch (error) {
         console.error('Error clearing cache:', error)
         this.$message.error('Failed to clear cache')
       } finally {
         this.clearingCache = false
+      }
+    },
+
+    onThemeChange() {
+      // Apply theme immediately when changed
+      const theme = this.generalSettings.theme
+      localStorage.setItem('theme', theme)
+      
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else if (theme === 'light') {
+        document.documentElement.classList.remove('dark')
+      } else if (theme === 'auto') {
+        // Auto mode - follow system preference
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (prefersDark) {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
       }
     },
 

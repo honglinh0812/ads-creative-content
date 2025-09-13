@@ -625,10 +625,10 @@ export default {
           features: ['Custom form questions', 'Lead collection', 'Contact information']
         },
         {
-          value: 'brand_awareness',
-          label: 'Brand Awareness',
-          description: 'Increase brand visibility and recognition',
-          features: ['Reach optimization', 'Brand exposure', 'Awareness metrics']
+          value: 'page_post',
+          label: 'Page Post',
+          description: 'Promote your page posts to increase engagement',
+          features: ['Post promotion', 'Engagement boost', 'Social interaction']
         }
       ],
       campaigns: [],

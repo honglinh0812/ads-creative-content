@@ -259,6 +259,11 @@ export default {
         await this.$store.dispatch('auth/fetchUser')
       } catch (error) {
         console.error('Failed to fetch user data:', error)
+        // If fetchUser fails due to 401, clear auth and redirect
+        if (error.response && error.response.status === 401) {
+          this.$store.dispatch('auth/logout')
+          this.$router.push('/login')
+        }
       }
     }
   }

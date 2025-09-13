@@ -4,7 +4,7 @@
     <div class="dashboard-header">
       <div class="header-content">
         <h1 class="dashboard-title">
-          <i class="pi pi-lightbulb"></i>
+          <bulb-outlined />
           Optimization Recommendations
         </h1>
         <p class="dashboard-subtitle">
@@ -14,154 +14,191 @@
       
       <!-- Quick Actions -->
       <div class="header-actions">
-        <div class="time-range-selector">
-          <label for="timeRange" class="sr-only">Select time range</label>
-          <select 
-            id="timeRange"
-            v-model="selectedTimeRange" 
-            @change="fetchRecommendations"
-            class="time-range-select"
-          >
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-          </select>
-        </div>
+        <a-select 
+          v-model:value="selectedTimeRange" 
+          @change="fetchRecommendations"
+          style="width: 150px;"
+        >
+          <a-select-option value="7d">Last 7 days</a-select-option>
+          <a-select-option value="30d">Last 30 days</a-select-option>
+          <a-select-option value="90d">Last 90 days</a-select-option>
+        </a-select>
         
-        <button @click="refreshRecommendations" class="action-btn refresh-btn" :disabled="loading">
-          <i class="pi pi-refresh" :class="{ 'pi-spin': loading }"></i>
+        <a-button @click="refreshRecommendations" :loading="loading">
+          <template #icon>
+            <reload-outlined />
+          </template>
           Refresh
-        </button>
+        </a-button>
       </div>
     </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
-      <div class="loading-spinner"></div>
+      <a-spin size="large" />
       <p>Analyzing your campaigns and generating recommendations...</p>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
-      <i class="pi pi-exclamation-triangle"></i>
-      <h3>Failed to load recommendations</h3>
-      <p>{{ error }}</p>
-      <button @click="fetchRecommendations" class="retry-btn">
-        <i class="pi pi-refresh"></i>
-        Retry
-      </button>
+      <a-result
+        status="error"
+        title="Failed to load recommendations"
+        :sub-title="error"
+      >
+        <template #extra>
+          <a-button type="primary" @click="fetchRecommendations">
+            <template #icon>
+              <reload-outlined />
+            </template>
+            Retry
+          </a-button>
+        </template>
+      </a-result>
     </div>
 
     <!-- Optimization Content -->
     <div v-else-if="optimizationData" class="optimization-content">
       <!-- Summary Cards -->
-      <div class="summary-section">
-        <div class="summary-grid">
-          <div class="summary-card total-recommendations">
-            <div class="card-icon">
-              <i class="pi pi-list"></i>
-            </div>
-            <div class="card-content">
-              <span class="card-value">{{ optimizationData.summary.totalRecommendations }}</span>
-              <span class="card-label">Total Recommendations</span>
-            </div>
-          </div>
-          
-          <div class="summary-card high-priority">
-            <div class="card-icon">
-              <i class="pi pi-exclamation-circle"></i>
-            </div>
-            <div class="card-content">
-              <span class="card-value">{{ optimizationData.summary.highPriorityRecommendations }}</span>
-              <span class="card-label">High Priority</span>
-            </div>
-          </div>
-          
-          <div class="summary-card potential-impact">
-            <div class="card-icon">
-              <i class="pi pi-chart-line"></i>
-            </div>
-            <div class="card-content">
-              <span class="card-value">+{{ optimizationData.summary.totalPotentialImpact.toFixed(1) }}%</span>
-              <span class="card-label">Potential Impact</span>
-            </div>
-          </div>
-          
-          <div class="summary-card implementable">
-            <div class="card-icon">
-              <i class="pi pi-cog"></i>
-            </div>
-            <div class="card-content">
-              <span class="card-value">{{ optimizationData.summary.implementableRecommendations }}</span>
-              <span class="card-label">Ready to Implement</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <a-row :gutter="[16, 16]" style="margin-bottom: 24px;">
+        <a-col :xs="24" :sm="12" :lg="6">
+          <a-card class="summary-card" hoverable>
+            <a-statistic
+              title="Total Recommendations"
+              :value="optimizationData.summary.totalRecommendations"
+              :value-style="{ color: '#1890ff' }"
+            >
+              <template #prefix>
+                <unordered-list-outlined />
+              </template>
+            </a-statistic>
+          </a-card>
+        </a-col>
+        
+        <a-col :xs="24" :sm="12" :lg="6">
+          <a-card class="summary-card" hoverable>
+            <a-statistic
+              title="High Priority"
+              :value="optimizationData.summary.highPriorityRecommendations"
+              :value-style="{ color: '#ff4d4f' }"
+            >
+              <template #prefix>
+                <exclamation-circle-outlined />
+              </template>
+            </a-statistic>
+          </a-card>
+        </a-col>
+        
+        <a-col :xs="24" :sm="12" :lg="6">
+          <a-card class="summary-card" hoverable>
+            <a-statistic
+              title="Potential Impact"
+              :value="optimizationData.summary.totalPotentialImpact"
+              suffix="%"
+              :value-style="{ color: '#52c41a' }"
+            >
+              <template #prefix>
+                <line-chart-outlined />
+              </template>
+            </a-statistic>
+          </a-card>
+        </a-col>
+        
+        <a-col :xs="24" :sm="12" :lg="6">
+          <a-card class="summary-card" hoverable>
+            <a-statistic
+              title="Ready to Implement"
+              :value="optimizationData.summary.implementableRecommendations"
+              :value-style="{ color: '#fa8c16' }"
+            >
+              <template #prefix>
+                <setting-outlined />
+              </template>
+            </a-statistic>
+          </a-card>
+        </a-col>
+      </a-row>
 
       <!-- Filter and Sort Controls -->
-      <div class="controls-section">
-        <div class="filter-controls">
-          <div class="filter-group">
-            <label for="priorityFilter">Priority</label>
-            <select id="priorityFilter" v-model="selectedPriority" @change="applyFilters">
-              <option value="">All Priorities</option>
-              <option value="HIGH">High Priority</option>
-              <option value="MEDIUM">Medium Priority</option>
-              <option value="LOW">Low Priority</option>
-            </select>
-          </div>
+      <a-card style="margin-bottom: 24px;">
+        <a-row :gutter="16" align="middle">
+          <a-col :xs="24" :sm="8" :md="6">
+            <a-select 
+              v-model:value="selectedPriority" 
+              @change="applyFilters"
+              placeholder="All Priorities"
+              style="width: 100%"
+            >
+              <a-select-option value="">All Priorities</a-select-option>
+              <a-select-option value="HIGH">High Priority</a-select-option>
+              <a-select-option value="MEDIUM">Medium Priority</a-select-option>
+              <a-select-option value="LOW">Low Priority</a-select-option>
+            </a-select>
+          </a-col>
           
-          <div class="filter-group">
-            <label for="typeFilter">Type</label>
-            <select id="typeFilter" v-model="selectedType" @change="applyFilters">
-              <option value="">All Types</option>
-              <option value="BUDGET_REALLOCATION">Budget Optimization</option>
-              <option value="AI_PROVIDER_SWITCH">AI Provider</option>
-              <option value="CAMPAIGN_OBJECTIVE_OPTIMIZATION">Campaign Objective</option>
-              <option value="AD_SCHEDULING">Ad Scheduling</option>
-              <option value="CONTENT_TYPE_OPTIMIZATION">Content Type</option>
-              <option value="AD_CREATIVE_REFRESH">Creative Refresh</option>
-            </select>
-          </div>
+          <a-col :xs="24" :sm="8" :md="6">
+            <a-select 
+              v-model:value="selectedType" 
+              @change="applyFilters"
+              placeholder="All Types"
+              style="width: 100%"
+            >
+              <a-select-option value="">All Types</a-select-option>
+              <a-select-option value="BUDGET_REALLOCATION">Budget Optimization</a-select-option>
+              <a-select-option value="AI_PROVIDER_SWITCH">AI Provider</a-select-option>
+              <a-select-option value="CAMPAIGN_OBJECTIVE_OPTIMIZATION">Campaign Objective</a-select-option>
+              <a-select-option value="AD_SCHEDULING">Ad Scheduling</a-select-option>
+              <a-select-option value="CONTENT_TYPE_OPTIMIZATION">Content Type</a-select-option>
+              <a-select-option value="AD_CREATIVE_REFRESH">Creative Refresh</a-select-option>
+            </a-select>
+          </a-col>
           
-          <div class="filter-group">
-            <label for="categoryFilter">Category</label>
-            <select id="categoryFilter" v-model="selectedCategory" @change="applyFilters">
-              <option value="">All Categories</option>
-              <option value="Budget Optimization">Budget Optimization</option>
-              <option value="AI Optimization">AI Optimization</option>
-              <option value="Campaign Strategy">Campaign Strategy</option>
-              <option value="Creative Optimization">Creative Optimization</option>
-              <option value="Timing Optimization">Timing Optimization</option>
-            </select>
-          </div>
-        </div>
-        
-        <div class="view-controls">
-          <button 
-            @click="viewMode = 'cards'" 
-            :class="['view-btn', { active: viewMode === 'cards' }]"
-          >
-            <i class="pi pi-th-large"></i>
-            Cards
-          </button>
-          <button 
-            @click="viewMode = 'list'" 
-            :class="['view-btn', { active: viewMode === 'list' }]"
-          >
-            <i class="pi pi-list"></i>
-            List
-          </button>
-        </div>
-      </div>
+          <a-col :xs="24" :sm="8" :md="6">
+            <a-select 
+              v-model:value="selectedCategory" 
+              @change="applyFilters"
+              placeholder="All Categories"
+              style="width: 100%"
+            >
+              <a-select-option value="">All Categories</a-select-option>
+              <a-select-option value="Budget Optimization">Budget Optimization</a-select-option>
+              <a-select-option value="AI Optimization">AI Optimization</a-select-option>
+              <a-select-option value="Campaign Strategy">Campaign Strategy</a-select-option>
+              <a-select-option value="Creative Optimization">Creative Optimization</a-select-option>
+              <a-select-option value="Timing Optimization">Timing Optimization</a-select-option>
+            </a-select>
+          </a-col>
+          
+          <a-col :xs="24" :sm="24" :md="6">
+            <a-radio-group v-model:value="viewMode" button-style="solid">
+              <a-radio-button value="cards">
+                <template #icon>
+                  <appstore-outlined />
+                </template>
+                Cards
+              </a-radio-button>
+              <a-radio-button value="list">
+                <template #icon>
+                  <unordered-list-outlined />
+                </template>
+                List
+              </a-radio-button>
+            </a-radio-group>
+          </a-col>
+        </a-row>
+      </a-card>
 
       <!-- Recommendations Display -->
       <div class="recommendations-section">
         <div v-if="filteredRecommendations.length === 0" class="no-recommendations">
-          <i class="pi pi-info-circle"></i>
-          <h3>No recommendations found</h3>
-          <p>Try adjusting your filters or check back later for new recommendations.</p>
+          <a-empty description="No recommendations found">
+            <template #image>
+              <info-circle-outlined style="font-size: 48px; color: #d9d9d9;" />
+            </template>
+            <template #description>
+              <span>Try adjusting your filters or check back later for new recommendations.</span>
+            </template>
+          </a-empty>
         </div>
         
         <div v-else>
@@ -193,27 +230,15 @@
         </div>
         
         <!-- Pagination -->
-        <div v-if="totalPages > 1" class="pagination">
-          <button
-            @click="currentPage = Math.max(1, currentPage - 1)"
-            :disabled="currentPage === 1"
-            class="pagination-btn"
-          >
-            <i class="pi pi-chevron-left"></i>
-          </button>
-          
-          <span class="pagination-info">
-            Page {{ currentPage }} of {{ totalPages }}
-            ({{ filteredRecommendations.length }} recommendations)
-          </span>
-          
-          <button
-            @click="currentPage = Math.min(totalPages, currentPage + 1)"
-            :disabled="currentPage === totalPages"
-            class="pagination-btn"
-          >
-            <i class="pi pi-chevron-right"></i>
-          </button>
+        <div v-if="totalPages > 1" style="margin-top: 24px; text-align: center;">
+          <a-pagination
+            v-model:current="currentPage"
+            :total="filteredRecommendations.length"
+            :page-size="itemsPerPage"
+            show-size-changer
+            show-quick-jumper
+            :show-total="(total, range) => `${range[0]}-${range[1]} of ${total} recommendations`"
+          />
         </div>
       </div>
     </div>
@@ -225,6 +250,16 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import RecommendationCard from './RecommendationCard.vue'
 import RecommendationListItem from './RecommendationListItem.vue'
+import {
+  BulbOutlined,
+  ReloadOutlined,
+  UnorderedListOutlined,
+  ExclamationCircleOutlined,
+  LineChartOutlined,
+  SettingOutlined,
+  AppstoreOutlined,
+  InfoCircleOutlined
+} from '@ant-design/icons-vue'
 import api from '@/services/api'
 const { optimizationAPI } = api
 
@@ -232,7 +267,15 @@ export default {
   name: 'OptimizationDashboard',
   components: {
     RecommendationCard,
-    RecommendationListItem
+    RecommendationListItem,
+    BulbOutlined,
+    ReloadOutlined,
+    UnorderedListOutlined,
+    ExclamationCircleOutlined,
+    LineChartOutlined,
+    SettingOutlined,
+    AppstoreOutlined,
+    InfoCircleOutlined
   },
   
   setup() {
@@ -404,7 +447,7 @@ export default {
 <style scoped>
 .optimization-dashboard {
   padding: 24px;
-  background: #f8fafc;
+  background: #f5f5f5;
   min-height: 100vh;
 }
 
@@ -426,7 +469,7 @@ export default {
   margin: 0 0 8px;
 }
 
-.header-content h1 i {
+.header-content h1 .anticon {
   color: #f59e0b;
 }
 
@@ -444,55 +487,6 @@ export default {
   flex-shrink: 0;
 }
 
-.time-range-select {
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  color: #374151;
-  font-size: 14px;
-  min-width: 150px;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  color: #374151;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-btn:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: #eff6ff;
-  border-color: #3b82f6;
-  color: #3b82f6;
-}
-
-.pi-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .loading-container,
 .error-container {
   display: flex;
@@ -504,199 +498,13 @@ export default {
   color: #6b7280;
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #e5e7eb;
-  border-top: 3px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
-}
-
-.error-container i {
-  font-size: 48px;
-  color: #ef4444;
-  margin-bottom: 16px;
-}
-
-.retry-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+.loading-container p {
   margin-top: 16px;
-}
-
-.retry-btn:hover {
-  background: #2563eb;
-}
-
-.summary-section {
-  margin-bottom: 32px;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+  font-size: 16px;
 }
 
 .summary-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 24px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.summary-card:hover {
-  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
-  transform: translateY(-2px);
-}
-
-.card-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  font-size: 24px;
-}
-
-.total-recommendations .card-icon {
-  background: #eff6ff;
-  color: #2563eb;
-}
-
-.high-priority .card-icon {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-.potential-impact .card-icon {
-  background: #f0fdf4;
-  color: #16a34a;
-}
-
-.implementable .card-icon {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.card-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.card-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.card-label {
-  font-size: 14px;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.controls-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.filter-controls {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.filter-group label {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.filter-group select {
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: white;
-  font-size: 14px;
-  min-width: 150px;
-}
-
-.view-controls {
-  display: flex;
-  gap: 4px;
-  background: #f3f4f6;
-  padding: 4px;
-  border-radius: 8px;
-}
-
-.view-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: #6b7280;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.view-btn.active {
-  background: white;
-  color: #374151;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
-}
-
-.view-btn:hover:not(.active) {
-  color: #374151;
-}
-
-.no-recommendations {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 64px;
   text-align: center;
-  color: #6b7280;
-}
-
-.no-recommendations i {
-  font-size: 48px;
-  margin-bottom: 16px;
-  color: #d1d5db;
 }
 
 .recommendations-grid {
@@ -711,46 +519,12 @@ export default {
   gap: 16px;
 }
 
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  margin-top: 32px;
-  padding: 24px;
-}
-
-.pagination-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-info {
-  font-size: 14px;
-  color: #6b7280;
+.no-recommendations {
+  padding: 64px;
 }
 
 /* Responsive Design */
-@media (width <= 768px) {
+@media (max-width: 768px) {
   .optimization-dashboard {
     padding: 16px;
   }
@@ -763,24 +537,6 @@ export default {
   
   .header-actions {
     justify-content: space-between;
-  }
-  
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .controls-section {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .filter-controls {
-    justify-content: space-between;
-  }
-  
-  .filter-group select {
-    min-width: auto;
-    flex: 1;
   }
   
   .recommendations-grid {

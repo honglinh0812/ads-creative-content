@@ -228,8 +228,14 @@ export default {
         const response = await api.auth.getProfile()
         if (response.data) {
           this.profileForm = {
-            ...this.profileForm,
-            ...response.data
+            firstName: response.data.firstName || '',
+            lastName: response.data.lastName || '',
+            email: response.data.email || '',
+            phoneNumber: response.data.phoneNumber || '',
+            company: response.data.company || '',
+            jobTitle: response.data.jobTitle || '',
+            language: response.data.language || 'en',
+            timezone: response.data.timezone || 'Asia/Ho_Chi_Minh'
           }
         }
       } catch (error) {
@@ -243,7 +249,16 @@ export default {
     async updateProfile() {
       this.updating = true
       try {
-        await api.auth.updateProfile(this.profileForm)
+        const profileData = {
+          firstName: this.profileForm.firstName,
+          lastName: this.profileForm.lastName,
+          phoneNumber: this.profileForm.phoneNumber,
+          company: this.profileForm.company,
+          jobTitle: this.profileForm.jobTitle,
+          language: this.profileForm.language,
+          timezone: this.profileForm.timezone
+        }
+        await api.auth.updateProfile(profileData)
         this.$message.success('Profile updated successfully')
       } catch (error) {
         console.error('Error updating profile:', error)
@@ -256,6 +271,11 @@ export default {
     async changePassword() {
       if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
         this.$message.error('New passwords do not match')
+        return
+      }
+
+      if (this.passwordForm.newPassword.length < 6) {
+        this.$message.error('Password must be at least 6 characters long')
         return
       }
 
@@ -274,7 +294,8 @@ export default {
         }
       } catch (error) {
         console.error('Error changing password:', error)
-        this.$message.error('Failed to change password')
+        const errorMessage = error.response?.data?.message || 'Failed to change password'
+        this.$message.error(errorMessage)
       } finally {
         this.changingPassword = false
       }
@@ -290,10 +311,12 @@ export default {
       try {
         await api.auth.deleteAccount()
         this.$message.success('Account deleted successfully')
+        this.$store.dispatch('auth/logout')
         this.$router.push('/login')
       } catch (error) {
         console.error('Error deleting account:', error)
-        this.$message.error('Failed to delete account')
+        const errorMessage = error.response?.data?.message || 'Failed to delete account'
+        this.$message.error(errorMessage)
       } finally {
         this.deleting = false
       }

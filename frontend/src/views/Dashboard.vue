@@ -14,7 +14,6 @@
       >
         <template #extra>
           <a-space>
-            <DarkModeToggle @theme-changed="onThemeChanged" />
             <router-link to="/campaign/create">
               <a-button type="primary" size="large">
                 <template #icon>
@@ -441,7 +440,6 @@ import {
 } from '@ant-design/icons-vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 import MobileDashboardStats from '@/components/MobileDashboardStats.vue'
-import DarkModeToggle from '@/components/DarkModeToggle.vue'
 import LoadingSkeleton from '@/components/LoadingSkeleton.vue'
 
 export default {
@@ -458,7 +456,6 @@ export default {
     RocketOutlined,
     MobileHeader,
     MobileDashboardStats,
-    DarkModeToggle,
     LoadingSkeleton
   },
   data() {
