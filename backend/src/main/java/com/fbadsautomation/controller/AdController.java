@@ -161,7 +161,7 @@ public class AdController {
                 // Tạo ad tạm thời để generate content
                 Ad tempAd = new Ad();
                 tempAd.setName(request.getName());
-                tempAd.setAdType(com.fbadsautomation.model.AdType.valueOf(request.getAdType()));
+                tempAd.setAdType(adService.mapFrontendAdTypeToEnum(request.getAdType()));
                 tempAd.setPrompt(request.getPrompt());
                 
                 // Generate AI content mà không lưu vào database

@@ -79,7 +79,7 @@ public class AdService {
      * @param frontendAdType The ad type from frontend
      * @return The corresponding AdType enum
      */
-    private AdType mapFrontendAdTypeToEnum(String frontendAdType) {
+    public AdType mapFrontendAdTypeToEnum(String frontendAdType) {
         if (frontendAdType == null) {
             return AdType.PAGE_POST_AD; // Default
         }
