@@ -1976,11 +1976,6 @@
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-log4j2</artifactId>
-        <version>2.7.8</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-logging</artifactId>
         <version>2.7.8</version>
       </dependency>
