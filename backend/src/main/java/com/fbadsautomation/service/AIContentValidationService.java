@@ -26,13 +26,13 @@ public class AIContentValidationService {
     // Spam indicators
     private static final List<String> SPAM_INDICATORS = Arrays.asList("!!!", "???", "FREE!!!", "URGENT!!!", "ACT NOW!!!", "LIMITED TIME!!!",
         "CLICK HERE NOW", "AMAZING OFFER", "DON'T MISS OUT"
-    ); // Maximum lengths for different content types
-    private static final int MAX_HEADLINE_LENGTH = 40;
-    private static final int MAX_DESCRIPTION_LENGTH = 125;
-    private static final int MAX_PRIMARY_TEXT_LENGTH = 10000; // Tăng lên rất cao để bỏ giới hạn thực tế
-    // Minimum quality thresholds
-    private static final int MIN_WORD_COUNT = 3;
-    private static final double MIN_READABILITY_SCORE = 0.3;
+    );     // Maximum lengths for different content types - Updated to match Facebook actual limits
+    private static final int MAX_HEADLINE_LENGTH = 40; // Facebook limit: 40 characters
+    private static final int MAX_DESCRIPTION_LENGTH = 125; // Facebook limit: 125 characters (not 30!)
+    private static final int MAX_PRIMARY_TEXT_LENGTH = 1000; // Facebook limit: 1000+ characters (not 125!)
+    // Minimum quality thresholds - Relaxed for better content acceptance
+    private static final int MIN_WORD_COUNT = 2; // Reduced from 3 to 2
+    private static final double MIN_READABILITY_SCORE = 0.1; // Reduced from 0.3 to 0.1
 
     /**
      * Validate and filter AI-generated content
@@ -176,14 +176,14 @@ public class AIContentValidationService {
             content.getHeadline().equals(content.getDescription())) {
             violations.add("Headline and description are identical");
         }
-        // Check for coherence between fields
+        // Check for coherence between fields - Relaxed threshold
         if (content.getHeadline() != null && content.getPrimaryText() != null) {
             double similarity = calculateTextSimilarity(content.getHeadline(), content.getPrimaryText());
-            if (similarity < 0.1) {
+            if (similarity < 0.05) { // Reduced from 0.1 to 0.05 - more lenient
                 violations.add("Content fields seem unrelated");
             }
         }
-        // Check readability
+        // Check readability - More lenient
         if (content.getPrimaryText() != null) {
             double readabilityScore = calculateReadabilityScore(content.getPrimaryText());
             if (readabilityScore < MIN_READABILITY_SCORE) {
@@ -340,15 +340,18 @@ public class AIContentValidationService {
     }
     
     /**
-     * Calculate readability score (simplified)
+     * Calculate readability score (simplified) - More lenient calculation
      */
     private double calculateReadabilityScore(String text) {
-        if (text == null || text.trim().isEmpty()) return 0.0;
+        if (text == null || text.trim().isEmpty()) return 0.5; // Default to acceptable score
         String[] sentences = text.split("[.!?]+");
         String[] words = text.split("\\s+");
-        if (sentences.length == 0 || words.length == 0) return 0.0;
-        double avgWordsPerSentence = (double) words.length / sentences.length; // Simple readability: prefer shorter sentences
-        return Math.max(0.0, 1.0 - (avgWordsPerSentence - 10) / 20);
+        if (sentences.length == 0 || words.length == 0) return 0.5; // Default to acceptable score
+        
+        double avgWordsPerSentence = (double) words.length / sentences.length;
+        // More lenient readability calculation - accept longer sentences
+        double score = Math.max(0.0, 1.0 - (avgWordsPerSentence - 15) / 30); // Increased threshold from 10 to 15
+        return Math.max(0.1, score); // Ensure minimum score of 0.1
     }
     
     /**

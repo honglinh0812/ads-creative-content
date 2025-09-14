@@ -92,8 +92,8 @@ public class OpenAIProvider implements AIProvider {
                 "\n\nCRITICAL FACEBOOK REQUIREMENTS (MUST FOLLOW):" +
                 "\n1. CHARACTER LIMITS (STRICT):" +
                 "\n   - Headline: Maximum 40 characters (including spaces)" +
-                "\n   - Description: Maximum 30 characters (including spaces)" +
-                "\n   - Primary Text: Maximum 125 characters (including spaces)" +
+                "\n   - Description: Maximum 125 characters (including spaces)" +
+                "\n   - Primary Text: Maximum 1000 characters (including spaces)" +
                 "\n\n2. CONTENT QUALITY REQUIREMENTS:" +
                 "\n   - Each field must contain at least 3 meaningful words" +
                 "\n   - Use clear, professional language" +

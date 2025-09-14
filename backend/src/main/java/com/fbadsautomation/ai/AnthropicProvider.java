@@ -52,8 +52,8 @@ public class AnthropicProvider implements AIProvider {
                     "Generate " + numberOfVariations + " different ad variations for: \"" + prompt + "\". " +
                     "\n\nSTRICT FACEBOOK REQUIREMENTS:" +
                     "\n- Headline: MAX 40 characters (count carefully)" +
-                    "\n- Description: MAX 30 characters (count carefully)" +
-                    "\n- Primary Text: MAX 125 characters (count carefully)" +
+                    "\n- Description: MAX 125 characters (count carefully)" +
+                    "\n- Primary Text: MAX 1000 characters (count carefully)" +
                     "\n- Each field needs minimum 3 meaningful words" +
                     "\n\nFORBIDDEN CONTENT:" +
                     "\n- Words: hate, violence, drugs, miracle, guaranteed, cure, instant, free (with exclamation)" +

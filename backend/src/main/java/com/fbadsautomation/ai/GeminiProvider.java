@@ -53,8 +53,8 @@ public class GeminiProvider implements AIProvider {
                     "Create " + numberOfVariations + " compliant, high-converting ad variations for: \"" + prompt + "\". " +
                     "\n\nFACEBOOK COMPLIANCE CHECKLIST:" +
                     "\n✓ Headline: Exactly 40 characters or less" +
-                    "\n✓ Description: Exactly 30 characters or less" +
-                    "\n✓ Primary Text: Exactly 125 characters or less" +
+                    "\n✓ Description: Exactly 125 characters or less" +
+                    "\n✓ Primary Text: Exactly 1000 characters or less" +
                     "\n✓ No prohibited words (hate, violence, drugs, miracle, guaranteed, cure, instant)" +
                     "\n✓ No excessive punctuation (!!!, $$$, ???)" +
                     "\n✓ No ALL CAPS (except brand names)" +
