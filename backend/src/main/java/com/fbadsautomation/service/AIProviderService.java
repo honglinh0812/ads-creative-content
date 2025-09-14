@@ -62,8 +62,9 @@ public class AIProviderService {
         providerFallbacks.put("huggingface", Arrays.asList("openai", "gemini", "anthropic"));
 
         // Image generation fallback chains
-        providerFallbacks.put("fal-ai", Arrays.asList("stable-diffusion"));
-        providerFallbacks.put("stable-diffusion", Arrays.asList("fal-ai"));
+        providerFallbacks.put("openai", Arrays.asList("fal-ai", "stable-diffusion"));
+        providerFallbacks.put("fal-ai", Arrays.asList("openai", "stable-diffusion"));
+        providerFallbacks.put("stable-diffusion", Arrays.asList("openai", "fal-ai"));
     }
 
     public List<ProviderResponse> getTextProviders() {
