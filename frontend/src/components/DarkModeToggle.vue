@@ -1,6 +1,6 @@
 <template>
   <button 
-    class="dark-toggle bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-neutral-600 dark:text-neutral-300 transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 rounded-lg p-2.5 border border-neutral-200 dark:border-neutral-600 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-neutral-800" 
+    class="dark-toggle bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-neutral-600 dark:text-neutral-300 transition-colors duration-200 ease-in-out rounded-lg p-2.5 border border-neutral-200 dark:border-neutral-600 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-neutral-800" 
     :aria-label="isDark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'"
     :aria-pressed="isDark.toString()"
     role="switch"
@@ -64,23 +64,7 @@ export default {
   overflow: hidden;
 }
 
-.dark-toggle::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: radial-gradient(circle, rgb(59 130 246 / 10%) 0%, transparent 70%);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.3s ease, height 0.3s ease;
-}
-
-.dark-toggle:active::before {
-  width: 120px;
-  height: 120px;
-}
+/* Simplified button without complex effects */
 
 /* Icon transition animations */
 .icon-fade-enter-active,
@@ -88,20 +72,14 @@ export default {
   transition: all 0.2s ease-in-out;
 }
 
-.icon-fade-enter-from {
-  opacity: 0;
-  transform: rotate(-90deg) scale(0.8);
-}
-
+.icon-fade-enter-from,
 .icon-fade-leave-to {
   opacity: 0;
-  transform: rotate(90deg) scale(0.8);
 }
 
 .icon-fade-enter-to,
 .icon-fade-leave-from {
   opacity: 1;
-  transform: rotate(0deg) scale(1);
 }
 
 /* Responsive adjustments */

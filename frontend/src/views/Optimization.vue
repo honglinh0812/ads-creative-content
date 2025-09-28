@@ -690,7 +690,7 @@ export default {
 }
 
 .category-card:hover {
-  transform: translateY(-2px);
+  border-color: #dae4eb;
 }
 
 .category-title {

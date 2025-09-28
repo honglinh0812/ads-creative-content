@@ -26,12 +26,12 @@
   background: var(--color-hover);
   border-color: var(--color-border);
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  opacity: 0.9;
 }
 
 .btn:active:not(:disabled) {
   background: var(--color-active);
-  transform: translateY(0);
+  opacity: 1;
   box-shadow: var(--shadow-sm);
 }
 
@@ -59,13 +59,13 @@
   background: var(--brand-primary-hover);
   border-color: var(--brand-primary-hover);
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  opacity: 0.9;
 }
 
 .btn-primary:active:not(:disabled) {
   background: var(--primary-700);
   border-color: var(--primary-700);
-  transform: translateY(0);
+  opacity: 1;
 }
 
 .btn-secondary {
@@ -81,15 +81,15 @@
     }
 
 .btn-success {
-  background: linear-gradient(135deg, var(--color-success) 0%, #059669 100%);
+  background: var(--success-500);
   color: #fff;
-  border: 1px solid #059669;
+  border: 1px solid var(--success-600);
 }
 
 .btn-success:hover:not(:disabled) {
-  background: linear-gradient(135deg, #059669 0%, var(--color-success) 100%);
+  background: var(--success-600);
   color: #fff;
-  border-color: #059669;
+  border-color: var(--success-700);
     }
 
 .btn-ghost {
@@ -129,9 +129,8 @@
 }
 
 .card:hover {
-  box-shadow: var(--shadow-lg);
-  border-color: var(--color-border);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+  border-color: var(--primary-200);
 }
 
 .card-header {
@@ -473,7 +472,7 @@
     &:hover {
       background: var(--neutral-100);
       color: var(--secondary-900);
-      transform: translateX(4px);
+      background: var(--primary-50);
     }
     
     &.active {

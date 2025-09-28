@@ -528,5 +528,73 @@ export default {
   color: #595959;
   line-height: 1.5;
 }
+
+/* Mobile Responsiveness - Phase 2 Implementation */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 12px;
+  }
+
+  .page-header {
+    margin-bottom: 16px;
+    padding: 12px;
+  }
+
+  .campaign-form-card {
+    margin-bottom: 16px;
+  }
+
+  .help-dialog .ant-modal {
+    margin: 0;
+    max-width: 100vw;
+    height: 100vh;
+  }
+
+  .help-dialog .ant-modal-content {
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .help-section {
+    margin-bottom: 16px;
+  }
+
+  .help-step {
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: 8px;
+  }
+
+  .page-header {
+    padding: 8px;
+    margin-bottom: 12px;
+  }
+
+  .help-title {
+    font-size: 14px;
+  }
+
+  .help-text {
+    font-size: 13px;
+  }
+
+  .step-number {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+
+  .step-content h4 {
+    font-size: 13px;
+  }
+
+  .step-content p {
+    font-size: 12px;
+  }
+}
 </style>
 

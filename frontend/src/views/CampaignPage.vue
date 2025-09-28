@@ -1,73 +1,52 @@
 <template>
-  <div class="campaign-page">
-    <div class="campaign-content">
-
-        <!-- Page Header -->
-        <a-page-header
-          title="Campaigns"
-          sub-title="Manage your advertising campaigns"
-          class="mb-8"
-        >
-          <template #extra>
-            <router-link to="/campaign/create">
-              <a-button type="primary" size="large">
-                <template #icon>
-                  <PlusOutlined />
-                </template>
-                New Campaign
-              </a-button>
-            </router-link>
-          </template>
-        </a-page-header>
-
-        <!-- Error State -->
-        <div v-if="error" class="mb-6">
-          <a-alert
-            type="error"
-            :message="'Error loading campaign list'"
-            :description="error"
-            show-icon
-            closable
-          >
-            <template #action>
-              <a-button size="small" type="primary" @click="loadCampaigns">
-                Try again
-              </a-button>
-            </template>
-          </a-alert>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else-if="campaigns.length === 0 && !loading">
-          <a-empty
-            description="No campaign found"
-          >
-            <template #image>
-              <FolderOpenOutlined style="font-size: 64px; color: #d9d9d9;" />
-            </template>
-            <a-button type="primary" size="large">
-              <template #icon>
-                <PlusOutlined />
-              </template>
-              <router-link to="/campaign/create" style="color: inherit; text-decoration: none;">
-                Create First Campaign
-              </router-link>
-            </a-button>
-          </a-empty>
-        </div>
-
-        <!-- Campaign Table with Advanced Filtering -->
-        <div v-else>
-          <CampaignTable
-            :campaigns="campaigns"
-            :loading="loading"
-            @view-details="showCampaignDetails"
-            @edit-campaign="showEditCampaignModal"
-            @delete-campaign="confirmDeleteCampaign"
-            @view-ads="viewCampaignAds"
-          />
-        </div>
+  <div class="page-container">
+    <!-- Standardized Page Header -->
+    <div class="page-header-standard">
+      <div class="page-header-content">
+        <h1 class="page-title-standard">Campaigns</h1>
+        <p class="page-subtitle-standard">
+          Manage your advertising campaigns and monitor their performance
+        </p>
       </div>
+
+      <div class="page-actions-standard">
+        <router-link to="/campaign/create">
+          <button class="btn-primary-standard">
+            <PlusOutlined />
+            New Campaign
+          </button>
+        </router-link>
+      </div>
+    </div>
+
+    <!-- Creative Error State -->
+    <CreativeEmptyState
+      v-if="error"
+      variant="loading-failed"
+      :custom-message="error"
+      action-text="Try Again"
+      :action-handler="loadCampaigns"
+    />
+
+    <!-- Creative Empty State -->
+    <CreativeEmptyState
+      v-else-if="campaigns.length === 0 && !loading"
+      variant="no-campaigns"
+      action-text="Create First Campaign"
+      :action-handler="() => $router.push('/campaign/create')"
+    />
+
+    <!-- Campaign Table with Advanced Filtering -->
+    <div v-else>
+      <CampaignTable
+        :campaigns="campaigns"
+        :loading="loading"
+        @view-details="showCampaignDetails"
+        @edit-campaign="showEditCampaignModal"
+        @delete-campaign="confirmDeleteCampaign"
+        @view-ads="viewCampaignAds"
+      />
+    </div>
 
       <!-- Campaign Detail Modal -->
       <a-modal
@@ -150,20 +129,20 @@
 
 <script>
 import { mapState, mapActions } from 'vuex'
-import { 
-  PlusOutlined, 
-  FolderOpenOutlined
+import {
+  PlusOutlined
 } from '@ant-design/icons-vue'
 import { Modal } from 'ant-design-vue'
 
 import CampaignTable from '@/components/CampaignTable.vue'
+import CreativeEmptyState from '@/components/ui/CreativeEmptyState.vue'
 
 export default {
   name: "CampaignPage",
   components: {
     PlusOutlined,
-    FolderOpenOutlined,
-    CampaignTable
+    CampaignTable,
+    CreativeEmptyState
   },
   data() {
     return {
@@ -340,5 +319,66 @@ export default {
   padding: 20px;
   background: #f5f5f5;
   min-height: 100vh;
+}
+
+/* Mobile Responsiveness - Phase 2 Implementation */
+@media (max-width: 768px) {
+  .campaign-page {
+    padding: 12px;
+  }
+
+  .ant-page-header {
+    padding: 12px;
+  }
+
+  .ant-page-header-heading-title {
+    font-size: 1.5rem;
+  }
+
+  .ant-page-header-heading-sub-title {
+    font-size: 0.9rem;
+  }
+
+  .ant-modal {
+    margin: 0;
+    max-width: 100vw;
+    height: 100vh;
+  }
+
+  .ant-modal-content {
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .ant-form-item {
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .campaign-page {
+    padding: 8px;
+  }
+
+  .ant-page-header {
+    padding: 8px;
+  }
+
+  .ant-page-header-heading-title {
+    font-size: 1.25rem;
+  }
+
+  .ant-page-header-heading-sub-title {
+    font-size: 0.825rem;
+  }
+
+  .ant-form-item {
+    margin-bottom: 12px;
+  }
+
+  .ant-btn {
+    width: 100%;
+    margin-bottom: 8px;
+  }
 }
 </style>

@@ -220,9 +220,8 @@ export default {
 }
 
 .top-content-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px -3px rgb(0 0 0 / 10%);
-  border-color: #d1d5db;
+  box-shadow: 0 3px 12px rgba(45, 90, 160, 0.08);
+  border-color: #dae4eb;
 }
 
 .card-header {
@@ -551,10 +550,10 @@ export default {
 }
 
 .top-content-card:hover .trend-indicator {
-  transform: scale(1.1);
+  opacity: 0.8;
 }
 
 .top-content-card:hover .action-btn {
-  transform: scale(1.05);
+  opacity: 0.8;
 }
 </style>

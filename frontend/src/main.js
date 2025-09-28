@@ -16,7 +16,13 @@ import ToastService from './services/toastService.js'
 // API Service
 import ApiService from './services/apiService.js'
 
+// Sentry Error Monitoring
+import { initSentry } from './plugins/sentry.js'
+
 const app = createApp(App)
+
+// Initialize Sentry (must be done before other configurations)
+initSentry(app, router)
 
 // Use plugins
 app.use(store)
@@ -30,14 +36,18 @@ window.store = store
 
 // Ant Design Vue is globally registered, no need for individual component registration
 
-// Global error handler
+// Global error handler (Sentry will also capture these errors)
 app.config.errorHandler = (err, vm, info) => {
   console.error('Vue Error:', err)
   console.error('Info:', info)
+  
+  // Show user-friendly error message
   store.dispatch('toast/showError', {
     title: 'Application Error',
     message: 'An unexpected error occurred. Please try again later.'
   })
+  
+  // Sentry error handler is set up in plugins/sentry.js
 }
 
 // All Ant Design Vue components are available globally

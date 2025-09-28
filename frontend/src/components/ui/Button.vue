@@ -114,34 +114,34 @@ export default {
   @apply inline-flex items-center justify-center font-medium transition-all duration-200 ease-in-out;
   @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
   @apply disabled:opacity-50 disabled:cursor-not-allowed;
-  @apply transform hover:scale-105 active:scale-95;
+  @apply hover:bg-opacity-90 active:bg-opacity-100;
   @apply border border-transparent;
 }
 
 /* Button variants */
 .btn-primary {
   @apply bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500;
-  @apply shadow-md hover:shadow-lg;
+  @apply border border-primary-600 hover:border-primary-700;
 }
 
 .btn-secondary {
   @apply bg-secondary-500 text-white hover:bg-secondary-600 focus:ring-secondary-500;
-  @apply shadow-md hover:shadow-lg;
+  @apply border border-primary-600 hover:border-primary-700;
 }
 
 .btn-success {
   @apply bg-success-500 text-white hover:bg-success-600 focus:ring-success-500;
-  @apply shadow-md hover:shadow-lg;
+  @apply border border-primary-600 hover:border-primary-700;
 }
 
 .btn-warning {
   @apply bg-warning-500 text-white hover:bg-warning-600 focus:ring-warning-500;
-  @apply shadow-md hover:shadow-lg;
+  @apply border border-primary-600 hover:border-primary-700;
 }
 
 .btn-error {
   @apply bg-error-500 text-white hover:bg-error-600 focus:ring-error-500;
-  @apply shadow-md hover:shadow-lg;
+  @apply border border-primary-600 hover:border-primary-700;
 }
 
 .btn-ghost {
@@ -236,15 +236,7 @@ export default {
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .btn {
-    @apply transform-none;
-  }
-  
-  .btn:hover {
-    @apply scale-100;
-  }
-  
-  .btn:active {
-    @apply scale-100;
+    transition: none;
   }
 }
 

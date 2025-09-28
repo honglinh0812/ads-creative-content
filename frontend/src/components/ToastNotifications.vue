@@ -6,7 +6,7 @@
           v-for="toast in toasts"
           :key="toast.id"
           :class="getToastClass(toast.type)"
-          class="toast bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-lg hover:shadow-xl transition-all duration-300 ease-out backdrop-blur-sm"
+          class="toast bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-lg hover:shadow-lg transition-shadow duration-200 ease-out"
         >
           <div class="toast-content">
             <div class="toast-icon">
@@ -149,9 +149,7 @@ export default {
   transition: transform 0.2s ease;
 }
 
-.toast:hover .toast-icon {
-  transform: scale(1.1);
-}
+/* Removed scale transform effects */
 
 .toast-success .toast-icon {
   background: theme('colors.success.100');
@@ -266,13 +264,13 @@ export default {
   }
 }
 
-/* Toast animations */
+/* Simplified toast animations */
 .toast-enter-active {
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s ease-out;
 }
 
 .toast-leave-active {
-  transition: all 0.3s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  transition: all 0.2s ease-in;
 }
 
 .toast-enter-from {

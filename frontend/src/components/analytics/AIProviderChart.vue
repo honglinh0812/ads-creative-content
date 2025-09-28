@@ -453,8 +453,8 @@ export default {
 }
 
 .provider-card:hover {
-  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
-  transform: translateY(-2px);
+  box-shadow: 0 3px 12px rgba(45, 90, 160, 0.08);
+  border-color: #dae4eb;
 }
 
 .provider-header {

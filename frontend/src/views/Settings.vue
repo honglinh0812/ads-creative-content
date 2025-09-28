@@ -1,25 +1,70 @@
 <template>
-  <div class="settings-page">
-    <!-- Header -->
-    <div class="mobile-header">
-      <h1>Settings</h1>
-      <a-button type="text" @click="handleLogout">
-        <template #icon><logout-outlined /></template>
-      </a-button>
+  <div class="page-container">
+    <!-- Standardized Page Header -->
+    <div class="page-header-standard">
+      <div class="page-header-content">
+        <h1 class="page-title-standard">Settings</h1>
+        <p class="page-subtitle-standard">
+          Configure your account preferences and application settings
+        </p>
+      </div>
+
+      <div class="page-actions-standard">
+        <button @click="handleLogout" class="btn-danger-standard">
+          <logout-outlined />
+          Logout
+        </button>
+      </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-      <div class="settings-container">
-        <a-row :gutter="24">
-          <!-- General Settings -->
-          <a-col :xs="24" :lg="12">
-            <a-card title="General Settings" class="settings-card">
-              <a-form
-                :model="generalSettings"
-                layout="vertical"
-                @finish="updateGeneralSettings"
-              >
+    <!-- Creative Settings Layout -->
+    <div class="creative-settings-container">
+      <!-- Settings Navigation -->
+      <div class="settings-navigation">
+        <div class="nav-header">
+          <h3 class="nav-title">Settings Menu</h3>
+          <p class="nav-subtitle">Customize your experience</p>
+        </div>
+        <div class="nav-items">
+          <div
+            v-for="section in settingSections"
+            :key="section.key"
+            class="nav-item"
+            :class="{ active: activeSection === section.key }"
+            @click="activeSection = section.key"
+          >
+            <div class="nav-icon">{{ section.emoji }}</div>
+            <div class="nav-content">
+              <div class="nav-name">{{ section.name }}</div>
+              <div class="nav-desc">{{ section.description }}</div>
+            </div>
+            <div class="nav-indicator">
+              <div class="indicator-dot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Content -->
+      <div class="settings-content">
+        <!-- General Settings Section -->
+        <div v-if="activeSection === 'general'" class="settings-section">
+          <div class="section-header-creative">
+            <div class="section-icon-large">⚙️</div>
+            <div class="section-info">
+              <h2 class="section-title-creative">General Preferences</h2>
+              <p class="section-subtitle-creative">Basic settings for your account</p>
+            </div>
+            <div class="section-decoration">{{ getRandomTip() }}</div>
+          </div>
+
+          <div class="creative-form-container">
+            <a-form
+              :model="generalSettings"
+              layout="vertical"
+              @finish="updateGeneralSettings"
+              class="creative-form"
+            >
                 <a-form-item label="Default Language">
                   <a-select v-model:value="generalSettings.defaultLanguage" style="width: 100%">
                     <a-select-option value="en">English</a-select-option>
@@ -52,23 +97,50 @@
                   <p class="help-text">Choose your preferred theme. Auto will follow your system preference.</p>
                 </a-form-item>
 
-                <a-form-item>
-                  <a-button type="primary" html-type="submit" :loading="updatingGeneral">
-                    Save General Settings
-                  </a-button>
-                </a-form-item>
+                <div class="form-actions-creative">
+                  <button type="submit" class="btn-primary-creative" :disabled="updatingGeneral">
+                    <span v-if="updatingGeneral">Saving...</span>
+                    <span v-else>Save Preferences 💾</span>
+                  </button>
+                </div>
               </a-form>
-            </a-card>
-          </a-col>
+            </div>
+          </div>
+        </div>
 
-          <!-- AI Provider Settings -->
-          <a-col :xs="24" :lg="12">
-            <a-card title="AI Provider Settings" class="settings-card">
-              <a-form
-                :model="aiSettings"
-                layout="vertical"
-                @finish="updateAISettings"
-              >
+        <!-- AI Provider Settings Section -->
+        <div v-if="activeSection === 'ai'" class="settings-section">
+          <div class="section-header-creative">
+            <div class="section-icon-large">🤖</div>
+            <div class="section-info">
+              <h2 class="section-title-creative">AI Configuration</h2>
+              <p class="section-subtitle-creative">Set your AI provider preferences</p>
+            </div>
+            <div class="section-decoration">🔮</div>
+          </div>
+
+          <div class="creative-form-container">
+            <div class="ai-provider-showcase">
+              <div class="provider-stats">
+                <div class="stat-item">
+                  <div class="stat-emoji">✨</div>
+                  <div class="stat-number">{{ aiSettings.defaultVariations || 3 }}</div>
+                  <div class="stat-label">Variations</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-emoji">🎨</div>
+                  <div class="stat-number">{{ aiSettings.autoGenerateImages ? 'ON' : 'OFF' }}</div>
+                  <div class="stat-label">Auto Images</div>
+                </div>
+              </div>
+            </div>
+
+            <a-form
+              :model="aiSettings"
+              layout="vertical"
+              @finish="updateAISettings"
+              class="creative-form"
+            >
                 <a-form-item label="Default Text Provider">
                   <a-select v-model:value="aiSettings.defaultTextProvider" style="width: 100%">
                     <a-select-option 
@@ -107,72 +179,138 @@
                   <p class="help-text">Automatically generate images for new ads</p>
                 </a-form-item>
 
-                <a-form-item>
-                  <a-button type="primary" html-type="submit" :loading="updatingAI">
-                    Save AI Settings
-                  </a-button>
-                </a-form-item>
+                <div class="form-actions-creative">
+                  <button type="submit" class="btn-primary-creative" :disabled="updatingAI">
+                    <span v-if="updatingAI">Updating AI...</span>
+                    <span v-else>Save AI Settings 🤖</span>
+                  </button>
+                </div>
               </a-form>
-            </a-card>
-          </a-col>
+            </div>
+          </div>
+        </div>
 
-          <!-- Notification Settings -->
-          <a-col :xs="24" :lg="12">
-            <a-card title="Notification Settings" class="settings-card">
-              <a-form
-                :model="notificationSettings"
-                layout="vertical"
-                @finish="updateNotificationSettings"
-              >
-                <a-form-item label="Email Notifications">
-                  <div class="notification-item">
+        <!-- Notification Settings Section -->
+        <div v-if="activeSection === 'notifications'" class="settings-section">
+          <div class="section-header-creative">
+            <div class="section-icon-large">🔔</div>
+            <div class="section-info">
+              <h2 class="section-title-creative">Notifications</h2>
+              <p class="section-subtitle-creative">Stay updated on important events</p>
+            </div>
+            <div class="section-decoration">📬</div>
+          </div>
+
+          <div class="creative-form-container">
+            <div class="notification-showcase">
+              <div class="notification-summary">
+                <div class="summary-item">
+                  <div class="summary-icon">📧</div>
+                  <div class="summary-text">
+                    <span class="summary-count">{{ countEnabledNotifications('email') }}</span>
+                    <span class="summary-label">Email alerts</span>
+                  </div>
+                </div>
+                <div class="summary-item">
+                  <div class="summary-icon">🖥️</div>
+                  <div class="summary-text">
+                    <span class="summary-count">{{ notificationSettings.browserNotifications ? 'ON' : 'OFF' }}</span>
+                    <span class="summary-label">Browser alerts</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <a-form
+              :model="notificationSettings"
+              layout="vertical"
+              @finish="updateNotificationSettings"
+              class="creative-form"
+            >
+              <div class="creative-switches">
+                <div class="switch-group">
+                  <h4 class="switch-title">📧 Email Notifications</h4>
+                  <div class="creative-switch-item">
                     <a-switch v-model:checked="notificationSettings.emailCampaignUpdates" />
-                    <span>Campaign status updates</span>
+                    <div class="switch-info">
+                      <span class="switch-name">Campaign Updates</span>
+                      <span class="switch-desc">Get notified when campaigns change status</span>
+                    </div>
                   </div>
-                  <div class="notification-item">
+                  <div class="creative-switch-item">
                     <a-switch v-model:checked="notificationSettings.emailAdGeneration" />
-                    <span>Ad generation completion</span>
+                    <div class="switch-info">
+                      <span class="switch-name">Ad Generation Complete</span>
+                      <span class="switch-desc">Know when your AI ad creation is finished</span>
+                    </div>
                   </div>
-                  <div class="notification-item">
+                  <div class="creative-switch-item">
                     <a-switch v-model:checked="notificationSettings.emailWeeklyReport" />
-                    <span>Weekly performance reports</span>
+                    <div class="switch-info">
+                      <span class="switch-name">Weekly Reports</span>
+                      <span class="switch-desc">Receive performance summaries every week</span>
+                    </div>
                   </div>
-                </a-form-item>
-
-                <a-form-item label="Browser Notifications">
-                  <div class="notification-item">
-                    <a-switch v-model:checked="notificationSettings.browserNotifications" />
-                    <span>Enable browser notifications</span>
-                  </div>
-                </a-form-item>
-
-                <a-form-item>
-                  <a-button type="primary" html-type="submit" :loading="updatingNotifications">
-                    Save Notification Settings
-                  </a-button>
-                </a-form-item>
-              </a-form>
-            </a-card>
-          </a-col>
-
-          <!-- Export & Import Settings -->
-          <a-col :xs="24" :lg="12">
-            <a-card title="Data Management" class="settings-card">
-              <div class="data-management">
-                <div class="management-item">
-                  <h4>Export Data</h4>
-                  <p>Download all your campaigns and ads data</p>
-                  <a-button @click="exportData" :loading="exporting">
-                    <template #icon><download-outlined /></template>
-                    Export Data
-                  </a-button>
                 </div>
 
-                <a-divider />
+                <div class="switch-group">
+                  <h4 class="switch-title">🖥️ Browser Notifications</h4>
+                  <div class="creative-switch-item">
+                    <a-switch v-model:checked="notificationSettings.browserNotifications" />
+                    <div class="switch-info">
+                      <span class="switch-name">Browser Alerts</span>
+                      <span class="switch-desc">Real-time notifications in your browser</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                <div class="management-item">
-                  <h4>Import Data</h4>
-                  <p>Import campaigns and ads from a CSV file</p>
+              <div class="form-actions-creative">
+                <button type="submit" class="btn-primary-creative" :disabled="updatingNotifications">
+                  <span v-if="updatingNotifications">Saving...</span>
+                  <span v-else>Save Notifications 🔔</span>
+                </button>
+              </div>
+            </a-form>
+          </div>
+        </div>
+
+        <!-- Data Management Section -->
+        <div v-if="activeSection === 'data'" class="settings-section">
+          <div class="section-header-creative">
+            <div class="section-icon-large">💾</div>
+            <div class="section-info">
+              <h2 class="section-title-creative">Data Management</h2>
+              <p class="section-subtitle-creative">Import, export, and manage your data</p>
+            </div>
+            <div class="section-decoration">📊</div>
+          </div>
+
+          <div class="creative-form-container">
+            <div class="data-actions-grid">
+              <div class="data-action-card export-card">
+                <div class="action-visual">
+                  <div class="action-icon">📤</div>
+                  <div class="action-bg-pattern"></div>
+                </div>
+                <div class="action-content">
+                  <h4 class="action-title">Export Data</h4>
+                  <p class="action-desc">Download all your campaigns and ads data as CSV or JSON</p>
+                  <button @click="exportData" class="btn-action-card" :disabled="exporting">
+                    <span v-if="exporting">Exporting...</span>
+                    <span v-else>Export Now 📤</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="data-action-card import-card">
+                <div class="action-visual">
+                  <div class="action-icon">📥</div>
+                  <div class="action-bg-pattern"></div>
+                </div>
+                <div class="action-content">
+                  <h4 class="action-title">Import Data</h4>
+                  <p class="action-desc">Import campaigns and ads from CSV files</p>
                   <a-upload
                     :before-upload="handleImport"
                     accept=".csv"
@@ -184,21 +322,19 @@
                     </a-button>
                   </a-upload>
                 </div>
-
-                <a-divider />
-
-                <div class="management-item">
-                  <h4>Clear Cache</h4>
-                  <p>Clear all cached data and temporary files</p>
-                  <a-button @click="clearCache" :loading="clearingCache">
-                    <template #icon><clear-outlined /></template>
-                    Clear Cache
-                  </a-button>
-                </div>
               </div>
-            </a-card>
-          </a-col>
-        </a-row>
+
+              <a-divider />
+
+              <div class="management-item">
+                <h4>Clear Cache</h4>
+                <p>Clear all cached data and temporary files</p>
+                <a-button @click="clearCache" :loading="clearingCache">
+                  <template #icon><clear-outlined /></template>
+                  Clear Cache
+                </a-button>
+              </div>
+        </div>
       </div>
     </div>
   </div>
@@ -207,7 +343,6 @@
 <script>
 import {
   LogoutOutlined,
-  DownloadOutlined,
   UploadOutlined,
   ClearOutlined
 } from '@ant-design/icons-vue'
@@ -217,7 +352,6 @@ export default {
   name: 'AppSettings',
   components: {
     LogoutOutlined,
-    DownloadOutlined,
     UploadOutlined,
     ClearOutlined
   },
@@ -258,7 +392,36 @@ export default {
       exporting: false,
       importing: false,
       clearingCache: false,
-      loading: true
+      loading: true,
+
+      // Phase 3: Creative Settings Implementation
+      activeSection: 'general',
+      settingSections: [
+        {
+          key: 'general',
+          name: 'General',
+          description: 'Basic preferences',
+          emoji: '⚙️'
+        },
+        {
+          key: 'ai',
+          name: 'AI Providers',
+          description: 'AI configuration',
+          emoji: '🤖'
+        },
+        {
+          key: 'notifications',
+          name: 'Notifications',
+          description: 'Alert preferences',
+          emoji: '🔔'
+        },
+        {
+          key: 'data',
+          name: 'Data',
+          description: 'Import & export',
+          emoji: '💾'
+        }
+      ]
     }
   },
   async mounted() {
@@ -429,88 +592,576 @@ export default {
     handleLogout() {
       this.$store.dispatch('auth/logout')
       this.$router.push('/login')
+    },
+
+    // Phase 3: Creative Settings Methods
+    getRandomTip() {
+      const tips = [
+        "💡 Pro tip from a student developer",
+        "🚀 Making your experience better",
+        "✨ Built with attention to detail",
+        "🎯 Optimized for your workflow",
+        "💎 Crafted with care",
+        "🔧 Student-built, enterprise-ready"
+      ]
+      return tips[Math.floor(Math.random() * tips.length)]
+    },
+
+    countEnabledNotifications(type) {
+      if (type === 'email') {
+        let count = 0
+        if (this.notificationSettings.emailCampaignUpdates) count++
+        if (this.notificationSettings.emailAdGeneration) count++
+        if (this.notificationSettings.emailWeeklyReport) count++
+        return count
+      }
+      return 0
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.settings-page {
-  background: #f5f5f5;
-  min-height: 100vh;
+/* Creative Settings Styles - Phase 3 Implementation */
+
+.creative-settings-container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  margin-top: 24px;
 }
 
-.mobile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
+/* Settings Navigation */
+.settings-navigation {
   background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(45, 90, 160, 0.06);
+  border: 1px solid #f0f2f5;
+  height: fit-content;
   position: sticky;
-  top: 0;
-  z-index: 100;
+  top: 24px;
 }
 
-.mobile-header h1 {
+.nav-header {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.nav-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #262626;
+  margin: 0 0 4px 0;
+}
+
+.nav-subtitle {
+  font-size: 12px;
+  color: #8c8c8c;
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
 }
 
-.main-content {
-  padding: 2rem;
+.nav-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.settings-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.settings-card {
-  margin-bottom: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.notification-item {
+.nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  background: transparent;
 }
 
-.notification-item span {
-  color: #374151;
+.nav-item:hover {
+  background: #f0f9ff;
+  transform: translateX(2px);
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, #2d5aa0 0%, #1890ff 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.nav-icon {
+  font-size: 20px;
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.nav-content {
+  flex: 1;
+}
+
+.nav-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: inherit;
+  margin-bottom: 2px;
+}
+
+.nav-desc {
+  font-size: 11px;
+  opacity: 0.8;
+  color: inherit;
+}
+
+.nav-indicator {
+  width: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.nav-item.active .indicator-dot {
+  opacity: 1;
+}
+
+/* Settings Content */
+.settings-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(45, 90, 160, 0.06);
+  border: 1px solid #f0f2f5;
+  overflow: hidden;
+}
+
+.settings-section {
+  padding: 32px;
+}
+
+/* Creative Section Headers */
+.section-header-creative {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #f0f2f5;
+}
+
+.section-icon-large {
+  font-size: 48px;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+  border-radius: 20px;
+  border: 2px solid #91d5ff;
+  flex-shrink: 0;
+}
+
+.section-info {
+  flex: 1;
+}
+
+.section-title-creative {
+  font-size: 28px;
+  font-weight: 700;
+  color: #262626;
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+.section-subtitle-creative {
+  font-size: 16px;
+  color: #8c8c8c;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.section-decoration {
+  font-size: 18px;
+  background: linear-gradient(135deg, #fff1f0 0%, #fff7e6 100%);
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #ffd6cc;
+  color: #d46b08;
+  font-weight: 600;
+}
+
+/* Creative Form Container */
+.creative-form-container {
+  max-width: 600px;
+}
+
+.creative-form .ant-form-item {
+  margin-bottom: 24px;
+}
+
+.creative-form .ant-form-item-label > label {
+  font-weight: 600;
+  color: #262626;
+  font-size: 14px;
 }
 
 .help-text {
-  margin: 4px 0 0 0;
-  color: #6b7280;
-  font-size: 0.875rem;
+  font-size: 12px;
+  color: #8c8c8c;
+  margin-top: 4px;
+  font-style: italic;
 }
 
-.data-management {
-  .management-item {
-    margin-bottom: 1rem;
+/* AI Provider Showcase */
+.ai-provider-showcase {
+  margin-bottom: 32px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fff8e1 0%, #fff1b0 100%);
+  border-radius: 12px;
+  border: 1px solid #ffd666;
+}
+
+.provider-stats {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-emoji {
+  font-size: 24px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.stat-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: #d46b08;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #a8071a;
+  font-weight: 600;
+}
+
+/* Notification Showcase */
+.notification-showcase {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+  border-radius: 12px;
+  border: 1px solid #b7eb8f;
+}
+
+.notification-summary {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.summary-icon {
+  font-size: 24px;
+}
+
+.summary-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.summary-count {
+  font-size: 18px;
+  font-weight: 700;
+  color: #389e0d;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #52c41a;
+  font-weight: 600;
+}
+
+/* Creative Switches */
+.creative-switches {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.switch-group {
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #f0f2f5;
+  background: #fafafa;
+}
+
+.switch-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #262626;
+  margin: 0 0 16px 0;
+}
+
+.creative-switch-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.creative-switch-item:last-child {
+  margin-bottom: 0;
+}
+
+.switch-info {
+  flex: 1;
+}
+
+.switch-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 4px;
+}
+
+.switch-desc {
+  display: block;
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 1.4;
+}
+
+/* Data Actions Grid */
+.data-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.data-action-card {
+  background: white;
+  border: 2px solid #f0f2f5;
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.data-action-card:hover {
+  border-color: #2d5aa0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(45, 90, 160, 0.15);
+}
+
+.export-card {
+  border-left: 4px solid #16a085;
+}
+
+.import-card {
+  border-left: 4px solid #e76f51;
+}
+
+.action-visual {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.action-icon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.action-bg-pattern {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 40px;
+  height: 40px;
+  background: rgba(24, 144, 255, 0.1);
+  border-radius: 50%;
+  opacity: 0.5;
+}
+
+.action-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #262626;
+  margin: 0 0 8px 0;
+}
+
+.action-desc {
+  font-size: 14px;
+  color: #8c8c8c;
+  line-height: 1.4;
+  margin-bottom: 16px;
+}
+
+/* Creative Buttons */
+.btn-primary-creative {
+  background: linear-gradient(135deg, #2d5aa0 0%, #1890ff 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.3);
+}
+
+.btn-primary-creative:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1e3a6f 0%, #0d7cc0 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(24, 144, 255, 0.4);
+}
+
+.btn-primary-creative:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-action-card {
+  background: #2d5aa0;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.btn-action-card:hover:not(:disabled) {
+  background: #1e3a6f;
+  transform: translateY(-1px);
+}
+
+.form-actions-creative {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f2f5;
+}
+
+/* Mobile Responsiveness - Phase 2 Complete */
+@media (max-width: 1024px) {
+  .creative-settings-container {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 
-  .management-item h4 {
-    margin: 0 0 0.5rem 0;
-    font-weight: 600;
-    color: #1f2937;
+  .settings-navigation {
+    position: static;
+    margin-bottom: 16px;
   }
 
-  .management-item p {
-    margin: 0 0 1rem 0;
-    color: #6b7280;
-    font-size: 0.875rem;
+  .nav-items {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+
+  .nav-item {
+    flex-shrink: 0;
+    min-width: 140px;
   }
 }
 
 @media (max-width: 768px) {
-  .main-content {
-    padding: 1rem;
+  .section-header-creative {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .section-icon-large {
+    width: 60px;
+    height: 60px;
+    font-size: 32px;
+    margin: 0 auto;
+  }
+
+  .section-title-creative {
+    font-size: 24px;
+  }
+
+  .provider-stats,
+  .notification-summary {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .data-actions-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .creative-form-container {
+    max-width: none;
+  }
+
+  .settings-section {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-items {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+
+  .nav-item {
+    min-width: auto;
+  }
+
+  .section-title-creative {
+    font-size: 20px;
+  }
+
+  .settings-section {
+    padding: 20px;
+  }
+
+  .creative-switches {
+    gap: 16px;
+  }
+
+  .switch-group {
+    padding: 16px;
   }
 }
 </style>

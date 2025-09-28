@@ -12,13 +12,55 @@
         </template>
       </a-page-header>
 
-      <!-- Progress Steps -->
-      <div class="wizard-progress">
-        <a-steps :current="currentStep - 1" size="small">
-          <a-step title="Basic Information" description="Campaign details and ad type" />
-          <a-step title="AI Configuration" description="Choose AI providers and settings" />
-          <a-step title="Preview & Save" description="Review and save your ad" />
-        </a-steps>
+      <!-- Creative Progress Steps -->
+      <div class="creative-progress-container">
+        <div class="progress-header">
+          <h2 class="progress-title">Let's create your ad</h2>
+          <div class="progress-subtitle">Step {{ currentStep }} of 3</div>
+        </div>
+
+        <div class="creative-progress-tracker">
+          <div class="progress-line">
+            <div class="progress-fill" :style="{ width: (currentStep / 3 * 100) + '%' }"></div>
+          </div>
+
+          <div class="progress-steps">
+            <div
+              v-for="(step, index) in progressSteps"
+              :key="index"
+              class="progress-step"
+              :class="{
+                active: currentStep === index + 1,
+                completed: currentStep > index + 1,
+                current: currentStep === index + 1
+              }"
+            >
+              <div class="step-circle">
+                <div v-if="currentStep > index + 1" class="step-check">✓</div>
+                <div v-else class="step-number">{{ index + 1 }}</div>
+              </div>
+              <div class="step-content">
+                <div class="step-title">{{ step.title }}</div>
+                <div class="step-desc">{{ step.description }}</div>
+                <div v-if="currentStep === index + 1" class="step-emoji">{{ step.emoji }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fun Progress Indicator -->
+        <div class="fun-progress">
+          <div class="progress-character">
+            <span v-if="currentStep === 1">🎯</span>
+            <span v-else-if="currentStep === 2">🤖</span>
+            <span v-else>🎉</span>
+          </div>
+          <div class="progress-message">
+            <span v-if="currentStep === 1">Tell us about your ad</span>
+            <span v-else-if="currentStep === 2">Pick your AI superpowers</span>
+            <span v-else>Almost there!</span>
+          </div>
+        </div>
       </div>
 
       <!-- Step 1: Basic Information -->
@@ -177,6 +219,16 @@
                 :maxlength="2000"
                 show-count
               />
+              
+              <!-- Prompt Validator Component -->
+              <PromptValidator
+                :prompt="formData.prompt"
+                :ad-type="formData.adType"
+                :language="formData.language"
+                :target-audience="formData.targetAudience || ''"
+                :auto-validate="true"
+                @prompt-updated="onPromptUpdated"
+              />
             </a-form-item>
 
             <!-- Ad Links -->
@@ -244,62 +296,152 @@
 
       <!-- Step 2: AI Configuration -->
       <div v-if="currentStep === 2" class="step-content">
-        <a-card title="AI Configuration" class="enhanced-card">
-          <!-- Text Provider Selection -->
-          <a-form-item label="Text Generation Provider">
-            <a-radio-group v-model:value="formData.textProvider" class="ai-provider-grid">
-              <div 
-                v-for="provider in textProviders" 
-                :key="provider.value" 
-                class="ai-provider-card" 
-                :class="{ 
+        <div class="ai-config-container">
+          <div class="ai-section-header">
+            <h2 class="section-title-magic">Choose your AI superpowers! 🤖</h2>
+            <p class="section-subtitle-magic">Select the best AI providers for your creative needs</p>
+          </div>
+
+          <!-- Text Provider Selection - Creative Layout -->
+          <div class="provider-section text-providers">
+            <div class="provider-section-header">
+              <div class="section-icon">✍️</div>
+              <div>
+                <h3 class="provider-title">Text Generation</h3>
+                <p class="provider-subtitle">Pick your copywriting assistant</p>
+              </div>
+            </div>
+
+            <div class="creative-provider-grid">
+              <div
+                v-for="provider in textProviders"
+                :key="provider.value"
+                class="creative-provider-card text-provider"
+                :class="{
                   selected: formData.textProvider === provider.value,
-                  disabled: !provider.enabled 
+                  disabled: !provider.enabled
                 }"
                 @click="formData.textProvider = provider.value"
               >
-                <a-radio :value="provider.value" style="display: none" />
-                <div class="provider-header">
-                  <h3>{{ provider.name }}</h3>
-                  <a-tag v-if="!provider.enabled" color="red">Disabled</a-tag>
+                <input
+                  type="radio"
+                  :value="provider.value"
+                  v-model="formData.textProvider"
+                  style="display: none"
+                />
+
+                <div class="provider-visual">
+                  <div class="provider-icon">{{ getProviderIcon(provider.value, 'text') }}</div>
+                  <div class="provider-status" v-if="!provider.enabled">⚠️</div>
                 </div>
-                <p>{{ provider.description }}</p>
-                <div class="provider-features">
-                  <a-tag v-for="feature in provider.features" :key="feature" color="blue">
-                    {{ feature }}
-                  </a-tag>
+
+                <div class="provider-info">
+                  <h4 class="provider-name">{{ provider.name }}</h4>
+                  <p class="provider-desc">{{ provider.description }}</p>
+
+                  <div class="provider-badges">
+                    <span
+                      v-for="feature in provider.features"
+                      :key="feature"
+                      class="feature-badge"
+                    >
+                      {{ feature }}
+                    </span>
+                  </div>
+
+                  <div class="provider-rating">
+                    <div class="rating-stars">
+                      <span v-for="n in getProviderRating(provider.value)" :key="n">⭐</span>
+                    </div>
+                    <span class="rating-text">{{ getProviderRatingText(provider.value) }}</span>
+                  </div>
+                </div>
+
+                <div class="provider-selection">
+                  <div class="selection-indicator">
+                    <div class="selection-dot"></div>
+                  </div>
                 </div>
               </div>
-            </a-radio-group>
-          </a-form-item>
+            </div>
+          </div>
 
-          <!-- Image Provider Selection -->
-          <a-form-item label="Image Generation Provider">
-            <a-radio-group v-model:value="formData.imageProvider" class="ai-provider-grid">
-              <div 
-                v-for="provider in imageProviders" 
-                :key="provider.value" 
-                class="ai-provider-card" 
-                :class="{ 
+          <!-- Image Provider Selection - Creative Layout -->
+          <div class="provider-section image-providers">
+            <div class="provider-section-header">
+              <div class="section-icon">🎨</div>
+              <div>
+                <h3 class="provider-title">Image Generation</h3>
+                <p class="provider-subtitle">Choose your visual artist</p>
+              </div>
+            </div>
+
+            <div class="creative-provider-grid">
+              <div
+                v-for="provider in imageProviders"
+                :key="provider.value"
+                class="creative-provider-card image-provider"
+                :class="{
                   selected: formData.imageProvider === provider.value,
-                  disabled: !provider.enabled 
+                  disabled: !provider.enabled
                 }"
                 @click="formData.imageProvider = provider.value"
               >
-                <a-radio :value="provider.value" style="display: none" />
-                <div class="provider-header">
-                  <h3>{{ provider.name }}</h3>
-                  <a-tag v-if="!provider.enabled" color="red">Disabled</a-tag>
+                <input
+                  type="radio"
+                  :value="provider.value"
+                  v-model="formData.imageProvider"
+                  style="display: none"
+                />
+
+                <div class="provider-visual">
+                  <div class="provider-icon">{{ getProviderIcon(provider.value, 'image') }}</div>
+                  <div class="provider-status" v-if="!provider.enabled">⚠️</div>
                 </div>
-                <p>{{ provider.description }}</p>
-                <div class="provider-features">
-                  <a-tag v-for="feature in provider.features" :key="feature" color="blue">
-                    {{ feature }}
-                  </a-tag>
+
+                <div class="provider-info">
+                  <h4 class="provider-name">{{ provider.name }}</h4>
+                  <p class="provider-desc">{{ provider.description }}</p>
+
+                  <div class="provider-badges">
+                    <span
+                      v-for="feature in provider.features"
+                      :key="feature"
+                      class="feature-badge"
+                    >
+                      {{ feature }}
+                    </span>
+                  </div>
+
+                  <div class="provider-rating">
+                    <div class="rating-stars">
+                      <span v-for="n in getProviderRating(provider.value)" :key="n">⭐</span>
+                    </div>
+                    <span class="rating-text">{{ getProviderRatingText(provider.value) }}</span>
+                  </div>
+                </div>
+
+                <div class="provider-selection">
+                  <div class="selection-indicator">
+                    <div class="selection-dot"></div>
+                  </div>
                 </div>
               </div>
-            </a-radio-group>
-          </a-form-item>
+            </div>
+          </div>
+
+          <!-- AI Power Level Indicator -->
+          <div class="ai-power-indicator">
+            <div class="power-header">
+              <span class="power-icon">⚡</span>
+              <span class="power-title">AI Power Level</span>
+            </div>
+            <div class="power-bar">
+              <div class="power-fill" :style="{ width: calculateAIPowerLevel() + '%' }"></div>
+            </div>
+            <div class="power-message">{{ getAIPowerMessage() }}</div>
+          </div>
+        </div>
 
           <!-- Optional Media Upload -->
           <a-form-item label="Upload Media (Optional)">
@@ -354,7 +496,7 @@
               Generate Ad
             </a-button>
           </div>
-        </a-card>
+        </div>
       </div>
 
       <!-- Step 3: Preview & Save -->
@@ -420,9 +562,8 @@
           </div>
         </a-card>
       </div>
-    </div>
 
-    <!-- Edit Modal -->
+      <!-- Edit Modal -->
     <a-modal 
       v-model:open="showEditModal" 
       title="Edit Ad Variation" 
@@ -559,7 +700,7 @@
         </div>
       </div>
     </a-modal>
-    </div>
+  </div>
 </template>
 
 <script>
@@ -575,6 +716,7 @@ import {
   SaveOutlined
 } from '@ant-design/icons-vue'
 import api from '@/services/api'
+import PromptValidator from '@/components/PromptValidator.vue'
 
 export default {
   name: 'AdCreate',
@@ -587,7 +729,8 @@ export default {
     DownloadOutlined,
     ThunderboltOutlined,
     EditOutlined,
-    SaveOutlined
+    SaveOutlined,
+    PromptValidator
   },
   data() {
     return {
@@ -706,7 +849,25 @@ export default {
     }
   },
   computed: {
-    // Add any computed properties here
+    progressSteps() {
+      return [
+        {
+          title: 'Basic Info',
+          description: 'Tell us about your ad',
+          emoji: '📝'
+        },
+        {
+          title: 'AI Magic',
+          description: 'Choose your AI tools',
+          emoji: '🤖'
+        },
+        {
+          title: 'Preview',
+          description: 'See your creation',
+          emoji: '✨'
+        }
+      ]
+    }
   },
   async mounted() {
     await this.loadData()
@@ -1199,17 +1360,729 @@ export default {
     closeMediaModal() {
       this.showMediaModal = false
       this.selectedMediaUrl = ''
+    },
+
+    onPromptUpdated(improvedPrompt) {
+      this.formData.prompt = improvedPrompt
+      this.$message.success('Prompt updated with improved version!')
+    },
+
+    // New Creative Methods for Phase 3 Implementation
+    getProviderIcon(provider, type) {
+      const icons = {
+        text: {
+          openai: '🧠',
+          claude: '🎭',
+          gemini: '💎',
+          huggingface: '🤗'
+        },
+        image: {
+          openai: '🎨',
+          stability: '🌟',
+          fal: '⚡',
+          midjourney: '🎪'
+        }
+      }
+      return icons[type]?.[provider] || (type === 'text' ? '✏️' : '🖼️')
+    },
+
+    getProviderRating(provider) {
+      const ratings = {
+        openai: 5,
+        claude: 4,
+        gemini: 4,
+        stability: 4,
+        fal: 3,
+        huggingface: 3
+      }
+      return ratings[provider] || 3
+    },
+
+    getProviderRatingText(provider) {
+      const texts = {
+        openai: 'Most Popular',
+        claude: 'Reliable',
+        gemini: 'Fast',
+        stability: 'High Quality',
+        fal: 'Experimental',
+        huggingface: 'Open Source'
+      }
+      return texts[provider] || 'Good Choice'
+    },
+
+    calculateAIPowerLevel() {
+      let power = 0
+
+      // Text provider power
+      const textPower = {
+        openai: 35,
+        claude: 30,
+        gemini: 25,
+        huggingface: 20
+      }
+      power += textPower[this.formData.textProvider] || 20
+
+      // Image provider power
+      const imagePower = {
+        openai: 35,
+        stability: 30,
+        fal: 25,
+        midjourney: 40
+      }
+      power += imagePower[this.formData.imageProvider] || 20
+
+      return Math.min(power, 100)
+    },
+
+    getAIPowerMessage() {
+      const level = this.calculateAIPowerLevel()
+      if (level >= 80) return "🔥 Ultra powerful combo! Your ads will be amazing!"
+      if (level >= 60) return "⚡ Great combination! Ready for high-quality results!"
+      if (level >= 40) return "✨ Solid choice! Your ads will look professional!"
+      return "🌱 Good start! Your ads will be decent!"
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-/* Enhanced AdCreate Styles */
+/* Creative Ad Create Styles - Phase 3 Implementation */
 .ad-create-page {
   padding: 20px;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #fafafa 0%, #f0f2f5 100%);
   min-height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Creative Progress Container */
+.creative-progress-container {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(45, 90, 160, 0.08);
+  border: 1px solid #f0f2f5;
+}
+
+.progress-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.progress-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2d5aa0;
+  margin: 0 0 8px 0;
+  background: linear-gradient(135deg, #2d5aa0 0%, #1890ff 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.progress-subtitle {
+  font-size: 16px;
+  color: #8c8c8c;
+  font-weight: 500;
+}
+
+.creative-progress-tracker {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.progress-line {
+  position: absolute;
+  top: 28px;
+  left: 32px;
+  right: 32px;
+  height: 4px;
+  background: #f0f2f5;
+  border-radius: 2px;
+  z-index: 1;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2d5aa0 0%, #1890ff 100%);
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.step-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 3px solid #f0f2f5;
+  margin-bottom: 12px;
+  transition: all 0.4s ease;
+  position: relative;
+  z-index: 3;
+}
+
+.progress-step.completed .step-circle {
+  background: #2d5aa0;
+  border-color: #2d5aa0;
+  color: white;
+}
+
+.progress-step.current .step-circle {
+  background: #1890ff;
+  border-color: #1890ff;
+  color: white;
+  animation: pulse-step 2s ease-in-out infinite;
+}
+
+@keyframes pulse-step {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.step-check,
+.step-number {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.step-content {
+  text-align: center;
+  max-width: 120px;
+}
+
+.step-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 4px;
+}
+
+.step-desc {
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.step-emoji {
+  font-size: 20px;
+  animation: bounce-emoji 1.5s ease-in-out infinite;
+}
+
+@keyframes bounce-emoji {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.fun-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fff1f0 0%, #fff7e6 100%);
+  border-radius: 12px;
+  border: 1px solid #ffd6cc;
+}
+
+.progress-character {
+  font-size: 24px;
+  animation: character-float 2s ease-in-out infinite;
+}
+
+@keyframes character-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.progress-message {
+  font-size: 16px;
+  font-weight: 600;
+  color: #d46b08;
+}
+
+/* AI Configuration Creative Styling */
+.ai-config-container {
+  background: white;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(45, 90, 160, 0.08);
+  border: 1px solid #f0f2f5;
+}
+
+.ai-section-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.section-title-magic {
+  font-size: 32px;
+  font-weight: 700;
+  color: #262626;
+  margin: 0 0 12px 0;
+  line-height: 1.2;
+}
+
+.section-subtitle-magic {
+  font-size: 16px;
+  color: #8c8c8c;
+  margin: 0;
+}
+
+.provider-section {
+  margin-bottom: 40px;
+}
+
+.provider-section-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f2f5;
+}
+
+.section-icon {
+  font-size: 28px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+  border-radius: 12px;
+  border: 2px solid #91d5ff;
+}
+
+.provider-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #262626;
+  margin: 0 0 4px 0;
+}
+
+.provider-subtitle {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin: 0;
+}
+
+.creative-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.creative-provider-card {
+  background: white;
+  border: 2px solid #f0f2f5;
+  border-radius: 16px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.creative-provider-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(24, 144, 255, 0.02) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.creative-provider-card:hover::before {
+  opacity: 1;
+}
+
+.creative-provider-card:hover {
+  border-color: #91d5ff;
+  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.creative-provider-card.selected {
+  border-color: #1890ff;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+  box-shadow: 0 8px 32px rgba(24, 144, 255, 0.2);
+}
+
+.creative-provider-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  background: #1890ff;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.creative-provider-card.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.provider-visual {
+  position: relative;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.provider-icon {
+  font-size: 32px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fff1f0 0%, #fff7e6 100%);
+  border-radius: 12px;
+  border: 2px solid #ffadd2;
+}
+
+.provider-status {
+  font-size: 18px;
+}
+
+.provider-info {
+  flex: 1;
+}
+
+.provider-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #262626;
+  margin: 0 0 8px 0;
+}
+
+.provider-desc {
+  font-size: 14px;
+  color: #595959;
+  line-height: 1.4;
+  margin: 0 0 16px 0;
+}
+
+.provider-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.feature-badge {
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+  color: #0958d9;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid #91d5ff;
+}
+
+.provider-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rating-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.rating-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f4a261;
+}
+
+.provider-selection {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.selection-indicator {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d9d9d9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.creative-provider-card.selected .selection-indicator {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+.selection-dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+}
+
+/* AI Power Level Indicator */
+.ai-power-indicator {
+  background: linear-gradient(135deg, #fff8e1 0%, #fff1b0 100%);
+  border: 2px solid #ffd666;
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 32px;
+}
+
+.power-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.power-icon {
+  font-size: 20px;
+}
+
+.power-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #d46b08;
+}
+
+.power-bar {
+  background: rgba(255, 255, 255, 0.8);
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.power-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd666 0%, #f4a261 100%);
+  border-radius: 6px;
+  transition: width 0.6s ease;
+}
+
+.power-message {
+  font-size: 14px;
+  font-weight: 600;
+  color: #d46b08;
+  text-align: center;
+}
+
+/* Step Content Styling */
+.step-content {
+  background: white;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(45, 90, 160, 0.08);
+  border: 1px solid #f0f2f5;
+}
+
+.enhanced-card {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.enhanced-card :deep(.ant-card-head) {
+  border: none;
+  padding: 0 0 24px 0;
+}
+
+.enhanced-card :deep(.ant-card-head-title) {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2d5aa0;
+}
+
+.enhanced-card :deep(.ant-card-body) {
+  padding: 0;
+}
+
+/* Step Navigation */
+.step-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #f0f2f5;
+}
+
+.step-navigation .ant-btn {
+  height: 48px;
+  border-radius: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-navigation .ant-btn-primary {
+  background: linear-gradient(135deg, #2d5aa0 0%, #1890ff 100%);
+  border: none;
+  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.3);
+}
+
+.step-navigation .ant-btn-primary:hover {
+  background: linear-gradient(135deg, #1e3a6f 0%, #0d7cc0 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(24, 144, 255, 0.4);
+}
+
+/* Mobile Responsiveness - Phase 2 Enhanced */
+@media (max-width: 768px) {
+  .ad-create-page {
+    padding: 16px;
+  }
+
+  .creative-progress-container {
+    padding: 20px;
+  }
+
+  .progress-title {
+    font-size: 24px;
+  }
+
+  .progress-steps {
+    gap: 8px;
+  }
+
+  .step-circle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .step-content {
+    max-width: 90px;
+  }
+
+  .step-title {
+    font-size: 12px;
+  }
+
+  .step-desc {
+    font-size: 10px;
+  }
+
+  .ai-config-container {
+    padding: 24px;
+  }
+
+  .section-title-magic {
+    font-size: 26px;
+  }
+
+  .creative-provider-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .creative-provider-card {
+    padding: 20px;
+  }
+
+  .provider-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 24px;
+  }
+
+  .step-navigation {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .step-navigation .ant-btn {
+    width: 100%;
+    height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .progress-line {
+    left: 22px;
+    right: 22px;
+  }
+
+  .step-circle {
+    width: 36px;
+    height: 36px;
+  }
+
+  .step-check,
+  .step-number {
+    font-size: 14px;
+  }
+
+  .section-title-magic {
+    font-size: 22px;
+  }
+
+  .provider-title {
+    font-size: 18px;
+  }
+}
+
+  .step-navigation .ant-btn:first-child {
+    order: 1;
+  }
+
+@media (max-width: 480px) {
+  .ad-create-page {
+    padding: 8px;
+  }
+
+  .step-content {
+    padding: 0.75rem;
+  }
+
+  .wizard-progress {
+    padding: 0.75rem;
+  }
+
+  .ai-provider-card {
+    min-height: 120px;
+    padding: 0.75rem;
+  }
 }
 
 .nav-item:hover,
@@ -1287,14 +2160,13 @@ export default {
 .ai-provider-card:hover {
   border-color: #1890ff;
   box-shadow: 0 10px 25px rgba(24, 144, 255, 0.1);
-  transform: translateY(-2px);
+  border-color: #6b8499;
 }
 
 .ai-provider-card.selected {
-  border-color: #1890ff;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
-  box-shadow: 0 10px 25px rgba(24, 144, 255, 0.2);
-  transform: scale(1.02);
+  border-color: #2d5aa0;
+  background: #f0f4f7;
+  box-shadow: 0 3px 12px rgba(45, 90, 160, 0.12);
 }
 
 .ai-provider-card.disabled {
@@ -1359,14 +2231,13 @@ export default {
 .ad-preview-card:hover {
   border-color: #52c41a;
   box-shadow: 0 20px 40px rgba(82, 196, 26, 0.1);
-  transform: translateY(-4px);
+  border-color: #4a8c4a;
 }
 
 .ad-preview-card.selected {
-  border-color: #52c41a;
-  background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
-  box-shadow: 0 20px 40px rgba(82, 196, 26, 0.2);
-  transform: scale(1.02);
+  border-color: #4a8c4a;
+  background: #f2f8f2;
+  box-shadow: 0 3px 12px rgba(74, 140, 74, 0.12);
 }
 
 .ad-preview-content {
@@ -1381,7 +2252,8 @@ export default {
   border-radius: 1rem;
   overflow: hidden;
   margin-bottom: 1rem;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  background: #f4f4f2;
+  border: 2px solid #e8e8e4;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1424,19 +2296,19 @@ export default {
 }
 
 .ad-preview-cta {
-  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  background: #2d5aa0;
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
+  border: 1px solid #274d89;
   font-weight: 600;
   text-align: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(24, 144, 255, 0.2);
+  transition: all 0.2s ease;
 }
 
 .ad-preview-cta:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 12px rgba(24, 144, 255, 0.3);
+  background: #274d89;
+  border-color: #1f3d6b;
 }
 
 .ad-preview-actions {

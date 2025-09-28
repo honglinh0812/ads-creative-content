@@ -199,8 +199,7 @@ export default {
 }
 
 .mobile-card--clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-md);
 }
 
 .mobile-card--clickable:active {
@@ -227,7 +226,7 @@ export default {
   align-items: center;
   justify-content: center;
   z-index: 10;
-  backdrop-filter: blur(2px);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .loading-spinner {
@@ -321,9 +320,7 @@ export default {
   transition: var(--transition-transform);
 }
 
-.mobile-card--clickable:hover .mobile-card-image img {
-  transform: scale(1.05);
-}
+/* Simplified hover effects without transform */
 
 /* Card Content */
 .mobile-card-content {

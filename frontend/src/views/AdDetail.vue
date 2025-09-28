@@ -29,7 +29,7 @@
         </div>
         <div v-else>
           <div class="ad-preview-container flex flex-col md:flex-row gap-8">
-            <div class="ad-preview flex-1 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 shadow">
+            <div class="ad-preview flex-1 bg-neutral-50 border border-neutral-200 rounded-xl p-6">
               <div class="ad-preview-header flex items-center justify-between mb-4">
                 <div class="page-info flex items-center gap-3">
                   <div class="page-avatar w-10 h-10 bg-gray-200 rounded-full"></div>
@@ -101,7 +101,7 @@
               </div>
             </div>
             <div v-else class="generated-content-list grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div v-for="content in adContents" :key="content.id" class="generated-content-card card p-6 rounded-xl shadow border-0 bg-gradient-to-br from-white to-gray-50">
+              <div v-for="content in adContents" :key="content.id" class="generated-content-card card p-6 rounded-xl border border-neutral-200 bg-white">
                 <h4 class="font-semibold text-lg mb-2">{{ content.title }}</h4>
                 <p class="text-secondary-700 mb-2">{{ content.body }}</p>
                 <div class="flex gap-2 mt-4">

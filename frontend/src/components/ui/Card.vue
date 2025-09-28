@@ -113,7 +113,7 @@ export default {
 }
 
 .card-elevated {
-  @apply shadow-md hover:shadow-lg;
+  @apply shadow-soft hover:shadow-medium;
 }
 
 .card-outlined {
@@ -164,7 +164,7 @@ export default {
 
 /* Card states */
 .card-hoverable:hover {
-  @apply transform -translate-y-1 shadow-lg;
+  @apply shadow-medium border-primary-200;
 }
 
 .card-clickable {
@@ -172,11 +172,11 @@ export default {
 }
 
 .card-clickable:hover {
-  @apply transform -translate-y-0.5 shadow-md;
+  @apply shadow-soft border-primary-200;
 }
 
 .card-clickable:active {
-  @apply transform translate-y-0 shadow-sm;
+  @apply shadow-soft border-primary-300;
 }
 
 .card-loading {
@@ -281,10 +281,8 @@ export default {
     @apply transition-none;
   }
   
-  .card-hoverable:hover,
-  .card-clickable:hover,
-  .card-clickable:active {
-    @apply transform-none;
+  .card {
+    transition: none;
   }
   
   .card-loading::before {

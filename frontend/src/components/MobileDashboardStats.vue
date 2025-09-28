@@ -68,16 +68,19 @@
           </div>
         </div>
         
-        <div v-if="!recentActivity.length" class="empty-state">
-          <i class="pi pi-clock"></i>
-          <p>No recent activity</p>
-        </div>
+        <CreativeEmptyState
+          v-if="!recentActivity.length"
+          variant="no-activity"
+          :show-signature="false"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import CreativeEmptyState from './ui/CreativeEmptyState.vue'
+
 export default {
   name: 'MobileDashboardStats',
   props: {
@@ -153,6 +156,10 @@ export default {
     }
   },
   
+  components: {
+    CreativeEmptyState
+  },
+
   emits: ['action', 'view-all-activity'],
   
   methods: {
@@ -540,20 +547,6 @@ export default {
   color: var(--info-700);
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-8);
-  color: var(--color-text-muted);
-  text-align: center;
-}
-
-.empty-state i {
-  font-size: 2rem;
-  opacity: 0.5;
-}
 
 /* Responsive Adjustments */
 @media (width <= 640px) {

@@ -318,7 +318,7 @@ export default {
 }
 
 .input-focused {
-  @apply transform scale-[1.01];
+  @apply ring-1 ring-primary-500;
 }
 
 /* Reduced motion support */
@@ -330,7 +330,7 @@ export default {
   }
   
   .input-focused {
-    @apply transform-none scale-100;
+    @apply ring-0;
   }
 }
 

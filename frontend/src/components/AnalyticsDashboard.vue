@@ -586,35 +586,35 @@ export default {
 }
 
 .kpi-icon.kpi-blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2d5aa0;
 }
 
 .kpi-icon.kpi-green {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: #16a085;
 }
 
 .kpi-icon.kpi-purple {
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  background: #8e44ad;
 }
 
 .kpi-icon.kpi-orange {
-  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  background: #f4a261;
 }
 
 .kpi-icon.kpi-teal {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  background: #06b6d4;
 }
 
 .kpi-icon.kpi-indigo {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #4c51bf;
 }
 
 .kpi-icon.kpi-pink {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: #e76f51;
 }
 
 .kpi-icon.kpi-cyan {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: #0891b2;
 }
 
 .kpi-details {

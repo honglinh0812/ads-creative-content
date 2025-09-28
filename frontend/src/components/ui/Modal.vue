@@ -356,8 +356,5 @@ export default {
   @apply focus:outline-none;
 }
 
-/* Backdrop blur for better visual separation */
-.modal-overlay {
-  backdrop-filter: blur(4px);
-}
+/* Clean overlay without AI effects */
 </style>

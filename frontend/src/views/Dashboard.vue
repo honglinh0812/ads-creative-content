@@ -75,88 +75,122 @@
         @view-all-activity="navigateToActivity"
       />
       
-      <!-- Desktop Stats Cards -->
-      <a-row v-else :gutter="[16, 16]" style="margin-bottom: 32px;">
-        <a-col :xs="24" :sm="12" :lg="6">
-          <a-card class="stat-card" hoverable>
-            <a-statistic
-              title="Total Campaigns"
-              :value="stats.totalCampaigns || 0"
-              :value-style="{ color: '#1890ff', fontSize: '32px', fontWeight: 'bold' }"
-            >
-              <template #prefix>
-                <folder-outlined style="color: #1890ff; margin-right: 8px;" />
-              </template>
-            </a-statistic>
-          </a-card>
-        </a-col>
-        
-        <a-col :xs="24" :sm="12" :lg="6">
-          <a-card class="stat-card" hoverable>
-            <a-statistic
-              title="Total Ads"
-              :value="stats.totalAds || 0"
-              :value-style="{ color: '#52c41a', fontSize: '32px', fontWeight: 'bold' }"
-            >
-              <template #prefix>
-                <file-text-outlined style="color: #52c41a; margin-right: 8px;" />
-              </template>
-            </a-statistic>
-          </a-card>
-        </a-col>
-        
-        <a-col :xs="24" :sm="12" :lg="6">
-          <a-card class="stat-card" hoverable>
-            <a-statistic
-              title="Active Campaigns"
-              :value="stats.activeCampaigns || 0"
-              :value-style="{ color: '#fa8c16', fontSize: '32px', fontWeight: 'bold' }"
-            >
-              <template #prefix>
-                <thunderbolt-outlined style="color: #fa8c16; margin-right: 8px;" />
-              </template>
-            </a-statistic>
-          </a-card>
-        </a-col>
-        
-        <a-col :xs="24" :sm="12" :lg="6">
-          <a-card class="stat-card" hoverable>
-            <a-statistic
-              title="Active Ads"
-              :value="stats.activeAds || 0"
-              :value-style="{ color: '#722ed1', fontSize: '32px', fontWeight: 'bold' }"
-            >
-              <template #prefix>
-                <eye-outlined style="color: #722ed1; margin-right: 8px;" />
-              </template>
-            </a-statistic>
-          </a-card>
-        </a-col>
-      </a-row>
+      <!-- Creative Asymmetric Stats Layout -->
+      <div v-else class="creative-stats-container">
+        <!-- Main Featured Stat (Creative Asymmetric Position) -->
+        <div class="featured-stat">
+          <div class="stat-card-creative primary-stat">
+            <div class="stat-visual">
+              <folder-outlined class="stat-icon primary-icon" />
+              <div class="stat-pattern"></div>
+            </div>
+            <div class="stat-content">
+              <div class="stat-label">Total Campaigns</div>
+              <div class="stat-number primary-number">{{ stats.totalCampaigns || 0 }}</div>
+              <div class="stat-growth">{{ stats.totalCampaigns > 0 ? '+12%' : 'Start creating!' }}</div>
+            </div>
+          </div>
+        </div>
 
-      <!-- Quick Actions -->
-      <div class="section" style="margin-bottom: 32px;">
-        <a-typography-title :level="2" style="margin-bottom: 8px;">Quick Actions</a-typography-title>
-        <a-typography-text type="secondary" style="margin-bottom: 24px; display: block;">Get started with creating your campaigns and ads</a-typography-text>
-        
-        <a-row :gutter="[16, 16]">
-          <a-col :xs="24" :sm="12" :md="6" v-for="action in quickActions" :key="action.name">
-            <router-link :to="action.link" style="text-decoration: none;">
-              <a-card class="action-card" hoverable style="height: 100%; border-radius: 12px; border: 1px solid #f0f0f0; transition: all 0.3s ease;">
-                <div class="action-content" style="text-align: center; padding: 24px 16px;">
-                  <div class="action-icon" :style="{ width: '64px', height: '64px', margin: '0 auto 16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: action.color + '20', border: '2px solid ' + action.color + '40' }">
-                    <component :is="action.icon" :style="{ fontSize: '28px', color: action.color }" />
-                  </div>
-                  <a-typography-title :level="4" style="margin-bottom: 8px; color: #262626;">{{ action.name }}</a-typography-title>
-                  <a-typography-text type="secondary" style="font-size: 13px; line-height: 1.4; margin-bottom: 16px; display: block;">{{ action.description }}</a-typography-text>
-                  <a-button :type="action.buttonType" block :style="{ borderColor: action.color, color: action.buttonType === 'primary' ? '#fff' : action.color, backgroundColor: action.buttonType === 'primary' ? action.color : 'transparent' }">
-                    {{ action.buttonText }}
-                  </a-button>
+        <!-- Secondary Stats Grid (Breaking Standard Grid) -->
+        <div class="secondary-stats">
+          <div class="stat-card-creative secondary-stat success">
+            <file-text-outlined class="stat-icon" />
+            <div class="stat-info">
+              <div class="stat-number">{{ stats.totalAds || 0 }}</div>
+              <div class="stat-label">Total Ads</div>
+            </div>
+            <div class="stat-accent"></div>
+          </div>
+
+          <div class="stat-card-creative secondary-stat warning">
+            <thunderbolt-outlined class="stat-icon" />
+            <div class="stat-info">
+              <div class="stat-number">{{ stats.activeCampaigns || 0 }}</div>
+              <div class="stat-label">Active Campaigns</div>
+            </div>
+            <div class="stat-accent"></div>
+          </div>
+
+          <div class="stat-card-creative secondary-stat danger">
+            <eye-outlined class="stat-icon" />
+            <div class="stat-info">
+              <div class="stat-number">{{ stats.activeAds || 0 }}</div>
+              <div class="stat-label">Active Ads</div>
+            </div>
+            <div class="stat-accent"></div>
+          </div>
+        </div>
+
+        <!-- Creative Quick Insight Box -->
+        <div class="insight-card">
+          <div class="insight-content">
+            <div class="insight-emoji">🎯</div>
+            <div class="insight-text">
+              <div class="insight-title">Pro Tip</div>
+              <div class="insight-message">{{ getRandomTip() }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Creative Quick Actions -->
+      <div class="creative-actions-section">
+        <div class="section-header-creative">
+          <div class="header-content">
+            <h2 class="section-title-creative">Ready to create something awesome?</h2>
+            <p class="section-subtitle">Jump into your next campaign or ad with these shortcuts</p>
+          </div>
+          <div class="header-decoration">✨</div>
+        </div>
+
+        <div class="actions-grid-creative">
+          <!-- Primary Action - Create Campaign (Featured) -->
+          <router-link :to="quickActions[0].link" class="action-card-primary">
+            <div class="action-primary-content">
+              <div class="action-visual">
+                <folder-outlined class="action-main-icon" />
+                <div class="action-glow"></div>
+              </div>
+              <div class="action-text">
+                <h3 class="action-title">{{ quickActions[0].name }}</h3>
+                <p class="action-desc">{{ quickActions[0].description }}</p>
+                <div class="action-cta">
+                  <span>Let's go!</span>
+                  <div class="arrow-icon">→</div>
                 </div>
-              </a-card>
+              </div>
+            </div>
+          </router-link>
+
+          <!-- Secondary Actions - Creative Mini Cards -->
+          <div class="actions-secondary">
+            <router-link
+              v-for="(action, index) in quickActions.slice(1)"
+              :key="action.name"
+              :to="action.link"
+              class="action-card-mini"
+              :class="`action-${index + 1}`"
+            >
+              <component :is="action.icon" class="mini-icon" />
+              <div class="mini-content">
+                <div class="mini-title">{{ action.name.replace(' ', '\n') }}</div>
+                <div class="mini-arrow">↗</div>
+              </div>
             </router-link>
-          </a-col>
-        </a-row>
+          </div>
+
+          <!-- Fun Motivational Card -->
+          <div class="motivation-card">
+            <div class="motivation-content">
+              <div class="motivation-icon">{{ getMoodEmoji() }}</div>
+              <div class="motivation-text">
+                <div class="motivation-title">You're doing great!</div>
+                <div class="motivation-message">{{ getMotivationalMessage() }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Recent Campaigns -->
@@ -263,7 +297,7 @@
         <!-- Ads Grid -->
         <a-row :gutter="[12, 12]" v-else>
           <a-col :xs="24" :sm="12" :md="8" :lg="6" :xl="4" v-for="ad in recentAds" :key="ad.id">
-            <a-card class="ad-card hover:shadow-lg transition-all duration-200 hover:-translate-y-1" hoverable @click="viewAdDetail(ad)">
+            <a-card class="ad-card" hoverable @click="viewAdDetail(ad)">
               <!-- Ad Image Preview -->
               <div class="ad-image relative" style="margin-bottom: 12px; text-align: center;">
                 <!-- Status Badge -->
@@ -277,12 +311,12 @@
                     v-if="ad.imageUrl || ad.mediaFileUrl"
                     :src="ad.imageUrl || ad.mediaFileUrl" 
                     :alt="ad.name"
-                    class="w-full h-24 sm:h-28 object-cover rounded-lg border border-gray-200 cursor-pointer transition-transform duration-200 group-hover:scale-105"
+                    class="w-full h-24 sm:h-28 object-cover rounded-lg border border-gray-200 cursor-pointer"
                     @error="handleImageError($event, ad.id)"
                     :key="ad.id + '-image'"
                     loading="lazy"
                   />
-                  <div v-else class="w-full h-24 sm:h-28 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                  <div v-else class="w-full h-24 sm:h-28 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600 font-semibold text-lg border border-primary-200">
                     {{ ad.name ? ad.name.charAt(0).toUpperCase() : 'A' }}
                   </div>
                   
@@ -468,7 +502,7 @@ export default {
           link: "/campaign/create",
           buttonText: "Create Campaign",
           buttonType: "primary",
-          color: "#1890ff"
+          color: "#2d5aa0"
         },
         {
           name: "Create Ad",
@@ -477,7 +511,7 @@ export default {
           link: "/ad/create",
           buttonText: "Create Ad",
           buttonType: "primary",
-          color: "#52c41a"
+          color: "#16a085"
         },
         {
           name: "View Analytics",
@@ -486,7 +520,7 @@ export default {
           link: "/analytics",
           buttonText: "View Analytics",
           buttonType: "default",
-          color: "#722ed1"
+          color: "#8e44ad"
         },
         {
           name: "Optimization Center",
@@ -495,7 +529,7 @@ export default {
           link: "/optimization",
           buttonText: "Optimize",
           buttonType: "default",
-          color: "#fa8c16"
+          color: "#f4a261"
         },
       ],
       showDetailModal: false,
@@ -656,7 +690,7 @@ export default {
       // Thay thế ảnh bị lỗi bằng placeholder
       const img = event.target
       const placeholder = document.createElement('div')
-      placeholder.style.cssText = 'width: 100px; height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;'
+      placeholder.style.cssText = 'width: 100px; height: 100px; background: #f0f4f7; border: 2px solid #dae4eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #2d5aa0; font-weight: 600; font-size: 14px;'
       
       const ad = this.recentAds.find(a => a.id === adId)
       placeholder.textContent = ad && ad.name ? ad.name.charAt(0).toUpperCase() : 'A'
@@ -678,6 +712,36 @@ export default {
     
     navigateToActivity() {
       this.$router.push('/notifications')
+    },
+
+    getRandomTip() {
+      const tips = [
+        "Try A/B testing different ad creatives for better performance!",
+        "Use compelling call-to-actions to increase engagement",
+        "Target specific audiences for higher conversion rates",
+        "Monitor your ad performance regularly and optimize",
+        "Create multiple ad variations to find what works best",
+        "Use high-quality images to grab attention",
+        "Keep your ad copy concise and impactful"
+      ]
+      return tips[Math.floor(Math.random() * tips.length)]
+    },
+
+    getMoodEmoji() {
+      const emojis = ['🚀', '💪', '🎉', '⭐', '🔥', '💎', '🎯', '✨']
+      return emojis[Math.floor(Math.random() * emojis.length)]
+    },
+
+    getMotivationalMessage() {
+      const messages = [
+        "Every expert was once a beginner",
+        "Great ads start with great ideas",
+        "Your creativity is your superpower",
+        "Small steps lead to big results",
+        "Perfect is the enemy of done",
+        "Innovation comes from experimentation"
+      ]
+      return messages[Math.floor(Math.random() * messages.length)]
     }
   }
 }
@@ -685,11 +749,13 @@ export default {
 
 <style scoped>
 .dashboard-container {
-  padding: 24px;
+  padding: 18px 22px 30px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .page-header {
-  margin-bottom: 24px;
+  margin-bottom: 26px;
 }
 
 .loading-container,
@@ -697,40 +763,416 @@ export default {
   margin-bottom: 24px;
 }
 
-.stat-card {
-  transition: all 0.3s ease;
+/* Creative Asymmetric Stats Layout */
+.creative-stats-container {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 0.8fr;
+  grid-template-rows: auto auto;
+  gap: 18px 22px;
+  margin-bottom: 34px;
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.featured-stat {
+  grid-row: span 2;
 }
 
-.action-card {
-  height: 100%;
-  transition: all 0.3s ease;
-}
-
-.action-card:hover {
-  transform: translateY(-2px);
-}
-
-.action-content {
-  text-align: center;
-  padding: 16px;
-}
-
-.action-icon {
+.stat-card-creative.primary-stat {
+  background: linear-gradient(135deg, #2d5aa0 0%, #1e3a6f 100%);
+  border-radius: 18px;
+  padding: 26px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  height: 200px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  width: 48px;
-  height: 48px;
-  background: #f0f9ff;
-  border-radius: 50%;
-  margin: 0 auto 12px;
+  gap: 20px;
 }
 
+.stat-visual {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.stat-icon.primary-icon {
+  font-size: 42px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.stat-pattern {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  opacity: 0.6;
+}
+
+.stat-content .stat-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 6px;
+}
+
+.stat-number.primary-number {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-growth {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.15);
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.secondary-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stat-card-creative.secondary-stat {
+  background: #ffffff;
+  border: 1px solid #f0f2f5;
+  border-radius: 14px;
+  padding: 18px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.3s ease;
+  height: 82px;
+}
+
+.stat-card-creative.secondary-stat:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(45, 90, 160, 0.12);
+}
+
+.stat-card-creative.secondary-stat .stat-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.stat-card-creative.secondary-stat.success .stat-icon {
+  color: #16a085;
+}
+
+.stat-card-creative.secondary-stat.warning .stat-icon {
+  color: #f4a261;
+}
+
+.stat-card-creative.secondary-stat.danger .stat-icon {
+  color: #e76f51;
+}
+
+.stat-info .stat-number {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #262626;
+}
+
+.stat-info .stat-label {
+  font-size: 12px;
+  color: #8c8c8c;
+  margin-top: 2px;
+}
+
+.stat-accent {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+}
+
+.secondary-stat.success .stat-accent {
+  background: #16a085;
+}
+
+.secondary-stat.warning .stat-accent {
+  background: #f4a261;
+}
+
+.secondary-stat.danger .stat-accent {
+  background: #e76f51;
+}
+
+.insight-card {
+  background: #fff8e1;
+  border: 1px solid #f4a261;
+  border-radius: 14px;
+  padding: 18px;
+  position: relative;
+}
+
+.insight-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.insight-emoji {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.insight-title {
+  font-weight: 600;
+  color: #d46b08;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.insight-message {
+  font-size: 12px;
+  color: #7a4f01;
+  line-height: 1.4;
+}
+
+/* Creative Quick Actions */
+.creative-actions-section {
+  margin-bottom: 36px;
+}
+
+.section-header-creative {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+
+.section-title-creative {
+  font-size: 26px;
+  font-weight: 700;
+  color: #262626;
+  margin: 0 0 6px 0;
+  line-height: 1.2;
+}
+
+.section-subtitle {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin: 0;
+}
+
+.header-decoration {
+  font-size: 24px;
+  opacity: 0.8;
+}
+
+.actions-grid-creative {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 0.6fr;
+  grid-template-rows: auto auto;
+  gap: 18px;
+}
+
+.action-card-primary {
+  grid-row: span 2;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+  border: 2px solid #91d5ff;
+  border-radius: 18px;
+  padding: 28px;
+  text-decoration: none;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+}
+
+.action-card-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(24, 144, 255, 0.15);
+  border-color: #40a9ff;
+}
+
+.action-primary-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 160px;
+}
+
+.action-visual {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.action-main-icon {
+  font-size: 36px;
+  color: #1890ff;
+}
+
+.action-glow {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  background: radial-gradient(circle, rgba(24, 144, 255, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.action-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #262626;
+  margin: 0 0 8px 0;
+}
+
+.action-desc {
+  font-size: 14px;
+  color: #595959;
+  line-height: 1.4;
+  margin-bottom: auto;
+}
+
+.action-cta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #1890ff;
+  margin-top: 20px;
+}
+
+.arrow-icon {
+  font-size: 16px;
+  transition: transform 0.3s ease;
+}
+
+.action-card-primary:hover .arrow-icon {
+  transform: translateX(4px);
+}
+
+.actions-secondary {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.action-card-mini {
+  background: #ffffff;
+  border: 1px solid #f0f2f5;
+  border-radius: 12px;
+  padding: 16px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  height: 70px;
+}
+
+.action-card-mini:hover {
+  border-color: #d9d9d9;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.action-card-mini.action-1 {
+  border-left: 4px solid #16a085;
+}
+
+.action-card-mini.action-2 {
+  border-left: 4px solid #8e44ad;
+}
+
+.action-card-mini.action-3 {
+  border-left: 4px solid #f4a261;
+}
+
+.mini-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.action-1 .mini-icon {
+  color: #16a085;
+}
+
+.action-2 .mini-icon {
+  color: #8e44ad;
+}
+
+.action-3 .mini-icon {
+  color: #f4a261;
+}
+
+.mini-content {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mini-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #262626;
+  white-space: pre-line;
+  line-height: 1.2;
+}
+
+.mini-arrow {
+  font-size: 14px;
+  color: #8c8c8c;
+  transition: all 0.3s ease;
+}
+
+.action-card-mini:hover .mini-arrow {
+  color: #262626;
+  transform: translate(2px, -2px);
+}
+
+.motivation-card {
+  background: linear-gradient(135deg, #fff1f0 0%, #fff7e6 100%);
+  border: 1px solid #ffadd2;
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.motivation-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.motivation-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.motivation-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #cf1322;
+  margin-bottom: 4px;
+}
+
+.motivation-message {
+  font-size: 11px;
+  color: #a8071a;
+  line-height: 1.3;
+}
+
+/* Existing styles for other sections */
 .campaign-card,
 .ad-card {
   height: 100%;
@@ -739,8 +1181,8 @@ export default {
 
 .campaign-card:hover,
 .ad-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #dae4eb;
+  box-shadow: 0 2px 8px rgba(45, 90, 160, 0.08);
 }
 
 .campaign-header {
@@ -758,11 +1200,62 @@ export default {
   .dashboard-container {
     padding: 16px;
   }
-  
+
+  .creative-stats-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 16px;
+  }
+
+  .featured-stat {
+    grid-row: span 1;
+  }
+
+  .stat-card-creative.primary-stat {
+    height: 140px;
+    padding: 20px;
+    flex-direction: row;
+  }
+
+  .secondary-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .actions-grid-creative {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .action-card-primary {
+    grid-row: span 1;
+  }
+
+  .actions-secondary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .section-title-creative {
+    font-size: 22px;
+  }
+
   .section-header {
     flex-direction: column;
     align-items: flex-start !important;
     gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .secondary-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .actions-secondary {
+    grid-template-columns: 1fr;
   }
 }
 </style>

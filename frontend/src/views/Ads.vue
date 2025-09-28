@@ -27,32 +27,21 @@
       />
 
           <!-- Error State -->
-          <div v-if="error" class="mb-6">
-            <a-empty description="Error loading ads">
-              <template #image>
-                <div class="text-red-500">
-                  <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                </div>
-              </template>
-              <p class="text-gray-600 mb-4">{{ error }}</p>
-              <a-button type="primary" @click="loadAds">
-                Try Again
-              </a-button>
-            </a-empty>
-          </div>
+          <CreativeEmptyState
+            v-if="error"
+            variant="loading-failed"
+            :custom-message="error"
+            action-text="Try Again"
+            :action-handler="loadAds"
+          />
 
           <!-- Empty State -->
-          <div v-if="!loading && ads.length === 0" class="text-center py-12">
-            <a-empty description="No ads yet">
-              <p class="text-secondary-600 mb-6">Create your first ad to start advertising</p>
-              <a-button type="primary" size="large" @click="$router.push('/ad/create')">
-                <template #icon><plus-outlined /></template>
-                Create Your First Ad
-              </a-button>
-            </a-empty>
-          </div>
+          <CreativeEmptyState
+            v-if="!loading && ads.length === 0"
+            variant="no-ads"
+            action-text="Create Your First Ad"
+            :action-handler="() => $router.push('/ad/create')"
+          />
       </div>
 
       <!-- Ad Detail Modal -->
@@ -173,10 +162,11 @@
 
 <script>
 import { mapState, mapActions } from "vuex"
-import { Modal, Input, Select, Button, message, Empty } from "ant-design-vue"
+import { Modal, Input, Select, Button, message } from "ant-design-vue"
 import { PlusOutlined } from "@ant-design/icons-vue"
 
 import AdTable from '@/components/AdTable.vue'
+import CreativeEmptyState from '@/components/ui/CreativeEmptyState.vue'
 import api from '@/services/api'
 
 export default {
@@ -187,10 +177,10 @@ export default {
     ATextarea: Input.TextArea,
     ASelect: Select,
     AButton: Button,
-    AEmpty: Empty,
     PlusOutlined,
 
-    AdTable
+    AdTable,
+    CreativeEmptyState
   },
   data() {
     return {
@@ -589,5 +579,60 @@ export default {
   padding: 24px;
   background: #f5f5f5;
   min-height: 100vh;
+}
+
+/* Mobile Responsiveness - Phase 2 Implementation */
+@media (max-width: 768px) {
+  .ads-page {
+    padding: 12px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .page-header .ant-btn {
+    width: 100%;
+    order: -1;
+  }
+
+  .ant-modal {
+    margin: 0;
+    max-width: 100vw;
+    height: 100vh;
+  }
+
+  .ant-modal-content {
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .field {
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ads-page {
+    padding: 8px;
+  }
+
+  .page-header {
+    gap: 8px;
+  }
+
+  .page-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .page-header p {
+    font-size: 0.9rem;
+  }
+
+  .field label {
+    font-size: 0.875rem;
+  }
 }
 </style>

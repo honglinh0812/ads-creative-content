@@ -1,8 +1,18 @@
 <template>
   <header class="header bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700 shadow-soft">
     <div class="header-left">
-      <div class="header-brand">
-        <h1 class="brand-text text-neutral-900 dark:text-neutral-100">Ads Creative</h1>
+      <div class="header-brand" @click="handleBrandClick">
+        <h1 class="brand-text text-neutral-900 dark:text-neutral-100" :class="{ 'brand-sparkle': brandClicks >= 5 }">
+          Ads Creative
+          <span v-if="brandClicks >= 3" class="brand-easter-egg">{{ getBrandEasterEgg() }}</span>
+        </h1>
+        <div v-if="showDeveloperSignature" class="developer-signature-popup">
+          <div class="signature-content">
+            <div class="signature-emoji">👨‍💻</div>
+            <p class="signature-text">{{ getDeveloperMessage() }}</p>
+            <small class="signature-credit">{{ getDeveloperCredit() }}</small>
+          </div>
+        </div>
       </div>
       <!-- Search functionality removed as requested -->
     </div>
@@ -199,7 +209,10 @@ export default {
       showDropdown: false,
       showNotificationDropdown: false,
       showLogoutDialog: false,
-      defaultAvatar: 'https://avatars.githubusercontent.com/u/9919?s=200&v=4'
+      defaultAvatar: 'https://avatars.githubusercontent.com/u/9919?s=200&v=4',
+      brandClicks: 0,
+      showDeveloperSignature: false,
+      signatureTimeout: null
     }
   },
   computed: {
@@ -304,6 +317,66 @@ export default {
       const currentIndex = menuItems.findIndex(item => item === event.target)
       const prevIndex = currentIndex === 0 ? menuItems.length - 1 : currentIndex - 1
       menuItems[prevIndex]?.focus()
+    },
+
+    // Easter Egg Methods
+    handleBrandClick() {
+      this.brandClicks++
+
+      if (this.brandClicks === 7) {
+        this.showDeveloperSignature = true
+        this.signatureTimeout = setTimeout(() => {
+          this.showDeveloperSignature = false
+          this.brandClicks = 0
+        }, 5000)
+      } else if (this.brandClicks > 10) {
+        // Super secret easter egg
+        this.brandClicks = 0
+        this.triggerSuperEasterEgg()
+      }
+    },
+
+    getBrandEasterEgg() {
+      const easterEggs = ['✨', '🎉', '🚀', '💎', '⭐', '🌟', '✨']
+      return easterEggs[this.brandClicks % easterEggs.length]
+    },
+
+    getDeveloperMessage() {
+      const messages = [
+        "Hey there! You found the developer easter egg! 👋",
+        "Curious developer, aren't you? I like that! 🕵️‍♂️",
+        "7 clicks to unlock this message... you're persistent! 🎯",
+        "Welcome to the secret developer club! 🤝",
+        "Achievement unlocked: Professional Button Clicker! 🏆"
+      ]
+      return messages[Math.floor(Math.random() * messages.length)]
+    },
+
+    getDeveloperCredit() {
+      const credits = [
+        "Handcrafted with ❤️ and too much coffee",
+        "Built by someone who reads documentation",
+        "Made with love, bugs, and Stack Overflow",
+        "100% authentic code, 0% AI templates",
+        "Powered by determination and energy drinks"
+      ]
+      return credits[Math.floor(Math.random() * credits.length)]
+    },
+
+    triggerSuperEasterEgg() {
+      // Add some fun visual effects
+      document.body.style.animation = 'rainbow-background 2s ease-in-out'
+      setTimeout(() => {
+        document.body.style.animation = ''
+      }, 2000)
+
+      // Show a special message
+      this.$store.dispatch('toast/show', {
+        type: 'success',
+        title: 'Super Easter Egg!',
+        message: 'You discovered the ultimate easter egg! You must be a developer too. 🎊',
+        duration: 5000
+      })
     }
   },
   mounted() {
@@ -334,8 +407,7 @@ export default {
   position: sticky;
   top: 0;
   z-index: 40;
-  backdrop-filter: blur(8px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease;
 }
 
 /* Header brand */
@@ -349,17 +421,11 @@ export default {
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.025em;
-  background: linear-gradient(135deg, theme('colors.primary.600'), theme('colors.secondary.500'));
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: theme('colors.primary.600');
 }
 
 .dark .brand-text {
-  background: linear-gradient(135deg, theme('colors.primary.400'), theme('colors.secondary.400'));
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: theme('colors.primary.400');
 }
 
 /* Header layout */
@@ -384,7 +450,7 @@ export default {
   font-size: 1.25rem;
   padding: 0.75rem;
   border-radius: 0.75rem;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -392,7 +458,7 @@ export default {
 
 .icon-btn:hover {
   background: theme('colors.neutral.100');
-  transform: translateY(-1px);
+  opacity: 0.8;
 }
 
 .dark .icon-btn:hover {
@@ -400,7 +466,7 @@ export default {
 }
 
 .icon-btn:active {
-  transform: translateY(0);
+  opacity: 1;
 }
 
 /* Badge */
@@ -431,13 +497,13 @@ export default {
   cursor: pointer;
   padding: 0.5rem 1rem;
   border-radius: 0.75rem;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease;
   border: 1px solid transparent;
 }
 
 .user-menu:hover {
   border-color: theme('colors.neutral.200');
-  transform: translateY(-1px);
+  opacity: 0.8;
   box-shadow: 0 4px 12px -2px rgb(0 0 0 / 10%);
 }
 
@@ -491,12 +557,12 @@ export default {
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-8px) scale(0.95);
+    opacity: 0;
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    opacity: 1;
   }
 }
 
@@ -506,14 +572,14 @@ export default {
   font-size: 0.875rem;
   font-weight: 500;
   border-radius: 0.5rem;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.15s ease;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .dropdown a:hover {
-  transform: translateX(2px);
+  background: theme('colors.primary.50');
 }
 
 /* Focus styles */
@@ -568,7 +634,7 @@ export default {
   gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-bottom: 1px solid theme('colors.neutral.100');
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.15s ease;
   cursor: pointer;
 }
 
@@ -581,7 +647,7 @@ export default {
 }
 
 .notification-item:hover {
-  transform: translateX(2px);
+  background: theme('colors.primary.50');
 }
 
 .noti-icon {
@@ -626,12 +692,12 @@ export default {
   cursor: pointer;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.15s ease;
   width: 100%;
 }
 
 .check-all-btn:hover {
-  transform: translateY(-1px);
+  opacity: 0.8;
 }
 
 .notification-empty {
@@ -668,8 +734,7 @@ export default {
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 10%), 0 10px 10px -5px rgb(0 0 0 / 4%);
   max-width: 28rem;
   width: 90%;
-  animation: scaleIn 0.2s ease-out;
-  transform-origin: center;
+  opacity: 1;
 }
 
 .dark .logout-dialog {
@@ -687,17 +752,7 @@ export default {
   }
 }
 
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+/* Simplified animations */
 
 .logout-dialog-content {
   padding: 2rem;
@@ -741,7 +796,7 @@ export default {
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.15s ease;
   min-width: 5rem;
 }
 
@@ -752,7 +807,7 @@ export default {
 
 .logout-dialog-actions .btn-secondary:hover {
   background: theme('colors.neutral.200');
-  transform: translateY(-1px);
+  opacity: 0.8;
 }
 
 .dark .logout-dialog-actions .btn-secondary {
@@ -771,7 +826,7 @@ export default {
 
 .logout-dialog-actions .btn-primary:hover {
   background: theme('colors.error.600');
-  transform: translateY(-1px);
+  opacity: 0.8;
   box-shadow: 0 4px 12px rgb(239 68 68 / 40%);
 }
 
@@ -940,5 +995,115 @@ export default {
   .check-all-btn {
     padding: 0.75rem 1rem;
   }
+}
+
+/* Easter Egg Styles */
+.header-brand {
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.brand-sparkle {
+  animation: sparkle-dance 2s ease-in-out infinite;
+}
+
+.brand-easter-egg {
+  display: inline-block;
+  margin-left: 0.5rem;
+  animation: easter-egg-bounce 1s ease-in-out infinite;
+  font-size: 1.2rem;
+}
+
+.developer-signature-popup {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 1rem;
+  background: white;
+  border: 2px solid theme('colors.primary.500');
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+  animation: signature-appear 0.5s ease-out;
+  min-width: 280px;
+}
+
+.signature-content {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.signature-emoji {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.signature-text {
+  color: theme('colors.neutral.800');
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem 0;
+  font-weight: 500;
+}
+
+.signature-credit {
+  color: theme('colors.neutral.600');
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+/* Dark mode styles for signature popup */
+.dark .developer-signature-popup {
+  background: theme('colors.neutral.800');
+  border-color: theme('colors.primary.400');
+}
+
+.dark .signature-text {
+  color: theme('colors.neutral.200');
+}
+
+.dark .signature-credit {
+  color: theme('colors.neutral.400');
+}
+
+/* Easter Egg Animations */
+@keyframes sparkle-dance {
+  0%, 100% {
+    text-shadow: 0 0 5px theme('colors.primary.400'),
+                 2px 2px 10px theme('colors.primary.300');
+  }
+  50% {
+    text-shadow: 0 0 15px theme('colors.primary.500'),
+                 2px 2px 20px theme('colors.primary.400');
+  }
+}
+
+@keyframes easter-egg-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.1); }
+}
+
+@keyframes signature-appear {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.8) translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1) translateY(0);
+  }
+}
+
+/* Global rainbow background easter egg */
+@keyframes rainbow-background {
+  0% { background-color: #ff0000; }
+  16% { background-color: #ff8800; }
+  32% { background-color: #ffff00; }
+  48% { background-color: #88ff00; }
+  64% { background-color: #00ff88; }
+  80% { background-color: #0088ff; }
+  100% { background-color: #8800ff; }
+}
 }
 </style>

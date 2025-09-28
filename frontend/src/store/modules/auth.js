@@ -1,4 +1,5 @@
 import api from '../../services/api'
+import { setSentryUser, clearSentryUser } from '../../plugins/sentry'
 
 export default {
   namespaced: true,
@@ -17,6 +18,15 @@ export default {
   mutations: {
     SET_USER(state, user) {
       state.user = user;
+      
+      // Set user context in Sentry for error tracking
+      if (user) {
+        setSentryUser({
+          id: user.id,
+          email: user.email,
+          username: user.name || user.username,
+        });
+      }
     },
     SET_TOKEN(state, token) {
       state.token = token;
@@ -37,6 +47,9 @@ export default {
       state.token = null;
       state.error = null;
       localStorage.removeItem('token');
+      
+      // Clear user context from Sentry
+      clearSentryUser();
     }
   },
   actions: {

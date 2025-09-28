@@ -1,9 +1,7 @@
 <template>
   <div class="login-container">
     <div class="login-background">
-      <div class="gradient-orb orb-1"></div>
-      <div class="gradient-orb orb-2"></div>
-      <div class="gradient-orb orb-3"></div>
+      <!-- Removed AI-generated floating orbs -->
     </div>
     <a-card class="login-card glass-effect">
       <template #title>
@@ -413,7 +411,7 @@ export default {
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #fafafa;
   
   .login-background {
     position: absolute;
@@ -422,41 +420,6 @@ export default {
     width: 100%;
     height: 100%;
     z-index: 1;
-    
-    .gradient-orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(40px);
-      opacity: 0.3;
-      animation: float 6s ease-in-out infinite;
-      
-      &.orb-1 {
-        width: 300px;
-        height: 300px;
-        background: linear-gradient(45deg, #ff6b6b, #feca57);
-        top: -150px;
-        left: -150px;
-        animation-delay: 0s;
-      }
-      
-      &.orb-2 {
-        width: 200px;
-        height: 200px;
-        background: linear-gradient(45deg, #48dbfb, #0abde3);
-        top: 50%;
-        right: -100px;
-        animation-delay: 2s;
-      }
-      
-      &.orb-3 {
-        width: 250px;
-        height: 250px;
-        background: linear-gradient(45deg, #ff9ff3, #f368e0);
-        bottom: -125px;
-        left: 50%;
-        animation-delay: 4s;
-      }
-    }
   }
   
   .login-card {
@@ -464,10 +427,9 @@ export default {
     z-index: 2;
     width: 100%;
     max-width: 500px;
-    backdrop-filter: blur(20px);
-    background: rgb(255 255 255 / 95%);
-    border: 1px solid rgb(255 255 255 / 20%);
-    box-shadow: 0 25px 50px rgb(0 0 0 / 10%);
+    background: #ffffff;
+    border: 1px solid #e0e6eb;
+    box-shadow: 0 4px 16px rgba(45, 90, 160, 0.08);
     
     :deep(.ant-card-head) {
       border-bottom: none;
@@ -487,14 +449,13 @@ export default {
       .logo-container {
         width: 80px;
         height: 80px;
-        background: linear-gradient(135deg, #1877f2, #42a5f5);
+        background: #2d5aa0;
         border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-bottom: 1.5rem;
-        box-shadow: 0 10px 30px rgb(24 119 242 / 30%);
-        animation: pulse 2s ease-in-out infinite;
+        box-shadow: 0 3px 12px rgba(45, 90, 160, 0.15);
         
         .facebook-logo {
           width: 50px;
@@ -509,10 +470,7 @@ export default {
         font-size: 2rem;
         font-weight: 700;
         text-align: center;
-        background: linear-gradient(135deg, #1877f2, #42a5f5);
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #2d5aa0;
       }
     }
     
@@ -530,22 +488,21 @@ export default {
       }
       
       .facebook-login-button {
-        background: linear-gradient(135deg, #1877f2, #42a5f5);
-        border: none;
+        background: #2d5aa0;
+        border: 1px solid #274d89;
         font-size: 1.1rem;
         height: 48px;
         border-radius: 12px;
-        box-shadow: 0 10px 30px rgb(24 119 242 / 30%);
-        transition: all 0.3s ease;
-        
+        transition: all 0.2s ease;
+
         &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 15px 40px rgb(24 119 242 / 40%);
-          background: linear-gradient(135deg, #1877f2, #42a5f5);
+          background: #274d89;
+          border-color: #1f3d6b;
         }
-        
+
         &:focus {
-          background: linear-gradient(135deg, #1877f2, #42a5f5);
+          background: #274d89;
+          border-color: #1f3d6b;
         }
       }
       
@@ -566,20 +523,20 @@ export default {
             display: flex;
             align-items: center;
             padding: 1rem;
-            background: rgb(24 119 242 / 5%);
-            border-radius: 12px;
-            transition: all 0.3s ease;
+            background: #f7f9fc;
+            border-radius: 8px;
+            border: 1px solid #e8eff5;
             height: 100%;
-            
+
             &:hover {
-              background: rgb(24 119 242 / 10%);
-              transform: translateY(-2px);
+              background: #f0f4f7;
+              border-color: #d6e2eb;
             }
             
             .feature-icon {
               width: 40px;
               height: 40px;
-              background: linear-gradient(135deg, #1877f2, #42a5f5);
+              background: #2d5aa0;
               border-radius: 10px;
               display: flex;
               align-items: center;
@@ -634,25 +591,7 @@ export default {
   margin-bottom: 1rem;
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg);
-  }
-
-  50% {
-    transform: translateY(-20px) rotate(180deg);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.05);
-  }
-}
+/* Clean, authentic styling without AI-generated patterns */
 
 @media (width <= 768px) {
   .login-container {

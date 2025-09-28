@@ -1,25 +1,25 @@
 <template>
-  <div class="analytics-view">
-    <!-- Page Header -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1 class="page-title">Analytics Dashboard</h1>
-        <p class="page-description">
+  <div class="page-container">
+    <!-- Standardized Page Header -->
+    <div class="page-header-standard">
+      <div class="page-header-content">
+        <h1 class="page-title-standard">Analytics Dashboard</h1>
+        <p class="page-subtitle-standard">
           Comprehensive insights and performance metrics for your Facebook advertising campaigns
         </p>
       </div>
-      
-      <!-- Quick Actions -->
-      <div class="header-actions">
-        <button @click="refreshData" class="action-btn refresh-btn" :disabled="loading">
+
+      <!-- Standardized Actions -->
+      <div class="page-actions-standard">
+        <button @click="refreshData" class="btn-secondary-standard" :disabled="loading">
           <i class="pi pi-refresh" :class="{ 'pi-spin': loading }"></i>
           Refresh
         </button>
-        <button @click="exportData" class="action-btn export-btn">
+        <button @click="exportData" class="btn-primary-standard">
           <i class="pi pi-download"></i>
           Export
         </button>
-        <button @click="openSettings" class="action-btn settings-btn">
+        <button @click="openSettings" class="btn-secondary-standard">
           <i class="pi pi-cog"></i>
           Settings
         </button>
@@ -29,22 +29,22 @@
     <!-- Analytics Dashboard Component -->
     <AnalyticsDashboard />
 
-    <!-- Export Modal -->
-    <div v-if="showExportModal" class="modal-overlay" @click="closeExportModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>Export Analytics Data</h3>
-          <button @click="closeExportModal" class="modal-close">
+    <!-- Standardized Export Modal -->
+    <div v-if="showExportModal" class="modal-overlay-standard" @click="closeExportModal">
+      <div class="modal-content-standard" @click.stop>
+        <div class="modal-header-standard">
+          <h3 class="modal-title-standard">Export Analytics Data</h3>
+          <button @click="closeExportModal" class="modal-close-standard">
             <i class="pi pi-times"></i>
           </button>
         </div>
-        
-        <div class="modal-body">
+
+        <div class="modal-body-standard">
           <div class="export-options">
-            <div class="option-group">
-              <label class="option-label">Data Type</label>
+            <div class="form-group-standard">
+              <label class="form-label-standard">Data Type</label>
               <div class="option-buttons">
-                <button 
+                <button
                   v-for="type in exportTypes"
                   :key="type.value"
                   @click="selectedExportType = type.value"
@@ -55,11 +55,11 @@
                 </button>
               </div>
             </div>
-            
-            <div class="option-group">
-              <label class="option-label">Format</label>
+
+            <div class="form-group-standard">
+              <label class="form-label-standard">Format</label>
               <div class="option-buttons">
-                <button 
+                <button
                   v-for="format in exportFormats"
                   :key="format.value"
                   @click="selectedExportFormat = format.value"
@@ -70,10 +70,10 @@
                 </button>
               </div>
             </div>
-            
-            <div class="option-group">
-              <label class="option-label">Time Range</label>
-              <select v-model="selectedExportTimeRange" class="time-range-select">
+
+            <div class="form-group-standard">
+              <label class="form-label-standard">Time Range</label>
+              <select v-model="selectedExportTimeRange" class="form-input-standard">
                 <option value="7d">Last 7 days</option>
                 <option value="30d">Last 30 days</option>
                 <option value="90d">Last 90 days</option>
@@ -82,12 +82,12 @@
             </div>
           </div>
         </div>
-        
-        <div class="modal-footer">
-          <button @click="closeExportModal" class="btn btn-secondary">
+
+        <div class="modal-footer-standard">
+          <button @click="closeExportModal" class="btn-secondary-standard">
             Cancel
           </button>
-          <button @click="performExport" class="btn btn-primary" :disabled="exporting">
+          <button @click="performExport" class="btn-primary-standard" :disabled="exporting">
             <i v-if="exporting" class="pi pi-spin pi-spinner"></i>
             <i v-else class="pi pi-download"></i>
             {{ exporting ? 'Exporting...' : 'Export' }}
