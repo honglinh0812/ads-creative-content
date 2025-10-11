@@ -15,6 +15,7 @@
           <i class="pi pi-refresh" :class="{ 'pi-spin': loading }"></i>
           Refresh
         </button>
+        <ImportFacebookReport @import-complete="handleImportComplete" />
         <button @click="exportData" class="btn-primary-standard">
           <i class="pi pi-download"></i>
           Export
@@ -179,12 +180,15 @@
 <script>
 import { ref, onMounted, onUnmounted } from 'vue'
 import AnalyticsDashboard from '@/components/AnalyticsDashboard.vue'
+import ImportFacebookReport from '@/components/ImportFacebookReport.vue'
 import api from '@/services/api'
+import { message } from 'ant-design-vue'
 
 export default {
   name: 'AnalyticsView',
   components: {
-    AnalyticsDashboard
+    AnalyticsDashboard,
+    ImportFacebookReport
   },
   
   setup() {
@@ -321,6 +325,12 @@ export default {
     }
     
     // Lifecycle
+    const handleImportComplete = (result) => {
+      message.success(`Successfully imported ${result.imported} performance reports`)
+      // Refresh the analytics dashboard to show new data
+      refreshData()
+    }
+
     onMounted(() => {
       loadSettings()
       setupAutoRefresh()
@@ -352,7 +362,8 @@ export default {
       performExport,
       openSettings,
       closeSettingsModal,
-      saveSettings
+      saveSettings,
+      handleImportComplete
     }
   }
 }

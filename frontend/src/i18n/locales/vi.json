@@ -1,0 +1,189 @@
+{
+  "app": {
+    "loading": "Đang tải ứng dụng...",
+    "title": "Ads Creative"
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "logout": "Đăng xuất",
+    "logoutTitle": "Xác nhận đăng xuất",
+    "logoutConfirmation": "Bạn có chắc chắn muốn đăng xuất?",
+    "loginFailed": "Đăng nhập thất bại: Không lấy được thông tin người dùng."
+  },
+  "navigation": {
+    "dashboard": "Bảng điều khiển",
+    "campaigns": "Chiến dịch",
+    "allCampaigns": "Tất cả chiến dịch",
+    "createCampaign": "Tạo chiến dịch",
+    "ads": "Quảng cáo",
+    "allAds": "Tất cả quảng cáo",
+    "createAd": "Tạo quảng cáo",
+    "personas": "Persona",
+    "analytics": "Phân tích",
+    "optimization": "Tối ưu hóa",
+    "profile": "Hồ sơ",
+    "settings": "Cài đặt",
+    "backToDashboard": "Quay lại Bảng điều khiển"
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "noNotifications": "Chưa có thông báo nào",
+    "emptyDescription": "Các thông báo về chiến dịch và quảng cáo sẽ hiển thị ở đây",
+    "markAllAsRead": "Đánh dấu tất cả đã đọc"
+  },
+  "user": {
+    "defaultName": "Người dùng"
+  },
+  "darkMode": {
+    "lightMode": "Chế độ sáng đang bật",
+    "darkMode": "Chế độ tối đang bật"
+  },
+  "campaigns": {
+    "createGuide": "Hướng dẫn tạo chiến dịch",
+    "guideDescription": "Trình hướng dẫn này sẽ giúp bạn tạo chiến dịch quảng cáo Facebook chuyên nghiệp qua 3 bước đơn giản."
+  },
+  "ads": {
+    "notFound": "Không tìm thấy quảng cáo để sao chép",
+    "cannotExtract": "Không thể trích xuất nội dung"
+  },
+  "legal": {
+    "dataDeletion": {
+      "title": "Hướng dẫn Xóa Dữ liệu Người dùng",
+      "intro": "Chúng tôi tôn trọng quyền riêng tư của bạn và cung cấp cho bạn khả năng yêu cầu xóa dữ liệu cá nhân mà chúng tôi đã thu thập thông qua việc bạn sử dụng Ứng dụng và đăng nhập bằng Facebook.",
+      "requestTitle": "Cách yêu cầu xóa dữ liệu:",
+      "emailSubject": "Yêu cầu Xóa Dữ liệu Người dùng - Facebook Login",
+      "processingTime": "Chúng tôi sẽ tiến hành xóa dữ liệu cá nhân của bạn khỏi hệ thống của chúng tôi trong vòng 7 ngày làm việc.",
+      "contact": "Nếu bạn có bất kỳ câu hỏi nào về quy trình xóa dữ liệu, vui lòng liên hệ với chúng tôi tại"
+    }
+  },
+  "cta": {
+    "note": "Lưu ý: Chỉ sử dụng một trong các Call to Action sau cho quảng cáo: {ctaList}. Không tạo CTA khác."
+  },
+  "common": {
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "create": "Tạo",
+    "close": "Đóng"
+  },
+  "sidebar": {
+    "openSidebar": "Mở sidebar",
+    "closeSidebar": "Đóng sidebar"
+  },
+  "dashboard": {
+    "title": "Bảng điều khiển",
+    "subtitle": "Tổng quan về các chiến dịch và quảng cáo của bạn",
+    "newCampaign": "Chiến dịch mới",
+    "newAd": "Quảng cáo mới",
+    "errorLoading": "Lỗi tải bảng điều khiển",
+    "tryAgain": "Thử lại",
+    "totalCampaigns": "Tổng số chiến dịch",
+    "totalAds": "Tổng số quảng cáo",
+    "activeCampaigns": "Chiến dịch đang hoạt động",
+    "activeAds": "Quảng cáo đang hoạt động",
+    "startCreating": "Bắt đầu tạo!",
+    "growthThisMonth": "Bạn đã tăng trưởng {percent}% tháng này",
+    "proTip": "Mẹo Pro",
+    "whatNext": "Tiếp theo là gì",
+    "yourProgress": "Tiến độ của bạn",
+    "quickActions": "Hành động nhanh",
+    "readyToCreate": "Sẵn sàng tạo điều gì đó tuyệt vời?",
+    "jumpIntoNext": "Bắt đầu chiến dịch hoặc quảng cáo tiếp theo với các lối tắt này",
+    "viewAll": "Xem tất cả",
+    "noCampaignsYet": "Chưa có chiến dịch nào",
+    "createFirstCampaign": "Tạo chiến dịch đầu tiên",
+    "noAdsYet": "Chưa có quảng cáo nào",
+    "createFirstAd": "Tạo quảng cáo đầu tiên",
+    "recentCampaigns": "Chiến dịch gần đây",
+    "recentCampaignsDesc": "Các chiến dịch mới nhất và hiệu suất của chúng",
+    "recentAds": "Quảng cáo gần đây",
+    "recentAdsDesc": "Các quảng cáo mới tạo của bạn",
+    "budget": "Ngân sách",
+    "ads": "Quảng cáo",
+    "adDetails": "Chi tiết quảng cáo",
+    "adMedia": "Media quảng cáo",
+    "viewImage": "Xem hình ảnh",
+    "viewVideo": "Xem video",
+    "view": "Xem",
+    "viewDetails": "Xem chi tiết",
+    "campaign": "Chiến dịch",
+    "adType": "Loại quảng cáo",
+    "status": "Trạng thái",
+    "headline": "Tiêu đề",
+    "primaryText": "Văn bản chính",
+    "description": "Mô tả",
+    "callToAction": "Lời kêu gọi hành động",
+    "media": "Media",
+    "createdDate": "Ngày tạo",
+    "noMediaAvailable": "Không có media cho quảng cáo này",
+    "youDoingGreat": "Bạn làm rất tốt!",
+    "nextSteps": {
+      "title": "Các bước tiếp theo được đề xuất",
+      "firstCampaign": "Tạo chiến dịch đầu tiên để bắt đầu",
+      "firstAd": "Tạo quảng cáo đầu tiên để tiếp cận đối tượng",
+      "moreCampaigns": "Tạo thêm chiến dịch để mở rộng phạm vi tiếp cận",
+      "moreAds": "Thêm quảng cáo để thử nghiệm các sáng tạo khác nhau",
+      "reviewPerformance": "Xem lại hiệu suất chiến dịch trong Phân tích",
+      "optimizeCampaigns": "Tối ưu hóa chiến dịch để đạt kết quả tốt hơn"
+    },
+    "insights": {
+      "noCampaigns": "Bắt đầu bằng cách tạo chiến dịch đầu tiên",
+      "noAds": "Thêm quảng cáo vào chiến dịch để bắt đầu quảng cáo",
+      "lowActivity": "Giữ chiến dịch hoạt động để có kết quả tốt nhất",
+      "growing": "Tiến bộ tuyệt vời! Tiếp tục xây dựng thành công của bạn"
+    }
+  },
+  "personas": {
+    "title": "Persona Đối tượng",
+    "subtitle": "Tạo và quản lý persona đối tượng mục tiêu để nhắm mục tiêu quảng cáo tốt hơn",
+    "createPersona": "Tạo Persona",
+    "createNew": "Tạo mới",
+    "editPersona": "Sửa Persona",
+    "viewPersona": "Xem Persona",
+    "deletePersona": "Xóa Persona",
+    "selectPersona": "Chọn Persona",
+    "noPersonas": "Chưa có persona nào",
+    "createFirst": "Tạo Persona đầu tiên",
+    "total": "Tổng số Persona",
+    "recent": "Mới tạo gần đây",
+    "quota": "Đã sử dụng",
+    "mostCommonTone": "Giọng điệu phổ biến nhất",
+    "name": "Tên Persona",
+    "age": "Tuổi",
+    "gender": "Giới tính",
+    "interests": "Sở thích",
+    "tone": "Giọng điệu giao tiếp",
+    "painPoints": "Điểm đau",
+    "desiredOutcome": "Kết quả mong muốn",
+    "description": "Mô tả",
+    "male": "Nam",
+    "female": "Nữ",
+    "all": "Tất cả / Khác",
+    "professional": "Chuyên nghiệp",
+    "casual": "Thân mật",
+    "funny": "Hài hước",
+    "inspirational": "Truyền cảm hứng",
+    "searchPlaceholder": "Tìm kiếm persona...",
+    "sortNewest": "Mới nhất trước",
+    "sortOldest": "Cũ nhất trước",
+    "sortNameAZ": "Tên A-Z",
+    "sortNameZA": "Tên Z-A",
+    "gridView": "Xem lưới",
+    "listView": "Xem danh sách",
+    "topInterests": "Sở thích hàng đầu",
+    "mainChallenges": "Thách thức chính",
+    "goal": "Mục tiêu",
+    "viewFullDetails": "Xem chi tiết đầy đủ",
+    "clearSelection": "Xóa lựa chọn",
+    "selected": "Đã chọn persona cho quảng cáo",
+    "cleared": "Đã xóa lựa chọn persona",
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa persona này?",
+    "deletedSuccess": "Xóa persona thành công",
+    "createdSuccess": "Tạo persona thành công",
+    "updatedSuccess": "Cập nhật persona thành công",
+    "selectForAd": "Chọn persona để tự động điều chỉnh nội dung quảng cáo",
+    "promptEnhancement": "Nội dung quảng cáo của bạn sẽ được tự động làm phong phú với hồ sơ persona này",
+    "targeting": "Nhắm mục tiêu persona:"
+  }
+}

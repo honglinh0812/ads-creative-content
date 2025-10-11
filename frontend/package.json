@@ -14,8 +14,8 @@
     "@ant-design/colors": "^7.2.1",
     "@ant-design/icons-vue": "^7.0.1",
     "@heroicons/vue": "^2.2.0",
-    "@sentry/vue": "^7.81.1",
     "@sentry/tracing": "^7.81.1",
+    "@sentry/vue": "^7.81.1",
     "@vuelidate/core": "^2.0.3",
     "@vuelidate/validators": "^2.0.4",
     "ant-design-vue": "^4.2.6",
@@ -26,6 +26,7 @@
     "moment": "^2.29.4",
     "vue": "^3.2.13",
     "vue-chartjs": "^4.1.2",
+    "vue-i18n": "^9.14.5",
     "vue-router": "^4.0.3",
     "vuex": "^4.0.0"
   },

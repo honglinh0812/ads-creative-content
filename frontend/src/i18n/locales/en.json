@@ -1,0 +1,189 @@
+{
+  "app": {
+    "loading": "Loading application...",
+    "title": "Ads Creative"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "logoutTitle": "Confirm Logout",
+    "logoutConfirmation": "Are you sure you want to logout?",
+    "loginFailed": "Login failed: Unable to fetch user information."
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "campaigns": "Campaigns",
+    "allCampaigns": "All Campaigns",
+    "createCampaign": "Create Campaign",
+    "ads": "Ads",
+    "allAds": "All Ads",
+    "createAd": "Create Ad",
+    "personas": "Personas",
+    "analytics": "Analytics",
+    "optimization": "Optimization",
+    "profile": "Profile",
+    "settings": "Settings",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "noNotifications": "No notifications yet",
+    "emptyDescription": "Notifications about campaigns and ads will appear here",
+    "markAllAsRead": "Mark all as read"
+  },
+  "user": {
+    "defaultName": "User"
+  },
+  "darkMode": {
+    "lightMode": "Light mode enabled",
+    "darkMode": "Dark mode enabled"
+  },
+  "campaigns": {
+    "createGuide": "Campaign Creation Guide",
+    "guideDescription": "This guide will help you create a professional Facebook advertising campaign in 3 simple steps."
+  },
+  "ads": {
+    "notFound": "Ad not found for copying",
+    "cannotExtract": "Cannot extract content"
+  },
+  "legal": {
+    "dataDeletion": {
+      "title": "User Data Deletion Instructions",
+      "intro": "We respect your privacy and provide you with the ability to request deletion of personal data we have collected through your use of the Application and login with Facebook.",
+      "requestTitle": "How to request data deletion:",
+      "emailSubject": "Data Deletion Request - Facebook Login",
+      "processingTime": "We will proceed to delete your personal data from our system within 7 business days.",
+      "contact": "If you have any questions about the data deletion process, please contact us at"
+    }
+  },
+  "cta": {
+    "note": "Note: Only use one of the following Call to Action for ads: {ctaList}. Do not create other CTAs."
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close"
+  },
+  "sidebar": {
+    "openSidebar": "Open sidebar",
+    "closeSidebar": "Close sidebar"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Overview of your campaigns and ads",
+    "newCampaign": "New Campaign",
+    "newAd": "New Ad",
+    "errorLoading": "Error loading dashboard",
+    "tryAgain": "Try Again",
+    "totalCampaigns": "Total Campaigns",
+    "totalAds": "Total Ads",
+    "activeCampaigns": "Active Campaigns",
+    "activeAds": "Active Ads",
+    "startCreating": "Start creating!",
+    "growthThisMonth": "You've grown {percent}% this month",
+    "proTip": "Pro Tip",
+    "whatNext": "What's Next",
+    "yourProgress": "Your Progress",
+    "quickActions": "Quick Actions",
+    "readyToCreate": "Ready to create something awesome?",
+    "jumpIntoNext": "Jump into your next campaign or ad with these shortcuts",
+    "viewAll": "View All",
+    "noCampaignsYet": "No campaigns yet",
+    "createFirstCampaign": "Create Your First Campaign",
+    "noAdsYet": "No ads yet",
+    "createFirstAd": "Create Your First Ad",
+    "recentCampaigns": "Recent Campaigns",
+    "recentCampaignsDesc": "Your latest campaigns and their performance",
+    "recentAds": "Recent Ads",
+    "recentAdsDesc": "Your latest ad creations",
+    "budget": "Budget",
+    "ads": "Ads",
+    "adDetails": "Ad Details",
+    "adMedia": "Ad Media",
+    "viewImage": "View Image",
+    "viewVideo": "View Video",
+    "view": "View",
+    "viewDetails": "View Details",
+    "campaign": "Campaign",
+    "adType": "Ad Type",
+    "status": "Status",
+    "headline": "Headline",
+    "primaryText": "Primary Text",
+    "description": "Description",
+    "callToAction": "Call to Action",
+    "media": "Media",
+    "createdDate": "Created Date",
+    "noMediaAvailable": "No media available for this ad",
+    "youDoingGreat": "You're doing great!",
+    "nextSteps": {
+      "title": "Suggested Next Steps",
+      "firstCampaign": "Create your first campaign to get started",
+      "firstAd": "Create your first ad to reach your audience",
+      "moreCampaigns": "Create more campaigns to expand your reach",
+      "moreAds": "Add more ads to test different creatives",
+      "reviewPerformance": "Review your campaign performance in Analytics",
+      "optimizeCampaigns": "Optimize your campaigns for better results"
+    },
+    "insights": {
+      "noCampaigns": "Get started by creating your first campaign",
+      "noAds": "Add ads to your campaigns to start advertising",
+      "lowActivity": "Keep your campaigns active for best results",
+      "growing": "Great progress! Keep building on your success"
+    }
+  },
+  "personas": {
+    "title": "Audience Personas",
+    "subtitle": "Create and manage target audience personas for better ad targeting",
+    "createPersona": "Create Persona",
+    "createNew": "Create New",
+    "editPersona": "Edit Persona",
+    "viewPersona": "View Persona",
+    "deletePersona": "Delete Persona",
+    "selectPersona": "Select Persona",
+    "noPersonas": "No personas yet",
+    "createFirst": "Create Your First Persona",
+    "total": "Total Personas",
+    "recent": "Recently Created",
+    "quota": "Quota Used",
+    "mostCommonTone": "Most Common Tone",
+    "name": "Persona Name",
+    "age": "Age",
+    "gender": "Gender",
+    "interests": "Interests",
+    "tone": "Communication Tone",
+    "painPoints": "Pain Points",
+    "desiredOutcome": "Desired Outcome",
+    "description": "Description",
+    "male": "Male",
+    "female": "Female",
+    "all": "All / Other",
+    "professional": "Professional",
+    "casual": "Casual",
+    "funny": "Funny",
+    "inspirational": "Inspirational",
+    "searchPlaceholder": "Search personas...",
+    "sortNewest": "Newest First",
+    "sortOldest": "Oldest First",
+    "sortNameAZ": "Name A-Z",
+    "sortNameZA": "Name Z-A",
+    "gridView": "Grid View",
+    "listView": "List View",
+    "topInterests": "Top Interests",
+    "mainChallenges": "Main Challenges",
+    "goal": "Goal",
+    "viewFullDetails": "View Full Details",
+    "clearSelection": "Clear Selection",
+    "selected": "Persona selected for ad creation",
+    "cleared": "Persona selection cleared",
+    "deleteConfirm": "Are you sure you want to delete this persona?",
+    "deletedSuccess": "Persona deleted successfully",
+    "createdSuccess": "Persona created successfully",
+    "updatedSuccess": "Persona updated successfully",
+    "selectForAd": "Select a persona to automatically tailor your ad content",
+    "promptEnhancement": "Your ad prompt will be automatically enriched with this persona's profile",
+    "targeting": "Targeting persona:"
+  }
+}

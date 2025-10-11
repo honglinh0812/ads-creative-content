@@ -277,6 +277,18 @@
                 </a-button>
               </div>
             </a-form-item>
+
+            <!-- Audience Segment Targeting -->
+            <AudienceSegmentForm v-model="formData.audienceSegment" />
+
+            <!-- Persona Selector -->
+            <PersonaSelector
+              v-model="formData.personaId"
+              @persona-selected="handlePersonaSelected"
+            />
+
+            <!-- Trending Keywords -->
+            <TrendingKeywords @keywords-selected="handleKeywordsSelected" />
           </a-form>
 
           <!-- Navigation -->
@@ -717,6 +729,9 @@ import {
 } from '@ant-design/icons-vue'
 import api from '@/services/api'
 import PromptValidator from '@/components/PromptValidator.vue'
+import AudienceSegmentForm from '@/components/AudienceSegmentForm.vue'
+import PersonaSelector from '@/components/PersonaSelector.vue'
+import TrendingKeywords from '@/components/TrendingKeywords.vue'
 
 export default {
   name: 'AdCreate',
@@ -730,7 +745,10 @@ export default {
     ThunderboltOutlined,
     EditOutlined,
     SaveOutlined,
-    PromptValidator
+    PromptValidator,
+    AudienceSegmentForm,
+    PersonaSelector,
+    TrendingKeywords
   },
   data() {
     return {
@@ -747,7 +765,14 @@ export default {
         prompt: '',
         textProvider: 'openai',
         imageProvider: 'openai',
-        enhancementOptions: []
+        enhancementOptions: [],
+        audienceSegment: {
+          gender: 'ALL',
+          minAge: 18,
+          maxAge: 65,
+          location: '',
+          interests: ''
+        }
       },
       steps: [
         { title: 'Basic Information', description: 'Campaign details and ad type' },
@@ -873,6 +898,33 @@ export default {
     await this.loadData()
   },
   methods: {
+    handleKeywordsSelected(keywords) {
+      // Format trending keywords for prompt injection
+      const keywordText = keywords.map(k => `• ${k}`).join('\n')
+      const trendingSection = `\n\n📈 TRENDING KEYWORDS:\n${keywordText}\n\n💡 Incorporate these trending topics naturally into the ad content.`
+
+      // Append to prompt (or custom prompt if it exists)
+      if (!this.formData.prompt.includes('TRENDING KEYWORDS')) {
+        this.formData.prompt += trendingSection
+      }
+
+      this.$message.success(`Added ${keywords.length} trending keyword(s) to prompt`)
+    },
+
+    handlePersonaSelected(persona) {
+      // Store the persona information for later use
+      if (persona) {
+        // The personaId is already bound via v-model
+        // We can optionally show a success message or update UI
+        this.$message.success(`Targeting persona: ${persona.name}`)
+
+        // Note: The backend PersonaService.enrichPromptWithPersona() will automatically
+        // enhance the prompt with persona details when personaId is included in the request
+      } else {
+        this.$message.info('Persona selection cleared')
+      }
+    },
+
     async enhanceImages() {
       if (!this.formData.enhancementOptions.length) {
         this.$message.warning('Please select at least one enhancement option');
@@ -1121,6 +1173,7 @@ export default {
           mediaFileUrl: this.uploadedFileUrl,
           callToAction: this.formData.callToAction,
           extractedContent: extractedContent,
+          personaId: this.formData.personaId || null,
           isPreview: true
         }
         
@@ -1315,6 +1368,7 @@ export default {
           numberOfVariations: this.formData.numberOfVariations,
           mediaFileUrl: this.uploadedFileUrl,
           extractedContent: null,
+          personaId: this.formData.personaId || null,
           isPreview: true
         }
         

@@ -110,6 +110,23 @@
         </div>
       </a-modal>
 
+      <!-- Export to Facebook Modal -->
+      <ExportToFacebookModal
+        :visible="showExportModal"
+        :ad-ids="selectedAdIds"
+        @update:visible="showExportModal = $event"
+        @success="handleExportSuccess"
+        @error="handleExportError"
+      />
+
+      <!-- Facebook Instructions Modal -->
+      <FacebookInstructionsModal
+        :visible="showInstructionsModal"
+        :format="exportFormat"
+        :timestamp="exportTimestamp"
+        @update:visible="showInstructionsModal = $event"
+      />
+
       <!-- Edit Ad Modal -->
       <a-modal v-model:open="showEditModal" title="Edit Ad" width="90vw" style="max-width: 1200px">
         <div v-if="editingAd">
@@ -167,6 +184,8 @@ import { PlusOutlined } from "@ant-design/icons-vue"
 
 import AdTable from '@/components/AdTable.vue'
 import CreativeEmptyState from '@/components/ui/CreativeEmptyState.vue'
+import ExportToFacebookModal from '@/components/ExportToFacebookModal.vue'
+import FacebookInstructionsModal from '@/components/FacebookInstructionsModal.vue'
 import api from '@/services/api'
 
 export default {
@@ -180,7 +199,9 @@ export default {
     PlusOutlined,
 
     AdTable,
-    CreativeEmptyState
+    CreativeEmptyState,
+    ExportToFacebookModal,
+    FacebookInstructionsModal
   },
   data() {
     return {
@@ -195,8 +216,11 @@ export default {
       filteredAds: [],
       errors: {},
       standardCTAs: [],
-      selectedAds: [],
-      isExporting: false
+      selectedAdIds: [],
+      showExportModal: false,
+      showInstructionsModal: false,
+      exportFormat: 'csv',
+      exportTimestamp: Date.now()
     }
   },
   computed: {
@@ -237,6 +261,10 @@ export default {
   },
   methods: {
     ...mapActions("ad", ["fetchAds", "deleteAd", "updateAd"]),
+    ...mapActions("fbExport", {
+      setSelectedAdsForExport: "setSelectedAds",
+      showFBInstructions: "showInstructions"
+    }),
     
     async loadAds() {
       try {
@@ -456,78 +484,67 @@ export default {
 
     
     // Facebook Export Methods
-    toggleAdSelection(adId) {
-      const index = this.selectedAds.indexOf(adId)
-      if (index > -1) {
-        this.selectedAds.splice(index, 1)
-      } else {
-        this.selectedAds.push(adId)
+    exportAdToFacebook(adId) {
+      // Single ad export (from AdTable action button)
+      if (typeof adId === 'number') {
+        this.selectedAdIds = [adId]
+      } else if (Array.isArray(adId)) {
+        // Bulk export (from selection)
+        this.selectedAdIds = adId
       }
+
+      if (this.selectedAdIds.length === 0) {
+        message.warning('Please select at least one ad to export')
+        return
+      }
+
+      // Set selected ads in store
+      this.setSelectedAdsForExport(this.selectedAdIds)
+
+      // Show export modal
+      this.showExportModal = true
+      this.exportTimestamp = Date.now()
     },
-    
-    clearSelection() {
-      this.selectedAds = []
+
+    handleExportSuccess() {
+      message.success(`Successfully exported ${this.selectedAdIds.length} ad(s)!`)
+
+      // Get export format from store
+      const format = this.$store.state.fbExport.format
+      this.exportFormat = format
+
+      // Show instructions modal
+      setTimeout(() => {
+        this.showInstructionsModal = true
+      }, 500)
+
+      // Clear selection
+      this.selectedAdIds = []
     },
-    
-    async exportAdToFacebook(adId) {
-      try {
-        this.isExporting = true
-        const response = await api.facebookExport.exportAd(adId)
-        
-        // Tạo URL để tải file
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement('a')
-        link.href = url
-        link.setAttribute('download', `facebook_ad_${adId}.csv`)
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-        
-        message.success('Đã xuất quảng cáo thành công!')
-      } catch (error) {
-        console.error('Error exporting ad:', error)
-        message.error('Lỗi khi xuất quảng cáo: ' + (error.response?.data?.message || error.message))
-      } finally {
-        this.isExporting = false
+
+    handleExportError(error) {
+      console.error('Export error:', error)
+      message.error('Failed to export ads: ' + (error.message || 'Unknown error'))
+    },
+
+    toggleAdSelection(adId) {
+      const index = this.selectedAdIds.indexOf(adId)
+      if (index > -1) {
+        this.selectedAdIds.splice(index, 1)
+      } else {
+        this.selectedAdIds.push(adId)
       }
     },
 
-    async exportSelectedAdsToFacebook() {
-      if (this.selectedAds.length === 0) {
-        message.warning('Vui lòng chọn ít nhất một quảng cáo để xuất')
-        return
-      }
-      
-      try {
-        this.isExporting = true
-        const response = await api.facebookExport.exportMultipleAds(this.selectedAds)
-        
-        // Tạo URL để tải file
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement('a')
-        link.href = url
-        link.setAttribute('download', `facebook_ads_bulk_${Date.now()}.csv`)
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-        
-        message.success(`Đã xuất ${this.selectedAds.length} quảng cáo thành công!`)
-        this.selectedAds = []
-      } catch (error) {
-        console.error('Error exporting ads:', error)
-        message.error('Lỗi khi xuất quảng cáo: ' + (error.response?.data?.message || error.message))
-      } finally {
-        this.isExporting = false
-      }
+    clearSelection() {
+      this.selectedAdIds = []
     },
 
     async duplicateAd(adId) {
       try {
         const adToDuplicate = this.ads.find(ad => ad.id === adId)
         if (!adToDuplicate) {
-          message.error('Không tìm thấy quảng cáo để sao chép')
+          message.error('Ad not found')
           return
         }
 

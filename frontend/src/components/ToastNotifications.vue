@@ -27,8 +27,20 @@
             <div class="toast-text">
               <div v-if="toast.title" class="toast-title text-neutral-900 dark:text-neutral-100">{{ toast.title }}</div>
               <div class="toast-message text-neutral-700 dark:text-neutral-300">{{ toast.message }}</div>
+
+              <!-- Action Buttons -->
+              <div v-if="toast.actions && toast.actions.length" class="toast-actions">
+                <button
+                  v-for="(action, index) in toast.actions"
+                  :key="index"
+                  @click="handleAction(toast.id, action)"
+                  :class="['toast-action-btn', action.primary ? 'action-primary' : 'action-secondary']"
+                >
+                  {{ action.label }}
+                </button>
+              </div>
             </div>
-            
+
             <button @click="removeToast(toast.id)" class="toast-close text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-all duration-200">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -59,7 +71,7 @@ export default {
   },
   methods: {
     ...mapActions('toast', ['removeToast']),
-    
+
     getToastClass(type) {
       const baseClass = 'toast'
       switch (type) {
@@ -73,6 +85,18 @@ export default {
           return `${baseClass} toast-info`
         default:
           return `${baseClass} toast-info`
+      }
+    },
+
+    handleAction(toastId, action) {
+      // Execute the action callback
+      if (action.handler && typeof action.handler === 'function') {
+        action.handler()
+      }
+
+      // Remove toast if action is configured to do so
+      if (action.dismissOnClick !== false) {
+        this.removeToast(toastId)
       }
     }
   }
@@ -206,6 +230,64 @@ export default {
 .toast-message {
   font-size: 0.8125rem;
   line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
+/* Action buttons */
+.toast-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.toast-action-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.375rem 0.875rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+  min-height: 28px;
+}
+
+.toast-action-btn.action-primary {
+  background: theme('colors.primary.500');
+  color: white;
+}
+
+.toast-action-btn.action-primary:hover {
+  background: theme('colors.primary.600');
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(45, 90, 160, 0.3);
+}
+
+.toast-action-btn.action-primary:active {
+  transform: translateY(0);
+}
+
+.toast-action-btn.action-secondary {
+  background: theme('colors.neutral.100');
+  color: theme('colors.neutral.700');
+  border: 1px solid theme('colors.neutral.300');
+}
+
+.toast-action-btn.action-secondary:hover {
+  background: theme('colors.neutral.200');
+  border-color: theme('colors.neutral.400');
+}
+
+.dark .toast-action-btn.action-secondary {
+  background: theme('colors.neutral.700');
+  color: theme('colors.neutral.200');
+  border-color: theme('colors.neutral.600');
+}
+
+.dark .toast-action-btn.action-secondary:hover {
+  background: theme('colors.neutral.600');
+  border-color: theme('colors.neutral.500');
 }
 
 .toast-close {

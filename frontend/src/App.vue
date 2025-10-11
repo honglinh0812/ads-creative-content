@@ -7,7 +7,7 @@
           <a-icon type="thunderbolt" style="font-size: 48px; color: #1890ff;" />
         </div>
         <a-spin size="large" />
-        <p class="loading-text">Đang tải ứng dụng...</p>
+        <p class="loading-text">{{ $t('app.loading') }}</p>
       </div>
     </div>
     
@@ -90,6 +90,9 @@
             </div>
             
             <div class="header-right">
+              <!-- Language Switcher -->
+              <LanguageSwitcher />
+
               <!-- Notifications -->
               <a-badge :count="notificationCountFunc" class="notification-badge">
                 <a-button type="text" shape="circle" @click="showNotifications">
@@ -98,7 +101,7 @@
               </a-badge>
               <transition name="fade">
                 <div v-if="showNotificationDropdown" class="notification-dropdown">
-                  <div class="notification-header">Thông báo</div>
+                  <div class="notification-header">{{ $t('notifications.title') }}</div>
                   <div v-if="recentNotifications.length > 0" class="notification-list">
                     <div v-for="noti in recentNotifications" :key="noti.id" class="notification-item">
                       <span :class="noti.type">{{ noti.title || noti.type }}</span>
@@ -106,9 +109,9 @@
                       <div>{{ formatTime(noti.timestamp) }}</div>
                     </div>
                   </div>
-                  <div v-else>Chưa có thông báo nào</div>
+                  <div v-else>{{ $t('notifications.noNotifications') }}</div>
                   <div class="notification-footer">
-                    <button @click="markAllAsRead">Đánh dấu tất cả đã đọc</button>
+                    <button @click="markAllAsRead">{{ $t('notifications.markAllAsRead') }}</button>
                   </div>
                 </div>
               </transition>
@@ -172,11 +175,13 @@
 <script>
 import { mapGetters } from 'vuex'
 import ToastNotifications from './components/ToastNotifications.vue'
+import LanguageSwitcher from './components/LanguageSwitcher.vue'
 
 export default {
   name: 'App',
   components: {
-    ToastNotifications
+    ToastNotifications,
+    LanguageSwitcher
   },
   data() {
     return {
@@ -203,8 +208,8 @@ export default {
       return this.loading
     },
     username() {
-      if (!this.user) return 'Người dùng'
-      return this.user.name || this.user.username || this.user.email?.split('@')[0] || 'Người dùng'
+      if (!this.user) return this.$t('user.defaultName')
+      return this.user.name || this.user.username || this.user.email?.split('@')[0] || this.$t('user.defaultName')
     }
   },
   methods: {

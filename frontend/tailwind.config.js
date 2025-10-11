@@ -5,6 +5,14 @@ module.exports = {
     "./src/**/*.{vue,js,ts,jsx,tsx}"
   ],
   theme: {
+    screens: {
+      'xs': '320px',    // Small mobile
+      'sm': '576px',    // Mobile
+      'md': '768px',    // Large mobile/Small tablet
+      'lg': '1024px',   // Desktop
+      'xl': '1280px',   // Large desktop
+      '2xl': '1536px'   // Ultra-wide
+    },
     extend: {
       colors: {
         // Primary - Deep blue instead of generic blue

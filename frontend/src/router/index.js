@@ -13,6 +13,7 @@ const CampaignDetail = () => import('../views/CampaignDetail.vue')
 const Ads = () => import('../views/Ads.vue')
 const AdCreate = () => import('../views/AdCreate.vue')
 const AdDetail = () => import('../views/AdDetail.vue')
+const Personas = () => import('../views/Personas.vue')
 const NotFound = () => import('../views/NotFound.vue')
 const PrivacyPolicy = () => import('../views/legal/PrivacyPolicy.vue')
 const TermsOfService = () => import('../views/legal/TermsOfService.vue')
@@ -103,6 +104,12 @@ const routes = [
     name: 'AdEdit',
     component: AdCreate, // Reuse create component for editing
     props: true,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/personas',
+    name: 'Personas',
+    component: Personas,
     meta: { requiresAuth: true }
   },
   // Notifications route removed - notifications are now handled in header modal only

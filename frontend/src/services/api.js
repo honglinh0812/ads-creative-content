@@ -111,12 +111,18 @@ export default {
 
   // Facebook Export endpoints
   facebookExport: {
-    exportAd: (adId) => apiClient.get(`/facebook-export/ad/${adId}`, {
+    exportAd: (adId, format = 'csv') => apiClient.get(`/facebook-export/ad/${adId}`, {
+      params: { format },
       responseType: 'blob'
     }),
-    exportMultipleAds: (adIds) => apiClient.post('/facebook-export/ads/bulk', adIds, {
+    exportMultipleAds: (adIds, format = 'csv') => apiClient.post('/facebook-export/ads/bulk/export', {
+      adIds,
+      format
+    }, {
       responseType: 'blob'
-    })
+    }),
+    previewAd: (adId) => apiClient.get(`/facebook-export/preview/ad/${adId}`),
+    previewMultipleAds: (adIds) => apiClient.post('/facebook-export/preview/ads/bulk', adIds)
   },
   
   // Meta Ad Library endpoints
@@ -194,5 +200,17 @@ export default {
     acceptRecommendation: (id) => apiClient.post(`/optimization/recommendations/${id}/accept`),
     dismissRecommendation: (id, reason) => apiClient.post(`/optimization/recommendations/${id}/dismiss`, { reason }),
     updateRecommendationSettings: (settings) => apiClient.put('/optimization/settings', settings)
+  },
+
+  // Persona endpoints
+  personas: {
+    getAll: () => apiClient.get('/personas'),
+    getPaged: (page = 0, size = 20, sort = 'createdAt,desc') =>
+      apiClient.get(`/personas/paged?page=${page}&size=${size}&sort=${sort}`),
+    get: (id) => apiClient.get(`/personas/${id}`),
+    create: (persona) => apiClient.post('/personas', persona),
+    update: (id, persona) => apiClient.put(`/personas/${id}`, persona),
+    delete: (id) => apiClient.delete(`/personas/${id}`),
+    search: (name) => apiClient.get(`/personas/search?name=${encodeURIComponent(name)}`)
   }
 }

@@ -9,11 +9,12 @@ const mutations = {
     const fullToast = {
       id,
       ...toast,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      actions: toast.actions || [] // Support action buttons
     }
     state.toasts.push(fullToast)
     const duration = toast.duration || 5000
-    if (duration > 0) {
+    if (duration > 0 && !toast.persistent) {
       setTimeout(() => {
         state.toasts = state.toasts.filter(t => t.id !== id)
       }, duration)
@@ -84,12 +85,30 @@ const actions = {
   
   clearAllToasts({ commit }) {
     commit('CLEAR_TOASTS')
+  },
+
+  // Alias for compatibility
+  clearAll({ commit }) {
+    commit('CLEAR_TOASTS')
+  },
+
+  // Show toast with custom actions
+  showToastWithActions({ dispatch }, { type = 'info', title, message, actions = [], duration = 0 }) {
+    dispatch('showToast', {
+      type,
+      title,
+      message,
+      actions,
+      duration,
+      persistent: duration === 0 // If duration is 0, make it persistent
+    })
   }
 }
 
 const getters = {
   toasts: state => state.toasts,
-  hasToasts: state => state.toasts.length > 0
+  hasToasts: state => state.toasts.length > 0,
+  activeToasts: state => state.toasts.filter(t => !t.dismissed)
 }
 
 export default {

@@ -9,8 +9,8 @@
     <!-- Desktop Page Header -->
     <div v-if="!isMobile" class="page-header">
       <a-page-header
-        title="Dashboard"
-        sub-title="Overview of your campaigns and ads"
+        :title="$t('dashboard.title')"
+        :sub-title="$t('dashboard.subtitle')"
       >
         <template #extra>
           <a-space>
@@ -19,7 +19,7 @@
                 <template #icon>
                   <plus-outlined />
                 </template>
-                New Campaign
+                {{ $t('dashboard.newCampaign') }}
               </a-button>
             </router-link>
             <router-link to="/ad/create">
@@ -27,7 +27,7 @@
                 <template #icon>
                   <plus-outlined />
                 </template>
-                New Ad
+                {{ $t('dashboard.newAd') }}
               </a-button>
             </router-link>
           </a-space>
@@ -50,7 +50,7 @@
     <!-- Error State -->
     <div v-else-if="dashboardError" class="error-container">
       <a-alert
-        message="Error loading dashboard"
+        :message="$t('dashboard.errorLoading')"
         :description="dashboardError"
         type="error"
         show-icon
@@ -58,7 +58,7 @@
       >
         <template #action>
           <a-button size="small" @click="loadDashboardData">
-            Try Again
+            {{ $t('dashboard.tryAgain') }}
           </a-button>
         </template>
       </a-alert>
@@ -75,51 +75,61 @@
         @view-all-activity="navigateToActivity"
       />
       
+      <!-- What's Next Section -->
+      <DashboardNextSteps v-if="!isMobile" :stats="stats" />
+
       <!-- Creative Asymmetric Stats Layout -->
       <div v-else class="creative-stats-container">
-        <!-- Main Featured Stat (Creative Asymmetric Position) -->
-        <div class="featured-stat">
+        <!-- Main Featured Stat (Creative Asymmetric Position) - Clickable -->
+        <router-link to="/campaigns" class="featured-stat-link">
           <div class="stat-card-creative primary-stat">
             <div class="stat-visual">
               <folder-outlined class="stat-icon primary-icon" />
               <div class="stat-pattern"></div>
             </div>
             <div class="stat-content">
-              <div class="stat-label">Total Campaigns</div>
+              <div class="stat-label">{{ $t('dashboard.totalCampaigns') }}</div>
               <div class="stat-number primary-number">{{ stats.totalCampaigns || 0 }}</div>
-              <div class="stat-growth">{{ stats.totalCampaigns > 0 ? '+12%' : 'Start creating!' }}</div>
+              <div class="stat-growth">{{ stats.totalCampaigns > 0 ? $t('dashboard.growthThisMonth', { percent: 12 }) : $t('dashboard.startCreating') }}</div>
+              <div class="stat-action">{{ $t('dashboard.viewAll') }} →</div>
             </div>
           </div>
-        </div>
+        </router-link>
 
         <!-- Secondary Stats Grid (Breaking Standard Grid) -->
         <div class="secondary-stats">
-          <div class="stat-card-creative secondary-stat success">
-            <file-text-outlined class="stat-icon" />
-            <div class="stat-info">
-              <div class="stat-number">{{ stats.totalAds || 0 }}</div>
-              <div class="stat-label">Total Ads</div>
+          <router-link to="/ads" class="stat-card-link">
+            <div class="stat-card-creative secondary-stat success">
+              <file-text-outlined class="stat-icon" />
+              <div class="stat-info">
+                <div class="stat-number">{{ stats.totalAds || 0 }}</div>
+                <div class="stat-label">{{ $t('dashboard.totalAds') }}</div>
+              </div>
+              <div class="stat-accent"></div>
             </div>
-            <div class="stat-accent"></div>
-          </div>
+          </router-link>
 
-          <div class="stat-card-creative secondary-stat warning">
-            <thunderbolt-outlined class="stat-icon" />
-            <div class="stat-info">
-              <div class="stat-number">{{ stats.activeCampaigns || 0 }}</div>
-              <div class="stat-label">Active Campaigns</div>
+          <router-link to="/campaigns" class="stat-card-link">
+            <div class="stat-card-creative secondary-stat warning">
+              <thunderbolt-outlined class="stat-icon" />
+              <div class="stat-info">
+                <div class="stat-number">{{ stats.activeCampaigns || 0 }}</div>
+                <div class="stat-label">{{ $t('dashboard.activeCampaigns') }}</div>
+              </div>
+              <div class="stat-accent"></div>
             </div>
-            <div class="stat-accent"></div>
-          </div>
+          </router-link>
 
-          <div class="stat-card-creative secondary-stat danger">
-            <eye-outlined class="stat-icon" />
-            <div class="stat-info">
-              <div class="stat-number">{{ stats.activeAds || 0 }}</div>
-              <div class="stat-label">Active Ads</div>
+          <router-link to="/ads" class="stat-card-link">
+            <div class="stat-card-creative secondary-stat danger">
+              <eye-outlined class="stat-icon" />
+              <div class="stat-info">
+                <div class="stat-number">{{ stats.activeAds || 0 }}</div>
+                <div class="stat-label">{{ $t('dashboard.activeAds') }}</div>
+              </div>
+              <div class="stat-accent"></div>
             </div>
-            <div class="stat-accent"></div>
-          </div>
+          </router-link>
         </div>
 
         <!-- Creative Quick Insight Box -->
@@ -127,8 +137,8 @@
           <div class="insight-content">
             <div class="insight-emoji">🎯</div>
             <div class="insight-text">
-              <div class="insight-title">Pro Tip</div>
-              <div class="insight-message">{{ getRandomTip() }}</div>
+              <div class="insight-title">{{ $t('dashboard.proTip') }}</div>
+              <div class="insight-message">{{ getContextualInsight() }}</div>
             </div>
           </div>
         </div>
@@ -138,8 +148,8 @@
       <div class="creative-actions-section">
         <div class="section-header-creative">
           <div class="header-content">
-            <h2 class="section-title-creative">Ready to create something awesome?</h2>
-            <p class="section-subtitle">Jump into your next campaign or ad with these shortcuts</p>
+            <h2 class="section-title-creative">{{ $t('dashboard.readyToCreate') }}</h2>
+            <p class="section-subtitle">{{ $t('dashboard.jumpIntoNext') }}</p>
           </div>
           <div class="header-decoration">✨</div>
         </div>
@@ -185,7 +195,7 @@
             <div class="motivation-content">
               <div class="motivation-icon">{{ getMoodEmoji() }}</div>
               <div class="motivation-text">
-                <div class="motivation-title">You're doing great!</div>
+                <div class="motivation-title">{{ $t('dashboard.youDoingGreat') }}</div>
                 <div class="motivation-message">{{ getMotivationalMessage() }}</div>
               </div>
             </div>
@@ -197,21 +207,21 @@
       <div class="section" style="margin-bottom: 32px;">
         <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
           <div>
-            <a-typography-title :level="2" style="margin-bottom: 8px;">Recent Campaigns</a-typography-title>
-            <a-typography-text type="secondary">Your latest campaigns and their performance</a-typography-text>
+            <a-typography-title :level="2" style="margin-bottom: 8px;">{{ $t('dashboard.recentCampaigns') }}</a-typography-title>
+            <a-typography-text type="secondary">{{ $t('dashboard.recentCampaignsDesc') }}</a-typography-text>
           </div>
           <router-link to="/campaigns">
-            <a-button>View All</a-button>
+            <a-button>{{ $t('dashboard.viewAll') }}</a-button>
           </router-link>
         </div>
 
         <div v-if="campaigns.length === 0">
-          <a-empty description="No campaigns yet">
+          <a-empty :description="$t('dashboard.noCampaignsYet')">
             <template #image>
               <folder-outlined style="font-size: 48px; color: #d9d9d9;" />
             </template>
             <router-link to="/campaign/create">
-              <a-button type="primary">Create Your First Campaign</a-button>
+              <a-button type="primary">{{ $t('dashboard.createFirstCampaign') }}</a-button>
             </router-link>
           </a-empty>
         </div>
@@ -227,19 +237,19 @@
               
               <a-row :gutter="16" style="margin-bottom: 12px;">
                 <a-col :span="12">
-                  <a-typography-text type="secondary" style="font-size: 12px;">Budget</a-typography-text>
+                  <a-typography-text type="secondary" style="font-size: 12px;">{{ $t('dashboard.budget') }}</a-typography-text>
                   <div style="font-weight: 500;">${{ campaign.budget }}</div>
                 </a-col>
                 <a-col :span="12">
-                  <a-typography-text type="secondary" style="font-size: 12px;">Ads</a-typography-text>
+                  <a-typography-text type="secondary" style="font-size: 12px;">{{ $t('dashboard.ads') }}</a-typography-text>
                   <div style="font-weight: 500;">{{ campaign.adCount }}</div>
                 </a-col>
               </a-row>
-              
+
               <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #f0f0f0;">
                 <a-typography-text type="secondary" style="font-size: 12px;">{{ formatDate(campaign.createdDate) }}</a-typography-text>
                 <router-link :to="`/campaigns/${campaign.id}`">
-                  <a-button size="small" type="primary">View Details</a-button>
+                  <a-button size="small" type="primary">{{ $t('dashboard.viewDetails') }}</a-button>
                 </router-link>
               </div>
             </a-card>
@@ -251,11 +261,11 @@
       <div class="section">
         <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
           <div>
-            <a-typography-title :level="2" style="margin-bottom: 8px;">Recent Ads</a-typography-title>
-            <a-typography-text type="secondary">Your latest ad creations</a-typography-text>
+            <a-typography-title :level="2" style="margin-bottom: 8px;">{{ $t('dashboard.recentAds') }}</a-typography-title>
+            <a-typography-text type="secondary">{{ $t('dashboard.recentAdsDesc') }}</a-typography-text>
           </div>
           <router-link to="/ads">
-            <a-button>View All</a-button>
+            <a-button>{{ $t('dashboard.viewAll') }}</a-button>
           </router-link>
         </div>
 
@@ -284,12 +294,12 @@
 
         <!-- Empty State -->
         <div v-else-if="recentAds.length === 0">
-          <a-empty description="No ads yet">
+          <a-empty :description="$t('dashboard.noAdsYet')">
             <template #image>
               <file-text-outlined style="font-size: 48px; color: #d9d9d9;" />
             </template>
             <router-link to="/ad/create">
-              <a-button type="primary">Create Your First Ad</a-button>
+              <a-button type="primary">{{ $t('dashboard.createFirstAd') }}</a-button>
             </router-link>
           </a-empty>
         </div>
@@ -351,19 +361,19 @@
               <!-- Ad Content Preview -->
               <div v-if="ad.headline || ad.description || ad.primaryText" class="bg-gray-50 p-2 sm:p-3 rounded-lg mb-3">
                 <div v-if="ad.headline" class="mb-2">
-                  <p class="text-xs font-medium text-gray-600 mb-1">Headline</p>
+                  <p class="text-xs font-medium text-gray-600 mb-1">{{ $t('dashboard.headline') }}</p>
                   <p class="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-1" :title="ad.headline">{{ ad.headline }}</p>
                 </div>
                 <div v-if="ad.description" class="mb-2">
-                  <p class="text-xs font-medium text-gray-600 mb-1">Description</p>
+                  <p class="text-xs font-medium text-gray-600 mb-1">{{ $t('dashboard.description') }}</p>
                   <p class="text-xs sm:text-sm text-gray-700 line-clamp-2" :title="ad.description">{{ ad.description }}</p>
                 </div>
                 <div v-if="ad.primaryText">
-                  <p class="text-xs font-medium text-gray-600 mb-1">Primary Text</p>
+                  <p class="text-xs font-medium text-gray-600 mb-1">{{ $t('dashboard.primaryText') }}</p>
                   <p class="text-xs sm:text-sm text-gray-700 line-clamp-2" :title="ad.primaryText">{{ ad.primaryText }}</p>
                 </div>
               </div>
-              
+
               <!-- Footer -->
               <div class="flex justify-between items-center pt-3 border-t border-gray-100">
                 <p class="text-xs text-gray-500">{{ formatDate(ad.createdDate) }}</p>
@@ -372,7 +382,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                   </svg>
-                  View
+                  {{ $t('dashboard.view') }}
                 </a-button>
               </div>
             </a-card>
@@ -384,23 +394,23 @@
     <!-- Ad Detail Modal -->
     <a-modal
       v-model:visible="showDetailModal"
-      title="Ad Details"
+      :title="$t('dashboard.adDetails')"
       width="800px"
       :footer="null"
     >
       <div v-if="selectedAd">
         <a-descriptions :column="1" bordered>
           <a-descriptions-item label="Name">{{ selectedAd.name }}</a-descriptions-item>
-          <a-descriptions-item label="Campaign">{{ selectedAd.campaignName || 'N/A' }}</a-descriptions-item>
-          <a-descriptions-item label="Ad Type">{{ selectedAd.adType?.replace('_', ' ') || 'N/A' }}</a-descriptions-item>
-          <a-descriptions-item label="Status">
+          <a-descriptions-item :label="$t('dashboard.campaign')">{{ selectedAd.campaignName || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item :label="$t('dashboard.adType')">{{ selectedAd.adType?.replace('_', ' ') || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item :label="$t('dashboard.status')">
             <a-tag :color="getStatusColor(selectedAd.status)">{{ selectedAd.status }}</a-tag>
           </a-descriptions-item>
-          <a-descriptions-item label="Headline">{{ selectedAd.headline || 'N/A' }}</a-descriptions-item>
-          <a-descriptions-item label="Primary Text">{{ selectedAd.primaryText || 'N/A' }}</a-descriptions-item>
-          <a-descriptions-item label="Description">{{ selectedAd.description || 'N/A' }}</a-descriptions-item>
-          <a-descriptions-item label="Call to Action">{{ selectedAd.callToAction || 'N/A' }}</a-descriptions-item>
-          <a-descriptions-item label="Media">
+          <a-descriptions-item :label="$t('dashboard.headline')">{{ selectedAd.headline || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item :label="$t('dashboard.primaryText')">{{ selectedAd.primaryText || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item :label="$t('dashboard.description')">{{ selectedAd.description || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item :label="$t('dashboard.callToAction')">{{ selectedAd.callToAction || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item :label="$t('dashboard.media')">
             <div v-if="selectedAd.imageUrl || selectedAd.videoUrl">
               <div v-if="selectedAd.imageUrl" style="display: flex; align-items: center; gap: 12px;">
                 <img :src="selectedAd.imageUrl" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #f0f0f0;" />
@@ -408,7 +418,7 @@
                   <template #icon>
                     <eye-outlined />
                   </template>
-                  View Image
+                  {{ $t('dashboard.viewImage') }}
                 </a-button>
               </div>
               <div v-else-if="selectedAd.videoUrl" style="display: flex; align-items: center; gap: 12px;">
@@ -419,13 +429,13 @@
                   <template #icon>
                     <eye-outlined />
                   </template>
-                  View Video
+                  {{ $t('dashboard.viewVideo') }}
                 </a-button>
               </div>
             </div>
             <span v-else>N/A</span>
           </a-descriptions-item>
-          <a-descriptions-item label="Created Date">{{ formatDate(selectedAd.createdDate) }}</a-descriptions-item>
+          <a-descriptions-item :label="$t('dashboard.createdDate')">{{ formatDate(selectedAd.createdDate) }}</a-descriptions-item>
         </a-descriptions>
       </div>
     </a-modal>
@@ -433,7 +443,7 @@
     <!-- Media Modal -->
     <a-modal
       v-model:visible="showMediaModal"
-      title="Ad Media"
+      :title="$t('dashboard.adMedia')"
       width="1000px"
       :footer="null"
     >
@@ -452,7 +462,7 @@
         </div>
         <div v-else style="padding: 48px;">
           <picture-outlined style="font-size: 48px; color: #d9d9d9; margin-bottom: 16px;" />
-          <a-typography-text type="secondary">No media available for this ad</a-typography-text>
+          <a-typography-text type="secondary">{{ $t('dashboard.noMediaAvailable') }}</a-typography-text>
         </div>
       </div>
     </a-modal>
@@ -475,6 +485,7 @@ import {
 import MobileHeader from '@/components/MobileHeader.vue'
 import MobileDashboardStats from '@/components/MobileDashboardStats.vue'
 import LoadingSkeleton from '@/components/LoadingSkeleton.vue'
+import DashboardNextSteps from '@/components/DashboardNextSteps.vue'
 
 export default {
   name: 'Dashboard',
@@ -490,7 +501,8 @@ export default {
     RocketOutlined,
     MobileHeader,
     MobileDashboardStats,
-    LoadingSkeleton
+    LoadingSkeleton,
+    DashboardNextSteps
   },
   data() {
     return {
@@ -742,6 +754,21 @@ export default {
         "Innovation comes from experimentation"
       ]
       return messages[Math.floor(Math.random() * messages.length)]
+    },
+
+    getContextualInsight() {
+      // Provide contextual insights based on current state
+      if (this.stats.totalCampaigns === 0) {
+        return this.$t('dashboard.insights.noCampaigns')
+      } else if (this.stats.totalAds === 0) {
+        return this.$t('dashboard.insights.noAds')
+      } else if (this.stats.activeCampaigns === 0) {
+        return this.$t('dashboard.insights.lowActivity')
+      } else if (this.stats.totalCampaigns > 0 && this.stats.totalAds > 0) {
+        return this.$t('dashboard.insights.growing')
+      } else {
+        return this.getRandomTip()
+      }
     }
   }
 }
@@ -772,8 +799,25 @@ export default {
   margin-bottom: 34px;
 }
 
-.featured-stat {
+.featured-stat-link {
   grid-row: span 2;
+  text-decoration: none;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.featured-stat-link:hover {
+  transform: translateY(-2px);
+}
+
+.stat-card-link {
+  text-decoration: none;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.stat-card-link:hover {
+  transform: translateY(-2px);
 }
 
 .stat-card-creative.primary-stat {
@@ -787,6 +831,12 @@ export default {
   display: flex;
   align-items: center;
   gap: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.featured-stat-link:hover .stat-card-creative.primary-stat {
+  box-shadow: 0 12px 32px rgba(45, 90, 160, 0.3);
 }
 
 .stat-visual {
@@ -832,6 +882,21 @@ export default {
   display: inline-block;
 }
 
+.stat-action {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: gap 0.2s ease;
+}
+
+.featured-stat-link:hover .stat-action {
+  gap: 8px;
+}
+
 .secondary-stats {
   display: flex;
   flex-direction: column;
@@ -849,10 +914,11 @@ export default {
   gap: 14px;
   transition: all 0.3s ease;
   height: 82px;
+  cursor: pointer;
 }
 
-.stat-card-creative.secondary-stat:hover {
-  transform: translateY(-1px);
+.stat-card-link:hover .stat-card-creative.secondary-stat {
+  border-color: #d9d9d9;
   box-shadow: 0 6px 20px rgba(45, 90, 160, 0.12);
 }
 

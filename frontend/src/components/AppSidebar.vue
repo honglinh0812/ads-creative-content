@@ -1,11 +1,11 @@
 <template>
-  <!-- Nút hamburger ngoài sidebar, chỉ hiện khi sidebar đóng -->
-  <button v-if="!sidebarOpen" class="sidebar-hamburger-fixed" @click="$emit('toggle')" aria-label="Mở sidebar">
+  <!-- Hamburger button outside sidebar, shown when sidebar is closed -->
+  <button v-if="!sidebarOpen" class="sidebar-hamburger-fixed" @click="$emit('toggle')" :aria-label="$t('sidebar.openSidebar')">
     <MenuOutlined class="w-6 h-6" />
   </button>
   <aside :class="['app-sidebar', { open: sidebarOpen }]">
-    <!-- Nút 3 gạch trong sidebar, chỉ hiện khi sidebar mở -->
-    <button v-if="sidebarOpen" class="sidebar-hamburger" @click="$emit('toggle')" aria-label="Đóng sidebar">
+    <!-- Hamburger button inside sidebar, shown when sidebar is open -->
+    <button v-if="sidebarOpen" class="sidebar-hamburger" @click="$emit('toggle')" :aria-label="$t('sidebar.closeSidebar')">
       <MenuOutlined class="w-6 h-6" />
     </button>
     <div v-if="sidebarOpen" class="sidebar-content">
@@ -30,7 +30,7 @@
       <div class="sidebar-actions">
         <button v-if="!isDashboard" class="btn btn-sm btn-outline w-full mb-2" @click="goDashboard">
           <ArrowLeftOutlined class="w-4 h-4 mr-1" />
-          Back to Dashboard
+          {{ $t('navigation.backToDashboard') }}
         </button>
       </div>
       <div class="sidebar-footer">
@@ -40,7 +40,7 @@
         </div>
       </div>
     </div>
-    <!-- Overlay khi sidebar đóng ở mobile/tablet -->
+    <!-- Overlay when sidebar is closed on mobile/tablet -->
     <div v-if="!sidebarOpen" class="sidebar-overlay" @click="$emit('toggle')"></div>
 
   </aside>
@@ -50,7 +50,8 @@
 import { computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
-import { HomeOutlined, ThunderboltOutlined, FileTextOutlined, MenuOutlined, ArrowLeftOutlined } from '@ant-design/icons-vue'
+import { useI18n } from 'vue-i18n'
+import { HomeOutlined, ThunderboltOutlined, FileTextOutlined, MenuOutlined, ArrowLeftOutlined, TeamOutlined } from '@ant-design/icons-vue'
 
 export default {
   name: 'AppSidebar',
@@ -60,6 +61,7 @@ export default {
     FileTextOutlined,
     MenuOutlined,
     ArrowLeftOutlined,
+    TeamOutlined
   },
   props: {
     sidebarOpen: {
@@ -73,21 +75,23 @@ export default {
     const route = useRoute()
     const router = useRouter()
 
-    const userName = computed(() => store.getters['auth/user']?.username || store.getters['auth/user']?.name || 'User')
+    const { t } = useI18n()
+    const userName = computed(() => store.getters['auth/user']?.username || store.getters['auth/user']?.name || t('user.defaultName'))
     const userInitials = computed(() => userName.value.split(' ').map(w => w[0]).join('').toUpperCase())
-    // Chỉ 3 mục chính
-    const menu = [
-      { label: 'Dashboard', path: '/dashboard', icon: HomeOutlined, match: ['dashboard'] },
-      { label: 'Campaigns', path: '/campaigns', icon: ThunderboltOutlined, match: ['campaign', 'campaigns'] },
-      { label: 'Ads', path: '/ads', icon: FileTextOutlined, match: ['ad', 'ads'] }
-    ]
-    // Xác định active
+    // Main menu items
+    const menu = computed(() => [
+      { label: t('navigation.dashboard'), path: '/dashboard', icon: HomeOutlined, match: ['dashboard'] },
+      { label: t('navigation.campaigns'), path: '/campaigns', icon: ThunderboltOutlined, match: ['campaign', 'campaigns'] },
+      { label: t('navigation.ads'), path: '/ads', icon: FileTextOutlined, match: ['ad', 'ads'] },
+      { label: t('navigation.personas') || 'Personas', path: '/personas', icon: TeamOutlined, match: ['persona', 'personas'] }
+    ])
+    // Determine if menu item is active
     function isActive(item) {
       return item.match.some(m => route.path.includes(m))
     }
-    // Đang ở dashboard?
+    // Check if current page is dashboard
     const isDashboard = computed(() => route.path === '/dashboard')
-    // Back to dashboard
+    // Navigate back to dashboard
     function goDashboard() {
       router.push('/dashboard')
     }

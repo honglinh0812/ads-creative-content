@@ -19,6 +19,9 @@ import ApiService from './services/apiService.js'
 // Sentry Error Monitoring
 import { initSentry } from './plugins/sentry.js'
 
+// i18n
+import i18n from './i18n'
+
 const app = createApp(App)
 
 // Initialize Sentry (must be done before other configurations)
@@ -27,6 +30,7 @@ initSentry(app, router)
 // Use plugins
 app.use(store)
 app.use(router)
+app.use(i18n)
 app.use(Antd)
 app.use(ToastService)
 app.use(ApiService)
@@ -55,15 +59,35 @@ app.config.errorHandler = (err, vm, info) => {
 // Initialize authentication before mounting app
 async function initializeApp() {
   try {
+    // Initialize theme from localStorage or system preference
+    const savedTheme = localStorage.getItem('theme')
+    if (savedTheme) {
+      store.commit('SET_THEME', savedTheme)
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      store.commit('SET_THEME', 'dark')
+    } else {
+      store.commit('SET_THEME', 'light')
+    }
+
+    // Listen for system theme changes
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        // Only auto-switch if user hasn't manually set a theme
+        if (!localStorage.getItem('theme')) {
+          store.commit('SET_THEME', e.matches ? 'dark' : 'light')
+        }
+      })
+    }
+
     // Set loading state
     store.commit('auth/SET_LOADING', true)
-    
+
     // Check if there's a token in localStorage
     const token = localStorage.getItem('token')
     if (token) {
       // Set token in store
       store.commit('auth/SET_TOKEN', token)
-      
+
       // Try to fetch user data to validate token
       try {
         await store.dispatch('auth/fetchUser')
@@ -80,7 +104,7 @@ async function initializeApp() {
     // Clear loading state
     store.commit('auth/SET_LOADING', false)
   }
-  
+
   // Mount app after authentication check
   app.mount("#app")
 }

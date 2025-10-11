@@ -1,8 +1,18 @@
 <template>
-  <div class="form-group-standard">
+  <div :class="['form-group-standard', { 'form-group-focused': isFocused, 'form-group-error': hasError }]">
     <label v-if="label" class="form-label-standard" :for="fieldId">
       {{ label }}
-      <span v-if="required" class="text-danger-standard">*</span>
+      <span v-if="required" class="text-danger-standard" aria-label="Required field">*</span>
+      <a-button
+        v-if="helpTooltip"
+        type="text"
+        size="small"
+        class="help-button"
+        @click="showHelp = true"
+        :aria-label="`Help for ${label}`"
+      >
+        <template #icon><question-circle-outlined /></template>
+      </a-button>
     </label>
 
     <!-- Input Field -->
@@ -10,9 +20,10 @@
       v-if="type === 'text' || type === 'email' || type === 'password' || type === 'url'"
       :id="fieldId"
       :type="type"
-      v-model="modelValue"
+      :value="modelValue"
       @input="$emit('update:modelValue', $event.target.value)"
-      @blur="validateField"
+      @blur="handleBlur"
+      @focus="handleFocus"
       :class="[
         'form-input-standard',
         { error: hasError }
@@ -26,9 +37,10 @@
     <textarea
       v-else-if="type === 'textarea'"
       :id="fieldId"
-      v-model="modelValue"
+      :value="modelValue"
       @input="$emit('update:modelValue', $event.target.value)"
-      @blur="validateField"
+      @blur="handleBlur"
+      @focus="handleFocus"
       :class="[
         'form-input-standard',
         { error: hasError }
@@ -43,9 +55,10 @@
     <select
       v-else-if="type === 'select'"
       :id="fieldId"
-      v-model="modelValue"
+      :value="modelValue"
       @change="$emit('update:modelValue', $event.target.value)"
-      @blur="validateField"
+      @blur="handleBlur"
+      @focus="handleFocus"
       :class="[
         'form-input-standard',
         { error: hasError }
@@ -67,9 +80,10 @@
       v-else-if="type === 'number'"
       :id="fieldId"
       type="number"
-      v-model="modelValue"
+      :value="modelValue"
       @input="$emit('update:modelValue', $event.target.value)"
-      @blur="validateField"
+      @blur="handleBlur"
+      @focus="handleFocus"
       :class="[
         'form-input-standard',
         { error: hasError }
@@ -185,6 +199,15 @@ export default {
     }
   },
   methods: {
+    handleFocus() {
+      this.isFocused = true
+    },
+
+    handleBlur() {
+      this.isFocused = false
+      this.validateField()
+    },
+
     validateField() {
       if (!this.validateOnBlur) return
 

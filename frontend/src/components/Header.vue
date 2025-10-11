@@ -17,6 +17,9 @@
       <!-- Search functionality removed as requested -->
     </div>
     <div class="header-right">
+      <!-- Theme Toggle -->
+      <ThemeToggle />
+
       <div class="notification-dropdown-wrapper" style="position: relative; display: inline-block;">
         <button 
           class="icon-btn notification-btn text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400" 
@@ -53,7 +56,7 @@
             @keydown.escape="closeNotificationDropdown"
           >
             <div class="notification-header">
-              <h3 class="text-neutral-900 dark:text-neutral-100 font-semibold">Thông báo</h3>
+              <h3 class="text-neutral-900 dark:text-neutral-100 font-semibold">{{ $t('notifications.title') }}</h3>
             </div>
             <div v-if="recentNotifications.length > 0" class="notification-list" role="list">
               <div 
@@ -65,7 +68,7 @@
                 @keydown.enter="handleNotificationClick(noti)"
                 @keydown.space.prevent="handleNotificationClick(noti)"
                 @click="handleNotificationClick(noti)"
-                :aria-label="`Thông báo: ${noti.title || noti.type}. ${noti.message}. ${formatTime(noti.timestamp)}`"
+                :aria-label="`${$t('notifications.title')}: ${noti.title || noti.type}. ${noti.message}. ${formatTime(noti.timestamp)}`"
               >
                 <span class="noti-icon" :class="noti.type" aria-hidden="true">
                   <i v-if="noti.type==='success'" class="pi pi-check-circle text-success-500"></i>
@@ -82,19 +85,19 @@
             </div>
             <div v-else class="notification-empty text-neutral-500 dark:text-neutral-400" role="status">
               <i class="fas fa-bell-slash mb-2 text-2xl"></i>
-              <p>Chưa có thông báo nào</p>
-              <p class="text-xs mt-1">Các thông báo về chiến dịch và quảng cáo sẽ hiển thị ở đây</p>
+              <p>{{ $t('notifications.noNotifications') }}</p>
+              <p class="text-xs mt-1">{{ $t('notifications.emptyDescription') }}</p>
             </div>
             <div v-if="recentNotifications.length > 0" class="notification-footer border-t border-neutral-200 dark:border-neutral-700">
-              <button 
-                class="check-all-btn text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20" 
+              <button
+                class="check-all-btn text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
                 @click="markAllAsRead"
                 @keydown.enter="markAllAsRead"
                 @keydown.space.prevent="markAllAsRead"
                 role="menuitem"
-                aria-label="Mark all as read"
+                :aria-label="$t('notifications.markAllAsRead')"
               >
-                Đánh dấu tất cả đã đọc
+                {{ $t('notifications.markAllAsRead') }}
               </button>
             </div>
           </div>
@@ -153,7 +156,7 @@
             ref="logoutMenuItem"
           >
             <i class="pi pi-sign-out" aria-hidden="true"></i>
-            Đăng xuất
+            {{ $t('auth.logout') }}
           </a>
         </div>
       </div>
@@ -171,8 +174,8 @@
     >
       <div class="logout-dialog" @click.stop @keydown.escape="cancelLogout">
         <div class="logout-dialog-content">
-          <h3 id="logout-dialog-title">Xác nhận đăng xuất</h3>
-          <p id="logout-dialog-description">Bạn có chắc chắn muốn đăng xuất?</p>
+          <h3 id="logout-dialog-title">{{ $t('auth.logoutTitle') }}</h3>
+          <p id="logout-dialog-description">{{ $t('auth.logoutConfirmation') }}</p>
           <div class="logout-dialog-actions">
             <button 
               class="btn btn-secondary" 
@@ -181,15 +184,15 @@
               ref="cancelButton"
               aria-label="Cancel logout"
             >
-              Hủy
+              {{ $t('common.cancel') }}
             </button>
-            <button 
-              class="btn btn-primary" 
+            <button
+              class="btn btn-primary"
               @click="doLogout"
               @keydown.enter="doLogout"
               aria-label="Confirm logout"
             >
-              Đăng xuất
+              {{ $t('auth.logout') }}
             </button>
           </div>
         </div>
@@ -200,9 +203,12 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import ThemeToggle from './ThemeToggle.vue'
+
 export default {
   name: 'AppHeader',
   components: {
+    ThemeToggle
   },
   data() {
     return {
@@ -222,8 +228,8 @@ export default {
       return this.user && this.user.avatar ? this.user.avatar : this.defaultAvatar
     },
     username() {
-      if (!this.user) return 'Người dùng'
-      return this.user.fullName || this.user.username || this.user.name || this.user.email?.split('@')[0] || 'Người dùng'
+      if (!this.user) return this.$t('user.defaultName')
+      return this.user.fullName || this.user.username || this.user.name || this.user.email?.split('@')[0] || this.$t('user.defaultName')
     },
     notificationCount() {
       return this.toasts.length
