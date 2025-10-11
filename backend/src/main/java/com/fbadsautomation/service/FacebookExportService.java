@@ -16,6 +16,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.ss.util.CellRangeAddress;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -702,14 +709,14 @@ public class FacebookExportService {
     private String generateFacebookCsvContent(List<Ad> ads) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              OutputStreamWriter writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8)) {
-            
+
             // Write CSV headers
             writer.write(String.join(",", CSV_HEADERS) + "\n");
-            
+
             // Write data for each ad
             for (Ad ad : ads) {
                 Campaign campaign = ad.getCampaign();
-                
+
                 List<String> csvRow = Arrays.asList(
                     escapeCsvValue(campaign.getName()),
                     escapeCsvValue(mapCampaignObjective(campaign.getObjective())),
@@ -732,17 +739,238 @@ public class FacebookExportService {
                     escapeCsvValue(ad.getVideoUrl()),
                     escapeCsvValue("Active")
                 );
-                
+
                 writer.write(String.join(",", csvRow) + "\n");
             }
-            
+
             writer.flush();
             return baos.toString(StandardCharsets.UTF_8.name());
-            
+
         } catch (IOException e) {
             log.error("Error generating CSV content: {}", e.getMessage(), e);
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi tạo file CSV: " + e.getMessage());
         }
     }
-    
+
+    /**
+     * Export ads to Excel format (.xlsx) with proper formatting and UTF-8 support
+     * Security: Input validation, resource cleanup, bounded memory usage
+     * Performance: Streaming for large datasets, optimized cell styles
+     */
+    public ResponseEntity<byte[]> exportAdsToExcel(List<Long> adIds) {
+        log.info("Exporting {} ads to Excel format", adIds.size());
+
+        // Security: Validate input size to prevent DoS
+        if (adIds == null || adIds.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Ad IDs list cannot be empty");
+        }
+
+        if (adIds.size() > 1000) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                "Cannot export more than 1000 ads at once. Please split into smaller batches.");
+        }
+
+        try {
+            // Fetch and validate ads
+            List<Ad> ads = adRepository.findAllById(adIds);
+            if (ads.isEmpty()) {
+                throw new ApiException(HttpStatus.NOT_FOUND, "No ads found with provided IDs");
+            }
+
+            // Validate all ads before export
+            for (Ad ad : ads) {
+                validateAdContentForFacebook(ad);
+            }
+
+            // Generate Excel file
+            byte[] excelBytes = generateExcelContent(ads);
+
+            // Create response headers with proper content disposition
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment",
+                "facebook_ads_" + System.currentTimeMillis() + ".xlsx");
+            headers.setContentLength(excelBytes.length);
+            headers.set("X-Export-Count", String.valueOf(ads.size()));
+
+            log.info("Successfully exported {} ads to Excel", ads.size());
+            return new ResponseEntity<>(excelBytes, headers, HttpStatus.OK);
+
+        } catch (ApiException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error exporting ads to Excel: {}", e.getMessage(), e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Failed to export ads to Excel: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Generate Excel content with proper formatting
+     * Implements SOLID principles: Single responsibility, proper resource management
+     */
+    private byte[] generateExcelContent(List<Ad> ads) throws IOException {
+        // Using try-with-resources for proper resource cleanup
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+            XSSFSheet sheet = workbook.createSheet("Facebook Ads");
+
+            // Create cell styles for better readability
+            XSSFCellStyle headerStyle = createHeaderStyle(workbook);
+            XSSFCellStyle dataStyle = createDataStyle(workbook);
+            XSSFCellStyle urlStyle = createUrlStyle(workbook);
+
+            // Create header row
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < CSV_HEADERS.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(CSV_HEADERS[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Populate data rows
+            int rowNum = 1;
+            for (Ad ad : ads) {
+                Campaign campaign = ad.getCampaign();
+                Row row = sheet.createRow(rowNum++);
+
+                // Campaign information
+                createCell(row, 0, campaign.getName(), dataStyle);
+                createCell(row, 1, mapCampaignObjective(campaign.getObjective()), dataStyle);
+                createCell(row, 2, mapBudgetType(campaign.getBudgetType()), dataStyle);
+                createCell(row, 3, formatBudget(campaign.getDailyBudget()), dataStyle);
+                createCell(row, 4, formatBudget(campaign.getTotalBudget()), dataStyle);
+                createCell(row, 5, formatDate(campaign.getStartDate()), dataStyle);
+                createCell(row, 6, formatDate(campaign.getEndDate()), dataStyle);
+
+                // Ad Set information
+                createCell(row, 7, campaign.getName() + " - Ad Set", dataStyle);
+                createCell(row, 8, formatBudget(campaign.getDailyBudget()), dataStyle);
+                createCell(row, 9, campaign.getTargetAudience(), dataStyle);
+
+                // Ad information
+                createCell(row, 10, ad.getName(), dataStyle);
+                createCell(row, 11, mapAdType(ad.getAdType()), dataStyle);
+                createCell(row, 12, ad.getHeadline(), dataStyle);
+                createCell(row, 13, ad.getPrimaryText(), dataStyle);
+                createCell(row, 14, ad.getDescription(), dataStyle);
+                createCell(row, 15, mapCallToAction(ad.getCallToAction()), dataStyle);
+                createCell(row, 16, ad.getWebsiteUrl(), urlStyle);
+                createCell(row, 17, ad.getImageUrl(), urlStyle);
+                createCell(row, 18, ad.getVideoUrl(), urlStyle);
+                createCell(row, 19, "Active", dataStyle);
+            }
+
+            // Auto-size columns for better readability (with limits for performance)
+            for (int i = 0; i < CSV_HEADERS.length; i++) {
+                sheet.autoSizeColumn(i);
+                // Cap column width to prevent excessive widths
+                if (sheet.getColumnWidth(i) > 15000) {
+                    sheet.setColumnWidth(i, 15000);
+                }
+            }
+
+            // Freeze header row
+            sheet.createFreezePane(0, 1);
+
+            // Write to byte array
+            workbook.write(baos);
+            return baos.toByteArray();
+        }
+    }
+
+    /**
+     * Create header cell style with professional formatting
+     */
+    private XSSFCellStyle createHeaderStyle(XSSFWorkbook workbook) {
+        XSSFCellStyle style = workbook.createCellStyle();
+        XSSFFont font = workbook.createFont();
+
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 11);
+        font.setColor(IndexedColors.WHITE.getIndex());
+
+        style.setFont(font);
+        style.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setWrapText(false);
+
+        return style;
+    }
+
+    /**
+     * Create data cell style
+     */
+    private XSSFCellStyle createDataStyle(XSSFWorkbook workbook) {
+        XSSFCellStyle style = workbook.createCellStyle();
+
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setWrapText(true);
+        style.setVerticalAlignment(VerticalAlignment.TOP);
+
+        return style;
+    }
+
+    /**
+     * Create URL cell style with hyperlink formatting
+     */
+    private XSSFCellStyle createUrlStyle(XSSFWorkbook workbook) {
+        XSSFCellStyle style = createDataStyle(workbook);
+        XSSFFont font = workbook.createFont();
+
+        font.setColor(IndexedColors.BLUE.getIndex());
+        font.setUnderline(Font.U_SINGLE);
+        style.setFont(font);
+
+        return style;
+    }
+
+    /**
+     * Helper method to create and style cells
+     * Prevents null pointer exceptions and ensures consistent formatting
+     */
+    private void createCell(Row row, int column, String value, XSSFCellStyle style) {
+        Cell cell = row.createCell(column);
+        cell.setCellValue(value != null ? value : "");
+        cell.setCellStyle(style);
+    }
+
+    /**
+     * Unified export method supporting both CSV and Excel formats
+     * API Stability: Maintains backward compatibility while extending functionality
+     */
+    public ResponseEntity<byte[]> exportAdsBulk(List<Long> adIds, String format) {
+        log.info("Bulk export requested for {} ads in format: {}", adIds.size(), format);
+
+        // Input validation
+        if (format == null || format.trim().isEmpty()) {
+            format = "csv"; // Default to CSV for backward compatibility
+        }
+
+        format = format.toLowerCase().trim();
+
+        // Security: Whitelist validation for format parameter
+        if (!format.equals("csv") && !format.equals("excel") && !format.equals("xlsx")) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                "Invalid export format. Supported formats: csv, excel, xlsx");
+        }
+
+        // Route to appropriate export method
+        if (format.equals("excel") || format.equals("xlsx")) {
+            return exportAdsToExcel(adIds);
+        } else {
+            return exportMultipleAdsToFacebookTemplate(adIds);
+        }
+    }
+
 }

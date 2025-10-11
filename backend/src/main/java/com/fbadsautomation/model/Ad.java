@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "ads")
@@ -90,7 +92,11 @@ public class Ad {
     
     @Column(name = "lead_form_questions", columnDefinition = "TEXT")
     private String leadFormQuestions; // JSON string for LEAD_FORM_AD questions
-    
+
+    // OneToMany relationship with AdContent
+    @OneToMany(mappedBy = "ad", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private Set<AdContent> adContents = new HashSet<>();
+
     // Getter & Setter cho tất cả các trường
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -136,4 +142,6 @@ public class Ad {
     public void setWebsiteUrl(String websiteUrl) { this.websiteUrl = websiteUrl; }
     public String getLeadFormQuestions() { return leadFormQuestions; }
     public void setLeadFormQuestions(String leadFormQuestions) { this.leadFormQuestions = leadFormQuestions; }
+    public Set<AdContent> getAdContents() { return adContents; }
+    public void setAdContents(Set<AdContent> adContents) { this.adContents = adContents; }
 }

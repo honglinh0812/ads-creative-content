@@ -40,6 +40,82 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, ex.getStatus());
     }
 
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex, WebRequest request) {
+        log.error("Business Exception [{}]: {}", ex.getErrorCode(), ex.getMessage(), ex);
+
+        ErrorResponse errorResponse = ErrorResponse.of(ex.getHttpStatus().value(),
+                ex.getErrorCode(),
+                ex.getMessage(),
+                getPath(request)
+        );
+        errorResponse.setRequestId(generateRequestId());
+
+        return new ResponseEntity<>(errorResponse, ex.getHttpStatus());
+    }
+
+    @ExceptionHandler(AIProviderException.class)
+    public ResponseEntity<ErrorResponse> handleAIProviderException(AIProviderException ex, WebRequest request) {
+        log.error("AI Provider Exception [{}]: {}", ex.getProviderName(), ex.getMessage(), ex);
+
+        ErrorResponse errorResponse = ErrorResponse.of(ex.getHttpStatus().value(),
+                ex.getErrorCode(),
+                ex.getMessage(),
+                getPath(request)
+        );
+        errorResponse.setRequestId(generateRequestId());
+
+        return new ResponseEntity<>(errorResponse, ex.getHttpStatus());
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(ValidationException ex, WebRequest request) {
+        log.warn("Validation Exception: {}", ex.getMessage());
+
+        ErrorResponse errorResponse;
+        if (ex.getFieldErrors() != null && !ex.getFieldErrors().isEmpty()) {
+            errorResponse = ErrorResponse.validationError(ex.getMessage(),
+                    ex.getFieldErrors(),
+                    getPath(request));
+        } else {
+            errorResponse = ErrorResponse.of(ex.getHttpStatus().value(),
+                    ex.getErrorCode(),
+                    ex.getMessage(),
+                    getPath(request));
+        }
+        errorResponse.setRequestId(generateRequestId());
+
+        return new ResponseEntity<>(errorResponse, ex.getHttpStatus());
+    }
+
+    @ExceptionHandler(ResourceException.class)
+    public ResponseEntity<ErrorResponse> handleResourceException(ResourceException ex, WebRequest request) {
+        log.warn("Resource Exception [{}:{}]: {}", ex.getResourceType(), ex.getResourceId(), ex.getMessage());
+
+        ErrorResponse errorResponse = ErrorResponse.of(ex.getHttpStatus().value(),
+                ex.getErrorCode(),
+                ex.getMessage(),
+                getPath(request)
+        );
+        errorResponse.setRequestId(generateRequestId());
+
+        return new ResponseEntity<>(errorResponse, ex.getHttpStatus());
+    }
+
+    @ExceptionHandler(ExternalServiceException.class)
+    public ResponseEntity<ErrorResponse> handleExternalServiceException(ExternalServiceException ex, WebRequest request) {
+        log.error("External Service Exception [{}]: {}", ex.getServiceName(), ex.getMessage(), ex);
+
+        ErrorResponse errorResponse = ErrorResponse.of(ex.getHttpStatus().value(),
+                ex.getErrorCode(),
+                ex.getMessage(),
+                getPath(request)
+        );
+        errorResponse.setRequestId(generateRequestId());
+
+        return new ResponseEntity<>(errorResponse, ex.getHttpStatus());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(
             MethodArgumentNotValidException ex, WebRequest request) {

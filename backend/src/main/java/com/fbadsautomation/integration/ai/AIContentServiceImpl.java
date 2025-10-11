@@ -50,6 +50,22 @@ public class AIContentServiceImpl {
                                            String customPrompt,
                                            String extractedContent,
                                            com.fbadsautomation.model.FacebookCTA callToAction) {
+        return generateContent(prompt, contentType, textProvider, imageProvider, numberOfVariations,
+                               language, adLinks, promptStyle, customPrompt, extractedContent, callToAction, null);
+    }
+
+    public List<AdContent> generateContent(String prompt,
+                                           AdContent.ContentType contentType,
+                                           String textProvider,
+                                           String imageProvider,
+                                           int numberOfVariations,
+                                           String language,
+                                           List<String> adLinks,
+                                           String promptStyle,
+                                           String customPrompt,
+                                           String extractedContent,
+                                           com.fbadsautomation.model.FacebookCTA callToAction,
+                                           com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
         
         String providerId = (textProvider == null || textProvider.isBlank())
                 ? "openai" : textProvider;
@@ -72,6 +88,12 @@ public class AIContentServiceImpl {
 
         // Build final prompt based on available inputs
         String finalPrompt = buildFinalPrompt(prompt, adLinks, promptStyle, customPrompt, extractedContent);
+
+        // Inject audience segment variables if provided
+        if (audienceSegment != null) {
+            finalPrompt = injectAudienceSegment(finalPrompt, audienceSegment);
+        }
+
         try {
             AdType adType = convertContentTypeToAdType(contentType);
             String enhancedPrompt = enhancePromptForAdType(finalPrompt, adType);
@@ -204,13 +226,43 @@ public class AIContentServiceImpl {
      * Enhance user prompt based on ad type to potentially get better AI-generated content.
      */
     private String enhancePromptForAdType(String userPrompt, AdType adType) {
-        StringBuilder enhancedPrompt = new StringBuilder(userPrompt);
-        enhancedPrompt.append("\n\n🚨 FACEBOOK COMPLIANCE REQUIREMENTS (MANDATORY):\n");
-        enhancedPrompt.append("📏 CHARACTER LIMITS: Headline ≤40, Description ≤30, Primary Text ≤125\n");
-        enhancedPrompt.append("📝 MINIMUM: 3 meaningful words per field\n");
-        enhancedPrompt.append("🚫 PROHIBITED: hate, violence, drugs, miracle, guaranteed, cure, instant, excessive punctuation\n");
-        enhancedPrompt.append("✅ REQUIRED: Professional tone, clear language, no ALL CAPS, no spam-like content\n");
-        enhancedPrompt.append("⚠️ PRIORITY: Compliance over creativity - if unsure, choose safer content\n");
-        return enhancedPrompt.toString();
+        return userPrompt;
+    }
+
+    /**
+     * Inject audience segment variables into the prompt for personalized ad targeting
+     */
+    private String injectAudienceSegment(String basePrompt, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
+        StringBuilder enhanced = new StringBuilder(basePrompt);
+        enhanced.append("\n\n🎯 TARGET AUDIENCE PROFILE:\n");
+
+        if (audienceSegment.getGender() != null) {
+            enhanced.append("👥 Gender: ").append(audienceSegment.getGender().getDisplayName()).append("\n");
+        }
+
+        if (audienceSegment.getMinAge() != null && audienceSegment.getMaxAge() != null) {
+            enhanced.append("📅 Age Range: ").append(audienceSegment.getMinAge())
+                    .append(" - ").append(audienceSegment.getMaxAge()).append(" years old\n");
+        } else if (audienceSegment.getMinAge() != null) {
+            enhanced.append("📅 Minimum Age: ").append(audienceSegment.getMinAge()).append("+ years old\n");
+        }
+
+        if (audienceSegment.getLocation() != null && !audienceSegment.getLocation().trim().isEmpty()) {
+            enhanced.append("📍 Location: ").append(audienceSegment.getLocation()).append("\n");
+        }
+
+        if (audienceSegment.getInterests() != null && !audienceSegment.getInterests().trim().isEmpty()) {
+            enhanced.append("❤️ Interests: ").append(audienceSegment.getInterests()).append("\n");
+        }
+
+        enhanced.append("\n💡 Please create ad content that resonates with this specific audience demographic.");
+
+        log.info("Audience segment injected into prompt: gender={}, age={}-{}, location={}",
+                audienceSegment.getGender(),
+                audienceSegment.getMinAge(),
+                audienceSegment.getMaxAge(),
+                audienceSegment.getLocation());
+
+        return enhanced.toString();
     }
 }

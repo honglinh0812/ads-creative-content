@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-// import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,10 +18,11 @@ public class AIContentCacheService {
 
     private static final Logger log = LoggerFactory.getLogger(AIContentCacheService.class);
 
-    public AIContentCacheService() {
-    }
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    // private final RedisTemplate<String, Object> redisTemplate;
+    public AIContentCacheService(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
     
     private static final String AI_CONTENT_PREFIX = "ai:content:";
     private static final String AI_IMAGE_PREFIX = "ai:image:";
@@ -55,7 +56,7 @@ public class AIContentCacheService {
      */
     public void cacheContent(String cacheKey, List<AdContent> content, Duration ttl) {
         try {
-            // redisTemplate.opsForValue().set(cacheKey, content, ttl.toSeconds(), TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(cacheKey, content, ttl.toSeconds(), TimeUnit.SECONDS);
             log.debug("Cached AI content with key: {}", cacheKey);
         } catch (Exception e) {
             log.error("Failed to cache AI content: {}", e.getMessage(), e);
@@ -68,11 +69,11 @@ public class AIContentCacheService {
     @SuppressWarnings("unchecked")
     public List<AdContent> getCachedContent(String cacheKey) {
         try {
-            // Object cached = redisTemplate.opsForValue().get(cacheKey);
-            // if (cached instanceof List) {
-            //     log.debug("Retrieved cached AI content with key: {}", cacheKey);
-            //     return (List<AdContent>) cached;
-            // }
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached instanceof List) {
+                log.debug("Retrieved cached AI content with key: {}", cacheKey);
+                return (List<AdContent>) cached;
+            }
             return null;
         } catch (Exception e) {
             log.error("Failed to retrieve cached AI content: {}", e.getMessage(), e);
@@ -85,7 +86,7 @@ public class AIContentCacheService {
      */
     public void cacheImage(String cacheKey, String imageUrl, Duration ttl) {
         try {
-            // redisTemplate.opsForValue().set(cacheKey, imageUrl, ttl.toSeconds(), TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(cacheKey, imageUrl, ttl.toSeconds(), TimeUnit.SECONDS);
             log.debug("Cached AI image with key: {}", cacheKey);
         } catch (Exception e) {
             log.error("Failed to cache AI image: {}", e.getMessage(), e);
@@ -97,11 +98,11 @@ public class AIContentCacheService {
      */
     public String getCachedImage(String cacheKey) {
         try {
-            // Object cached = redisTemplate.opsForValue().get(cacheKey);
-            // if (cached instanceof String) {
-            //     log.debug("Retrieved cached AI image with key: {}", cacheKey);
-            //     return (String) cached;
-            // }
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached instanceof String) {
+                log.debug("Retrieved cached AI image with key: {}", cacheKey);
+                return (String) cached;
+            }
             return null;
         } catch (Exception e) {
             log.error("Failed to retrieve cached AI image: {}", e.getMessage(), e);
@@ -114,33 +115,35 @@ public class AIContentCacheService {
      */
     public void recordProviderUsage(String provider, boolean success, long responseTimeMs, double cost) {
         try {
-            // String statsKey = PROVIDER_STATS_PREFIX + provider + ":" + getCurrentHour(); // Increment counters
-            // redisTemplate.opsForHash().increment(statsKey, "total_calls", 1);
-            // if (success) {
-            //     redisTemplate.opsForHash().increment(statsKey, "successful_calls", 1);
-            // } else {
-            //     redisTemplate.opsForHash().increment(statsKey, "failed_calls", 1);
-            // }
-            
-            // // Update response time (moving average)
-            // Object currentAvgTime = redisTemplate.opsForHash().get(statsKey, "avg_response_time");
-            // Object currentCallCount = redisTemplate.opsForHash().get(statsKey, "total_calls");
-            
-            // if (currentAvgTime != null && currentCallCount != null) {
-            //     double avgTime = Double.parseDouble(currentAvgTime.toString());
-            //     long callCount = Long.parseLong(currentCallCount.toString());
-            //     double newAvgTime = ((avgTime * (callCount - 1)) + responseTimeMs) / callCount;
-            //     redisTemplate.opsForHash().put(statsKey, "avg_response_time", String.valueOf(newAvgTime));
-            // } else {
-            //     redisTemplate.opsForHash().put(statsKey, "avg_response_time", String.valueOf(responseTimeMs));
-            // }
-            
-            // // Update cost
-            // redisTemplate.opsForHash().increment(statsKey, "total_cost", cost);
-            
-            // // Set expiration for stats (keep for 7 days)
-            // redisTemplate.expire(statsKey, Duration.ofDays(7));
-            
+            String statsKey = PROVIDER_STATS_PREFIX + provider + ":" + getCurrentHour();
+
+            // Increment counters
+            redisTemplate.opsForHash().increment(statsKey, "total_calls", 1);
+            if (success) {
+                redisTemplate.opsForHash().increment(statsKey, "successful_calls", 1);
+            } else {
+                redisTemplate.opsForHash().increment(statsKey, "failed_calls", 1);
+            }
+
+            // Update response time (moving average)
+            Object currentAvgTime = redisTemplate.opsForHash().get(statsKey, "avg_response_time");
+            Object currentCallCount = redisTemplate.opsForHash().get(statsKey, "total_calls");
+
+            if (currentAvgTime != null && currentCallCount != null) {
+                double avgTime = Double.parseDouble(currentAvgTime.toString());
+                long callCount = Long.parseLong(currentCallCount.toString());
+                double newAvgTime = ((avgTime * (callCount - 1)) + responseTimeMs) / callCount;
+                redisTemplate.opsForHash().put(statsKey, "avg_response_time", String.valueOf(newAvgTime));
+            } else {
+                redisTemplate.opsForHash().put(statsKey, "avg_response_time", String.valueOf(responseTimeMs));
+            }
+
+            // Update cost
+            redisTemplate.opsForHash().increment(statsKey, "total_cost", cost);
+
+            // Set expiration for stats (keep for 7 days)
+            redisTemplate.expire(statsKey, Duration.ofDays(7));
+
         } catch (Exception e) {
             log.error("Failed to record provider usage stats: {}", e.getMessage(), e);
         }
@@ -161,33 +164,33 @@ public class AIContentCacheService {
             double totalResponseTime = 0.0;
             int hourCount = 0;
             
-            // for (int i = 0; i < hoursBack; i++) {
-            //     String statsKey = PROVIDER_STATS_PREFIX + provider + ":" + (getCurrentHour() - i);
-            //     if (redisTemplate.hasKey(statsKey)) {
-            //         Object calls = redisTemplate.opsForHash().get(statsKey, "total_calls");
-            //         Object successful = redisTemplate.opsForHash().get(statsKey, "successful_calls");
-            //         Object failed = redisTemplate.opsForHash().get(statsKey, "failed_calls");
-            //         Object cost = redisTemplate.opsForHash().get(statsKey, "total_cost");
-            //         Object avgTime = redisTemplate.opsForHash().get(statsKey, "avg_response_time");
-                    
-            //         if (calls != null) {
-            //             totalCalls += Long.parseLong(calls.toString());
-            //             hourCount++;
-            //         }
-            //         if (successful != null) {
-            //             successfulCalls += Long.parseLong(successful.toString());
-            //         }
-            //         if (failed != null) {
-            //             failedCalls += Long.parseLong(failed.toString());
-            //         }
-            //         if (cost != null) {
-            //             totalCost += Double.parseDouble(cost.toString());
-            //         }
-            //         if (avgTime != null) {
-            //             totalResponseTime += Double.parseDouble(avgTime.toString());
-            //         }
-            //     }
-            // }
+            for (int i = 0; i < hoursBack; i++) {
+                String statsKey = PROVIDER_STATS_PREFIX + provider + ":" + (getCurrentHour() - i);
+                if (Boolean.TRUE.equals(redisTemplate.hasKey(statsKey))) {
+                    Object calls = redisTemplate.opsForHash().get(statsKey, "total_calls");
+                    Object successful = redisTemplate.opsForHash().get(statsKey, "successful_calls");
+                    Object failed = redisTemplate.opsForHash().get(statsKey, "failed_calls");
+                    Object cost = redisTemplate.opsForHash().get(statsKey, "total_cost");
+                    Object avgTime = redisTemplate.opsForHash().get(statsKey, "avg_response_time");
+
+                    if (calls != null) {
+                        totalCalls += Long.parseLong(calls.toString());
+                        hourCount++;
+                    }
+                    if (successful != null) {
+                        successfulCalls += Long.parseLong(successful.toString());
+                    }
+                    if (failed != null) {
+                        failedCalls += Long.parseLong(failed.toString());
+                    }
+                    if (cost != null) {
+                        totalCost += Double.parseDouble(cost.toString());
+                    }
+                    if (avgTime != null) {
+                        totalResponseTime += Double.parseDouble(avgTime.toString());
+                    }
+                }
+            }
             
             stats.setTotalCalls(totalCalls);
             stats.setSuccessfulCalls(successfulCalls);
@@ -210,8 +213,11 @@ public class AIContentCacheService {
     @CacheEvict(value = "ai-content", allEntries = true)
     public void clearProviderCache(String provider) {
         try {
-            // String pattern = AI_CONTENT_PREFIX + "*" + provider + "*";
-            // redisTemplate.delete(redisTemplate.keys(pattern));
+            String pattern = AI_CONTENT_PREFIX + "*" + provider + "*";
+            var keys = redisTemplate.keys(pattern);
+            if (keys != null && !keys.isEmpty()) {
+                redisTemplate.delete(keys);
+            }
             log.info("Cleared cache for provider: {}", provider);
         } catch (Exception e) {
             log.error("Failed to clear provider cache: {}", e.getMessage(), e);
@@ -224,8 +230,16 @@ public class AIContentCacheService {
     @CacheEvict(value = "ai-content", allEntries = true)
     public void clearAllCache() {
         try {
-            // redisTemplate.delete(redisTemplate.keys(AI_CONTENT_PREFIX + "*"));
-            // redisTemplate.delete(redisTemplate.keys(AI_IMAGE_PREFIX + "*"));
+            var contentKeys = redisTemplate.keys(AI_CONTENT_PREFIX + "*");
+            var imageKeys = redisTemplate.keys(AI_IMAGE_PREFIX + "*");
+
+            if (contentKeys != null && !contentKeys.isEmpty()) {
+                redisTemplate.delete(contentKeys);
+            }
+            if (imageKeys != null && !imageKeys.isEmpty()) {
+                redisTemplate.delete(imageKeys);
+            }
+
             log.info("Cleared all AI content cache");
         } catch (Exception e) {
             log.error("Failed to clear all cache: {}", e.getMessage(), e);

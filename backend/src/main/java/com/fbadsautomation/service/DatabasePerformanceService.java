@@ -1,9 +1,12 @@
 package com.fbadsautomation.service;
 
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.HikariPoolMXBean;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -11,39 +14,81 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class DatabasePerformanceService {
-    
+
     private static final Logger log = LoggerFactory.getLogger(DatabasePerformanceService.class);
 
     private final JdbcTemplate jdbcTemplate;
+    private final DataSource dataSource;
     
-    public DatabasePerformanceService(JdbcTemplate jdbcTemplate) {
+    public DatabasePerformanceService(JdbcTemplate jdbcTemplate, DataSource dataSource) {
         this.jdbcTemplate = jdbcTemplate;
+        this.dataSource = dataSource;
     }
 
     /**
      * Get database connection pool statistics
      */
     public Map<String, Object> getConnectionPoolStats() {
+        Map<String, Object> stats = new HashMap<>();
+
         try {
+            // Get HikariCP pool statistics if available
+            if (dataSource instanceof HikariDataSource) {
+                HikariDataSource hikariDataSource = (HikariDataSource) dataSource;
+                HikariPoolMXBean poolBean = hikariDataSource.getHikariPoolMXBean();
+
+                stats.put("poolName", hikariDataSource.getPoolName());
+                stats.put("activeConnections", poolBean.getActiveConnections());
+                stats.put("idleConnections", poolBean.getIdleConnections());
+                stats.put("totalConnections", poolBean.getTotalConnections());
+                stats.put("threadsAwaitingConnection", poolBean.getThreadsAwaitingConnection());
+                stats.put("maximumPoolSize", hikariDataSource.getMaximumPoolSize());
+                stats.put("minimumIdle", hikariDataSource.getMinimumIdle());
+                stats.put("connectionTimeout", hikariDataSource.getConnectionTimeout());
+                stats.put("idleTimeout", hikariDataSource.getIdleTimeout());
+                stats.put("maxLifetime", hikariDataSource.getMaxLifetime());
+                stats.put("leakDetectionThreshold", hikariDataSource.getLeakDetectionThreshold());
+
+                double utilization = (double) poolBean.getActiveConnections() / hikariDataSource.getMaximumPoolSize() * 100;
+                stats.put("utilizationPercentage", Math.round(utilization * 100.0) / 100.0);
+
+                String healthStatus;
+                if (utilization > 90 || poolBean.getThreadsAwaitingConnection() > 0) {
+                    healthStatus = "CRITICAL";
+                } else if (utilization > 80) {
+                    healthStatus = "WARNING";
+                } else if (utilization > 60) {
+                    healthStatus = "MEDIUM";
+                } else {
+                    healthStatus = "HEALTHY";
+                }
+                stats.put("healthStatus", healthStatus);
+            }
+
+            // Also get PostgreSQL connection statistics
             String sql = """
-SELECT 
-    numbackends as active_connections,
-    numbackends - (SELECT count(*) FROM pg_stat_activity WHERE state = 'idle') as busy_connections,
-    (SELECT count(*) FROM pg_stat_activity WHERE state = 'idle') as idle_connections,
-    (SELECT setting::int FROM pg_settings WHERE name = 'max_connections') as max_connections
-FROM pg_stat_database 
-WHERE datname = current_database();
-""";
+                SELECT
+                    numbackends as active_connections,
+                    numbackends - (SELECT count(*) FROM pg_stat_activity WHERE state = 'idle') as busy_connections,
+                    (SELECT count(*) FROM pg_stat_activity WHERE state = 'idle') as idle_connections,
+                    (SELECT setting::int FROM pg_settings WHERE name = 'max_connections') as max_connections
+                FROM pg_stat_database
+                WHERE datname = current_database();
+                """;
             List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
             if (!result.isEmpty()) {
-                Map<String, Object> stats = result.get(0);
-                log.info("Connection pool stats: {}", stats);
-                return stats;
+                Map<String, Object> pgStats = result.get(0);
+                stats.put("postgresqlStats", pgStats);
+                log.debug("PostgreSQL connection stats: {}", pgStats);
             }
+
+            log.debug("Complete connection pool stats: {}", stats);
+            return stats;
         } catch (Exception e) {
             log.error("Error getting connection pool stats: {}", e.getMessage(), e);
+            stats.put("error", e.getMessage());
         }
-        return Map.of();
+        return stats;
     }
 
     /**

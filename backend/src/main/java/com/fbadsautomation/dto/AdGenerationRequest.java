@@ -4,56 +4,93 @@ import com.fbadsautomation.dto.AdVariation;
 import com.fbadsautomation.model.FacebookCTA;
 import java.util.Arrays;
 import java.util.List;
-import javax.validation.constraints.AssertTrue;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
+import javax.validation.Valid;
 public class AdGenerationRequest {
     
     @NotNull(message = "Campaign ID is required")
+    @Positive(message = "Campaign ID must be positive")
     private Long campaignId;
+
     @NotBlank(message = "Ad type is required")
-    private String adType; // PAGE_POST_AD, WEBSITE_CONVERSION_AD, LEAD_FORM_AD
-    
-    private String prompt; // Remove @NotBlank to allow empty prompt when ad links are provided
-    
+    @Pattern(regexp = "^(PAGE_POST_AD|WEBSITE_CONVERSION_AD|LEAD_FORM_AD)$",
+             message = "Invalid ad type. Must be PAGE_POST_AD, WEBSITE_CONVERSION_AD, or LEAD_FORM_AD")
+    private String adType;
+
+    @Size(max = 5000, message = "Prompt cannot exceed 5000 characters")
+    private String prompt;
+
+    @Size(min = 3, max = 255, message = "Name must be between 3 and 255 characters")
+    @Pattern(regexp = "^[a-zA-Z0-9\\s\\-_.,()]+$", message = "Name contains invalid characters")
     private String name;
-    
+
     /**
      * URL của file media đã upload (nếu có). Nếu không có file upload trực tiếp, backend sẽ dùng giá trị này để set imageUrl cho ad.
      */
+    @Pattern(regexp = "^(https?://.*|/api/images/.*)$", message = "Invalid media file URL format")
     private String mediaFileUrl;
-    
+
     @NotBlank(message = "Text provider is required")
-    private String textProvider; // openai, gemini
-    
-    private String imageProvider; // openai, huggingface (không bắt buộc nếu đã có mediaFileUrl)
+    @Pattern(regexp = "^(openai|gemini|anthropic|huggingface)$",
+             message = "Invalid text provider. Must be openai, gemini, anthropic, or huggingface")
+    private String textProvider;
+
+    @Pattern(regexp = "^(openai|huggingface|stable-diffusion|fal-ai)$",
+             message = "Invalid image provider. Must be openai, huggingface, stable-diffusion, or fal-ai")
+    private String imageProvider;
+
     @NotNull(message = "Number of variations is required")
+    @Min(value = 1, message = "Number of variations must be at least 1")
+    @Max(value = 10, message = "Number of variations cannot exceed 10")
     private Integer numberOfVariations;
+
+    @Pattern(regexp = "^(en|vi|es|fr|de|it|pt|ru|ja|ko|zh)$",
+             message = "Invalid language code")
     private String language;
 
-    private List<String> adLinks;
-    
+    @Size(max = 10, message = "Cannot exceed 10 ad links")
+    private List<@Pattern(regexp = "^https?://.*", message = "Invalid URL format") String> adLinks;
+
+    @Size(max = 100, message = "Prompt style cannot exceed 100 characters")
     private String promptStyle;
-    
+
+    @Size(max = 2000, message = "Custom prompt cannot exceed 2000 characters")
     private String customPrompt;
-    
+
     private FacebookCTA callToAction;
-    
+
+    @Size(max = 10000, message = "Extracted content cannot exceed 10000 characters")
     private String extractedContent; // Content extracted from Meta Ad Library
-    
+
     private Boolean isPreview; // Flag để phân biệt preview vs save thực sự
-    
+
+    @Valid
     private AdVariation selectedVariation; // Variation được chọn khi save
-    
+
     private Boolean saveExistingContent; // Flag để backend biết chỉ lưu nội dung hiện tại
 
     // New fields for ad type specific data
+    @Pattern(regexp = "^https?://.*", message = "Invalid website URL format")
     private String websiteUrl; // For WEBSITE_CONVERSION_AD
+
+    @Valid
+    @Size(max = 20, message = "Cannot exceed 20 lead form questions")
     private List<LeadFormQuestion> leadFormQuestions; // For LEAD_FORM_AD
-    
+
+    @Valid
+    private AudienceSegmentRequest audienceSegment; // For audience targeting
+
+    @Positive(message = "Persona ID must be positive")
+    private Long personaId; // Optional: persona to use for prompt enhancement
+
     // Inner class for lead form questions
     public static class LeadFormQuestion {
+        @NotBlank(message = "Question type is required")
+        @Pattern(regexp = "^(FULL_NAME|EMAIL|PHONE|COMPANY|JOB_TITLE|CUSTOM)$",
+                 message = "Invalid question type")
         private String type; // FULL_NAME, EMAIL, PHONE, COMPANY, JOB_TITLE, CUSTOM
+
+        @Size(max = 200, message = "Custom text cannot exceed 200 characters")
         private String customText; // For CUSTOM type
         
         public LeadFormQuestion() {}
@@ -134,4 +171,10 @@ public class AdGenerationRequest {
     
     public List<LeadFormQuestion> getLeadFormQuestions() { return leadFormQuestions; }
     public void setLeadFormQuestions(List<LeadFormQuestion> leadFormQuestions) { this.leadFormQuestions = leadFormQuestions; }
+
+    public AudienceSegmentRequest getAudienceSegment() { return audienceSegment; }
+    public void setAudienceSegment(AudienceSegmentRequest audienceSegment) { this.audienceSegment = audienceSegment; }
+
+    public Long getPersonaId() { return personaId; }
+    public void setPersonaId(Long personaId) { this.personaId = personaId; }
 }

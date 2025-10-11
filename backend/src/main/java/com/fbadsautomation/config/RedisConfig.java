@@ -18,18 +18,18 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-// @EnableCaching
+@EnableCaching
 @Slf4j
 @Configuration
-
 public class RedisConfig {
 
-    @Value("${spring.redis.host:localhost}")
+    @Value("${spring.redis.host:127.0.0.1}")
     private String redisHost;
 
     @Value("${spring.redis.port:6379}")
@@ -41,21 +41,33 @@ public class RedisConfig {
     @Value("${spring.redis.database:0}")
     private int redisDatabase;
 
-    // @Bean
+    @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
         config.setHostName(redisHost);
         config.setPort(redisPort);
         config.setDatabase(redisDatabase);
-        
+
         if (redisPassword != null && !redisPassword.trim().isEmpty()) {
             config.setPassword(redisPassword);
         }
 
-        return new LettuceConnectionFactory(config);
+        // Configure Lettuce client with better timeout and connection settings
+        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
+                .commandTimeout(Duration.ofSeconds(5))
+                .shutdownTimeout(Duration.ofMillis(100))
+                .build();
+
+        LettuceConnectionFactory factory = new LettuceConnectionFactory(config, clientConfig);
+        factory.setValidateConnection(true);
+        factory.setShareNativeConnection(false);
+
+        log.info("Configuring Redis connection to {}:{}", redisHost, redisPort);
+
+        return factory;
     }
 
-    // @Bean
+    @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -78,7 +90,7 @@ public class RedisConfig {
         return template;
     }
 
-    // @Bean
+    @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         // Configure different cache configurations for different use cases
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();

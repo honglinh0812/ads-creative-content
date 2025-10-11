@@ -171,6 +171,6 @@ public class AdContent {
     
     // Added HUGGINGFACE based on provider implementation
     public enum AIProvider {
-        OPENAI, GEMINI, HUGGINGFACE, ANTHROPIC, FAL_AI, STABLE_DIFFUSION, MOCK;
+        OPENAI, GEMINI, HUGGINGFACE, ANTHROPIC, FAL_AI, STABLE_DIFFUSION, MOCK, FALLBACK;
     }
 }

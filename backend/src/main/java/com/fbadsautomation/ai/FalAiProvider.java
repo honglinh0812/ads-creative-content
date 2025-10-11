@@ -31,6 +31,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.scheduling.annotation.Async;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class FalAiProvider implements AIProvider {
@@ -220,5 +222,47 @@ public class FalAiProvider implements AIProvider {
             mockContents.add(adContent);
         }
         return mockContents;
+    }
+
+    @Override
+    @Async("aiProcessingExecutor")
+    public CompletableFuture<List<AdContent>> generateAdContentAsync(String prompt, int numberOfVariations, String language, FacebookCTA callToAction) {
+        try {
+            List<AdContent> result = generateAdContent(prompt, numberOfVariations, language, callToAction);
+            return CompletableFuture.completedFuture(result);
+        } catch (Exception e) {
+            log.error("Error in async ad content generation", e);
+            CompletableFuture<List<AdContent>> future = new CompletableFuture<>();
+            future.completeExceptionally(e);
+            return future;
+        }
+    }
+
+    @Override
+    @Async("imageProcessingExecutor")
+    public CompletableFuture<String> generateImageAsync(String prompt) {
+        try {
+            String result = generateImage(prompt);
+            return CompletableFuture.completedFuture(result);
+        } catch (Exception e) {
+            log.error("Error in async image generation", e);
+            CompletableFuture<String> future = new CompletableFuture<>();
+            future.completeExceptionally(e);
+            return future;
+        }
+    }
+
+    @Override
+    @Async("imageProcessingExecutor")
+    public CompletableFuture<String> enhanceImageAsync(String imagePath, String enhancementType, java.util.Map<String, Object> params) {
+        try {
+            String result = enhanceImage(imagePath, enhancementType, params);
+            return CompletableFuture.completedFuture(result);
+        } catch (Exception e) {
+            log.error("Error in async image enhancement", e);
+            CompletableFuture<String> future = new CompletableFuture<>();
+            future.completeExceptionally(e);
+            return future;
+        }
     }
 }

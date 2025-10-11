@@ -121,8 +121,8 @@ public class AdService {
      * @return Map containing ad and generated contents
      */
     @Transactional
-    public Map<String, Object> createAdWithAIContent(Long campaignId, String adType, String prompt, 
-                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions) {
+    public Map<String, Object> createAdWithAIContent(Long campaignId, String adType, String prompt,
+                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
         log.info("Creating ad with AI content for user ID: {}", userId);
         
         User user = userRepository.findById(userId)
@@ -177,7 +177,7 @@ public class AdService {
         log.info("Retrieved managed ad with ID: {}", ad.getId());
         
         // Generate AI content
-        List<AdContent> contents = aiContentService.generateAdContent(ad, prompt, mediaFile, textProvider, imageProvider, numberOfVariations, language, adLinks, promptStyle, customPrompt, extractedContent, callToAction);
+        List<AdContent> contents = aiContentService.generateAdContent(ad, prompt, mediaFile, textProvider, imageProvider, numberOfVariations, language, adLinks, promptStyle, customPrompt, extractedContent, callToAction, audienceSegment);
         // Nếu có contents được tạo, copy nội dung đầu tiên vào ad
         if (!contents.isEmpty()) {
             AdContent firstContent = contents.get(0);
@@ -432,17 +432,17 @@ public class AdService {
      * @param extractedContent Extracted content from Meta Ad Library
      * @return List of generated content (not saved to database)
      */
-    public List<AdContent> generatePreviewContent(Ad tempAd, String prompt, MultipartFile mediaFile, 
-                                                 String textProvider, String imageProvider, Integer numberOfVariations, 
-                                                 String language, List<String> adLinks, String promptStyle, 
+    public List<AdContent> generatePreviewContent(Ad tempAd, String prompt, MultipartFile mediaFile,
+                                                 String textProvider, String imageProvider, Integer numberOfVariations,
+                                                 String language, List<String> adLinks, String promptStyle,
                                                  String customPrompt, String extractedContent, String mediaFileUrl,
-                                                 com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions) {
+                                                 com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
         log.info("Generating preview content for ad: {}", tempAd.getName());
-        
+
         // Generate AI content without saving to database
-        List<AdContent> contents = aiContentService.generateAdContent(tempAd, prompt, mediaFile, textProvider, 
-                                                                     imageProvider, numberOfVariations, language, 
-                                                                     adLinks, promptStyle, customPrompt, extractedContent, callToAction);
+        List<AdContent> contents = aiContentService.generateAdContent(tempAd, prompt, mediaFile, textProvider,
+                                                                     imageProvider, numberOfVariations, language,
+                                                                     adLinks, promptStyle, customPrompt, extractedContent, callToAction, audienceSegment);
         // Set temporary IDs for preview
         for (int i = 0; i < contents.size(); i++) {
             AdContent content = contents.get(i);

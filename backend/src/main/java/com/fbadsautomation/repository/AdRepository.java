@@ -26,6 +26,10 @@ public interface AdRepository extends JpaRepository<Ad, Long> {
     List<Ad> findByUserOrderByCreatedDateDesc(User user);
     Optional<Ad> findByIdAndUser(Long id, User user);
     List<Ad> findByCampaignAndUser(Campaign campaign, User user);
+
+    // Query by user ID for performance report matching
+    @Query("SELECT a FROM Ad a WHERE a.user.id = :userId")
+    List<Ad> findByUserId(@Param("userId") Long userId);
     
     List<Ad> findTop10ByOrderByCreatedDateDesc();
     List<Ad> findTop10ByUserOrderByCreatedDateDesc(User user);

@@ -1,17 +1,17 @@
 package com.fbadsautomation.controller;
 
+import com.fbadsautomation.service.MinIOStorageService;
+import io.minio.StatObjectResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.InputStream;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,8 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Images", description = "Image serving endpoints")
 public class ImageController {
 
-    @Value("${app.image.storage.location}")
-    private String imageStorageLocation;
+    @Autowired
+    private MinIOStorageService minioStorageService;
     
     @Operation(summary = "Serve image file", description = "Serves an image file by filename")
     @ApiResponses(value = {
@@ -40,23 +40,30 @@ public class ImageController {
     public ResponseEntity<Resource> serveFile(
             @Parameter(description = "Image filename to serve") @PathVariable String filename) {
         try {
-            Path file = Paths.get(imageStorageLocation).resolve(filename);
-            Resource resource = new UrlResource(file.toUri());
-            
-            if (resource.exists() || resource.isReadable()) {
-                // Xác định content-type thực tế
-                String contentType = Files.probeContentType(file);
-                if (contentType == null) {
-                    contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
-                }
-                return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
-                        .contentType(MediaType.parseMediaType(contentType))
-                        .body(resource);
-            } else {
+            // Check if file exists in MinIO
+            if (!minioStorageService.fileExists(filename)) {
                 return ResponseEntity.notFound().build();
             }
+
+            // Get file info and stream from MinIO
+            StatObjectResponse fileInfo = minioStorageService.getFileInfo(filename);
+            InputStream inputStream = minioStorageService.downloadFile(filename);
+
+            Resource resource = new InputStreamResource(inputStream);
+
+            // Determine content type
+            String contentType = fileInfo.contentType();
+            if (contentType == null || contentType.isEmpty()) {
+                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            }
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .body(resource);
+
         } catch (Exception e) {
+            log.error("Error serving file: {}", filename, e);
             return ResponseEntity.notFound().build();
         }
     }

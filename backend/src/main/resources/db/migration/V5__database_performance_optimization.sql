@@ -8,11 +8,11 @@
 -- Users table indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_facebook_id ON users(facebook_id);
-CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_date);
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
 
 -- Campaigns table indexes
 CREATE INDEX IF NOT EXISTS idx_campaigns_user_id_status ON campaigns(user_id, status);
-CREATE INDEX IF NOT EXISTS idx_campaigns_user_id_created_at ON campaigns(user_id, created_date DESC);
+CREATE INDEX IF NOT EXISTS idx_campaigns_user_id_created_at ON campaigns(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_campaigns_status ON campaigns(status);
 CREATE INDEX IF NOT EXISTS idx_campaigns_objective ON campaigns(objective);
 CREATE INDEX IF NOT EXISTS idx_campaigns_start_date ON campaigns(start_date);
@@ -30,7 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_ads_selected_content_id ON ads(selected_content_i
 
 -- Ad Contents table indexes
 CREATE INDEX IF NOT EXISTS idx_ad_contents_ad_id_preview_order ON ad_contents(ad_id, preview_order);
-CREATE INDEX IF NOT EXISTS idx_ad_contents_user_id_created_date ON ad_contents(user_id, created_date DESC);
+CREATE INDEX IF NOT EXISTS idx_ad_contents_user_id_created_date ON ad_contents(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ad_contents_ad_id_is_selected ON ad_contents(ad_id, is_selected);
 CREATE INDEX IF NOT EXISTS idx_ad_contents_ai_provider ON ad_contents(ai_provider);
 CREATE INDEX IF NOT EXISTS idx_ad_contents_content_type ON ad_contents(content_type);
@@ -41,7 +41,7 @@ CREATE INDEX IF NOT EXISTS idx_ad_contents_is_selected ON ad_contents(is_selecte
 -- =====================================================
 
 -- Dashboard queries optimization
-CREATE INDEX IF NOT EXISTS idx_campaigns_dashboard ON campaigns(user_id, status, created_date DESC);
+CREATE INDEX IF NOT EXISTS idx_campaigns_dashboard ON campaigns(user_id, status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ads_dashboard ON ads(user_id, status, created_date DESC);
 
 -- Campaign-Ad relationship optimization
@@ -55,11 +55,11 @@ CREATE INDEX IF NOT EXISTS idx_ad_contents_filtering ON ad_contents(ad_id, user_
 -- =====================================================
 
 -- Index only active campaigns
-CREATE INDEX IF NOT EXISTS idx_campaigns_active ON campaigns(user_id, created_date DESC) 
+CREATE INDEX IF NOT EXISTS idx_campaigns_active ON campaigns(user_id, created_at DESC)
 WHERE status = 'ACTIVE';
 
 -- Index only active ads
-CREATE INDEX IF NOT EXISTS idx_ads_active ON ads(user_id, created_date DESC) 
+CREATE INDEX IF NOT EXISTS idx_ads_active ON ads(user_id, created_date DESC)
 WHERE status = 'ACTIVE';
 
 -- Index only selected ad contents

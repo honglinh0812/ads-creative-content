@@ -1,15 +1,29 @@
 package com.fbadsautomation.dto;
 
+import javax.validation.constraints.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 
 public class AdCreateRequest {
+
+    @NotNull(message = "Campaign ID is required")
+    @Positive(message = "Campaign ID must be positive")
     private Long campaignId;
-    private String adType; // PAGE_POST_AD, WEBSITE_CONVERSION_AD, LEAD_FORM_AD
+
+    @NotBlank(message = "Ad type is required")
+    @Pattern(regexp = "^(PAGE_POST_AD|WEBSITE_CONVERSION_AD|LEAD_FORM_AD)$",
+             message = "Invalid ad type. Must be PAGE_POST_AD, WEBSITE_CONVERSION_AD, or LEAD_FORM_AD")
+    private String adType;
+
+    @Size(min = 10, max = 5000, message = "Prompt must be between 10 and 5000 characters")
     private String prompt;
+
     private MultipartFile mediaFile;
+
+    @Size(min = 3, max = 255, message = "Ad name must be between 3 and 255 characters")
+    @Pattern(regexp = "^[a-zA-Z0-9\\s\\-_.,()]+$", message = "Ad name contains invalid characters")
     private String name;
 
     // Constructors

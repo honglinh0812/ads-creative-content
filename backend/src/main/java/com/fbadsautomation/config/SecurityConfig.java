@@ -1,6 +1,7 @@
 package com.fbadsautomation.config;
 
 import com.fbadsautomation.security.JwtAuthenticationFilter;
+import com.fbadsautomation.security.SecurityHeadersFilter;
 import com.fbadsautomation.service.AuthService;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -40,11 +41,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     
     private final AuthService authService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final SecurityHeadersFilter securityHeadersFilter;
 
     @Autowired
-    public SecurityConfig(AuthService authService, JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(AuthService authService, JwtAuthenticationFilter jwtAuthenticationFilter,
+                         SecurityHeadersFilter securityHeadersFilter) {
         this.authService = authService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.securityHeadersFilter = securityHeadersFilter;
     }
 
     @Override
@@ -86,6 +90,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             
         // Add JWT filter before UsernamePasswordAuthenticationFilter
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // Add security headers filter
+        http.addFilterAfter(securityHeadersFilter, UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean
