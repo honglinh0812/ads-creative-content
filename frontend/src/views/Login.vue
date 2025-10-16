@@ -17,19 +17,9 @@
           Create and manage Facebook ads with AI-powered content generation
         </p>
 
-        <a-alert
-          v-if="error"
-          :message="error"
-          type="error"
-          show-icon
-          closable
-          style="margin-bottom: 24px;"
-          @close="error = ''"
-        />
-
         <div v-if="mode === 'login'" class="login-options">
           <div class="login-methods">
-            <a-button 
+            <a-button
               type="primary"
               size="large"
               class="facebook-login-button"
@@ -42,9 +32,12 @@
               </template>
               Login with Facebook
             </a-button>
-            
+
             <a-divider>Or</a-divider>
-            
+
+            <!-- Login Error Display -->
+            <FieldError :error="loginError" />
+
             <form @submit.prevent="handleLoginApp" class="login-form">
               <a-input 
                 v-model:value="loginForm.usernameOrEmail" 
@@ -90,6 +83,9 @@
         </div>
 
         <div v-else-if="mode === 'register'" class="register-form-wrapper">
+          <!-- Register Error Display -->
+          <FieldError :error="registerError" />
+
           <form @submit.prevent="handleRegister" class="register-form">
             <a-input 
               v-model:value="registerForm.username" 
@@ -152,6 +148,9 @@
         </div>
 
         <div v-else-if="mode === 'forgot'" class="forgot-form-wrapper">
+          <!-- Forgot Password Error Display -->
+          <FieldError :error="forgotError" />
+
           <form @submit.prevent="handleForgotPassword" class="forgot-form">
             <a-input 
               v-model:value="forgotForm.email" 
@@ -235,6 +234,7 @@
 
 <script>
 import { mapActions } from 'vuex'
+import FieldError from '@/components/FieldError.vue'
 import {
   FacebookOutlined,
   UserOutlined,
@@ -249,6 +249,7 @@ import {
 export default {
   name: 'Login',
   components: {
+    FieldError,
     FacebookOutlined,
     UserOutlined,
     LockOutlined,
@@ -266,6 +267,9 @@ export default {
       loadingRegister: false,
       loadingForgot: false,
       error: '',
+      loginError: null,
+      registerError: null,
+      forgotError: null,
       forgotSuccess: false,
       loginForm: {
         usernameOrEmail: '',
@@ -292,6 +296,7 @@ export default {
     },
     async handleLoginApp() {
       this.error = ''
+      this.loginError = null
       this.loadingLoginApp = true
       try {
         const res = await fetch(`${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api'}/auth/login-app`, {
@@ -301,8 +306,16 @@ export default {
         })
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
-          this.showError({ message: data.message || 'Login failed' })
-          throw new Error(data.message || 'Login failed')
+
+          // Create error object with fieldErrors support
+          const error = new Error(data.message || 'Login failed')
+          error.fieldErrors = data.fieldErrors || {}
+          error.errorCode = data.error || 'Login Error'
+          error.requestId = data.requestId || null
+
+          this.loginError = error
+          this.showError({ message: error.message })
+          throw error
         }
         const data = await res.json()
         console.log('Login response:', data)
@@ -318,7 +331,7 @@ export default {
         }
         console.log('Token set in localStorage:', localStorage.getItem('token'))
         this.showSuccess({ message: 'Login successful!' })
-        
+
         // Redirect to intended page or dashboard
         const redirectPath = this.$route.query.redirect || '/dashboard'
         this.$router.push(redirectPath)
@@ -330,16 +343,31 @@ export default {
     },
     async handleRegister() {
       this.error = ''
+      this.registerError = null
       this.loadingRegister = true
       if (!this.registerForm.username || !this.registerForm.email || !this.registerForm.password) {
-        this.error = 'Please fill in all information.'
-        this.showError({ message: 'Please fill in all information.' })
+        const error = new Error('Please fill in all information.')
+        error.fieldErrors = {
+          username: !this.registerForm.username ? 'Username is required' : '',
+          email: !this.registerForm.email ? 'Email is required' : '',
+          password: !this.registerForm.password ? 'Password is required' : ''
+        }
+        // Remove empty field errors
+        Object.keys(error.fieldErrors).forEach(key => {
+          if (!error.fieldErrors[key]) delete error.fieldErrors[key]
+        })
+        this.registerError = error
+        this.showError({ message: error.message })
         this.loadingRegister = false
         return
       }
       if (this.registerForm.password !== this.registerForm.confirmPassword) {
-        this.error = 'The re-entered password does not match.'
-        this.showError({ message: 'The re-entered password does not match.' })
+        const error = new Error('The re-entered password does not match.')
+        error.fieldErrors = {
+          confirmPassword: 'Password confirmation does not match'
+        }
+        this.registerError = error
+        this.showError({ message: error.message })
         this.loadingRegister = false
         return
       }
@@ -355,12 +383,21 @@ export default {
         })
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
-          this.showError({ message: data.message || 'Register failed' })
-          throw new Error(data.message || 'Register failed')
+
+          // Create error object with fieldErrors support
+          const error = new Error(data.message || 'Register failed')
+          error.fieldErrors = data.fieldErrors || {}
+          error.errorCode = data.error || 'Registration Error'
+          error.requestId = data.requestId || null
+
+          this.registerError = error
+          this.showError({ message: error.message })
+          throw error
         }
         // Đăng ký thành công, chuyển về login
         this.mode = 'login'
         this.error = ''
+        this.registerError = null
         this.registerForm = { username: '', email: '', password: '', confirmPassword: '' }
         this.showSuccess({ message: 'Register successful! Please login.' })
       } catch (e) {
@@ -371,11 +408,16 @@ export default {
     },
     async handleForgotPassword() {
       this.error = ''
+      this.forgotError = null
       this.loadingForgot = true
       this.forgotSuccess = false
       if (!this.forgotForm.email) {
-        this.error = 'Please enter your email.'
-        this.showError({ message: 'Please enter your email.' })
+        const error = new Error('Please enter your email.')
+        error.fieldErrors = {
+          email: 'Email is required'
+        }
+        this.forgotError = error
+        this.showError({ message: error.message })
         this.loadingForgot = false
         return
       }
@@ -387,11 +429,20 @@ export default {
         })
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
-          this.showError({ message: data.message || 'Failed to send email' })
-          throw new Error(data.message || 'Failed to send email')
+
+          // Create error object with fieldErrors support
+          const error = new Error(data.message || 'Failed to send email')
+          error.fieldErrors = data.fieldErrors || {}
+          error.errorCode = data.error || 'Forgot Password Error'
+          error.requestId = data.requestId || null
+
+          this.forgotError = error
+          this.showError({ message: error.message })
+          throw error
         }
         this.forgotSuccess = true
         this.error = ''
+        this.forgotError = null
         this.showSuccess({ message: 'Password reset email sent (if email exists).' })
       } catch (e) {
         this.error = e.message

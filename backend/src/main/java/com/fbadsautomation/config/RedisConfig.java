@@ -120,6 +120,11 @@ public class RedisConfig {
                 .entryTtl(Duration.ofMinutes(5))
                 .disableCachingNullValues());
 
+        // Prompt Validation Cache - 1 hour (Phase 4 enhancement)
+        cacheConfigurations.put("promptValidation", RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofHours(1))
+                .disableCachingNullValues());
+
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig()
                         .entryTtl(Duration.ofMinutes(30))

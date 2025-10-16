@@ -172,6 +172,11 @@
             </a-form-item>
           </a-col>
 
+          <!-- Error Display -->
+          <a-col :span="24">
+            <FieldError :error="submitError" />
+          </a-col>
+
           <!-- Submit -->
           <a-col :span="24">
             <a-form-item style="margin-top: 24px;">
@@ -181,10 +186,10 @@
                     Cancel
                   </a-button>
                 </router-link>
-                <a-button 
-                  type="primary" 
+                <a-button
+                  type="primary"
                   size="large"
-                  html-type="submit" 
+                  html-type="submit"
                   :loading="isSubmitting"
                 >
                   {{ isSubmitting ? 'Creating...' : 'Create Campaign' }}
@@ -237,12 +242,13 @@
 <script>
 import { mapState, mapActions } from 'vuex'
 import api from '@/services/api'
+import FieldError from '@/components/FieldError.vue'
 
-import { 
-  InputNumber, 
-  Modal, 
-  Input, 
-  Select, 
+import {
+  InputNumber,
+  Modal,
+  Input,
+  Select,
   DatePicker,
   Card,
   PageHeader,
@@ -275,7 +281,8 @@ export default {
     AFormItem: FormItem,
     ATypographyText: Typography.Text,
     QuestionCircleOutlined,
-    ArrowLeftOutlined
+    ArrowLeftOutlined,
+    FieldError
   },
   data() {
     return {
@@ -291,9 +298,10 @@ export default {
         startDate: '',
         endDate: ''
       },
-      
+
       errors: {},
-      
+      submitError: null,
+
       objectives: [
         { value: 'BRAND_AWARENESS', label: 'Brand Awareness' },
         { value: 'REACH', label: 'Reach' },
@@ -415,13 +423,14 @@ export default {
       console.log('handleSubmit called')
       console.log('Form data:', this.form)
       console.log('Validation result:', this.validateForm())
-      
+
       if (!this.validateForm()) {
         console.log('Form validation failed')
         return
       }
       console.log('Form validation passed, submitting...')
       this.isSubmitting = true
+      this.submitError = null
       try {
         console.log('Submitting campaign form:', this.form)
         console.log('API object:', api)
@@ -438,9 +447,13 @@ export default {
         console.error('Error creating campaign:', error)
         console.error('Error response:', error.response)
         console.error('Error data:', error.response?.data)
+
+        // Store entire error object for FieldError component
+        this.submitError = error
+
         this.showToast({
           type: 'error',
-          message: error.response?.data?.message || 'Unable to create campaign. Please try again.'
+          message: error.message || 'Unable to create campaign. Please try again.'
         })
       } finally {
         this.isSubmitting = false

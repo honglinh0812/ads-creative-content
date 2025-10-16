@@ -159,7 +159,7 @@ export default {
       this.showValidation = true
 
       try {
-        const response = await api.post('/api/prompt/validate', {
+        const response = await api.post('/prompt/validate', {
           prompt: this.prompt.trim(),
           adType: this.adType,
           language: this.language,

@@ -70,10 +70,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 "/api/public/**",
                 "/api/ai-providers/**",
                 "/api/images/**",
+                "/api/trends/**",
                 "/swagger-ui/**",
                 "/v3/api-docs/**"
             ).permitAll()
             .antMatchers("/api/auth/user").authenticated()
+            .antMatchers("/api/prompt/**").authenticated()
             .anyRequest().authenticated()
             .and()
             .oauth2Login()

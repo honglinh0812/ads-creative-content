@@ -33,20 +33,39 @@ apiClient.interceptors.response.use(
       // Clear token and redirect to login
       localStorage.removeItem('token')
       console.log('Token expired, redirecting to login')
-      
+
       // Clear auth state in store if available
       if (window.store) {
         window.store.dispatch('auth/clearAuth')
       }
-      
+
       // Redirect to login page
       if (window.location.pathname !== '/login') {
         window.location.href = '/login'
       }
     }
-    // Extract error message
-    const message = error.response?.data?.message || error.message || 'An error occurred'
-    error.message = message
+
+    // Extract structured error information
+    const errorData = error.response?.data || {}
+
+    // Enhance error object with structured data
+    error.message = errorData.message || error.message || 'An error occurred'
+    error.fieldErrors = errorData.fieldErrors || {}
+    error.errorCode = errorData.error || 'Unknown Error'
+    error.requestId = errorData.requestId || null
+    error.timestamp = errorData.timestamp || null
+
+    // Log for debugging (include trace ID)
+    if (process.env.NODE_ENV === 'development' || errorData.requestId) {
+      console.error(`[${errorData.requestId || 'NO-ID'}] API Error:`, {
+        message: error.message,
+        fieldErrors: error.fieldErrors,
+        errorCode: error.errorCode,
+        path: errorData.path,
+        timestamp: errorData.timestamp
+      })
+    }
+
     return Promise.reject(error)
   }
 )

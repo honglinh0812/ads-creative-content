@@ -291,11 +291,14 @@
             <TrendingKeywords @keywords-selected="handleKeywordsSelected" />
           </a-form>
 
+          <!-- Error Display -->
+          <FieldError :error="generateError" />
+
           <!-- Navigation -->
           <div class="step-navigation">
-            <a-button 
-              type="primary" 
-              @click="nextStep" 
+            <a-button
+              type="primary"
+              @click="nextStep"
               :disabled="!validateStep1()"
               size="large"
             >
@@ -491,15 +494,18 @@
             </div>
           </a-form-item>
 
+          <!-- Error Display -->
+          <FieldError :error="generateError" />
+
           <!-- Navigation -->
           <div class="step-navigation">
             <a-button @click="prevStep" size="large">
               <template #icon><arrow-left-outlined /></template>
               Previous
             </a-button>
-            <a-button 
-              type="primary" 
-              @click="generateAd" 
+            <a-button
+              type="primary"
+              @click="generateAd"
               :loading="isGenerating"
               :disabled="!validateStep2()"
               size="large"
@@ -515,18 +521,46 @@
       <div v-if="currentStep === 3" class="step-content">
         <a-card title="Preview & Save" class="enhanced-card">
           <div v-if="adVariations.length > 0" class="ad-preview-container">
-            <p class="preview-instruction">Select your preferred ad variation:</p>
+            <p class="preview-instruction">
+              Select your preferred ad variation. Quality scores help you choose the best one!
+            </p>
+
+            <!-- Quality Score Summary Card -->
+            <div v-if="bestQualityScore" class="quality-score-summary">
+              <div class="summary-card">
+                <span class="summary-icon">⭐</span>
+                <div class="summary-content">
+                  <div class="summary-label">Best Quality Score</div>
+                  <div class="summary-value">{{ bestQualityScore }}</div>
+                </div>
+              </div>
+              <div v-if="loadingQualityScores" class="summary-loading">
+                <a-spin size="small" /> Analyzing quality...
+              </div>
+            </div>
+
             <div class="ad-preview-grid">
-              <div 
-                v-for="variation in adVariations" 
-                :key="variation.id" 
-                class="ad-preview-card" 
-                :class="{ selected: selectedVariation?.id === variation.id }"
+              <div
+                v-for="variation in adVariations"
+                :key="variation.id"
+                class="ad-preview-card"
+                :class="{
+                  selected: selectedVariation?.id === variation.id,
+                  'best-quality': variation.qualityScore?.totalScore === bestQualityScoreValue
+                }"
                 @click="selectVariation(variation)"
               >
+                <!-- Best Quality Badge -->
+                <div
+                  v-if="variation.qualityScore?.totalScore === bestQualityScoreValue && bestQualityScoreValue >= 80"
+                  class="best-quality-badge"
+                >
+                  🏆 Best Quality
+                </div>
+
                 <div class="ad-preview-content">
-                  <div 
-                    v-if="variation.imageUrl" 
+                  <div
+                    v-if="variation.imageUrl"
                     class="ad-preview-image"
                     @click.stop="openMediaModal(variation.imageUrl)"
                   >
@@ -539,9 +573,18 @@
                     <div class="ad-preview-cta">{{ variation.callToAction }}</div>
                   </div>
                 </div>
+
+                <!-- Quality Score Component -->
+                <div v-if="variation.qualityScore" class="quality-score-wrapper">
+                  <QualityScore :score="variation.qualityScore" :compact="true" />
+                </div>
+                <div v-else-if="loadingQualityScores" class="quality-score-loading">
+                  <a-spin size="small" /> Loading quality score...
+                </div>
+
                 <div class="ad-preview-actions">
-                  <a-button 
-                    type="text" 
+                  <a-button
+                    type="text"
                     @click.stop="editVariation(variation)"
                     size="small"
                   >
@@ -555,15 +598,18 @@
 
           <a-empty v-else description="No ad variations generated yet" />
 
+          <!-- Error Display -->
+          <FieldError :error="saveError" />
+
           <!-- Navigation -->
           <div class="step-navigation">
             <a-button @click="prevStep" size="large">
               <template #icon><arrow-left-outlined /></template>
               Previous
             </a-button>
-            <a-button 
-              type="primary" 
-              @click="saveAd" 
+            <a-button
+              type="primary"
+              @click="saveAd"
               :disabled="!selectedVariation"
               :loading="isSaving"
               size="large"
@@ -732,6 +778,9 @@ import PromptValidator from '@/components/PromptValidator.vue'
 import AudienceSegmentForm from '@/components/AudienceSegmentForm.vue'
 import PersonaSelector from '@/components/PersonaSelector.vue'
 import TrendingKeywords from '@/components/TrendingKeywords.vue'
+import FieldError from '@/components/FieldError.vue'
+import QualityScore from '@/components/QualityScore.vue'
+import qualityApi from '@/services/qualityApi'
 
 export default {
   name: 'AdCreate',
@@ -748,7 +797,9 @@ export default {
     PromptValidator,
     AudienceSegmentForm,
     PersonaSelector,
-    TrendingKeywords
+    TrendingKeywords,
+    FieldError,
+    QualityScore
   },
   data() {
     return {
@@ -870,7 +921,14 @@ export default {
       customPromptAddition: '',
       savedPrompts: [],
       enhancedImages: [],
-      isEnhancing: false
+      isEnhancing: false,
+      generateError: null,
+      saveError: null,
+
+      // Quality scoring states
+      loadingQualityScores: false,
+      bestQualityScore: null,
+      bestQualityScoreValue: null
     }
   },
   computed: {
@@ -1102,7 +1160,8 @@ export default {
     
     async generateAd() {
       this.isGenerating = true
-      
+      this.generateError = null
+
       try {
         // Validate required fields
         if (!this.formData.prompt && !this.adLinks.some(link => link.trim())) {
@@ -1184,19 +1243,26 @@ export default {
             ...v,
             imageUrl: v.imageUrl || this.uploadedFileUrl || v.mediaFileUrl || ''
           }))
-          
+
           this.adId = response.data.adId
           this.currentStep = 3
           this.$message.success('Ad created successfully! Please preview and save.')
+
+          // Load quality scores for variations
+          await this.loadQualityScoresForVariations()
         } else {
           throw new Error(response.data.message)
         }
       } catch (error) {
         console.error('Error generating ad:', error)
-        const errorMessage = error.response?.data?.message || 'Could not create ad. Please try again.'
-        
+
+        // Store entire error object for FieldError component
+        this.generateError = error
+
+        const errorMessage = error.message || 'Could not create ad. Please try again.'
+
         this.$message.error(errorMessage)
-        
+
         if (errorMessage.includes('Please enter prompt content') || errorMessage.includes('valid ad link')) {
           this.currentStep = 1
           this.showValidation = true
@@ -1253,8 +1319,9 @@ export default {
     async confirmSave() {
       this.showConfirmModal = false
       this.isSaving = true
-      
-      try {
+      this.saveError = null
+
+      try{
         const requestData = {
           campaignId: this.formData.campaignId,
           adType: this.formData.adType,
@@ -1284,7 +1351,11 @@ export default {
         }
       } catch (error) {
         console.error('Error saving ad:', error)
-        this.$message.error(error.response?.data?.message || 'Could not save ad. Please try again.')
+
+        // Store entire error object for FieldError component
+        this.saveError = error
+
+        this.$message.error(error.message || 'Could not save ad. Please try again.')
       } finally {
         this.isSaving = false
       }
@@ -1386,9 +1457,12 @@ export default {
           throw new Error(response.data.message)
         }
       } catch (error) {
-        const errorMessage = error.response?.data?.message || 'Could not create ad. Please try again.'
+        // Store entire error object for FieldError component
+        this.generateError = error
+
+        const errorMessage = error.message || 'Could not create ad. Please try again.'
         this.$message.error(errorMessage)
-        
+
         if (errorMessage.includes('Please enter prompt content') || errorMessage.includes('valid ad link')) {
           this.currentStep = 1
           this.showValidation = true
@@ -1494,6 +1568,54 @@ export default {
       if (level >= 60) return "⚡ Great combination! Ready for high-quality results!"
       if (level >= 40) return "✨ Solid choice! Your ads will look professional!"
       return "🌱 Good start! Your ads will be decent!"
+    },
+
+    async loadQualityScoresForVariations() {
+      if (!this.adVariations || this.adVariations.length === 0) {
+        return
+      }
+
+      this.loadingQualityScores = true
+      try {
+        const adContentIds = this.adVariations.map(v => v.id).filter(id => id)
+
+        if (adContentIds.length === 0) {
+          console.warn('No valid ad content IDs found')
+          return
+        }
+
+        const response = await qualityApi.getQualityScoreBatch(adContentIds)
+
+        // Attach quality scores to variations
+        this.adVariations = this.adVariations.map(variation => {
+          const scoreData = response.data.find(s => s.adContentId === variation.id)
+          return {
+            ...variation,
+            qualityScore: scoreData || null
+          }
+        })
+
+        // Find best quality score
+        const scores = this.adVariations
+          .map(v => v.qualityScore?.totalScore)
+          .filter(s => s !== null && s !== undefined)
+
+        if (scores.length > 0) {
+          this.bestQualityScoreValue = Math.max(...scores)
+          const bestVariation = this.adVariations.find(
+            v => v.qualityScore?.totalScore === this.bestQualityScoreValue
+          )
+
+          if (bestVariation && bestVariation.qualityScore) {
+            this.bestQualityScore = `${bestVariation.qualityScore.totalScore.toFixed(1)}/100 (${bestVariation.qualityScore.grade})`
+          }
+        }
+      } catch (error) {
+        console.error('Error loading quality scores:', error)
+        this.$message.warning('Could not load quality scores')
+      } finally {
+        this.loadingQualityScores = false
+      }
     }
   }
 }
@@ -2582,6 +2704,135 @@ export default {
 @media (min-width: 1280px) {
   .ad-preview-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Quality Score Integration Styles */
+.quality-score-summary {
+  background: linear-gradient(135deg, #fff8e1 0%, #fff1b0 100%);
+  border: 2px solid #ffd666;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.summary-icon {
+  font-size: 32px;
+  animation: pulse-icon 2s ease-in-out infinite;
+}
+
+@keyframes pulse-icon {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.summary-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #d46b08;
+  margin-bottom: 4px;
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #d46b08;
+}
+
+.summary-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #d46b08;
+  font-weight: 600;
+}
+
+.best-quality-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #ffd666 0%, #f4a261 100%);
+  color: #8c4a00;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(255, 214, 102, 0.4);
+  z-index: 10;
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.ad-preview-card.best-quality {
+  border-color: #ffd666;
+  box-shadow: 0 8px 32px rgba(255, 214, 102, 0.3);
+}
+
+.ad-preview-card.best-quality:hover {
+  border-color: #f4a261;
+  box-shadow: 0 12px 40px rgba(255, 214, 102, 0.4);
+}
+
+.quality-score-wrapper {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f2f5;
+}
+
+.quality-score-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+/* Adjust ad preview card to accommodate quality score */
+.ad-preview-card {
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+/* Mobile responsive adjustments for quality score */
+@media (max-width: 768px) {
+  .quality-score-summary {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .summary-icon {
+    font-size: 24px;
+  }
+
+  .summary-value {
+    font-size: 20px;
+  }
+
+  .best-quality-badge {
+    font-size: 11px;
+    padding: 4px 8px;
   }
 }
 </style>

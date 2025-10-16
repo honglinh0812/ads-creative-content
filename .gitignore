@@ -81,3 +81,4 @@ GEMINI.md
 .CLAUDE.md.swp
 DEPLOYMENT.md
 backend/src/main/resources/application-resilience.yml
+scripts/

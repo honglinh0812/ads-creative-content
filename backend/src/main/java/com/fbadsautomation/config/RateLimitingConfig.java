@@ -73,6 +73,8 @@ public class RateLimitingConfig implements WebMvcConfigurer {
             endpointLimits.put("/api/ads", DEFAULT_REQUESTS_PER_MINUTE);
             // Facebook export rate limiting: 10 exports per minute per user
             endpointLimits.put("/api/facebook-export", 10);
+            // Prompt validation rate limiting: 100 requests per hour = ~2 per minute (conservative)
+            endpointLimits.put("/api/prompt", 30); // 30 per minute = 1800 per hour (more generous)
         }
 
         @Override

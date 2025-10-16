@@ -13,8 +13,8 @@ public class AdGenerationRequest {
     private Long campaignId;
 
     @NotBlank(message = "Ad type is required")
-    @Pattern(regexp = "^(PAGE_POST_AD|WEBSITE_CONVERSION_AD|LEAD_FORM_AD)$",
-             message = "Invalid ad type. Must be PAGE_POST_AD, WEBSITE_CONVERSION_AD, or LEAD_FORM_AD")
+    @Pattern(regexp = "^(PAGE_POST_AD|WEBSITE_CONVERSION_AD|LEAD_FORM_AD|page_post|website_conversion|lead_generation)$",
+             message = "Invalid ad type. Accepted values: page_post, website_conversion, lead_generation, PAGE_POST_AD, WEBSITE_CONVERSION_AD, LEAD_FORM_AD")
     private String adType;
 
     @Size(max = 5000, message = "Prompt cannot exceed 5000 characters")
@@ -26,8 +26,9 @@ public class AdGenerationRequest {
 
     /**
      * URL của file media đã upload (nếu có). Nếu không có file upload trực tiếp, backend sẽ dùng giá trị này để set imageUrl cho ad.
+     * Optional field - validation removed temporarily for Phase 1 (will be re-added with proper optional validator in Phase 3)
      */
-    @Pattern(regexp = "^(https?://.*|/api/images/.*)$", message = "Invalid media file URL format")
+    // @Pattern(regexp = "^(https?://.*|/api/images/.*)$", message = "Invalid media file URL format")
     private String mediaFileUrl;
 
     @NotBlank(message = "Text provider is required")
