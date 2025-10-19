@@ -350,6 +350,8 @@ public class AIProviderService {
     }
 
     private String normalizeKey(String input) {
-        return input.trim().toLowerCase().replace(" ", "_");
+        return input.trim().toLowerCase()
+            .replace(" ", "-")     // spaces → hyphens
+            .replace(".", "-");    // dots → hyphens
     }
 }

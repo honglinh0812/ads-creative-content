@@ -289,9 +289,8 @@ public class OpenAIProvider implements AIProvider {
             String shortPrompt = prompt.length() > 20 ? prompt.substring(0, 17) + "..." : prompt;
             adContent.setHeadline("Mẫu " + (i + 1) + ": " + shortPrompt); // Max ~30 chars
             adContent.setDescription("Nội dung quảng cáo được tạo bởi OpenAI, phiên bản " + (i + 1)); // Max 125 chars
-            adContent.setPrimaryText("Đây là nội dung chính của quảng cáo được tạo bởi OpenAI. " +
-                "Mô tả chi tiết về sản phẩm/dịch vụ: " + prompt + ". " +
-                "Đây là phiên bản số " + (i + 1) + " với nội dung được tối ưu hóa."); // Within 1000 chars
+            adContent.setPrimaryText("Mẫu quảng cáo số " + (i + 1) + " cho: " + prompt + ". " +
+                "Nội dung được tạo tự động bởi OpenAI với chất lượng cao, tối ưu hóa cho Facebook Ads."); // Within 1000 chars
             adContent.setCallToAction(callToAction);
             adContent.setCta(callToAction);
             adContent.setImageUrl("/img/placeholder.png"); // Use local placeholder

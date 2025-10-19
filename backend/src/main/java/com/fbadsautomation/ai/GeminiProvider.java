@@ -181,9 +181,8 @@ public class GeminiProvider implements AIProvider {
             String shortPrompt = prompt.length() > 20 ? prompt.substring(0, 17) + "..." : prompt;
             adContent.setHeadline("Phiên bản " + (i + 1) + ": " + shortPrompt); // Max ~35 chars
             adContent.setDescription("Nội dung quảng cáo được tạo bởi Gemini AI, mẫu số " + (i + 1)); // Max 125 chars
-            adContent.setPrimaryText("Đây là nội dung chính của quảng cáo được tạo bởi Gemini AI. " +
-                "Mô tả chi tiết về sản phẩm/dịch vụ: " + prompt + ". " +
-                "Phiên bản " + (i + 1) + " với nội dung được tối ưu hóa cho Facebook Ads."); // Within 1000 chars
+            adContent.setPrimaryText("Phiên bản quảng cáo " + (i + 1) + " cho: " + prompt + ". " +
+                "Nội dung được tạo tự động bởi Gemini AI với chất lượng cao, tối ưu hóa cho Facebook Ads."); // Within 1000 chars
             adContent.setCallToAction(callToAction);
             adContent.setCta(callToAction);
             adContent.setImageUrl("/img/placeholder.png"); // Use local placeholder

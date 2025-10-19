@@ -68,7 +68,8 @@ public class FalAiProvider implements AIProvider {
             String shortPrompt = prompt.length() > 25 ? prompt.substring(0, 22) + "..." : prompt;
             mockContent.setHeadline("Fal.ai: " + shortPrompt); // Max ~35 chars
             mockContent.setDescription("Hình ảnh được tạo bởi Fal.ai cho quảng cáo"); // Max 125 chars
-            mockContent.setPrimaryText("Nội dung mẫu vì Fal.ai chuyên tạo hình ảnh. Quảng cáo cho: " + prompt); // Within 1000 chars
+            mockContent.setPrimaryText("Fal.ai mẫu cho: " + prompt + ". " +
+                "Nội dung được tạo tự động với hình ảnh chất lượng cao, tối ưu cho Facebook Ads."); // Within 1000 chars
             mockContent.setCallToAction(callToAction != null ? callToAction : FacebookCTA.LEARN_MORE);
             mockContent.setCta(callToAction != null ? callToAction : FacebookCTA.LEARN_MORE);
             mockContent.setAiProvider(AdContent.AIProvider.FAL_AI);
@@ -218,9 +219,8 @@ public class FalAiProvider implements AIProvider {
             String shortPrompt = prompt.length() > 20 ? prompt.substring(0, 17) + "..." : prompt;
             adContent.setHeadline("Fal " + (i + 1) + ": " + shortPrompt); // Max ~30 chars
             adContent.setDescription("Nội dung quảng cáo với hình ảnh Fal.ai, mẫu " + (i + 1)); // Max 125 chars
-            adContent.setPrimaryText("Nội dung mẫu cho quảng cáo được tạo bởi Fal.ai. " +
-                "Sản phẩm/dịch vụ: " + prompt + ". " +
-                "Phiên bản " + (i + 1) + " với hình ảnh chất lượng cao."); // Within 1000 chars
+            adContent.setPrimaryText("Fal mẫu " + (i + 1) + " cho: " + prompt + ". " +
+                "Nội dung được tạo tự động bởi Fal.ai với hình ảnh chất lượng cao, tối ưu cho Facebook Ads."); // Within 1000 chars
             adContent.setCallToAction(FacebookCTA.LEARN_MORE);
             adContent.setCta(FacebookCTA.LEARN_MORE);
             adContent.setImageUrl("/img/placeholder.png");

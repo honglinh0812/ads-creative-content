@@ -77,7 +77,8 @@ public class StableDiffusionProvider implements AIProvider {
             String shortPrompt = prompt.length() > 22 ? prompt.substring(0, 19) + "..." : prompt;
             mockContent.setHeadline("SD " + (i + 1) + ": " + shortPrompt); // Max ~30 chars
             mockContent.setDescription("Hình ảnh SD cho quảng cáo, mẫu " + (i + 1)); // Max 125 chars
-            mockContent.setPrimaryText("Nội dung mẫu vì Stable Diffusion chuyên tạo hình ảnh. Quảng cáo: " + prompt); // Within 1000 chars
+            mockContent.setPrimaryText("SD mẫu " + (i + 1) + " cho: " + prompt + ". " +
+                "Nội dung được tạo tự động với hình ảnh chất lượng cao, tối ưu cho Facebook Ads."); // Within 1000 chars
             mockContent.setCallToAction(callToAction);
             mockContent.setCta(callToAction);
             mockContent.setAiProvider(AdContent.AIProvider.STABLE_DIFFUSION);

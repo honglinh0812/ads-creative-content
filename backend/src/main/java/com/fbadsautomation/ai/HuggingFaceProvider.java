@@ -225,7 +225,8 @@ public class HuggingFaceProvider implements AIProvider {
         AdContent adContent = new AdContent();
         adContent.setHeadline("Mẫu HuggingFace " + index); // 20 chars - safe!
         adContent.setDescription("Nội dung được tạo bởi HuggingFace"); // 37 chars - safe!
-        adContent.setPrimaryText("Nội dung quảng cáo mẫu được tạo bởi HuggingFace AI, phiên bản số " + index + ".");
+        adContent.setPrimaryText("Mẫu HuggingFace số " + index + " với nội dung được tạo tự động, " +
+            "chất lượng cao, tối ưu cho Facebook Ads.");
         adContent.setCallToAction(callToAction);
         adContent.setCta(callToAction);
         adContent.setImageUrl("/img/placeholder.png");
