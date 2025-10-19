@@ -159,9 +159,13 @@ public class AnthropicProvider implements AIProvider {
         List<AdContent> mockContents = new ArrayList<>();
         for (int i = 0; i < numberOfVariations; i++) {
             AdContent adContent = new AdContent();
-            adContent.setHeadline("Claude: Tiêu đề mẫu #" + (i + 1) + " cho: " + prompt);
-            adContent.setDescription("Mô tả ngắn gọn cho mẫu quảng cáo Claude #" + (i + 1));
-            adContent.setPrimaryText("Đây là nội dung chính của mẫu quảng cáo Claude #" + (i + 1) + ". Nội dung này sẽ mô tả chi tiết về sản phẩm hoặc dịch vụ được quảng cáo.");
+            // Ensure headline stays within 40 character limit
+            String shortPrompt = prompt.length() > 20 ? prompt.substring(0, 17) + "..." : prompt;
+            adContent.setHeadline("Mẫu Claude " + (i + 1) + ": " + shortPrompt); // Max ~35 chars
+            adContent.setDescription("Nội dung quảng cáo được tạo bởi Claude AI, phiên bản " + (i + 1)); // Max 125 chars
+            adContent.setPrimaryText("Đây là nội dung chính của quảng cáo được tạo bởi Claude AI. " +
+                "Mô tả chi tiết về sản phẩm/dịch vụ: " + prompt + ". " +
+                "Mẫu số " + (i + 1) + " với nội dung được tối ưu hóa cho Facebook Ads."); // Within 1000 chars
             adContent.setCallToAction(callToAction);
             adContent.setCta(callToAction);
             adContent.setImageUrl("/img/placeholder.png");

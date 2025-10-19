@@ -308,8 +308,35 @@ public class OptimizationController {
      * Helper method to extract user ID from authentication
      */
     private Long getUserIdFromAuthentication(Authentication authentication) {
-        // This is a simplified implementation
-        // In a real application, you would extract the user ID from the JWT token or user details
-        return 1L; // Placeholder - replace with actual user ID extraction logic
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new RuntimeException("User not authenticated");
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        // Extract user ID from Spring Security's UserDetails
+        // The CustomUserDetailsService sets username as user.getId().toString()
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            org.springframework.security.core.userdetails.UserDetails userDetails =
+                (org.springframework.security.core.userdetails.UserDetails) principal;
+            try {
+                return Long.parseLong(userDetails.getUsername());
+            } catch (NumberFormatException e) {
+                log.error("Failed to parse user ID from username: {}", userDetails.getUsername());
+                throw new RuntimeException("Invalid user ID format");
+            }
+        } else if (principal instanceof String) {
+            // JWT token might provide user ID directly as string
+            try {
+                return Long.parseLong((String) principal);
+            } catch (NumberFormatException e) {
+                log.error("Failed to parse user ID from principal: {}", principal);
+                throw new RuntimeException("Invalid user ID format");
+            }
+        }
+
+        log.error("Unable to extract user ID from authentication principal type: {}",
+                 principal.getClass().getName());
+        throw new RuntimeException("Unable to extract user ID from authentication");
     }
 }

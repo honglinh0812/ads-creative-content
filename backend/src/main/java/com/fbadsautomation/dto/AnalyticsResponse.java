@@ -16,10 +16,12 @@ public class AnalyticsResponse {
     private BudgetAnalytics budgetAnalytics;
     private ContentAnalytics contentAnalytics;
     private LocalDateTime generatedAt;
+    private boolean isDemoData;
 
     // Constructors
     public AnalyticsResponse() {
         this.generatedAt = LocalDateTime.now();
+        this.isDemoData = false;
     }
 
     public AnalyticsResponse(KPIMetrics kpiMetrics, List<TimeSeriesData> performanceTrends,
@@ -68,6 +70,11 @@ public class AnalyticsResponse {
     public LocalDateTime getGeneratedAt() { return generatedAt; }
     public void setGeneratedAt(LocalDateTime generatedAt) { this.generatedAt = generatedAt;
     }
+
+    public boolean isDemoData() { return isDemoData; }
+    public void setDemoData(boolean demoData) { this.isDemoData = demoData; }
+    public boolean getIsDemoData() { return isDemoData; }
+    public void setIsDemoData(boolean demoData) { this.isDemoData = demoData; }
 
     // Inner Classes
     public static class KPIMetrics {

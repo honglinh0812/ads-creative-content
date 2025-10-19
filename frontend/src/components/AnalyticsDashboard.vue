@@ -43,6 +43,21 @@
 
     <!-- Analytics Content -->
     <div v-else-if="analytics" class="analytics-content">
+      <!-- Demo Data Banner -->
+      <div v-if="analytics.isDemoData" class="demo-banner">
+        <div class="demo-banner-content">
+          <i class="pi pi-info-circle"></i>
+          <div class="demo-text">
+            <h4>Preview Mode</h4>
+            <p>You're viewing sample analytics data. Create your first campaign to see real performance metrics.</p>
+          </div>
+          <button @click="createFirstCampaign" class="create-campaign-btn">
+            <i class="pi pi-plus"></i>
+            Create Your First Campaign
+          </button>
+        </div>
+      </div>
+
       <!-- KPI Cards -->
       <section class="kpi-section">
         <h2 class="section-title">Key Performance Indicators</h2>
@@ -392,7 +407,12 @@ export default {
       // Navigate to content details
       store.dispatch('analytics/setSelectedContent', content)
     }
-    
+
+    const createFirstCampaign = () => {
+      // Navigate to campaign creation page
+      window.location.href = '/campaigns/create'
+    }
+
     // Helper functions
     const convertToCSV = (data) => {
       if (!data.length) return ''
@@ -444,6 +464,7 @@ export default {
       exportCampaignData,
       onCampaignClick,
       onContentClick,
+      createFirstCampaign,
       formatValue
     }
   }
@@ -545,6 +566,81 @@ export default {
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
+}
+
+.demo-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.demo-banner-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: white;
+}
+
+.demo-banner-content > i {
+  font-size: 2rem;
+  flex-shrink: 0;
+  opacity: 0.95;
+}
+
+.demo-text {
+  flex: 1;
+}
+
+.demo-text h4 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.demo-text p {
+  font-size: var(--text-sm);
+  margin: 0;
+  opacity: 0.95;
+  line-height: 1.5;
+}
+
+.create-campaign-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background: white;
+  color: #667eea;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.create-campaign-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.create-campaign-btn:active {
+  transform: translateY(0);
 }
 
 .section-title {
@@ -732,10 +828,26 @@ export default {
   .analytics-dashboard {
     padding: var(--space-4);
   }
-  
+
   .dashboard-header {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .demo-banner-content {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .demo-banner-content > i {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-2);
+  }
+
+  .create-campaign-btn {
+    width: 100%;
+    justify-content: center;
   }
   
   .kpi-grid {

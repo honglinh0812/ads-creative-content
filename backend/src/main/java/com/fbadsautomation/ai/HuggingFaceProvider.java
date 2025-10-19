@@ -223,11 +223,14 @@ public class HuggingFaceProvider implements AIProvider {
     }
     private AdContent createMockAdContent(int index, FacebookCTA callToAction) {
         AdContent adContent = new AdContent();
-        adContent.setHeadline("Mock Hugging Face Headline " + index);
-        adContent.setDescription("Mock description from Hugging Face.");
-        adContent.setPrimaryText("This is mock primary text from Hugging Face for variation " + index + ".");
+        adContent.setHeadline("Mẫu HuggingFace " + index); // 20 chars - safe!
+        adContent.setDescription("Nội dung được tạo bởi HuggingFace"); // 37 chars - safe!
+        adContent.setPrimaryText("Nội dung quảng cáo mẫu được tạo bởi HuggingFace AI, phiên bản số " + index + ".");
         adContent.setCallToAction(callToAction);
         adContent.setCta(callToAction);
+        adContent.setImageUrl("/img/placeholder.png");
+        adContent.setAiProvider(AdContent.AIProvider.HUGGINGFACE);
+        adContent.setIsSelected(false);
         return adContent;
     }
 

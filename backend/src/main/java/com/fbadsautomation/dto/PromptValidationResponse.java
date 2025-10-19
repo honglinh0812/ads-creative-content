@@ -1,8 +1,11 @@
 package com.fbadsautomation.dto;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class PromptValidationResponse {
+public class PromptValidationResponse implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private boolean isValid;
     private int qualityScore; // 0-100
@@ -14,7 +17,9 @@ public class PromptValidationResponse {
     // Constructor
     public PromptValidationResponse() {}
 
-    public static class ValidationIssue {
+    public static class ValidationIssue implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private String type; // length, specificity, clarity, tone, etc.
         private String severity; // error, warning, info
         private String message;

@@ -260,8 +260,7 @@ import {
   AppstoreOutlined,
   InfoCircleOutlined
 } from '@ant-design/icons-vue'
-import api from '@/services/api'
-const { optimizationAPI } = api
+import { optimizationAPI } from '@/services/optimizationAPI'
 
 export default {
   name: 'OptimizationDashboard',

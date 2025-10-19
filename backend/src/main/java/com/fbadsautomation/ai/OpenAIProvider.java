@@ -285,9 +285,13 @@ public class OpenAIProvider implements AIProvider {
         List<AdContent> mockContents = new ArrayList<>();
         for (int i = 0; i < numberOfVariations; i++) {
             AdContent adContent = new AdContent();
-            adContent.setHeadline("OpenAI: Tiêu đề mẫu #" + (i + 1) + " cho: " + prompt);
-            adContent.setDescription("Mô tả ngắn gọn cho mẫu quảng cáo OpenAI #" + (i + 1));
-            adContent.setPrimaryText("Đây là nội dung chính của mẫu quảng cáo OpenAI #" + (i + 1) + ". Nội dung này sẽ mô tả chi tiết về sản phẩm hoặc dịch vụ được quảng cáo.");
+            // Ensure headline stays within 40 character limit
+            String shortPrompt = prompt.length() > 20 ? prompt.substring(0, 17) + "..." : prompt;
+            adContent.setHeadline("Mẫu " + (i + 1) + ": " + shortPrompt); // Max ~30 chars
+            adContent.setDescription("Nội dung quảng cáo được tạo bởi OpenAI, phiên bản " + (i + 1)); // Max 125 chars
+            adContent.setPrimaryText("Đây là nội dung chính của quảng cáo được tạo bởi OpenAI. " +
+                "Mô tả chi tiết về sản phẩm/dịch vụ: " + prompt + ". " +
+                "Đây là phiên bản số " + (i + 1) + " với nội dung được tối ưu hóa."); // Within 1000 chars
             adContent.setCallToAction(callToAction);
             adContent.setCta(callToAction);
             adContent.setImageUrl("/img/placeholder.png"); // Use local placeholder
@@ -299,9 +303,9 @@ public class OpenAIProvider implements AIProvider {
     }
     private AdContent generateMockAdContent(String prompt, FacebookCTA callToAction) {
         AdContent mockContent = new AdContent();
-        mockContent.setHeadline("Mock Fallback Headline");
-        mockContent.setDescription("Fallback description due to parsing error.");
-        mockContent.setPrimaryText("Fallback primary text for prompt: " + prompt);
+        mockContent.setHeadline("Quảng cáo mẫu"); // Only 14 chars - safe!
+        mockContent.setDescription("Nội dung được tạo tự động"); // 27 chars - safe!
+        mockContent.setPrimaryText("Nội dung chính cho quảng cáo: " + prompt);
         mockContent.setCallToAction(callToAction);
         mockContent.setCta(callToAction);
         return mockContent;

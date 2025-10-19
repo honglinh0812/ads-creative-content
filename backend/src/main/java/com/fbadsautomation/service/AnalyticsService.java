@@ -46,14 +46,25 @@ public class AnalyticsService {
     public AnalyticsResponse getAnalytics(Long userId, String timeRange) {
         try {
             log.info("Generating analytics for user ID: {} with time range: {}", userId, timeRange);
-            
+
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
             LocalDateTime startDate = calculateStartDate(timeRange);
             LocalDateTime endDate = LocalDateTime.now();
 
-            // Generate all analytics components
+            // Check if user has any real data
+            long campaignCount = campaignRepository.countByUser(user);
+            long adCount = adRepository.countByUser(user);
+
+            if (campaignCount == 0 && adCount == 0) {
+                log.info("User {} has no campaigns/ads, returning demo analytics", userId);
+                AnalyticsResponse demoResponse = generateDemoAnalytics(user, timeRange, startDate, endDate);
+                demoResponse.setIsDemoData(true);
+                return demoResponse;
+            }
+
+            // Generate all analytics components with real data
             KPIMetrics kpiMetrics = generateKPIMetrics(user, startDate, endDate);
             List<TimeSeriesData> performanceTrends = generatePerformanceTrends(user, startDate, endDate, timeRange);
             List<CampaignAnalytics> campaignAnalytics = generateCampaignAnalytics(user, startDate, endDate);
@@ -66,6 +77,7 @@ public class AnalyticsService {
                 kpiMetrics, performanceTrends, campaignAnalytics, adAnalytics,
                 aiProviderAnalytics, budgetAnalytics, contentAnalytics
             );
+            response.setIsDemoData(false);
 
             log.info("Analytics generated successfully for user ID: {}", userId);
             return response;
@@ -462,6 +474,270 @@ public class AnalyticsService {
             log.error("Error generating content analytics: {}", e.getMessage(), e);
             return new ContentAnalytics();
         }
+    }
+
+    /**
+     * Generate demo analytics for users with no campaigns/ads yet
+     */
+    private AnalyticsResponse generateDemoAnalytics(User user, String timeRange, LocalDateTime startDate, LocalDateTime endDate) {
+        log.info("Generating demo analytics for user: {}", user.getId());
+
+        // Create demo KPI metrics
+        KPIMetrics demoKPIs = new KPIMetrics(
+            3L, // totalCampaigns
+            12L, // totalAds
+            2L, // activeCampaigns
+            8L, // activeAds
+            5000.0, // totalBudget
+            3400.0, // totalSpent (68% utilization)
+            3.25, // averageCTR (3.25%)
+            1.12, // averageCPC ($1.12)
+            195000L, // totalImpressions
+            6337L, // totalClicks
+            8.2, // conversionRate (8.2%)
+            156.0, // roi (156%)
+            28, // contentGenerated
+            700.0 // aiCostSavings ($700)
+        );
+        demoKPIs.setCampaignGrowth(18.5);
+        demoKPIs.setAdGrowth(22.3);
+        demoKPIs.setBudgetGrowth(15.2);
+        demoKPIs.setImpressionGrowth(24.7);
+
+        // Generate demo performance trends
+        List<TimeSeriesData> demoTrends = generateDemoPerformanceTrends(startDate, endDate, timeRange);
+
+        // Generate demo campaign analytics
+        List<CampaignAnalytics> demoCampaigns = generateDemoCampaigns();
+
+        // Generate demo ad analytics
+        List<AdAnalytics> demoAds = generateDemoAds();
+
+        // Generate demo AI provider analytics
+        AIProviderAnalytics demoAIProvider = generateDemoAIProviderAnalytics();
+
+        // Generate demo budget analytics
+        BudgetAnalytics demoBudget = generateDemoBudgetAnalytics(startDate, endDate);
+
+        // Generate demo content analytics
+        ContentAnalytics demoContent = generateDemoContentAnalytics();
+
+        return new AnalyticsResponse(
+            demoKPIs, demoTrends, demoCampaigns, demoAds,
+            demoAIProvider, demoBudget, demoContent
+        );
+    }
+
+    private List<TimeSeriesData> generateDemoPerformanceTrends(LocalDateTime startDate, LocalDateTime endDate, String timeRange) {
+        List<TimeSeriesData> trends = new ArrayList<>();
+        String period = determinePeriod(timeRange);
+        List<LocalDateTime> timePoints = generateTimePoints(startDate, endDate, period);
+
+        double baseImpressions = 10000;
+        for (int i = 0; i < timePoints.size(); i++) {
+            Map<String, Double> metrics = new HashMap<>();
+            double growthFactor = 1.0 + (i * 0.05); // 5% growth per period
+            double impressions = baseImpressions * growthFactor * (0.9 + Math.random() * 0.2);
+            double ctr = 2.8 + Math.random() * 1.2;
+            double cpc = 0.95 + Math.random() * 0.4;
+
+            metrics.put("impressions", impressions);
+            metrics.put("clicks", impressions * (ctr / 100));
+            metrics.put("ctr", ctr);
+            metrics.put("cpc", cpc);
+            metrics.put("conversions", impressions * (ctr / 100) * 0.082);
+            metrics.put("spend", impressions * (ctr / 100) * cpc);
+
+            trends.add(new TimeSeriesData(timePoints.get(i), period, metrics));
+        }
+
+        return trends;
+    }
+
+    private List<CampaignAnalytics> generateDemoCampaigns() {
+        List<CampaignAnalytics> campaigns = new ArrayList<>();
+
+        // Demo Campaign 1: High Performer
+        CampaignAnalytics campaign1 = new CampaignAnalytics();
+        campaign1.setCampaignId(999001L);
+        campaign1.setCampaignName("Summer Sale 2024 (Demo)");
+        campaign1.setStatus("ACTIVE");
+        campaign1.setObjective("CONVERSIONS");
+        campaign1.setBudget(2000.0);
+        campaign1.setSpent(1450.0);
+        campaign1.setBudgetUtilization(72.5);
+        campaign1.setAdCount(5);
+        campaign1.setActiveAdCount(4);
+        campaign1.setImpressions(85000L);
+        campaign1.setClicks(2890L);
+        campaign1.setCtr(3.4);
+        campaign1.setCpc(0.95);
+        campaign1.setConversions(245.0);
+        campaign1.setConversionRate(8.5);
+        campaign1.setRoi(178.0);
+        campaign1.setCreatedDate(LocalDateTime.now().minusDays(15));
+        campaign1.setLastActive(LocalDateTime.now().minusHours(2));
+        campaigns.add(campaign1);
+
+        // Demo Campaign 2: Average Performer
+        CampaignAnalytics campaign2 = new CampaignAnalytics();
+        campaign2.setCampaignId(999002L);
+        campaign2.setCampaignName("Product Launch Q3 (Demo)");
+        campaign2.setStatus("ACTIVE");
+        campaign2.setObjective("TRAFFIC");
+        campaign2.setBudget(1800.0);
+        campaign2.setSpent(1200.0);
+        campaign2.setBudgetUtilization(66.7);
+        campaign2.setAdCount(4);
+        campaign2.setActiveAdCount(3);
+        campaign2.setImpressions(65000L);
+        campaign2.setClicks(2050L);
+        campaign2.setCtr(3.15);
+        campaign2.setCpc(1.18);
+        campaign2.setConversions(156.0);
+        campaign2.setConversionRate(7.6);
+        campaign2.setRoi(142.0);
+        campaign2.setCreatedDate(LocalDateTime.now().minusDays(22));
+        campaign2.setLastActive(LocalDateTime.now().minusHours(5));
+        campaigns.add(campaign2);
+
+        // Demo Campaign 3: Paused Campaign
+        CampaignAnalytics campaign3 = new CampaignAnalytics();
+        campaign3.setCampaignId(999003L);
+        campaign3.setCampaignName("Brand Awareness Test (Demo)");
+        campaign3.setStatus("PAUSED");
+        campaign3.setObjective("BRAND_AWARENESS");
+        campaign3.setBudget(1200.0);
+        campaign3.setSpent(750.0);
+        campaign3.setBudgetUtilization(62.5);
+        campaign3.setAdCount(3);
+        campaign3.setActiveAdCount(0);
+        campaign3.setImpressions(45000L);
+        campaign3.setClicks(1397L);
+        campaign3.setCtr(3.1);
+        campaign3.setCpc(1.32);
+        campaign3.setConversions(98.0);
+        campaign3.setConversionRate(7.0);
+        campaign3.setRoi(118.0);
+        campaign3.setCreatedDate(LocalDateTime.now().minusDays(30));
+        campaign3.setLastActive(LocalDateTime.now().minusDays(3));
+        campaigns.add(campaign3);
+
+        return campaigns;
+    }
+
+    private List<AdAnalytics> generateDemoAds() {
+        List<AdAnalytics> ads = new ArrayList<>();
+        String[] adNames = {
+            "Summer Sale - Image Ad (Demo)", "Product Launch - Video (Demo)",
+            "Brand Story - Carousel (Demo)", "Limited Offer - Static (Demo)",
+            "New Arrivals - Dynamic (Demo)", "Flash Sale - Animated (Demo)",
+            "Customer Testimonial (Demo)", "Feature Highlight (Demo)",
+            "Seasonal Promotion (Demo)", "Holiday Special (Demo)",
+            "Weekend Deal (Demo)", "Exclusive Access (Demo)"
+        };
+        String[] campaigns = {"Summer Sale 2024 (Demo)", "Product Launch Q3 (Demo)", "Brand Awareness Test (Demo)"};
+        String[] providers = {"OPENAI", "GEMINI", "STABLE_DIFFUSION"};
+
+        for (int i = 0; i < 12; i++) {
+            AdAnalytics ad = new AdAnalytics();
+            ad.setAdId(999100L + i);
+            ad.setAdName(adNames[i]);
+            ad.setCampaignName(campaigns[i % 3]);
+            ad.setStatus(i < 8 ? "ACTIVE" : "PAUSED");
+            ad.setAdType("SINGLE_IMAGE");
+            ad.setImpressions(8000L + (long)(Math.random() * 12000));
+            ad.setClicks((long)(ad.getImpressions() * (0.025 + Math.random() * 0.02)));
+            ad.setCtr(ad.getImpressions() > 0 ? (double) ad.getClicks() / ad.getImpressions() * 100 : 0.0);
+            ad.setCpc(0.85 + Math.random() * 0.6);
+            ad.setConversions(ad.getClicks() * (0.07 + Math.random() * 0.04));
+            ad.setConversionRate(ad.getClicks() > 0 ? ad.getConversions() / ad.getClicks() * 100 : 0.0);
+            ad.setAiProvider(providers[i % 3]);
+            ad.setContentVariations(2 + (i % 4));
+            ad.setCreatedDate(LocalDateTime.now().minusDays(30 - i * 2));
+            ad.setLastActive(LocalDateTime.now().minusHours(i * 3));
+            ads.add(ad);
+        }
+
+        return ads;
+    }
+
+    private AIProviderAnalytics generateDemoAIProviderAnalytics() {
+        Map<String, AIProviderAnalytics.ProviderMetrics> providerMetrics = new HashMap<>();
+
+        providerMetrics.put("OPENAI", new AIProviderAnalytics.ProviderMetrics(
+            "OPENAI", 15, 92.5, 1650.0, 12.50, 73.3
+        ));
+        providerMetrics.put("GEMINI", new AIProviderAnalytics.ProviderMetrics(
+            "GEMINI", 8, 88.2, 1850.0, 6.40, 62.5
+        ));
+        providerMetrics.put("STABLE_DIFFUSION", new AIProviderAnalytics.ProviderMetrics(
+            "STABLE_DIFFUSION", 5, 85.0, 2100.0, 4.00, 60.0
+        ));
+
+        return new AIProviderAnalytics(
+            providerMetrics,
+            "OPENAI",
+            "OPENAI",
+            22.90,
+            700.0,
+            28
+        );
+    }
+
+    private BudgetAnalytics generateDemoBudgetAnalytics(LocalDateTime startDate, LocalDateTime endDate) {
+        BudgetAnalytics analytics = new BudgetAnalytics();
+        analytics.setTotalBudgetAllocated(5000.0);
+        analytics.setTotalBudgetSpent(3400.0);
+        analytics.setBudgetUtilizationRate(68.0);
+        analytics.setAverageDailySpend(113.3);
+        analytics.setProjectedMonthlySpend(3400.0);
+
+        List<BudgetAnalytics.BudgetBreakdown> breakdown = Arrays.asList(
+            new BudgetAnalytics.BudgetBreakdown("Campaign Ads", 2890.0, 85.0),
+            new BudgetAnalytics.BudgetBreakdown("AI Content Generation", 340.0, 10.0),
+            new BudgetAnalytics.BudgetBreakdown("Platform Fees", 170.0, 5.0)
+        );
+        analytics.setBudgetBreakdown(breakdown);
+
+        List<BudgetAnalytics.SpendingTrend> trends = new ArrayList<>();
+        LocalDateTime current = startDate;
+        while (current.isBefore(endDate)) {
+            double dailySpend = 100.0 + Math.random() * 50.0;
+            trends.add(new BudgetAnalytics.SpendingTrend(current, dailySpend, "Campaign Ads"));
+            current = current.plusDays(1);
+        }
+        analytics.setSpendingTrends(trends);
+
+        return analytics;
+    }
+
+    private ContentAnalytics generateDemoContentAnalytics() {
+        ContentAnalytics analytics = new ContentAnalytics();
+        analytics.setTotalContentGenerated(28);
+        analytics.setSelectedContent(18);
+        analytics.setSelectionRate(64.3);
+
+        Map<String, Integer> typeDistribution = new HashMap<>();
+        typeDistribution.put("SINGLE_IMAGE", 15);
+        typeDistribution.put("CAROUSEL", 8);
+        typeDistribution.put("VIDEO", 5);
+        analytics.setContentTypeDistribution(typeDistribution);
+
+        Map<String, Double> providerPerformance = new HashMap<>();
+        providerPerformance.put("OPENAI", 73.3);
+        providerPerformance.put("GEMINI", 62.5);
+        providerPerformance.put("STABLE_DIFFUSION", 60.0);
+        analytics.setAiProviderPerformance(providerPerformance);
+
+        List<ContentAnalytics.TopPerformingContent> topContent = Arrays.asList(
+            new ContentAnalytics.TopPerformingContent(999201L, "Summer Sale - 50% Off Everything (Demo)", "OPENAI", 8500.0, 12500L, 3.8),
+            new ContentAnalytics.TopPerformingContent(999202L, "New Product Launch - Limited Edition (Demo)", "GEMINI", 7200.0, 10800L, 3.5),
+            new ContentAnalytics.TopPerformingContent(999203L, "Flash Sale - Today Only (Demo)", "OPENAI", 6800.0, 9500L, 3.6)
+        );
+        analytics.setTopPerformingContent(topContent);
+
+        return analytics;
     }
 
     // Helper methods
