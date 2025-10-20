@@ -7,6 +7,7 @@ import dashboard from './modules/dashboard'
 import adCreation from './modules/adCreation'
 import fbExport from './modules/fbExport'
 import fbImport from './modules/fbImport'
+import competitor from './modules/competitor'
 import api from '../services/api'
 
 export default createStore({
@@ -95,7 +96,8 @@ export default createStore({
     dashboard,
     adCreation,
     fbExport,
-    fbImport
+    fbImport,
+    competitor
   }
 })
 

@@ -46,12 +46,36 @@
       </div>
 
       <!-- Loading State -->
-      <div v-if="loading" class="flex justify-center py-12">
+      <div v-if="loading" class="flex flex-col items-center justify-center py-12 space-y-4">
         <a-spin size="large">
           <template #indicator>
             <loading-outlined style="font-size: 48px" spin />
           </template>
         </a-spin>
+        <p class="text-gray-600">Loading preview...</p>
+      </div>
+
+      <!-- Exporting Progress -->
+      <div v-if="exporting" class="export-progress-section">
+        <div class="flex flex-col items-center justify-center py-8 space-y-4">
+          <a-spin size="large">
+            <template #indicator>
+              <loading-outlined style="font-size: 48px" spin />
+            </template>
+          </a-spin>
+          <div class="text-center">
+            <p class="text-lg font-medium">Exporting ads...</p>
+            <p class="text-sm text-gray-500">
+              Processing {{ selectedCount }} ad(s) in {{ selectedFormat.toUpperCase() }} format
+            </p>
+          </div>
+          <a-progress
+            :percent="exportProgress"
+            :status="exportProgress === 100 ? 'success' : 'active'"
+            :show-info="true"
+            stroke-color="#1890ff"
+          />
+        </div>
       </div>
 
       <!-- Error State -->
@@ -248,7 +272,8 @@ export default {
           width: 120,
           align: 'center'
         }
-      ]
+      ],
+      exportProgress: 0
     }
   },
 
@@ -369,11 +394,15 @@ export default {
 
     async handleExportAndRedirect() {
       try {
+        this.exportProgress = 0
+        this.simulateProgress()
         await this.exportToFacebook()
+        this.exportProgress = 100
         this.$message.success('Ads exported successfully!')
         this.$emit('success')
         this.handleClose()
       } catch (error) {
+        this.exportProgress = 0
         this.$message.error('Export failed: ' + error.message)
         this.$emit('error', error)
       }
@@ -381,14 +410,29 @@ export default {
 
     async handleDownloadOnly() {
       try {
+        this.exportProgress = 0
+        this.simulateProgress()
         await this.downloadOnly()
+        this.exportProgress = 100
         this.$message.success('File downloaded successfully!')
         this.$emit('success')
         this.handleClose()
       } catch (error) {
+        this.exportProgress = 0
         this.$message.error('Download failed: ' + error.message)
         this.$emit('error', error)
       }
+    },
+
+    simulateProgress() {
+      // Simulate progress for user feedback
+      const interval = setInterval(() => {
+        if (this.exportProgress < 90) {
+          this.exportProgress += 10
+        } else {
+          clearInterval(interval)
+        }
+      }, 200)
     },
 
     handleCancel() {

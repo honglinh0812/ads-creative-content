@@ -231,5 +231,57 @@ export default {
     update: (id, persona) => apiClient.put(`/personas/${id}`, persona),
     delete: (id) => apiClient.delete(`/personas/${id}`),
     search: (name) => apiClient.get(`/personas/search?name=${encodeURIComponent(name)}`)
+  },
+
+  // Competitor Insights endpoints (Phase 3)
+  competitors: {
+    // Search competitor ads by brand name
+    search: (brandName, region = 'US', limit = 5) => apiClient.post('/competitors/search', {
+      brandName,
+      region,
+      limit
+    }),
+
+    // Fetch specific ads by URLs
+    fetchByUrls: (adUrls) => apiClient.post('/competitors/ads/fetch', {
+      adUrls
+    }),
+
+    // Get search history
+    getHistory: (page = 0, size = 20) => apiClient.get('/competitors/history', {
+      params: { page, size }
+    }),
+
+    // Get brand name suggestions (autocomplete)
+    getSuggestions: (query) => apiClient.get('/competitors/suggestions', {
+      params: { query }
+    }),
+
+    // Generate AI suggestion based on competitor ad
+    generateSuggestion: (competitorAd, myAd, aiProvider = 'openai') => apiClient.post('/competitors/comparison/suggest', {
+      competitorAd,
+      myAd,
+      aiProvider
+    }),
+
+    // Analyze single competitor ad
+    analyze: (competitorAd, aiProvider = 'openai') => apiClient.post('/competitors/analyze', {
+      competitorAd,
+      aiProvider
+    }),
+
+    // Identify patterns across multiple ads
+    identifyPatterns: (competitorAds, aiProvider = 'openai') => apiClient.post('/competitors/patterns', {
+      competitorAds,
+      aiProvider
+    }),
+
+    // Generate A/B test variations
+    generateABTest: (competitorAd, myAd, variationCount = 3, aiProvider = 'openai') => apiClient.post('/competitors/ab-test', {
+      competitorAd,
+      myAd,
+      variationCount,
+      aiProvider
+    })
   }
 }

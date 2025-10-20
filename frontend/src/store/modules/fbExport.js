@@ -160,11 +160,11 @@ const actions = {
 
       // Single ad preview
       if (state.selectedAdIds.length === 1) {
-        response = await api.get(`/api/facebook-export/preview/ad/${state.selectedAdIds[0]}`)
+        response = await api.facebookExport.previewAd(state.selectedAdIds[0])
       }
       // Multiple ads preview
       else {
-        response = await api.post('/api/facebook-export/preview/ads/bulk', state.selectedAdIds)
+        response = await api.facebookExport.previewMultipleAds(state.selectedAdIds)
       }
 
       commit('SET_PREVIEW_DATA', response.data)
@@ -193,14 +193,9 @@ const actions = {
     commit('CLEAR_ERROR')
 
     try {
-      const response = await api.post('/api/facebook-export/ads/bulk/export',
-        {
-          adIds: state.selectedAdIds,
-          format: state.format
-        },
-        {
-          responseType: 'blob'
-        }
+      const response = await api.facebookExport.exportMultipleAds(
+        state.selectedAdIds,
+        state.format
       )
 
       return response.data

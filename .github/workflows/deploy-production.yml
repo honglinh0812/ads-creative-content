@@ -1,0 +1,383 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests (use with caution)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  GCP_VM_HOST: ${{ secrets.GCP_VM_HOST }}
+  GCP_VM_USER: ${{ secrets.GCP_VM_USER }}
+  DEPLOY_DIR: /opt/facebook-ads-automation
+  FRONTEND_DIR: /var/www/ads-creative-content-frontend
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_tests }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run tests
+        run: |
+          cd backend
+          mvn clean test -B
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_tests }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install and test
+        run: |
+          cd frontend
+          npm ci
+          npm run lint
+
+  build-backend:
+    name: Build Backend JAR
+    runs-on: ubuntu-latest
+    needs: [backend-tests]
+    if: always() && (needs.backend-tests.result == 'success' || inputs.skip_tests)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build JAR
+        run: |
+          cd backend
+          mvn clean package -DskipTests -B
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
+          retention-days: 1
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: [frontend-tests]
+    if: always() && (needs.frontend-tests.result == 'success' || inputs.skip_tests)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build production bundle
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+        env:
+          NODE_ENV: production
+          VUE_APP_API_BASE_URL: /api
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 1
+
+  deploy-backend:
+    name: Deploy Backend to GCP
+    runs-on: ubuntu-latest
+    needs: [build-backend]
+    environment:
+      name: production
+      url: http://${{ secrets.GCP_VM_HOST }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download backend artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-jar
+          path: backend-artifact/
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.GCP_VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create deployment backup
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            if [ -f ${{ env.DEPLOY_DIR }}/facebook-ads-automation.jar ]; then
+              BACKUP_NAME="facebook-ads-automation-$(date +'%Y%m%d-%H%M%S').jar"
+              sudo mkdir -p ${{ env.DEPLOY_DIR }}/_backup
+              sudo cp ${{ env.DEPLOY_DIR }}/facebook-ads-automation.jar ${{ env.DEPLOY_DIR }}/_backup/$BACKUP_NAME
+              echo "Backup created: $BACKUP_NAME"
+            fi
+          EOF
+
+      - name: Upload JAR to GCP VM
+        run: |
+          JAR_FILE=$(ls backend-artifact/*.jar | head -n 1)
+          scp -i ~/.ssh/deploy_key $JAR_FILE ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }}:/tmp/facebook-ads-automation.jar
+
+      - name: Deploy backend application
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            # Create deploy directory if not exists
+            sudo mkdir -p ${{ env.DEPLOY_DIR }}
+
+            # Move JAR to deployment directory
+            sudo mv /tmp/facebook-ads-automation.jar ${{ env.DEPLOY_DIR }}/facebook-ads-automation.jar
+            sudo chown ${{ secrets.GCP_VM_USER }}:${{ secrets.GCP_VM_USER }} ${{ env.DEPLOY_DIR }}/facebook-ads-automation.jar
+
+            # Restart service
+            sudo systemctl restart facebook-ads-automation
+
+            echo "Backend deployment completed"
+          EOF
+
+      - name: Wait for application startup
+        run: |
+          sleep 15
+
+      - name: Health check
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            # Check if service is running
+            if sudo systemctl is-active --quiet facebook-ads-automation; then
+              echo "Service is running"
+
+              # Check health endpoint
+              for i in {1..10}; do
+                if curl -f http://localhost:8080/actuator/health; then
+                  echo "Health check passed"
+                  exit 0
+                fi
+                echo "Health check attempt $i failed, retrying..."
+                sleep 5
+              done
+
+              echo "Health check failed after 10 attempts"
+              exit 1
+            else
+              echo "Service failed to start"
+              sudo journalctl -u facebook-ads-automation -n 50
+              exit 1
+            fi
+          EOF
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            echo "Deployment failed, rolling back to previous version..."
+
+            # Find latest backup
+            LATEST_BACKUP=$(ls -t ${{ env.DEPLOY_DIR }}/_backup/*.jar 2>/dev/null | head -n 1)
+
+            if [ -n "$LATEST_BACKUP" ]; then
+              sudo cp "$LATEST_BACKUP" ${{ env.DEPLOY_DIR }}/facebook-ads-automation.jar
+              sudo systemctl restart facebook-ads-automation
+              echo "Rollback completed to: $LATEST_BACKUP"
+            else
+              echo "No backup found for rollback"
+            fi
+          EOF
+
+  deploy-frontend:
+    name: Deploy Frontend to GCP
+    runs-on: ubuntu-latest
+    needs: [build-frontend, deploy-backend]
+
+    steps:
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-dist
+          path: frontend-dist/
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.GCP_VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create frontend backup
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            if [ -d ${{ env.FRONTEND_DIR }} ]; then
+              BACKUP_NAME="frontend-$(date +'%Y%m%d-%H%M%S')"
+              sudo mkdir -p ${{ env.FRONTEND_DIR }}/_backup
+              sudo cp -r ${{ env.FRONTEND_DIR }} ${{ env.FRONTEND_DIR }}/_backup/$BACKUP_NAME
+              echo "Frontend backup created: $BACKUP_NAME"
+            fi
+          EOF
+
+      - name: Deploy frontend files
+        run: |
+          # Create temporary directory on remote server
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} "sudo mkdir -p /tmp/frontend-deploy"
+
+          # Upload frontend files
+          scp -i ~/.ssh/deploy_key -r frontend-dist/* ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }}:/tmp/frontend-deploy/
+
+          # Move to production directory
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            sudo mkdir -p ${{ env.FRONTEND_DIR }}
+            sudo rm -rf ${{ env.FRONTEND_DIR }}/*
+            sudo mv /tmp/frontend-deploy/* ${{ env.FRONTEND_DIR }}/
+            sudo chown -R www-data:www-data ${{ env.FRONTEND_DIR }}
+            sudo rm -rf /tmp/frontend-deploy
+            echo "Frontend deployment completed"
+          EOF
+
+      - name: Reload Nginx
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            sudo nginx -t && sudo systemctl reload nginx
+            echo "Nginx reloaded successfully"
+          EOF
+
+  run-migrations:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: [deploy-backend]
+    if: success()
+
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.GCP_VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Run Flyway migrations
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            cd ${{ env.DEPLOY_DIR }}
+
+            # Flyway migrations are automatically run on application startup
+            # This step is a placeholder for future manual migration control
+            echo "Migrations run automatically on application startup"
+            echo "Checking migration status..."
+
+            # Wait for app to be fully started
+            sleep 10
+
+            # Optional: Add manual migration check here
+            echo "Migration check completed"
+          EOF
+
+  notify:
+    name: Send Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend, run-migrations]
+    if: always()
+
+    steps:
+      - name: Send email notification
+        uses: dawidd6/action-send-mail@v3
+        if: always()
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Deployment ${{ job.status }}: Facebook Ads Creative Content"
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: GitHub Actions <noreply@github.com>
+          body: |
+            Deployment Status: ${{ job.status }}
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+
+            Deployment Results:
+            - Backend: ${{ needs.deploy-backend.result }}
+            - Frontend: ${{ needs.deploy-frontend.result }}
+            - Migrations: ${{ needs.run-migrations.result }}
+
+            Deployed to: Production (${{ secrets.GCP_VM_HOST }})
+
+            View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        continue-on-error: true
+
+  cleanup:
+    name: Cleanup Old Backups
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    if: success()
+
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.GCP_VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Remove old backups (keep last 10)
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            # Cleanup backend backups
+            if [ -d ${{ env.DEPLOY_DIR }}/_backup ]; then
+              cd ${{ env.DEPLOY_DIR }}/_backup
+              ls -t *.jar 2>/dev/null | tail -n +11 | xargs -r rm -f
+              echo "Cleaned up old backend backups"
+            fi
+
+            # Cleanup frontend backups
+            if [ -d ${{ env.FRONTEND_DIR }}/_backup ]; then
+              cd ${{ env.FRONTEND_DIR }}/_backup
+              ls -t -d */ 2>/dev/null | tail -n +6 | xargs -r rm -rf
+              echo "Cleaned up old frontend backups"
+            fi
+          EOF

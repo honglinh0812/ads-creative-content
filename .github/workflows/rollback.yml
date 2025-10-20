@@ -1,0 +1,323 @@
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: 'Component to rollback'
+        required: true
+        type: choice
+        options:
+          - backend
+          - frontend
+          - both
+      backup_timestamp:
+        description: 'Backup timestamp (e.g., 20251020-143022) or "latest" for most recent'
+        required: false
+        default: 'latest'
+      skip_confirmation:
+        description: 'Skip confirmation (dangerous!)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  GCP_VM_HOST: ${{ secrets.GCP_VM_HOST }}
+  GCP_VM_USER: ${{ secrets.GCP_VM_USER }}
+  DEPLOY_DIR: /opt/facebook-ads-automation
+  FRONTEND_DIR: /var/www/ads-creative-content-frontend
+
+jobs:
+  confirm-rollback:
+    name: Confirm Rollback
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_confirmation }}
+
+    steps:
+      - name: Display rollback information
+        run: |
+          echo "================================================"
+          echo "ROLLBACK DEPLOYMENT CONFIRMATION"
+          echo "================================================"
+          echo ""
+          echo "Component: ${{ inputs.component }}"
+          echo "Backup: ${{ inputs.backup_timestamp }}"
+          echo "Target: ${{ secrets.GCP_VM_HOST }}"
+          echo ""
+          echo "This will restore the application to a previous version."
+          echo "Make sure you understand the implications!"
+          echo ""
+          echo "To proceed, this job must succeed."
+          echo "================================================"
+
+  list-backups:
+    name: List Available Backups
+    runs-on: ubuntu-latest
+    needs: [confirm-rollback]
+    if: always() && (needs.confirm-rollback.result == 'success' || inputs.skip_confirmation)
+
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.GCP_VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: List available backups
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            echo "Available Backend Backups:"
+            echo "=========================="
+            if [ -d ${{ env.DEPLOY_DIR }}/_backup ]; then
+              ls -lh ${{ env.DEPLOY_DIR }}/_backup/*.jar 2>/dev/null | tail -10 || echo "No backend backups found"
+            else
+              echo "No backend backup directory"
+            fi
+
+            echo ""
+            echo "Available Frontend Backups:"
+            echo "==========================="
+            if [ -d ${{ env.FRONTEND_DIR }}/_backup ]; then
+              ls -lh ${{ env.FRONTEND_DIR }}/_backup/ 2>/dev/null | tail -10 || echo "No frontend backups found"
+            else
+              echo "No frontend backup directory"
+            fi
+          EOF
+
+  rollback-backend:
+    name: Rollback Backend
+    runs-on: ubuntu-latest
+    needs: [list-backups]
+    if: always() && needs.list-backups.result == 'success' && (inputs.component == 'backend' || inputs.component == 'both')
+
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.GCP_VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create pre-rollback backup
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            if [ -f ${{ env.DEPLOY_DIR }}/facebook-ads-automation.jar ]; then
+              PRE_ROLLBACK_BACKUP="facebook-ads-automation-pre-rollback-$(date +'%Y%m%d-%H%M%S').jar"
+              sudo mkdir -p ${{ env.DEPLOY_DIR }}/_backup
+              sudo cp ${{ env.DEPLOY_DIR }}/facebook-ads-automation.jar ${{ env.DEPLOY_DIR }}/_backup/$PRE_ROLLBACK_BACKUP
+              echo "Pre-rollback backup created: $PRE_ROLLBACK_BACKUP"
+            fi
+          EOF
+
+      - name: Perform backend rollback
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            cd ${{ env.DEPLOY_DIR }}/_backup
+
+            # Determine which backup to restore
+            if [ "${{ inputs.backup_timestamp }}" = "latest" ]; then
+              # Find latest backup (excluding pre-rollback backups)
+              BACKUP_FILE=$(ls -t *.jar 2>/dev/null | grep -v "pre-rollback" | head -n 1)
+            else
+              # Use specified backup
+              BACKUP_FILE="facebook-ads-automation-${{ inputs.backup_timestamp }}.jar"
+            fi
+
+            if [ -z "$BACKUP_FILE" ]; then
+              echo "ERROR: No backup file found"
+              exit 1
+            fi
+
+            if [ ! -f "$BACKUP_FILE" ]; then
+              echo "ERROR: Backup file not found: $BACKUP_FILE"
+              exit 1
+            fi
+
+            echo "Rolling back to: $BACKUP_FILE"
+
+            # Stop service
+            sudo systemctl stop facebook-ads-automation
+
+            # Restore backup
+            sudo cp "$BACKUP_FILE" ${{ env.DEPLOY_DIR }}/facebook-ads-automation.jar
+            sudo chown ${{ secrets.GCP_VM_USER }}:${{ secrets.GCP_VM_USER }} ${{ env.DEPLOY_DIR }}/facebook-ads-automation.jar
+
+            # Start service
+            sudo systemctl start facebook-ads-automation
+
+            echo "Backend rollback completed"
+          EOF
+
+      - name: Wait for service startup
+        run: sleep 15
+
+      - name: Verify backend health
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            # Check service status
+            if ! sudo systemctl is-active --quiet facebook-ads-automation; then
+              echo "ERROR: Service failed to start after rollback"
+              sudo journalctl -u facebook-ads-automation -n 50
+              exit 1
+            fi
+
+            # Check health endpoint
+            for i in {1..10}; do
+              if curl -f http://localhost:8080/actuator/health; then
+                echo "Backend health check passed after rollback"
+                exit 0
+              fi
+              echo "Health check attempt $i failed, retrying..."
+              sleep 5
+            done
+
+            echo "ERROR: Health check failed after rollback"
+            sudo journalctl -u facebook-ads-automation -n 50
+            exit 1
+          EOF
+
+  rollback-frontend:
+    name: Rollback Frontend
+    runs-on: ubuntu-latest
+    needs: [list-backups]
+    if: always() && needs.list-backups.result == 'success' && (inputs.component == 'frontend' || inputs.component == 'both')
+
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.GCP_VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create pre-rollback backup
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            if [ -d ${{ env.FRONTEND_DIR }} ]; then
+              PRE_ROLLBACK_BACKUP="frontend-pre-rollback-$(date +'%Y%m%d-%H%M%S')"
+              sudo mkdir -p ${{ env.FRONTEND_DIR }}/_backup
+              sudo cp -r ${{ env.FRONTEND_DIR }} ${{ env.FRONTEND_DIR }}/_backup/$PRE_ROLLBACK_BACKUP
+              echo "Pre-rollback backup created: $PRE_ROLLBACK_BACKUP"
+            fi
+          EOF
+
+      - name: Perform frontend rollback
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            cd ${{ env.FRONTEND_DIR }}/_backup
+
+            # Determine which backup to restore
+            if [ "${{ inputs.backup_timestamp }}" = "latest" ]; then
+              # Find latest backup (excluding pre-rollback backups)
+              BACKUP_DIR=$(ls -td */ 2>/dev/null | grep -v "pre-rollback" | head -n 1)
+            else
+              # Use specified backup
+              BACKUP_DIR="frontend-${{ inputs.backup_timestamp }}/"
+            fi
+
+            if [ -z "$BACKUP_DIR" ]; then
+              echo "ERROR: No backup directory found"
+              exit 1
+            fi
+
+            if [ ! -d "$BACKUP_DIR" ]; then
+              echo "ERROR: Backup directory not found: $BACKUP_DIR"
+              exit 1
+            fi
+
+            echo "Rolling back to: $BACKUP_DIR"
+
+            # Restore backup
+            sudo rm -rf ${{ env.FRONTEND_DIR }}/*
+            sudo cp -r "$BACKUP_DIR"/* ${{ env.FRONTEND_DIR }}/
+            sudo chown -R www-data:www-data ${{ env.FRONTEND_DIR }}
+
+            # Reload Nginx
+            sudo nginx -t && sudo systemctl reload nginx
+
+            echo "Frontend rollback completed"
+          EOF
+
+      - name: Verify frontend
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.GCP_VM_USER }}@${{ secrets.GCP_VM_HOST }} << 'EOF'
+            # Check if files exist
+            if [ ! -f ${{ env.FRONTEND_DIR }}/index.html ]; then
+              echo "ERROR: Frontend files not found after rollback"
+              exit 1
+            fi
+
+            # Check Nginx status
+            if ! sudo systemctl is-active --quiet nginx; then
+              echo "ERROR: Nginx is not running"
+              exit 1
+            fi
+
+            echo "Frontend verification passed"
+          EOF
+
+  notify:
+    name: Send Rollback Notification
+    runs-on: ubuntu-latest
+    needs: [rollback-backend, rollback-frontend]
+    if: always()
+
+    steps:
+      - name: Send email notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Rollback ${{ job.status }}: Facebook Ads Creative Content"
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: GitHub Actions <noreply@github.com>
+          body: |
+            Rollback Status: ${{ job.status }}
+
+            Component: ${{ inputs.component }}
+            Backup: ${{ inputs.backup_timestamp }}
+            Target: ${{ secrets.GCP_VM_HOST }}
+
+            Rollback Results:
+            - Backend: ${{ needs.rollback-backend.result }}
+            - Frontend: ${{ needs.rollback-frontend.result }}
+
+            Initiated by: ${{ github.actor }}
+
+            View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        continue-on-error: true
+
+  summary:
+    name: Rollback Summary
+    runs-on: ubuntu-latest
+    needs: [rollback-backend, rollback-frontend]
+    if: always()
+
+    steps:
+      - name: Display rollback summary
+        run: |
+          echo "================================================"
+          echo "ROLLBACK SUMMARY"
+          echo "================================================"
+          echo ""
+          echo "Component: ${{ inputs.component }}"
+          echo "Backup: ${{ inputs.backup_timestamp }}"
+          echo ""
+          echo "Results:"
+          echo "- Backend: ${{ needs.rollback-backend.result }}"
+          echo "- Frontend: ${{ needs.rollback-frontend.result }}"
+          echo ""
+
+          if [ "${{ needs.rollback-backend.result }}" = "success" ] || [ "${{ needs.rollback-frontend.result }}" = "success" ]; then
+            echo "Rollback completed successfully!"
+            echo "================================================"
+            exit 0
+          else
+            echo "Rollback FAILED!"
+            echo "Please check logs and perform manual recovery if needed."
+            echo "================================================"
+            exit 1
+          fi

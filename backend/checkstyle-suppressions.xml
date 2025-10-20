@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+    Checkstyle Suppressions
+    Define files/patterns to exclude from Checkstyle checks
+-->
+
+<suppressions>
+    <!-- Suppress checks for generated files -->
+    <suppress files=".*[\\/]target[\\/].*" checks=".*"/>
+    <suppress files=".*[\\/]generated[\\/].*" checks=".*"/>
+    <suppress files=".*[\\/]generated-sources[\\/].*" checks=".*"/>
+
+    <!-- Suppress checks for test files (relaxed rules) -->
+    <suppress files=".*[\\/]test[\\/].*Test\.java$" checks="MagicNumber"/>
+    <suppress files=".*[\\/]test[\\/].*Test\.java$" checks="JavadocMethod"/>
+    <suppress files=".*[\\/]test[\\/].*Test\.java$" checks="JavadocType"/>
+
+    <!-- Suppress line length for specific patterns -->
+    <suppress checks="LineLength" files=".*" lines="1-10"/>
+
+    <!-- Suppress Javadoc for DTOs and entities (can be added later) -->
+    <suppress checks="JavadocMethod" files=".*[\\/]dto[\\/].*"/>
+    <suppress checks="JavadocType" files=".*[\\/]dto[\\/].*"/>
+    <suppress checks="JavadocMethod" files=".*[\\/]model[\\/].*"/>
+
+    <!-- Suppress visibility modifier for JPA entities -->
+    <suppress checks="VisibilityModifier" files=".*[\\/]model[\\/].*\.java$"/>
+
+    <!-- Configuration classes often have many parameters -->
+    <suppress checks="ParameterNumber" files=".*Config\.java$"/>
+
+    <!-- Allow longer methods in service layer (business logic) -->
+    <suppress checks="MethodLength" files=".*Service\.java$"/>
+</suppressions>

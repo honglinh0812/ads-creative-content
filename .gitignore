@@ -10,10 +10,22 @@
 # Config files
 .env
 .env.*
+!.env.production.template
 application.properties
 application.yml
 application-*.yml
 application-*.properties
+
+# CI/CD Secrets (NEVER commit these!)
+.env.production
+.env.production.template
+*.key
+*.pem
+gcp-deploy-key*
+deploy_key*
+**/secrets/
+**/*-key
+**/*-secret
 
 # IntelliJ / Eclipse
 .idea/

@@ -104,12 +104,36 @@
       </a-row>
     </div>
 
-    <!-- Results Summary -->
-    <div id="results-summary" class="results-summary" role="status" aria-live="polite">
-      <a-typography-text type="secondary">
-        Showing {{ filteredAds.length }} of {{ totalAds }} ads
-        <span v-if="hasActiveFilters"> (filtered)</span>
-      </a-typography-text>
+    <!-- Results Summary & Bulk Actions -->
+    <div class="results-actions-bar">
+      <div id="results-summary" class="results-summary" role="status" aria-live="polite">
+        <a-typography-text type="secondary">
+          Showing {{ filteredAds.length }} of {{ totalAds }} ads
+          <span v-if="hasActiveFilters"> (filtered)</span>
+        </a-typography-text>
+      </div>
+
+      <!-- Bulk Actions -->
+      <div v-if="selectedRowKeys.length > 0" class="bulk-actions">
+        <a-space>
+          <a-typography-text strong>
+            {{ selectedRowKeys.length }} ad(s) selected
+          </a-typography-text>
+          <a-button size="small" @click="clearSelection">
+            Clear Selection
+          </a-button>
+          <a-button
+            type="primary"
+            size="small"
+            @click="handleBulkExport"
+          >
+            <template #icon>
+              <ExportOutlined />
+            </template>
+            Export Selected
+          </a-button>
+        </a-space>
+      </div>
     </div>
 
     <!-- Table View -->
@@ -120,6 +144,7 @@
         :loading="loading"
         :pagination="false"
         :scroll="{ x: 1400 }"
+        :row-selection="rowSelection"
         row-key="id"
         size="middle"
         role="table"
@@ -436,8 +461,8 @@ export default {
     }
   },
   emits: ['view-details', 'edit-ad', 'delete-ad', 'duplicate-ad', 'export-ad'],
-  
-  setup(props) {
+
+  setup(props, { emit }) {
     // Reactive data
     const searchQuery = ref('')
     const statusFilter = ref('')
@@ -448,6 +473,7 @@ export default {
     const pageSize = ref(24)
     const sortField = ref('createdDate')
     const sortOrder = ref('desc')
+    const selectedRowKeys = ref([])
     
     // Table columns configuration
     const columns = ref([
@@ -646,12 +672,35 @@ export default {
     const formatRelativeTime = (date) => {
       return dayjs(date).fromNow()
     }
-    
+
+    // Bulk selection handlers
+    const rowSelection = computed(() => ({
+      selectedRowKeys: selectedRowKeys.value,
+      onChange: (selectedKeys) => {
+        selectedRowKeys.value = selectedKeys
+      },
+      getCheckboxProps: (record) => ({
+        name: record.name
+      })
+    }))
+
+    const clearSelection = () => {
+      selectedRowKeys.value = []
+    }
+
+    const handleBulkExport = () => {
+      if (selectedRowKeys.value.length === 0) {
+        return
+      }
+      // Emit the export-ad event with array of selected ad IDs
+      emit('export-ad', selectedRowKeys.value)
+    }
+
     // Watchers
     watch([searchQuery, statusFilter, adTypeFilter, campaignFilter], () => {
       currentPage.value = 1
     })
-    
+
     return {
       searchQuery,
       statusFilter,
@@ -662,6 +711,8 @@ export default {
       pageSize,
       sortField,
       sortOrder,
+      selectedRowKeys,
+      rowSelection,
       columns,
       totalAds,
       filteredAds,
@@ -675,6 +726,8 @@ export default {
       handleTableChange,
       handlePageChange,
       handlePageSizeChange,
+      clearSelection,
+      handleBulkExport,
       getStatusColor,
       formatAdType,
       getCampaignName,
@@ -695,8 +748,16 @@ export default {
   @apply bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
 }
 
+.results-actions-bar {
+  @apply flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-4;
+}
+
 .results-summary {
-  @apply flex justify-between items-center;
+  @apply flex items-center;
+}
+
+.bulk-actions {
+  @apply flex items-center gap-2;
 }
 
 .table-section {

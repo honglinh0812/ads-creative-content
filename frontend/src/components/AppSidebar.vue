@@ -51,7 +51,7 @@ import { computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { HomeOutlined, ThunderboltOutlined, FileTextOutlined, MenuOutlined, ArrowLeftOutlined, TeamOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, ThunderboltOutlined, FileTextOutlined, MenuOutlined, ArrowLeftOutlined, TeamOutlined, FundOutlined } from '@ant-design/icons-vue'
 
 export default {
   name: 'AppSidebar',
@@ -61,7 +61,8 @@ export default {
     FileTextOutlined,
     MenuOutlined,
     ArrowLeftOutlined,
-    TeamOutlined
+    TeamOutlined,
+    FundOutlined
   },
   props: {
     sidebarOpen: {
@@ -83,7 +84,8 @@ export default {
       { label: t('navigation.dashboard'), path: '/dashboard', icon: HomeOutlined, match: ['dashboard'] },
       { label: t('navigation.campaigns'), path: '/campaigns', icon: ThunderboltOutlined, match: ['campaign', 'campaigns'] },
       { label: t('navigation.ads'), path: '/ads', icon: FileTextOutlined, match: ['ad', 'ads'] },
-      { label: t('navigation.personas') || 'Personas', path: '/personas', icon: TeamOutlined, match: ['persona', 'personas'] }
+      { label: t('navigation.personas') || 'Personas', path: '/personas', icon: TeamOutlined, match: ['persona', 'personas'] },
+      { label: t('navigation.competitors') || 'Competitors', path: '/competitors', icon: FundOutlined, match: ['competitor', 'competitors'] }
     ])
     // Determine if menu item is active
     function isActive(item) {

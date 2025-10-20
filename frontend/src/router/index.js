@@ -14,6 +14,7 @@ const Ads = () => import('../views/Ads.vue')
 const AdCreate = () => import('../views/AdCreate.vue')
 const AdDetail = () => import('../views/AdDetail.vue')
 const Personas = () => import('../views/Personas.vue')
+const Competitors = () => import('../views/Competitors.vue')
 const NotFound = () => import('../views/NotFound.vue')
 const PrivacyPolicy = () => import('../views/legal/PrivacyPolicy.vue')
 const TermsOfService = () => import('../views/legal/TermsOfService.vue')
@@ -110,6 +111,12 @@ const routes = [
     path: '/personas',
     name: 'Personas',
     component: Personas,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/competitors',
+    name: 'Competitors',
+    component: Competitors,
     meta: { requiresAuth: true }
   },
   // Notifications route removed - notifications are now handled in header modal only
