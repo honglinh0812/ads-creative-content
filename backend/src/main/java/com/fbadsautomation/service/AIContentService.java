@@ -33,19 +33,20 @@ import org.springframework.stereotype.Service;
     * @param ad The ad to generate content for
     * @param prompt The content prompt
     * @param mediaFile The media file (optional)
+    * @param mediaFileUrl The uploaded media file URL from frontend (optional)
     * @return List of generated ad contents
     */
-   public List<AdContent> generateAdContent(Ad ad, String prompt, org.springframework.web.multipart.MultipartFile mediaFile, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent, com.fbadsautomation.model.FacebookCTA callToAction, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
-       log.info("Generating content for ad: {}", ad.getId());
-       
+   public List<AdContent> generateAdContent(Ad ad, String prompt, org.springframework.web.multipart.MultipartFile mediaFile, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
+       log.info("Generating content for ad: {}, mediaFileUrl: {}", ad.getId(), mediaFileUrl);
+
        // Determine content type based on ad type
        AdContent.ContentType contentType = determineContentType(ad.getAdType());
-       
+
        // Always use original prompt, extractedContent will be handled in buildFinalPrompt
        // Sử dụng CTA được truyền hoặc default nếu null
        com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
        List<AdContent> generatedContents = aiIntegrationService.generateContent(
-               prompt, contentType, textProvider, imageProvider, numberOfVariations != null ? numberOfVariations : DEFAULT_VARIATIONS, language, adLinks, promptStyle, customPrompt, extractedContent, cta, audienceSegment);
+               prompt, contentType, textProvider, imageProvider, numberOfVariations != null ? numberOfVariations : DEFAULT_VARIATIONS, language, adLinks, promptStyle, customPrompt, extractedContent, mediaFileUrl, cta, audienceSegment);
        
        // Set ad reference and preview order for each content
        for (int i = 0; i < generatedContents.size(); i++) {
@@ -88,14 +89,14 @@ import org.springframework.stereotype.Service;
    // Overload cho AdContentService gọi
    public List<AdContent> generateContent(String prompt, AdContent.ContentType contentType, String provider, int numberOfVariations) {
        // Gọi hàm chính với các tham số còn lại là null/mặc định
-       return aiIntegrationService.generateContent(prompt, contentType, provider, null, numberOfVariations, null, null, null, null, null, com.fbadsautomation.model.FacebookCTA.LEARN_MORE, null);
+       return aiIntegrationService.generateContent(prompt, contentType, provider, null, numberOfVariations, null, null, null, null, null, null, com.fbadsautomation.model.FacebookCTA.LEARN_MORE, null);
    }
 
    // Overload cho AdContentService gọi với default CTA
    public List<AdContent> generateContent(String prompt, AdContent.ContentType contentType, String provider, int numberOfVariations, com.fbadsautomation.model.FacebookCTA callToAction) {
        // Gọi hàm chính với các tham số còn lại là null/mặc định
        com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
-       return aiIntegrationService.generateContent(prompt, contentType, provider, null, numberOfVariations, null, null, null, null, null, cta, null);
+       return aiIntegrationService.generateContent(prompt, contentType, provider, null, numberOfVariations, null, null, null, null, null, null, cta, null);
    }
 
    /**

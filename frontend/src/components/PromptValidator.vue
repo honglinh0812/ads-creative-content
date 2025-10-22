@@ -155,12 +155,19 @@ export default {
     async validatePrompt() {
       if (!this.shouldValidate) return
 
+      // Don't validate if prompt is too short (< 10 chars as per backend validation)
+      const trimmedPrompt = this.prompt.trim()
+      if (trimmedPrompt.length < 10) {
+        this.hideValidation()
+        return
+      }
+
       this.isValidating = true
       this.showValidation = true
 
       try {
         const response = await api.post('/prompt/validate', {
-          prompt: this.prompt.trim(),
+          prompt: trimmedPrompt,
           adType: this.adType,
           language: this.language,
           targetAudience: this.targetAudience,
@@ -172,12 +179,24 @@ export default {
 
       } catch (error) {
         console.error('Error validating prompt:', error)
-        this.validationResult = {
-          isValid: false,
-          qualityScore: 0,
-          qualityLevel: 'error',
-          issues: [],
-          suggestions: ['Unable to validate prompt. Please try again.']
+
+        // Handle 400 validation errors specifically
+        if (error.response && error.response.status === 400) {
+          // Don't show error UI for validation failures - just hide the validation
+          this.hideValidation()
+        } else if (error.response && error.response.status === 401) {
+          // Authentication error - user not logged in
+          console.warn('Authentication required for prompt validation')
+          this.hideValidation()
+        } else {
+          // Other errors - show generic error
+          this.validationResult = {
+            valid: false,
+            qualityScore: 0,
+            qualityLevel: 'error',
+            issues: [],
+            suggestions: ['Unable to validate prompt. Please try again.']
+          }
         }
       } finally {
         this.isValidating = false

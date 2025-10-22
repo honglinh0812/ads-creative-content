@@ -176,8 +176,8 @@ public class AdService {
         ad = adRepository.findById(ad.getId()).orElseThrow(() -> new RuntimeException("Ad not found after save"));
         log.info("Retrieved managed ad with ID: {}", ad.getId());
         
-        // Generate AI content
-        List<AdContent> contents = aiContentService.generateAdContent(ad, prompt, mediaFile, textProvider, imageProvider, numberOfVariations, language, adLinks, promptStyle, customPrompt, extractedContent, callToAction, audienceSegment);
+        // Generate AI content - pass mediaFileUrl so it's used during generation
+        List<AdContent> contents = aiContentService.generateAdContent(ad, prompt, mediaFile, textProvider, imageProvider, numberOfVariations, language, adLinks, promptStyle, customPrompt, extractedContent, mediaFileUrl, callToAction, audienceSegment);
         // Nếu có contents được tạo, copy nội dung đầu tiên vào ad
         if (!contents.isEmpty()) {
             AdContent firstContent = contents.get(0);
@@ -187,22 +187,13 @@ public class AdService {
             ad.setCallToAction(firstContent.getCallToAction());
             ad.setImageUrl(firstContent.getImageUrl());
             ad.setStatus("READY");
-            
+
             // Mark first content as selected
             firstContent.setIsSelected(true);
             adContentRepository.save(firstContent);
-            
+
             // Save updated ad
             ad = adRepository.save(ad);
-        }
-        
-        // Khi tạo AdContent, nếu imageUrl rỗng thì set từ mediaFileUrl
-        log.info("Setting imageUrl for {} contents, mediaFileUrl: {}", contents.size(), mediaFileUrl);
-        for (AdContent content : contents) {
-            if ((content.getImageUrl() == null || content.getImageUrl().isEmpty()) && mediaFileUrl != null && !mediaFileUrl.isEmpty()) {
-                content.setImageUrl(mediaFileUrl);
-                log.info("Set imageUrl for content '{}' to: {}", content.getHeadline(), mediaFileUrl);
-            }
         }
         
         Map<String, Object> result = new HashMap<>();
@@ -442,7 +433,7 @@ public class AdService {
         // Generate AI content without saving to database
         List<AdContent> contents = aiContentService.generateAdContent(tempAd, prompt, mediaFile, textProvider,
                                                                      imageProvider, numberOfVariations, language,
-                                                                     adLinks, promptStyle, customPrompt, extractedContent, callToAction, audienceSegment);
+                                                                     adLinks, promptStyle, customPrompt, extractedContent, mediaFileUrl, callToAction, audienceSegment);
         // Set temporary IDs for preview
         for (int i = 0; i < contents.size(); i++) {
             AdContent content = contents.get(i);

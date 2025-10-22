@@ -391,6 +391,17 @@
               </div>
             </div>
 
+            <!-- Image Upload Info Message -->
+            <a-alert
+              v-if="hasUploadedImage"
+              message="Image already uploaded"
+              description="You've uploaded an image, so AI image generation is disabled. Remove the uploaded image to enable AI image providers."
+              type="info"
+              show-icon
+              closable
+              style="margin-bottom: 16px;"
+            />
+
             <div class="creative-provider-grid">
               <div
                 v-for="provider in imageProviders"
@@ -398,9 +409,9 @@
                 class="creative-provider-card image-provider"
                 :class="{
                   selected: formData.imageProvider === provider.value,
-                  disabled: !provider.enabled
+                  disabled: !provider.enabled || hasUploadedImage
                 }"
-                @click="formData.imageProvider = provider.value"
+                @click="!hasUploadedImage && provider.enabled ? (formData.imageProvider = provider.value) : null"
               >
                 <input
                   type="radio"
@@ -564,7 +575,11 @@
                     class="ad-preview-image"
                     @click.stop="openMediaModal(variation.imageUrl)"
                   >
-                    <img :src="variation.imageUrl" :alt="variation.headline" />
+                    <img
+                      :src="variation.imageUrl"
+                      :alt="variation.headline"
+                      @error="handleImageError($event, variation)"
+                    />
                   </div>
                   <div class="ad-preview-text">
                     <h3 class="ad-preview-headline">{{ variation.headline }}</h3>
@@ -950,6 +965,10 @@ export default {
           emoji: '✨'
         }
       ]
+    },
+    hasUploadedImage() {
+      // Check if user has uploaded an image
+      return this.uploadedFileUrl && this.uploadedFileUrl.trim() !== ''
     }
   },
   async mounted() {
@@ -1123,7 +1142,8 @@ export default {
     },
     
     validateStep2() {
-      return this.formData.textProvider && this.formData.imageProvider
+      // Valid if text provider selected AND (image provider selected OR image uploaded)
+      return this.formData.textProvider && (this.formData.imageProvider || this.hasUploadedImage)
     },
     
     async handleFileUpload(file) {
@@ -1149,7 +1169,21 @@ export default {
       this.uploadedFiles = []
       this.uploadedFileUrl = ''
     },
-    
+
+    handleImageError(event, variation) {
+      // Log the error for debugging
+      console.error(`Failed to load image for variation: ${variation.headline}`, variation.imageUrl)
+
+      // Set fallback placeholder image
+      event.target.src = '/img/placeholder.png'
+
+      // Show a warning toast to user (only once per session to avoid spam)
+      if (!this.$root.imageErrorShown) {
+        this.$message.warning('Some images failed to load. Using placeholder images.')
+        this.$root.imageErrorShown = true
+      }
+    },
+
     formatFileSize(bytes) {
       if (bytes === 0) return '0 Bytes'
       const k = 1024

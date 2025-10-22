@@ -51,7 +51,16 @@ public class AdContent {
     @Column(name = "ai_provider")
     @Enumerated(EnumType.STRING)
     private AIProvider aiProvider;
-    
+
+    @Column(name = "quality_score")
+    private Integer qualityScore; // 0-100 quality score
+
+    @Column(name = "validation_warnings", length = 2000)
+    private String validationWarnings; // JSON array or comma-separated warnings
+
+    @Column(name = "has_warnings")
+    private Boolean hasWarnings; // Flag for quick filtering
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ad_id", nullable = false)
     private Ad ad;
@@ -89,6 +98,12 @@ public class AdContent {
     public FacebookCTA getCallToAction() { return callToAction; }
     public void setAiProvider(AIProvider aiProvider) { this.aiProvider = aiProvider; }
     public AIProvider getAiProvider() { return aiProvider; }
+    public Integer getQualityScore() { return qualityScore; }
+    public void setQualityScore(Integer qualityScore) { this.qualityScore = qualityScore; }
+    public String getValidationWarnings() { return validationWarnings; }
+    public void setValidationWarnings(String validationWarnings) { this.validationWarnings = validationWarnings; }
+    public Boolean getHasWarnings() { return hasWarnings; }
+    public void setHasWarnings(Boolean hasWarnings) { this.hasWarnings = hasWarnings; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public ContentType getContentType() { return contentType; }
@@ -102,9 +117,10 @@ public class AdContent {
     public AdContent() {
     }
 
-    public AdContent(Long id, ContentType contentType, String primaryText, String headline, 
+    public AdContent(Long id, ContentType contentType, String primaryText, String headline,
                     String description, FacebookCTA callToAction, String imageUrl, Boolean isSelected,
-                    Integer previewOrder, AIProvider aiProvider, Ad ad, User user, 
+                    Integer previewOrder, AIProvider aiProvider, Integer qualityScore,
+                    String validationWarnings, Boolean hasWarnings, Ad ad, User user,
                     LocalDateTime createdDate, LocalDateTime updatedAt) {
         this.id = id;
         this.contentType = contentType;
@@ -116,6 +132,9 @@ public class AdContent {
         this.isSelected = isSelected;
         this.previewOrder = previewOrder;
         this.aiProvider = aiProvider;
+        this.qualityScore = qualityScore;
+        this.validationWarnings = validationWarnings;
+        this.hasWarnings = hasWarnings;
         this.ad = ad;
         this.user = user;
         this.createdDate = createdDate;
@@ -138,6 +157,9 @@ public class AdContent {
         private Boolean isSelected;
         private Integer previewOrder;
         private AIProvider aiProvider;
+        private Integer qualityScore;
+        private String validationWarnings;
+        private Boolean hasWarnings;
         private Ad ad;
         private User user;
         private LocalDateTime createdDate;
@@ -153,6 +175,9 @@ public class AdContent {
         public AdContentBuilder isSelected(Boolean isSelected) { this.isSelected = isSelected; return this; }
         public AdContentBuilder previewOrder(Integer previewOrder) { this.previewOrder = previewOrder; return this; }
         public AdContentBuilder aiProvider(AIProvider aiProvider) { this.aiProvider = aiProvider; return this; }
+        public AdContentBuilder qualityScore(Integer qualityScore) { this.qualityScore = qualityScore; return this; }
+        public AdContentBuilder validationWarnings(String validationWarnings) { this.validationWarnings = validationWarnings; return this; }
+        public AdContentBuilder hasWarnings(Boolean hasWarnings) { this.hasWarnings = hasWarnings; return this; }
         public AdContentBuilder ad(Ad ad) { this.ad = ad; return this; }
         public AdContentBuilder user(User user) { this.user = user; return this; }
         public AdContentBuilder createdDate(LocalDateTime createdDate) { this.createdDate = createdDate; return this; }
@@ -160,8 +185,8 @@ public class AdContent {
 
         public AdContent build() {
             return new AdContent(id, contentType, primaryText, headline, description, callToAction,
-                               imageUrl, isSelected, previewOrder, aiProvider, ad, user, 
-                               createdDate, updatedAt);
+                               imageUrl, isSelected, previewOrder, aiProvider, qualityScore,
+                               validationWarnings, hasWarnings, ad, user, createdDate, updatedAt);
         }
     }
 

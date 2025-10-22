@@ -1,19 +1,31 @@
 package com.fbadsautomation.service;
 
+import com.fbadsautomation.config.ValidationConfig;
 import com.fbadsautomation.model.AdContent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-
 public class AIContentValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(AIContentValidationService.class);
+
+    private final ValidationConfig config;
+    private final ObjectMapper objectMapper;
+
+    @Autowired
+    public AIContentValidationService(ValidationConfig config, ObjectMapper objectMapper) {
+        this.config = config;
+        this.objectMapper = objectMapper;
+    }
 
     // Inappropriate content patterns
     private static final List<String> INAPPROPRIATE_KEYWORDS = Arrays.asList("hate", "violence", "discrimination", "illegal", "drugs", "weapons",
@@ -35,36 +47,83 @@ public class AIContentValidationService {
     private static final double MIN_READABILITY_SCORE = 0.1; // Reduced from 0.3 to 0.1
 
     /**
-     * Validate and filter AI-generated content
+     * Validate and filter AI-generated content with quality scoring
      */
     public List<AdContent> validateAndFilterContent(List<AdContent> contents) {
         if (contents == null || contents.isEmpty()) {
             return contents;
         }
-        
+
         List<AdContent> validatedContents = new ArrayList<>();
-        
+
         for (AdContent content : contents) {
             ValidationResult result = validateContent(content);
+
+            // Attach quality metrics to content
+            content.setQualityScore(result.getQualityScore());
+            content.setHasWarnings(!result.getViolations().isEmpty());
+
+            // Convert violations list to JSON string for storage
+            if (!result.getViolations().isEmpty()) {
+                try {
+                    String warningsJson = objectMapper.writeValueAsString(result.getViolations());
+                    content.setValidationWarnings(warningsJson);
+                } catch (Exception e) {
+                    log.error("Failed to serialize validation warnings", e);
+                    content.setValidationWarnings(String.join(", ", result.getViolations()));
+                }
+            }
+
             if (result.isValid()) {
                 // Apply automatic fixes if needed
                 AdContent cleanedContent = applyAutomaticFixes(content);
+                cleanedContent.setQualityScore(result.getQualityScore());
+                cleanedContent.setHasWarnings(false);
                 validatedContents.add(cleanedContent);
-                log.debug("Content validated successfully: {}", content.getHeadline());
+                log.debug("Content validated successfully: {} (score: {})", content.getHeadline(), result.getQualityScore());
             } else {
-                log.warn("Content validation failed: {} - Reasons: {}", 
-                        content.getHeadline(), result.getViolations());
-                // Try to fix the content automatically
-                AdContent fixedContent = attemptContentFix(content, result);
-                if (fixedContent != null) {
-                    validatedContents.add(fixedContent);
-                    log.info("Content automatically fixed: {}", fixedContent.getHeadline());
+                // Check if quality score meets minimum threshold
+                if (config.isAllowPartialResults() && result.getQualityScore() >= config.getMinQualityScore()) {
+                    // Accept content with warnings if it meets minimum quality
+                    log.warn("Content has validation warnings but meets minimum quality (score: {}): {}",
+                            result.getQualityScore(), content.getHeadline());
+                    validatedContents.add(content);
                 } else {
-                    log.error("Content could not be fixed and will be excluded: {}", content.getHeadline());
+                    // Try to fix the content automatically
+                    log.warn("Content validation failed: {} (score: {}) - Reasons: {}",
+                            content.getHeadline(), result.getQualityScore(), result.getViolations());
+
+                    AdContent fixedContent = attemptContentFix(content, result);
+                    if (fixedContent != null) {
+                        // Re-validate fixed content
+                        ValidationResult fixedResult = validateContent(fixedContent);
+                        fixedContent.setQualityScore(fixedResult.getQualityScore());
+                        fixedContent.setHasWarnings(!fixedResult.getViolations().isEmpty());
+
+                        if (!fixedResult.getViolations().isEmpty()) {
+                            try {
+                                String warningsJson = objectMapper.writeValueAsString(fixedResult.getViolations());
+                                fixedContent.setValidationWarnings(warningsJson);
+                            } catch (Exception e) {
+                                fixedContent.setValidationWarnings(String.join(", ", fixedResult.getViolations()));
+                            }
+                        }
+
+                        validatedContents.add(fixedContent);
+                        log.info("Content automatically fixed: {} (score: {})", fixedContent.getHeadline(), fixedResult.getQualityScore());
+                    } else {
+                        // If configured to allow partial results, include even failed content
+                        if (config.isAllowPartialResults() && !config.isStrictMode()) {
+                            log.warn("Content could not be fixed but including due to allow-partial-results: {}", content.getHeadline());
+                            validatedContents.add(content);
+                        } else {
+                            log.error("Content could not be fixed and will be excluded: {}", content.getHeadline());
+                        }
+                    }
                 }
             }
         }
-        
+
         return validatedContents;
     }
     
@@ -102,11 +161,14 @@ public class AIContentValidationService {
         
         // Check overall content quality
         violations.addAll(validateContentQuality(content));
-        
+
         result.setValid(violations.isEmpty());
         result.setViolations(violations);
         result.setSeverity(calculateSeverity(violations));
-        
+        result.setQualityScore(calculateQualityScore(violations, result.getSeverity()));
+        result.setSuggestions(generateSuggestions(violations));
+        result.setIssues(convertViolationsToIssues(violations));
+
         return result;
     }
     
@@ -370,23 +432,177 @@ public class AIContentValidationService {
         }
         return severity;
     }
-    
+
     /**
-     * Validation result class
+     * Calculate quality score (0-100) based on violations and severity
+     */
+    private int calculateQualityScore(List<String> violations, int severity) {
+        if (violations.isEmpty()) {
+            return 100; // Perfect score
+        }
+
+        // Start with 100 and deduct points based on severity
+        int score = 100;
+        score -= Math.min(severity * 10, 80); // Max deduction: 80 points
+        score -= violations.size() * 2; // 2 points per violation
+
+        return Math.max(0, score); // Ensure score is never negative
+    }
+
+    /**
+     * Generate helpful suggestions based on violations
+     */
+    private List<String> generateSuggestions(List<String> violations) {
+        List<String> suggestions = new ArrayList<>();
+
+        for (String violation : violations) {
+            if (violation.contains("exceeds maximum length")) {
+                suggestions.add("Shorten the text to meet Facebook's character limits");
+            } else if (violation.contains("inappropriate content")) {
+                suggestions.add("Remove or rephrase content that may violate advertising policies");
+            } else if (violation.contains("policy")) {
+                suggestions.add("Avoid claims like 'guaranteed results' or 'miracle' that violate Facebook policies");
+            } else if (violation.contains("spam")) {
+                suggestions.add("Reduce excessive punctuation and all-caps text");
+            } else if (violation.contains("too few words")) {
+                suggestions.add("Add more descriptive content to improve engagement");
+            } else if (violation.contains("unrelated")) {
+                suggestions.add("Ensure all content fields are coherent and related to your ad message");
+            }
+        }
+
+        // Remove duplicates
+        return new ArrayList<>(new java.util.LinkedHashSet<>(suggestions));
+    }
+
+    /**
+     * Convert violations to detailed ValidationIssue objects
+     */
+    private List<ValidationIssue> convertViolationsToIssues(List<String> violations) {
+        List<ValidationIssue> issues = new ArrayList<>();
+
+        for (String violation : violations) {
+            String field = extractField(violation);
+            String type = categorizeViolationType(violation);
+            String severity = determineSeverity(violation);
+            String suggestion = generateSuggestionForViolation(violation);
+
+            issues.add(new ValidationIssue(field, type, severity, violation, suggestion));
+        }
+
+        return issues;
+    }
+
+    /**
+     * Extract field name from violation message
+     */
+    private String extractField(String violation) {
+        if (violation.contains("headline")) return "headline";
+        if (violation.contains("description")) return "description";
+        if (violation.contains("primary text")) return "primaryText";
+        return "general";
+    }
+
+    /**
+     * Categorize violation type
+     */
+    private String categorizeViolationType(String violation) {
+        if (violation.contains("length") || violation.contains("too few words")) return "length";
+        if (violation.contains("inappropriate")) return "inappropriate";
+        if (violation.contains("policy")) return "policy";
+        if (violation.contains("spam") || violation.contains("excessive")) return "spam";
+        if (violation.contains("readability") || violation.contains("unrelated")) return "quality";
+        return "other";
+    }
+
+    /**
+     * Determine issue severity level
+     */
+    private String determineSeverity(String violation) {
+        if (violation.contains("inappropriate") || violation.contains("policy")) {
+            return "error";
+        } else if (violation.contains("spam") || violation.contains("excessive")) {
+            return "warning";
+        } else {
+            return "info";
+        }
+    }
+
+    /**
+     * Generate specific suggestion for a violation
+     */
+    private String generateSuggestionForViolation(String violation) {
+        if (violation.contains("exceeds maximum length")) {
+            return "Shorten text while preserving key message";
+        } else if (violation.contains("inappropriate")) {
+            return "Remove or rephrase prohibited content";
+        } else if (violation.contains("policy")) {
+            return "Avoid superlatives and unverifiable claims";
+        } else if (violation.contains("spam")) {
+            return "Use standard punctuation and mixed case";
+        } else if (violation.contains("too few words")) {
+            return "Add more descriptive details";
+        } else if (violation.contains("unrelated")) {
+            return "Align content across all fields";
+        } else {
+            return "Review and improve content quality";
+        }
+    }
+
+    /**
+     * Validation result class with detailed feedback
      */
     public static class ValidationResult {
         private boolean valid;
         private List<String> violations = new ArrayList<>();
+        private List<ValidationIssue> issues = new ArrayList<>();
         private int severity;
-        
+        private int qualityScore; // 0-100
+        private List<String> suggestions = new ArrayList<>();
+
         // Getters and setters
         public boolean isValid() { return valid; }
         public void setValid(boolean valid) { this.valid = valid; }
-        
+
         public List<String> getViolations() { return violations; }
         public void setViolations(List<String> violations) { this.violations = violations; }
-        
+
+        public List<ValidationIssue> getIssues() { return issues; }
+        public void setIssues(List<ValidationIssue> issues) { this.issues = issues; }
+
         public int getSeverity() { return severity; }
         public void setSeverity(int severity) { this.severity = severity; }
+
+        public int getQualityScore() { return qualityScore; }
+        public void setQualityScore(int qualityScore) { this.qualityScore = qualityScore; }
+
+        public List<String> getSuggestions() { return suggestions; }
+        public void setSuggestions(List<String> suggestions) { this.suggestions = suggestions; }
+    }
+
+    /**
+     * Detailed validation issue
+     */
+    public static class ValidationIssue {
+        private String field; // headline, description, primaryText
+        private String type; // length, policy, spam, quality
+        private String severity; // error, warning, info
+        private String message;
+        private String suggestion;
+
+        public ValidationIssue(String field, String type, String severity, String message, String suggestion) {
+            this.field = field;
+            this.type = type;
+            this.severity = severity;
+            this.message = message;
+            this.suggestion = suggestion;
+        }
+
+        // Getters
+        public String getField() { return field; }
+        public String getType() { return type; }
+        public String getSeverity() { return severity; }
+        public String getMessage() { return message; }
+        public String getSuggestion() { return suggestion; }
     }
 }

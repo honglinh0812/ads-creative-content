@@ -10,8 +10,15 @@ import com.fbadsautomation.model.AdType; // Import AdType
 import com.fbadsautomation.service.AIContentValidationService;
 import com.fbadsautomation.service.AIProviderService;
 import com.fbadsautomation.service.MetaAdLibraryService;
+import com.fbadsautomation.service.MinIOStorageService;
+import com.fbadsautomation.util.ByteArrayMultipartFile;
+import com.fbadsautomation.util.ValidationMessages;
+import com.fbadsautomation.util.ValidationMessages.Language;
+import java.io.ByteArrayInputStream;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,14 +36,17 @@ public class AIContentServiceImpl {
     private final AIProviderService aiProviderService;
     private final MetaAdLibraryService metaAdLibraryService;
     private final AIContentValidationService validationService;
+    private final MinIOStorageService minIOStorageService;
 
     @Autowired
     public AIContentServiceImpl(AIProviderService aiProviderService,
                                MetaAdLibraryService metaAdLibraryService,
-                               AIContentValidationService validationService) {
+                               AIContentValidationService validationService,
+                               MinIOStorageService minIOStorageService) {
         this.aiProviderService = aiProviderService;
         this.metaAdLibraryService = metaAdLibraryService;
         this.validationService = validationService;
+        this.minIOStorageService = minIOStorageService;
     }
 
     public List<AdContent> generateContent(String prompt,
@@ -51,7 +61,7 @@ public class AIContentServiceImpl {
                                            String extractedContent,
                                            com.fbadsautomation.model.FacebookCTA callToAction) {
         return generateContent(prompt, contentType, textProvider, imageProvider, numberOfVariations,
-                               language, adLinks, promptStyle, customPrompt, extractedContent, callToAction, null);
+                               language, adLinks, promptStyle, customPrompt, extractedContent, null, callToAction, null);
     }
 
     public List<AdContent> generateContent(String prompt,
@@ -64,6 +74,7 @@ public class AIContentServiceImpl {
                                            String promptStyle,
                                            String customPrompt,
                                            String extractedContent,
+                                           String mediaFileUrl,
                                            com.fbadsautomation.model.FacebookCTA callToAction,
                                            com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
         
@@ -103,25 +114,77 @@ public class AIContentServiceImpl {
             // Sử dụng CTA được truyền hoặc default nếu null
             com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
             List<AdContent> contents = aiProviderService.generateContentWithReliability(
-                enhancedPrompt, textProvider, numberOfVariations, language, adLinks, cta); // Generate images with reliability features if image provider is specified
-            if (imageProvider != null && !imageProvider.isBlank()) {
+                enhancedPrompt, textProvider, numberOfVariations, language, adLinks, cta);
+
+            // Handle image URL assignment
+            // Priority 1: Use uploaded image from frontend (mediaFileUrl)
+            // Priority 2: Generate image with AI provider if specified
+            if (mediaFileUrl != null && !mediaFileUrl.isBlank()) {
+                // User uploaded an image - use it for all variations
+                log.info("Using uploaded image for all {} variations: {}", contents.size(), mediaFileUrl);
                 for (AdContent content : contents) {
-                    String imagePrompt = content.getPrimaryText();
-                    String imageUrl = aiProviderService.generateImageWithReliability(imagePrompt, imageProvider);
-                    content.setImageUrl(imageUrl);
+                    content.setImageUrl(mediaFileUrl);
                 }
-                log.info("Images added using enhanced reliability features");
+            } else if (imageProvider != null && !imageProvider.isBlank()) {
+                // No uploaded image - generate images with AI provider
+                log.info("Generating images for {} variations using provider: {}", contents.size(), imageProvider);
+                for (AdContent content : contents) {
+                    try {
+                        String imagePrompt = content.getPrimaryText();
+                        String externalImageUrl = aiProviderService.generateImageWithReliability(imagePrompt, imageProvider);
+
+                        // Download external AI image to MinIO to prevent expiration
+                        String storedImageUrl = downloadAndStoreImage(externalImageUrl);
+                        content.setImageUrl(storedImageUrl);
+                        log.info("Generated and stored image for variation: {}", storedImageUrl);
+                    } catch (Exception e) {
+                        log.error("Failed to generate/store image for variation: {}", e.getMessage());
+                        // Keep default placeholder on error
+                        content.setImageUrl("/img/placeholder.png");
+                    }
+                }
+                log.info("Images added and stored using enhanced reliability features");
+            } else {
+                // No image upload and no image provider - use placeholder
+                log.info("No image source specified, using placeholder for all variations");
+                for (AdContent content : contents) {
+                    content.setImageUrl("/img/placeholder.png");
+                }
             }
 
             // Validate and filter generated content
             List<AdContent> validatedContents = validationService.validateAndFilterContent(contents);
+
             if (validatedContents.isEmpty()) {
-                log.warn("All generated content was filtered out due to validation failures");
-                throw new ApiException(HttpStatus.BAD_REQUEST,
-                    "Generated content did not meet quality standards. Please try with a different prompt.");
+                log.error("All {} generated content variations were filtered out due to validation failures", contents.size());
+
+                // Provide detailed feedback about what went wrong
+                StringBuilder errorMessage = new StringBuilder("Generated content did not meet quality standards. ");
+
+                // Analyze why all content failed
+                if (contents.size() > 0) {
+                    errorMessage.append("Issues found: ");
+                    // This will be logged, but we return at least something if possible
+                    log.error("All variations rejected. This should rarely happen with new validation logic.");
+                }
+
+                errorMessage.append("Please try with a different prompt or adjust your requirements.");
+                throw new ApiException(HttpStatus.BAD_REQUEST, errorMessage.toString());
             }
 
-            log.info("Successfully generated and validated {} content variations", validatedContents.size());
+            // Log validation results with details
+            long contentWithWarnings = validatedContents.stream()
+                    .filter(c -> c.getHasWarnings() != null && c.getHasWarnings())
+                    .count();
+
+            if (contentWithWarnings > 0) {
+                log.warn("Successfully generated {} content variations, {} have quality warnings",
+                        validatedContents.size(), contentWithWarnings);
+            } else {
+                log.info("Successfully generated and validated {} content variations with no warnings",
+                        validatedContents.size());
+            }
+
             return validatedContents;
 
         } catch (Exception e) {
@@ -223,10 +286,41 @@ public class AIContentServiceImpl {
     }
 
     /**
-     * Enhance user prompt based on ad type to potentially get better AI-generated content.
+     * Enhance user prompt based on ad type with validation constraints
+     * to improve first-pass content quality and reduce validation failures
+     * Now supports bilingual prompts (Vietnamese/English)
      */
     private String enhancePromptForAdType(String userPrompt, AdType adType) {
-        return userPrompt;
+        StringBuilder enhanced = new StringBuilder(userPrompt);
+
+        // Detect language for bilingual support
+        Language detectedLanguage = ValidationMessages.detectLanguage(userPrompt);
+        log.info("Detected language for prompt enrichment: {}", detectedLanguage);
+
+        // Add validation constraints to guide AI generation in appropriate language
+        if (detectedLanguage == Language.VIETNAMESE) {
+            enhanced.append("\n\n📋 YÊU CẦU NỘI DUNG:\n");
+            enhanced.append("✓ Tiêu đề: Tối đa 40 ký tự\n");
+            enhanced.append("✓ Mô tả: Tối đa 125 ký tự\n");
+            enhanced.append("✓ Văn bản chính: Tối đa 1000 ký tự\n");
+            enhanced.append("✓ Giọng điệu: Chuyên nghiệp, rõ ràng, hướng tới hành động\n");
+            enhanced.append("✓ Phong cách: Tránh dấu chấm than/hỏi quá nhiều (!!!, ???), chữ in hoa toàn bộ, hoặc ngôn ngữ spam\n");
+            enhanced.append("✓ Tuân thủ: Tuân theo chính sách quảng cáo Facebook - tránh các tuyên bố như 'kết quả đảm bảo', 'thần kỳ', 'làm giàu nhanh'\n");
+            enhanced.append("✓ Chất lượng: Đảm bảo nội dung mạch lạc, hấp dẫn và nhất quán trên tất cả các trường\n");
+            enhanced.append("\n💡 Tạo nội dung đáp ứng các tiêu chuẩn này để đảm bảo được duyệt.\n");
+        } else {
+            enhanced.append("\n\n📋 CONTENT REQUIREMENTS:\n");
+            enhanced.append("✓ Headline: Maximum 40 characters\n");
+            enhanced.append("✓ Description: Maximum 125 characters\n");
+            enhanced.append("✓ Primary Text: Maximum 1000 characters\n");
+            enhanced.append("✓ Tone: Professional, clear, action-oriented\n");
+            enhanced.append("✓ Style: Avoid excessive punctuation (!!!, ???), all caps, or spam-like language\n");
+            enhanced.append("✓ Compliance: Follow Facebook advertising policies - avoid claims like 'guaranteed results', 'miracle', 'get rich quick'\n");
+            enhanced.append("✓ Quality: Ensure content is coherent, engaging, and aligned across all fields\n");
+            enhanced.append("\n💡 Generate content that meets these standards to ensure approval.\n");
+        }
+
+        return enhanced.toString();
     }
 
     /**
@@ -264,5 +358,44 @@ public class AIContentServiceImpl {
                 audienceSegment.getLocation());
 
         return enhanced.toString();
+    }
+
+    /**
+     * Download external AI-generated image and store it in MinIO to prevent expiration
+     * @param externalImageUrl The external image URL (e.g., from OpenAI, Stability AI)
+     * @return The stored image URL accessible via /api/images/{filename}
+     */
+    private String downloadAndStoreImage(String externalImageUrl) throws Exception {
+        try {
+            log.info("Downloading external image: {}", externalImageUrl);
+
+            // Download image from external URL
+            URL url = new URL(externalImageUrl);
+            byte[] imageBytes = url.openStream().readAllBytes();
+
+            // Generate unique filename
+            String extension = externalImageUrl.contains(".png") ? "png" : "jpg";
+            String filename = "ai-gen-" + UUID.randomUUID().toString() + "." + extension;
+
+            // Create MultipartFile wrapper for byte array
+            ByteArrayMultipartFile multipartFile = new ByteArrayMultipartFile(
+                imageBytes,
+                filename,
+                "image/" + extension,
+                filename
+            );
+
+            // Store in MinIO
+            String storedFilename = minIOStorageService.uploadFile(multipartFile);
+
+            // Return API gateway URL instead of MinIO direct URL
+            String apiImageUrl = "/api/images/" + storedFilename;
+            log.info("Successfully stored external image as: {}", apiImageUrl);
+
+            return apiImageUrl;
+        } catch (Exception e) {
+            log.error("Failed to download and store external image: {}", e.getMessage(), e);
+            throw new Exception("Failed to download and store image: " + e.getMessage(), e);
+        }
     }
 }

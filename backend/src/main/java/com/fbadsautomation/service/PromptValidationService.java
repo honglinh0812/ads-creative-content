@@ -2,6 +2,8 @@ package com.fbadsautomation.service;
 
 import com.fbadsautomation.dto.PromptValidationResponse;
 import com.fbadsautomation.dto.PromptValidationResponse.ValidationIssue;
+import com.fbadsautomation.util.ValidationMessages;
+import com.fbadsautomation.util.ValidationMessages.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -27,6 +29,10 @@ public class PromptValidationService {
             String targetAudience,
             String industry) {
 
+        // Detect language from prompt text for bilingual support
+        Language detectedLanguage = ValidationMessages.detectLanguage(prompt);
+        log.info("Detected language for prompt validation: {}", detectedLanguage);
+
         PromptValidationResponse response = new PromptValidationResponse();
         List<ValidationIssue> issues = new ArrayList<>();
         List<String> suggestions = new ArrayList<>();
@@ -38,16 +44,16 @@ public class PromptValidationService {
             issues.add(new ValidationIssue(
                 "length",
                 "warning",
-                "Prompt is too short",
-                "Add more details about your product, target audience, and desired outcome. Aim for at least 50 characters."
+                ValidationMessages.getMessage("too_short", detectedLanguage),
+                ValidationMessages.getSuggestion("add_product_details", detectedLanguage)
             ));
         } else if (prompt.length() > 500) {
             score -= 10;
             issues.add(new ValidationIssue(
                 "length",
                 "info",
-                "Prompt is quite long",
-                "Consider focusing on key points. Very long prompts may dilute the main message."
+                ValidationMessages.getMessage("too_long", detectedLanguage),
+                ValidationMessages.getSuggestion("simplify", detectedLanguage)
             ));
         }
 
@@ -57,14 +63,14 @@ public class PromptValidationService {
             issues.add(new ValidationIssue(
                 "specificity",
                 "warning",
-                "Missing product/service information",
-                "Include what you're selling or promoting."
+                ValidationMessages.getMessage("missing_product", detectedLanguage),
+                ValidationMessages.getSuggestion("add_product_details", detectedLanguage)
             ));
         }
 
         if (targetAudience == null || targetAudience.trim().isEmpty()) {
             score -= 15;
-            suggestions.add("Specify your target audience for better ad personalization");
+            suggestions.add(ValidationMessages.getSuggestion("add_target_audience", detectedLanguage));
         }
 
         // Validation: Clarity
@@ -73,27 +79,27 @@ public class PromptValidationService {
             issues.add(new ValidationIssue(
                 "clarity",
                 "info",
-                "Vague terms detected",
-                "Replace generic terms like 'great', 'amazing', 'best' with specific benefits or metrics."
+                ValidationMessages.getMessage("too_vague", detectedLanguage),
+                ValidationMessages.getSuggestion("be_specific", detectedLanguage)
             ));
         }
 
         // Validation: Call-to-action intent
         if (!containsCTAIntent(prompt)) {
             score -= 15;
-            suggestions.add("Mention desired user action (e.g., 'encourage sign-ups', 'drive purchases')");
+            suggestions.add(ValidationMessages.getSuggestion("add_action", detectedLanguage));
         }
 
         // Validation: Emotional appeal
         if (!containsEmotionalElement(prompt)) {
-            suggestions.add("Consider adding emotional triggers or benefits that resonate with your audience");
+            suggestions.add(ValidationMessages.getSuggestion("highlight_benefits", detectedLanguage));
         }
 
         // Additional suggestions based on ad type
         if ("WEBSITE_CONVERSION_AD".equals(adType)) {
-            suggestions.add("For conversion ads, emphasize urgency and clear value proposition");
+            suggestions.add(ValidationMessages.getSuggestion("add_urgency", detectedLanguage));
         } else if ("LEAD_FORM_AD".equals(adType)) {
-            suggestions.add("For lead generation, highlight what users will receive and keep form friction low");
+            suggestions.add(ValidationMessages.getSuggestion("highlight_benefits", detectedLanguage));
         }
 
         // Generate improved prompt (basic version)
@@ -126,11 +132,21 @@ public class PromptValidationService {
 
     private boolean containsProductInfo(String prompt) {
         String lower = prompt.toLowerCase();
-        return lower.contains("product") || lower.contains("service") ||
+        // English keywords
+        boolean hasEnglish = lower.contains("product") || lower.contains("service") ||
                lower.contains("app") || lower.contains("software") ||
                lower.contains("sell") || lower.contains("offer") ||
                lower.contains("game") || lower.contains("course") ||
                lower.contains("book") || lower.contains("tool");
+
+        // Vietnamese keywords
+        boolean hasVietnamese = lower.contains("sản phẩm") || lower.contains("dịch vụ") ||
+               lower.contains("ứng dụng") || lower.contains("phần mềm") ||
+               lower.contains("bán") || lower.contains("cung cấp") ||
+               lower.contains("trò chơi") || lower.contains("khóa học") ||
+               lower.contains("sách") || lower.contains("công cụ");
+
+        return hasEnglish || hasVietnamese;
     }
 
     private boolean containsUnclearTerms(String prompt) {
@@ -141,11 +157,20 @@ public class PromptValidationService {
 
     private boolean containsCTAIntent(String prompt) {
         String lower = prompt.toLowerCase();
-        return lower.contains("sign up") || lower.contains("buy") ||
+        // English keywords
+        boolean hasEnglish = lower.contains("sign up") || lower.contains("buy") ||
                lower.contains("purchase") || lower.contains("download") ||
                lower.contains("subscribe") || lower.contains("learn more") ||
                lower.contains("get started") || lower.contains("try") ||
                lower.contains("register") || lower.contains("join");
+
+        // Vietnamese keywords
+        boolean hasVietnamese = lower.contains("đăng ký") || lower.contains("mua") ||
+               lower.contains("tải xuống") || lower.contains("tải về") ||
+               lower.contains("tìm hiểu") || lower.contains("bắt đầu") ||
+               lower.contains("dùng thử") || lower.contains("tham gia");
+
+        return hasEnglish || hasVietnamese;
     }
 
     private boolean containsEmotionalElement(String prompt) {

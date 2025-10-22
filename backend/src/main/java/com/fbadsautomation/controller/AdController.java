@@ -182,24 +182,20 @@ public class AdController {
                     request.getLeadFormQuestions(), // truyền lead form questions vào
                     request.getAudienceSegment() // truyền audience segment vào
                 );
-                // Convert to AdGenerationResponse
+                // Convert to AdGenerationResponse with quality metrics
                 List<AdGenerationResponse.AdVariation> variations = contents.stream()
-                    .map(content -> AdGenerationResponse.AdVariation.builder()
-                        .id(content.getId())
-                        .headline(content.getHeadline())
-                        .description(content.getDescription())
-                        .primaryText(content.getPrimaryText())
-                        .callToAction(content.getCallToAction() != null ? content.getCallToAction().name() : null)
-                        .imageUrl(content.getImageUrl())
-                        .order(content.getPreviewOrder())
-                        .build())
+                    .map(this::convertToAdVariation)
                     .toList();
-                
+
+                // Build validation report
+                AdGenerationResponse.ValidationReport validationReport = buildValidationReport(contents);
+
                 AdGenerationResponse response = AdGenerationResponse.builder()
                     .adId(null) // Không có adId vì chỉ là preview
                     .variations(variations)
                     .status("success")
                     .message("Ad preview generated successfully")
+                    .validationReport(validationReport)
                     .build();
                 return ResponseEntity.ok(response);
             } else {
@@ -250,25 +246,21 @@ public class AdController {
                     }
                 }
                 
-                // Convert to AdGenerationResponse
+                // Convert to AdGenerationResponse with quality metrics
                 List<AdGenerationResponse.AdVariation> variations = contents.stream()
-                    .map(content -> AdGenerationResponse.AdVariation.builder()
-                        .id(content.getId())
-                        .headline(content.getHeadline())
-                        .description(content.getDescription())
-                        .primaryText(content.getPrimaryText())
-                        .callToAction(content.getCallToAction() != null ? content.getCallToAction().name() : null)
-                        .imageUrl(content.getImageUrl())
-                        .order(content.getPreviewOrder())
-                        .build())
+                    .map(this::convertToAdVariation)
                     .toList();
+
+                AdGenerationResponse.ValidationReport validationReport = buildValidationReport(contents);
+
                 AdGenerationResponse response = AdGenerationResponse.builder()
                     .adId(ad.getId())
                     .variations(variations)
                     .status("success")
                     .message("Ad created and saved successfully")
+                    .validationReport(validationReport)
                     .build();
-                
+
                 return ResponseEntity.ok(response);
             }
         } catch (Exception e) {
@@ -511,5 +503,58 @@ public class AdController {
             log.error("Error extracting from Meta Ad Library", e);
             return ResponseEntity.ok(new ArrayList<>());
         }
+    }
+
+    /**
+     * Helper method to convert AdContent to AdVariation with quality metrics
+     */
+    private AdGenerationResponse.AdVariation convertToAdVariation(AdContent content) {
+        // Parse warnings from JSON if available
+        List<String> warnings = null;
+        if (content.getValidationWarnings() != null && !content.getValidationWarnings().isEmpty()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                warnings = objectMapper.readValue(content.getValidationWarnings(),
+                        new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+            } catch (Exception e) {
+                // If JSON parsing fails, treat as comma-separated string
+                warnings = java.util.Arrays.asList(content.getValidationWarnings().split(","));
+            }
+        }
+
+        return AdGenerationResponse.AdVariation.builder()
+                .id(content.getId())
+                .headline(content.getHeadline())
+                .description(content.getDescription())
+                .primaryText(content.getPrimaryText())
+                .callToAction(content.getCallToAction() != null ? content.getCallToAction().name() : null)
+                .imageUrl(content.getImageUrl())
+                .order(content.getPreviewOrder())
+                .qualityScore(content.getQualityScore())
+                .hasWarnings(content.getHasWarnings())
+                .warnings(warnings)
+                .build();
+    }
+
+    /**
+     * Build validation report from list of AdContent
+     */
+    private AdGenerationResponse.ValidationReport buildValidationReport(List<AdContent> contents) {
+        int total = contents.size();
+        int passed = (int) contents.stream()
+                .filter(c -> c.getHasWarnings() == null || !c.getHasWarnings())
+                .count();
+        int withWarnings = (int) contents.stream()
+                .filter(c -> c.getHasWarnings() != null && c.getHasWarnings())
+                .count();
+        int failed = total - passed - withWarnings; // Should be 0 with new logic
+
+        double avgScore = contents.stream()
+                .filter(c -> c.getQualityScore() != null)
+                .mapToInt(AdContent::getQualityScore)
+                .average()
+                .orElse(0.0);
+
+        return new AdGenerationResponse.ValidationReport(total, passed, failed, withWarnings, avgScore);
     }
 }
