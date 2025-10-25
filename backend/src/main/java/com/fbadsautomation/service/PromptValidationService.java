@@ -201,7 +201,10 @@ public class PromptValidationService {
 
     private String generateImprovedPrompt(String original, List<ValidationIssue> issues,
                                          String adType, String targetAudience) {
-        // Enhanced rule-based improvement with AI-ready structure
+        // Enhanced rule-based improvement with bilingual support
+        Language detectedLanguage = ValidationMessages.detectLanguage(original);
+        boolean isVietnamese = (detectedLanguage == Language.VIETNAMESE);
+
         StringBuilder improved = new StringBuilder();
 
         // Start with original content
@@ -215,18 +218,32 @@ public class PromptValidationService {
         // Add target audience context if missing and provided
         if (targetAudience != null && !targetAudience.trim().isEmpty() &&
             !original.toLowerCase().contains("target") &&
+            !original.toLowerCase().contains("đối tượng") &&
             !original.toLowerCase().contains("audience")) {
-            improved.append(" Targeting: ").append(targetAudience).append(".");
+
+            if (isVietnamese) {
+                improved.append(" Đối tượng mục tiêu: ").append(targetAudience).append(".");
+            } else {
+                improved.append(" Target audience: ").append(targetAudience).append(".");
+            }
         }
 
-        // Add CTA suggestion if missing
+        // Add CTA suggestion if missing (bilingual)
         if (!containsCTAIntent(original)) {
-            improved.append(" Encourage users to take action.");
+            if (isVietnamese) {
+                improved.append(" Thêm lời kêu gọi hành động cụ thể (mua ngay, đăng ký, tìm hiểu...).");
+            } else {
+                improved.append(" Add specific call-to-action (buy now, sign up, learn more...).");
+            }
         }
 
-        // Add specificity if missing product info
+        // Add specificity if missing product info (bilingual)
         if (!containsProductInfo(original)) {
-            improved.append(" Include specific product/service benefits.");
+            if (isVietnamese) {
+                improved.append(" Làm rõ lợi ích cụ thể của sản phẩm/dịch vụ.");
+            } else {
+                improved.append(" Clarify specific product/service benefits.");
+            }
         }
 
         // Only return improved version if meaningfully different

@@ -196,8 +196,11 @@ public enum AdPersona {
             instruction.append("🚫 TUYỆT ĐỐI TRÁNH:\n");
             instruction.append(String.join(", ", avoidVietnamese)).append("\n\n");
 
-            instruction.append("💡 VÍ DỤ QUẢNG CÁO MẪU:\n");
-            instruction.append(exampleVietnamese).append("\n");
+            instruction.append("💡 PHONG CÁCH THAM KHẢO (KHÔNG SAO CHÉP):\n");
+            instruction.append("Viết tự nhiên, hài hước, gần gũi như ví dụ này (CHỈ THAM KHẢO CÁCH VIẾT, không copy nội dung):\n");
+            instruction.append("\"").append(exampleVietnamese).append("\"\n\n");
+            instruction.append("⚠️ LƯU Ý: Tạo nội dung HOÀN TOÀN MỚI dựa trên yêu cầu của người dùng, ");
+            instruction.append("CHỈ học phong cách viết từ ví dụ trên, KHÔNG sao chép nội dung, tên sản phẩm hay chi tiết cụ thể.\n");
         } else {
             instruction.append("🎭 YOUR ROLE:\n");
             instruction.append("You are a copywriter specializing in ").append(category).append(" ads for Vietnamese market.\n\n");
@@ -211,8 +214,11 @@ public enum AdPersona {
             instruction.append("🚫 ABSOLUTELY AVOID:\n");
             instruction.append(String.join(", ", avoidEnglish)).append("\n\n");
 
-            instruction.append("💡 EXAMPLE AD:\n");
-            instruction.append(exampleEnglish).append("\n");
+            instruction.append("💡 STYLE REFERENCE (DO NOT COPY):\n");
+            instruction.append("Write naturally, engagingly like this example (REFERENCE STYLE ONLY, don't copy content):\n");
+            instruction.append("\"").append(exampleEnglish).append("\"\n\n");
+            instruction.append("⚠️ NOTE: Create COMPLETELY NEW content based on user request, ");
+            instruction.append("ONLY learn writing style from example above, DO NOT copy content, product names or specific details.\n");
         }
 
         return instruction.toString();

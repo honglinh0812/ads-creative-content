@@ -95,14 +95,26 @@ public class FileUploadController {
             // Validate file security
             validateFile(file);
 
+            log.info("📤 [UPLOAD] User {} uploading file: {} (size: {} bytes, type: {})",
+                    currentUser.getId(), file.getOriginalFilename(), file.getSize(), file.getContentType());
+
             // Upload file to MinIO with duplicate check
             String filename = minioStorageService.uploadFileWithDuplicateCheck(file);
+
+            // Verify upload succeeded by checking file existence
+            if (!minioStorageService.fileExists(filename)) {
+                log.error("❌ [UPLOAD FAILED] File uploaded but not found in MinIO: {}", filename);
+                throw new RuntimeException("Upload verification failed - file not found in storage");
+            }
 
             // Get file info from MinIO
             StatObjectResponse fileInfo = minioStorageService.getFileInfo(filename);
 
             // Return file URL
             String fileUrl = "/api/images/" + filename;
+
+            log.info("✅ [UPLOAD SUCCESS] File uploaded and verified: {} → {}", file.getOriginalFilename(), fileUrl);
+
             response.put("success", true);
             response.put("message", "Upload file thành công");
             response.put("fileUrl", fileUrl);

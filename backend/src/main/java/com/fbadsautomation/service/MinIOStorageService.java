@@ -61,6 +61,9 @@ public class MinIOStorageService {
             String filename = generateSecureFilename(originalFilename);
             String contentType = file.getContentType();
 
+            log.info("⬆️  [MINIO UPLOAD] Starting upload: {} → {} (bucket: {}, size: {} bytes)",
+                    originalFilename, filename, bucketName, file.getSize());
+
             try (InputStream inputStream = file.getInputStream()) {
                 minioClient.putObject(
                         PutObjectArgs.builder()
@@ -72,11 +75,11 @@ public class MinIOStorageService {
                 );
             }
 
-            log.info("File uploaded successfully: {}", filename);
+            log.info("✅ [MINIO UPLOAD] File uploaded successfully: {} ({})", filename, contentType);
             return filename;
 
         } catch (Exception e) {
-            log.error("Error uploading file: {}", file.getOriginalFilename(), e);
+            log.error("❌ [MINIO UPLOAD] Error uploading file: {}", file.getOriginalFilename(), e);
             throw new RuntimeException("Failed to upload file to MinIO", e);
         }
     }

@@ -1,6 +1,5 @@
 package com.fbadsautomation.service;
 
-import com.fbadsautomation.ai.OpenAIProvider;
 import com.fbadsautomation.util.ValidationMessages;
 import com.fbadsautomation.util.ValidationMessages.Language;
 import org.slf4j.Logger;
@@ -45,15 +44,15 @@ public class AIPromptImprovementService {
             // Build AI improvement prompt
             String improvementPrompt = buildImprovementPrompt(originalPrompt, adType, targetAudience, language);
 
-            // Call OpenAI provider for quality improvement
-            OpenAIProvider provider = (OpenAIProvider) aiProviderService.getProvider("openai");
+            // Get AI provider (use interface, not concrete class to avoid ClassCastException)
+            com.fbadsautomation.ai.AIProvider provider = aiProviderService.getProvider("openai");
             if (provider == null) {
                 log.warn("OpenAI provider not available for prompt improvement");
                 return null;
             }
 
-            // Generate improvement using OpenAI chat completion
-            String improved = callOpenAIForImprovement(provider, improvementPrompt);
+            // Generate improvement using AI provider
+            String improved = callAIForImprovement(provider, improvementPrompt);
 
             if (improved != null && !improved.trim().isEmpty() && !improved.equals(originalPrompt)) {
                 log.info("Successfully generated improved prompt (length: {} -> {})",
@@ -71,20 +70,27 @@ public class AIPromptImprovementService {
     }
 
     /**
-     * Call OpenAI API to improve prompt
+     * Call AI provider to improve prompt
      */
-    private String callOpenAIForImprovement(OpenAIProvider provider, String improvementPrompt) {
+    private String callAIForImprovement(com.fbadsautomation.ai.AIProvider provider, String improvementPrompt) {
         try {
-            // Use OpenAI's generateAdContent with special prompt
+            // Use AI provider's generateAdContent with special prompt
             // This reuses existing API call infrastructure
             var contents = provider.generateAdContent(improvementPrompt, 1, null, null);
 
             if (contents != null && !contents.isEmpty()) {
-                // Return the headline as improved prompt (most concise)
-                return contents.get(0).getHeadline() + ". " + contents.get(0).getDescription();
+                // Return the primary text as improved prompt (most detailed and contextual)
+                String improved = contents.get(0).getPrimaryText();
+
+                // Fallback to headline + description if primaryText is empty
+                if (improved == null || improved.trim().isEmpty()) {
+                    improved = contents.get(0).getHeadline() + ". " + contents.get(0).getDescription();
+                }
+
+                return improved;
             }
         } catch (Exception e) {
-            log.error("OpenAI API call failed for prompt improvement: {}", e.getMessage());
+            log.error("AI API call failed for prompt improvement: {}", e.getMessage());
         }
         return null;
     }
