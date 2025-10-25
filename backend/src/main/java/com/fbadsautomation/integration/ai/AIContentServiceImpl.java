@@ -38,6 +38,12 @@ public class AIContentServiceImpl {
     private final AIContentValidationService validationService;
     private final MinIOStorageService minIOStorageService;
 
+    @Autowired(required = false)
+    private com.fbadsautomation.service.PersonaSelectorService personaSelectorService;
+
+    @Autowired(required = false)
+    private com.fbadsautomation.service.MultiStagePromptBuilder multiStagePromptBuilder;
+
     @Autowired
     public AIContentServiceImpl(AIProviderService aiProviderService,
                                MetaAdLibraryService metaAdLibraryService,
@@ -100,14 +106,10 @@ public class AIContentServiceImpl {
         // Build final prompt based on available inputs
         String finalPrompt = buildFinalPrompt(prompt, adLinks, promptStyle, customPrompt, extractedContent);
 
-        // Inject audience segment variables if provided
-        if (audienceSegment != null) {
-            finalPrompt = injectAudienceSegment(finalPrompt, audienceSegment);
-        }
-
         try {
             AdType adType = convertContentTypeToAdType(contentType);
-            String enhancedPrompt = enhancePromptForAdType(finalPrompt, adType);
+            // Pass audienceSegment to enhancePromptForAdType for multi-stage prompting
+            String enhancedPrompt = enhancePromptForAdType(finalPrompt, adType, audienceSegment);
             log.info("Generating {} text variations using enhanced reliability features", numberOfVariations);
 
             // Use enhanced AI provider service with caching, circuit breaker, and fallback
@@ -288,14 +290,58 @@ public class AIContentServiceImpl {
     /**
      * Enhance user prompt based on ad type with validation constraints
      * to improve first-pass content quality and reduce validation failures
-     * Now supports bilingual prompts (Vietnamese/English)
+     * Now supports bilingual prompts (Vietnamese/English) and persona-based prompting
      */
-    private String enhancePromptForAdType(String userPrompt, AdType adType) {
-        StringBuilder enhanced = new StringBuilder(userPrompt);
-
+    private String enhancePromptForAdType(String userPrompt, AdType adType, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
         // Detect language for bilingual support
         Language detectedLanguage = ValidationMessages.detectLanguage(userPrompt);
         log.info("Detected language for prompt enrichment: {}", detectedLanguage);
+
+        // Try multi-stage persona-based prompting first (new approach)
+        if (personaSelectorService != null && multiStagePromptBuilder != null) {
+            try {
+                log.info("Using multi-stage persona-based prompting for natural ad generation");
+
+                // Select appropriate persona based on product/service
+                com.fbadsautomation.model.AdPersona persona = personaSelectorService.selectPersona(
+                    userPrompt,
+                    detectedLanguage
+                );
+
+                // Build enhanced prompt with persona, examples, and constraints
+                String enhancedPrompt = multiStagePromptBuilder.buildEnhancedPrompt(
+                    userPrompt,
+                    persona,
+                    adType,
+                    detectedLanguage,
+                    audienceSegment // Now properly passed from caller
+                );
+
+                log.info("Multi-stage prompt built successfully with persona: {}", persona.name());
+                return enhancedPrompt;
+
+            } catch (Exception e) {
+                log.warn("Multi-stage prompting failed, falling back to legacy prompt: {}", e.getMessage());
+            }
+        }
+
+        // Fallback to legacy prompting (old approach)
+        log.info("Using legacy prompt enhancement (audience segment handled separately)");
+        String legacyPrompt = buildLegacyPrompt(userPrompt, adType, detectedLanguage);
+
+        // Inject audience segment for legacy approach
+        if (audienceSegment != null) {
+            legacyPrompt = injectAudienceSegment(legacyPrompt, audienceSegment);
+        }
+
+        return legacyPrompt;
+    }
+
+    /**
+     * Legacy prompt builder (fallback when multi-stage prompting unavailable)
+     */
+    private String buildLegacyPrompt(String userPrompt, AdType adType, Language detectedLanguage) {
+        StringBuilder enhanced = new StringBuilder(userPrompt);
 
         // Add validation constraints to guide AI generation in appropriate language
         if (detectedLanguage == Language.VIETNAMESE) {

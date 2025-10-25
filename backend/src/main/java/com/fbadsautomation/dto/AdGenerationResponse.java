@@ -83,7 +83,8 @@ public class AdGenerationResponse {
         private String headline;
         private String primaryText;
         private String description;
-        private String callToAction;
+        private String callToAction; // Enum value (e.g., "LEARN_MORE")
+        private String callToActionLabel; // Display label (e.g., "Tìm hiểu thêm")
         private String imageUrl;
         private Integer order;
         private Integer qualityScore; // Quality score 0-100
@@ -118,7 +119,10 @@ public class AdGenerationResponse {
         
         public String getCallToAction() { return callToAction; }
         public void setCallToAction(String callToAction) { this.callToAction = callToAction; }
-        
+
+        public String getCallToActionLabel() { return callToActionLabel; }
+        public void setCallToActionLabel(String callToActionLabel) { this.callToActionLabel = callToActionLabel; }
+
         public String getImageUrl() { return imageUrl; }
         public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
         
@@ -145,6 +149,7 @@ public class AdGenerationResponse {
             private String primaryText;
             private String description;
             private String callToAction;
+            private String callToActionLabel;
             private String imageUrl;
             private Integer order;
             private Integer qualityScore;
@@ -176,6 +181,11 @@ public class AdGenerationResponse {
                 return this;
             }
 
+            public Builder callToActionLabel(String callToActionLabel) {
+                this.callToActionLabel = callToActionLabel;
+                return this;
+            }
+
             public Builder imageUrl(String imageUrl) {
                 this.imageUrl = imageUrl;
                 return this;
@@ -203,6 +213,7 @@ public class AdGenerationResponse {
 
             public AdVariation build() {
                 AdVariation variation = new AdVariation(id, headline, primaryText, description, callToAction, imageUrl, order);
+                variation.setCallToActionLabel(callToActionLabel);
                 variation.setQualityScore(qualityScore);
                 variation.setHasWarnings(hasWarnings);
                 variation.setWarnings(warnings);

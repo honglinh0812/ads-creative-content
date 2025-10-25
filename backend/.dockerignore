@@ -1,0 +1,51 @@
+# Maven build output
+target/
+!target/*.jar
+
+# Maven wrapper
+.mvn/
+mvnw
+mvnw.cmd
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Testing
+.factorypath
+
+# Uploads (will be volume mounted)
+uploads/
+
+# Documentation
+README.md
+docs/
+
+# CI/CD
+.github/
+
+# Environment files (should be injected at runtime)
+.env
+.env.*
+application-local.properties
+application-dev.properties
+application.properties

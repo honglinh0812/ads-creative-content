@@ -126,14 +126,14 @@ public class AdController {
     public ResponseEntity<AdGenerationResponse> generateAdContent(
             @Valid @RequestBody AdGenerationRequest request,
             Authentication authentication) {
-        
+
         log.info("Generating ad content for user: {}", authentication.getName());
         Long userId = Long.parseLong(authentication.getName());
         // Validate input: check if both prompt and ad links are empty
         String prompt = request.getPrompt();
         List<String> adLinks = request.getAdLinks();
         String extractedContent = request.getExtractedContent();
-        
+
         boolean isPromptEmpty = (prompt == null || prompt.trim().isEmpty());
         boolean isAdLinksEmpty = (adLinks == null || adLinks.isEmpty() || adLinks.stream().allMatch(link -> link == null || link.trim().isEmpty()));
         boolean isExtractedContentEmpty = (extractedContent == null || extractedContent.trim().isEmpty());
@@ -146,24 +146,27 @@ public class AdController {
                 .build();
             return ResponseEntity.badRequest().body(errorResponse);
         }
-        
+
         try {
             // Kiểm tra xem có phải là preview hay không
             Boolean isPreview = request.getIsPreview();
             if (isPreview == null) {
                 isPreview = false; // Mặc định là save thực sự;
             }
-            
+
+            // Get language for CTA label mapping
+            String languageCode = request.getLanguage() != null ? request.getLanguage() : "vi";
+
             if (isPreview) {
                 // Chỉ tạo preview, không lưu vào database
                 log.info("Creating preview for user: {}", authentication.getName());
-                
+
                 // Tạo ad tạm thời để generate content
                 Ad tempAd = new Ad();
                 tempAd.setName(request.getName());
                 tempAd.setAdType(adService.mapFrontendAdTypeToEnum(request.getAdType()));
                 tempAd.setPrompt(request.getPrompt());
-                
+
                 // Generate AI content mà không lưu vào database
                 List<AdContent> contents = adService.generatePreviewContent(tempAd,
                     request.getPrompt(),
@@ -184,7 +187,7 @@ public class AdController {
                 );
                 // Convert to AdGenerationResponse with quality metrics
                 List<AdGenerationResponse.AdVariation> variations = contents.stream()
-                    .map(this::convertToAdVariation)
+                    .map(content -> convertToAdVariation(content, languageCode))
                     .toList();
 
                 // Build validation report
@@ -245,10 +248,10 @@ public class AdController {
                         log.warn("Failed to mark selected variation: {}", e.getMessage());
                     }
                 }
-                
+
                 // Convert to AdGenerationResponse with quality metrics
                 List<AdGenerationResponse.AdVariation> variations = contents.stream()
-                    .map(this::convertToAdVariation)
+                    .map(content -> convertToAdVariation(content, languageCode))
                     .toList();
 
                 AdGenerationResponse.ValidationReport validationReport = buildValidationReport(contents);
@@ -287,6 +290,9 @@ public class AdController {
         log.info("Saving existing ad content for user: {}", authentication.getName());
         Long userId = Long.parseLong(authentication.getName());
         try {
+            // Get language for CTA label mapping
+            String languageCode = request.getLanguage() != null ? request.getLanguage() : "vi";
+
             // Tạo ad với nội dung đã có (không generate mới)
             Map<String, Object> adResult = adService.createAdWithExistingContent(request.getCampaignId(),
                 request.getAdType(),
@@ -303,18 +309,28 @@ public class AdController {
 
             List<AdContent> contents = (List<AdContent>) adResult.get("contents");
             Ad ad = (Ad) adResult.get("ad");
-            
-            // Convert to AdGenerationResponse
+
+            // Convert to AdGenerationResponse with CTA label mapping
             List<AdGenerationResponse.AdVariation> variations = contents.stream()
-                .map(content -> AdGenerationResponse.AdVariation.builder()
-                    .id(content.getId())
-                    .headline(content.getHeadline())
-                    .description(content.getDescription())
-                    .primaryText(content.getPrimaryText())
-                    .callToAction(content.getCallToAction() != null ? content.getCallToAction().name() : null)
-                    .imageUrl(content.getImageUrl())
-                    .order(content.getPreviewOrder())
-                    .build())
+                .map(content -> {
+                    String callToActionLabel = null;
+                    if (content.getCallToAction() != null) {
+                        callToActionLabel = com.fbadsautomation.util.CTAMapper.getDisplayLabel(
+                            content.getCallToAction(),
+                            languageCode
+                        );
+                    }
+                    return AdGenerationResponse.AdVariation.builder()
+                        .id(content.getId())
+                        .headline(content.getHeadline())
+                        .description(content.getDescription())
+                        .primaryText(content.getPrimaryText())
+                        .callToAction(content.getCallToAction() != null ? content.getCallToAction().name() : null)
+                        .callToActionLabel(callToActionLabel)
+                        .imageUrl(content.getImageUrl())
+                        .order(content.getPreviewOrder())
+                        .build();
+                })
                 .collect(java.util.stream.Collectors.toList());
             AdGenerationResponse response = AdGenerationResponse.builder()
                 .adId(ad.getId())
@@ -508,7 +524,7 @@ public class AdController {
     /**
      * Helper method to convert AdContent to AdVariation with quality metrics
      */
-    private AdGenerationResponse.AdVariation convertToAdVariation(AdContent content) {
+    private AdGenerationResponse.AdVariation convertToAdVariation(AdContent content, String languageCode) {
         // Parse warnings from JSON if available
         List<String> warnings = null;
         if (content.getValidationWarnings() != null && !content.getValidationWarnings().isEmpty()) {
@@ -522,12 +538,22 @@ public class AdController {
             }
         }
 
+        // Map CTA enum to localized display label
+        String callToActionLabel = null;
+        if (content.getCallToAction() != null) {
+            callToActionLabel = com.fbadsautomation.util.CTAMapper.getDisplayLabel(
+                content.getCallToAction(),
+                languageCode
+            );
+        }
+
         return AdGenerationResponse.AdVariation.builder()
                 .id(content.getId())
                 .headline(content.getHeadline())
                 .description(content.getDescription())
                 .primaryText(content.getPrimaryText())
                 .callToAction(content.getCallToAction() != null ? content.getCallToAction().name() : null)
+                .callToActionLabel(callToActionLabel)
                 .imageUrl(content.getImageUrl())
                 .order(content.getPreviewOrder())
                 .qualityScore(content.getQualityScore())

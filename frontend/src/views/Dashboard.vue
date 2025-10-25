@@ -699,15 +699,18 @@ export default {
     },
     
     handleImageError(event, adId) {
-      // Thay thế ảnh bị lỗi bằng placeholder
-      const img = event.target
-      const placeholder = document.createElement('div')
-      placeholder.style.cssText = 'width: 100px; height: 100px; background: #f0f4f7; border: 2px solid #dae4eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #2d5aa0; font-weight: 600; font-size: 14px;'
-      
+      // Set fallback placeholder image using inline SVG data URI
       const ad = this.recentAds.find(a => a.id === adId)
-      placeholder.textContent = ad && ad.name ? ad.name.charAt(0).toUpperCase() : 'A'
-      
-      img.parentNode.replaceChild(placeholder, img)
+      const adInitial = ad && ad.name ? ad.name.charAt(0).toUpperCase() : 'A'
+
+      event.target.src = 'data:image/svg+xml,' + encodeURIComponent(`
+        <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" fill="#f0f4f7" stroke="#dae4eb" stroke-width="2" rx="8"/>
+          <text x="50%" y="50%" text-anchor="middle" fill="#2d5aa0" font-size="48" font-weight="600" font-family="Arial, sans-serif" dy="0.35em">
+            ${adInitial}
+          </text>
+        </svg>
+      `)
     },
     
     checkMobile() {

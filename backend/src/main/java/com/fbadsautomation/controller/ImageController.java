@@ -39,11 +39,16 @@ public class ImageController {
     @GetMapping("/{filename:.+}")
     public ResponseEntity<Resource> serveFile(
             @Parameter(description = "Image filename to serve") @PathVariable String filename) {
+        log.info("🖼️  [IMAGE REQUEST] Serving image: {}", filename);
+
         try {
             // Check if file exists in MinIO
             if (!minioStorageService.fileExists(filename)) {
+                log.warn("⚠️  [IMAGE NOT FOUND] File does not exist in MinIO: {}", filename);
                 return ResponseEntity.notFound().build();
             }
+
+            log.debug("✅ [IMAGE FOUND] File exists in MinIO: {}", filename);
 
             // Get file info and stream from MinIO
             StatObjectResponse fileInfo = minioStorageService.getFileInfo(filename);
@@ -57,14 +62,16 @@ public class ImageController {
                 contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
             }
 
+            log.info("✅ [IMAGE SERVED] Successfully serving {} (type: {})", filename, contentType);
+
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
                     .contentType(MediaType.parseMediaType(contentType))
                     .body(resource);
 
         } catch (Exception e) {
-            log.error("Error serving file: {}", filename, e);
-            return ResponseEntity.notFound().build();
+            log.error("❌ [IMAGE ERROR] Failed to serve image {}: {}", filename, e.getMessage(), e);
+            return ResponseEntity.status(500).build();
         }
     }
 }

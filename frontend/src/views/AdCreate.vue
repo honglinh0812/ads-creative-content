@@ -1174,8 +1174,19 @@ export default {
       // Log the error for debugging
       console.error(`Failed to load image for variation: ${variation.headline}`, variation.imageUrl)
 
-      // Set fallback placeholder image
-      event.target.src = '/img/placeholder.png'
+      // Set fallback placeholder image using inline SVG data URI
+      // This avoids dependency on external files and always works
+      event.target.src = 'data:image/svg+xml,' + encodeURIComponent(`
+        <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="300" fill="#f0f0f0"/>
+          <text x="50%" y="45%" text-anchor="middle" fill="#999" font-size="16" font-family="Arial, sans-serif">
+            Không tải được ảnh
+          </text>
+          <text x="50%" y="55%" text-anchor="middle" fill="#ccc" font-size="12" font-family="Arial, sans-serif">
+            ${variation.headline || 'Image unavailable'}
+          </text>
+        </svg>
+      `)
 
       // Show a warning toast to user (only once per session to avoid spam)
       if (!this.$root.imageErrorShown) {

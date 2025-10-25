@@ -450,7 +450,15 @@ export default {
     },
     
     handleImageError(event) {
-      event.target.style.display = 'none'
+      // Set fallback placeholder image using inline SVG data URI
+      event.target.src = 'data:image/svg+xml,' + encodeURIComponent(`
+        <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="300" fill="#f0f0f0"/>
+          <text x="50%" y="50%" text-anchor="middle" fill="#999" font-size="16" font-family="Arial, sans-serif">
+            Không tải được ảnh
+          </text>
+        </svg>
+      `)
     },
 
     validateEditAd() {

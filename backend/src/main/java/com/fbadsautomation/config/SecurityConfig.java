@@ -59,9 +59,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeRequests()
+            // Public endpoints - order matters! Most specific patterns first
             .antMatchers(
-		"/api/health",
-                "api/health",
+                "/api/health",
+                "/actuator/**",
+                "/api/images/**",
                 "/api/auth/register",
                 "/api/auth/login-app",
                 "/api/auth/forgot-password",
@@ -69,7 +71,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 "/api/auth/oauth2/**",
                 "/api/public/**",
                 "/api/ai-providers/**",
-                "/api/images/**",
                 "/api/trends/**",
                 "/swagger-ui/**",
                 "/v3/api-docs/**"
@@ -89,7 +90,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .and()
             .successHandler(oauth2AuthenticationSuccessHandler())
             .failureHandler(oauth2AuthenticationFailureHandler());
-            
+
         // Add JWT filter before UsernamePasswordAuthenticationFilter
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

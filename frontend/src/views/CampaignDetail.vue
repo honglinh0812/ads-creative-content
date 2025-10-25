@@ -551,7 +551,15 @@ export default {
     },
 
     handleImageError(event) {
-      event.target.src = 'https://via.placeholder.com/100x150'; // Fallback to placeholder
+      // Set fallback placeholder image using inline SVG data URI
+      event.target.src = 'data:image/svg+xml,' + encodeURIComponent(`
+        <svg width="100" height="150" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="150" fill="#f0f0f0"/>
+          <text x="50%" y="50%" text-anchor="middle" fill="#999" font-size="12" font-family="Arial, sans-serif">
+            Không tải được ảnh
+          </text>
+        </svg>
+      `)
     },
     handleLogout() {
       this.$store.dispatch('auth/logout')

@@ -6,6 +6,7 @@ import com.fbadsautomation.util.ValidationMessages;
 import com.fbadsautomation.util.ValidationMessages.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,9 @@ import java.util.List;
 public class PromptValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(PromptValidationService.class);
+
+    @Autowired(required = false)
+    private AIPromptImprovementService aiPromptImprovementService;
 
     private static final int MIN_EXCELLENT_SCORE = 80;
     private static final int MIN_GOOD_SCORE = 60;
@@ -102,8 +106,21 @@ public class PromptValidationService {
             suggestions.add(ValidationMessages.getSuggestion("highlight_benefits", detectedLanguage));
         }
 
-        // Generate improved prompt (basic version)
-        String improvedPrompt = generateImprovedPrompt(prompt, issues, adType, targetAudience);
+        // Generate improved prompt using AI (if available) or fallback to rule-based
+        String improvedPrompt = null;
+        if (aiPromptImprovementService != null) {
+            try {
+                improvedPrompt = aiPromptImprovementService.generateImprovedPrompt(prompt, adType, targetAudience);
+                log.debug("AI-powered improvement generated successfully");
+            } catch (Exception e) {
+                log.warn("AI prompt improvement failed, falling back to rule-based: {}", e.getMessage());
+            }
+        }
+
+        // Fallback to rule-based if AI unavailable or failed
+        if (improvedPrompt == null) {
+            improvedPrompt = generateImprovedPrompt(prompt, issues, adType, targetAudience);
+        }
 
         // Set quality level
         String qualityLevel;
