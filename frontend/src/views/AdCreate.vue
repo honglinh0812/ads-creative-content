@@ -585,7 +585,7 @@
                     <h3 class="ad-preview-headline">{{ variation.headline }}</h3>
                     <p class="ad-preview-primary-text">{{ variation.primaryText }}</p>
                     <p class="ad-preview-description">{{ variation.description }}</p>
-                    <div class="ad-preview-cta">{{ variation.callToAction }}</div>
+                    <div class="ad-preview-cta">{{ getCTALabel(variation.callToAction) }}</div>
                   </div>
                 </div>
 
@@ -655,7 +655,19 @@
           <a-textarea v-model:value="editingVariation.description" :rows="2" />
         </a-form-item>
         <a-form-item label="Call to Action">
-          <a-input v-model:value="editingVariation.callToAction" />
+          <a-select
+            v-model:value="editingVariation.callToAction"
+            placeholder="Select call to action"
+            :loading="loadingCTAs"
+          >
+            <a-select-option
+              v-for="cta in standardCTAs"
+              :key="cta.value"
+              :value="cta.value"
+            >
+              {{ cta.label }}
+            </a-select-option>
+          </a-select>
         </a-form-item>
       </a-form>
     </a-modal>
@@ -777,7 +789,8 @@
 </template>
 
 <script>
-import { 
+import { mapGetters, mapActions } from 'vuex'
+import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
   QuestionCircleOutlined,
@@ -866,7 +879,6 @@ export default {
         }
       ],
       campaigns: [],
-      standardCTAs: [],
       textProviders: [
         {
           value: 'openai',
@@ -947,6 +959,16 @@ export default {
     }
   },
   computed: {
+    ...mapGetters('cta', {
+      allCTAs: 'allCTAs',
+      ctaLoaded: 'isLoaded'
+    }),
+
+    // Use Vuex CTAs instead of local state
+    standardCTAs() {
+      return this.allCTAs
+    },
+
     progressSteps() {
       return [
         {
@@ -975,6 +997,19 @@ export default {
     await this.loadData()
   },
   methods: {
+    ...mapActions('cta', ['loadCTAs']),
+
+    /**
+     * Get CTA display label from enum value
+     * @param {string} value - CTA enum value (e.g., 'LEARN_MORE')
+     * @returns {string} - Display label (e.g., 'Tìm hiểu thêm')
+     */
+    getCTALabel(value) {
+      if (!value) return ''
+      const cta = this.standardCTAs.find(c => c.value === value)
+      return cta ? cta.label : value
+    },
+
     handleKeywordsSelected(keywords) {
       // Format trending keywords for prompt injection
       const keywordText = keywords.map(k => `• ${k}`).join('\n')
@@ -1061,8 +1096,8 @@ export default {
     async loadCallToActions() {
       this.loadingCTAs = true
       try {
-        const response = await api.providers.getCallToActions(this.formData.language)
-        this.standardCTAs = response.data.ctas || response.data || []
+        // Load CTAs from Vuex store with user's selected language
+        await this.loadCTAs({ language: this.formData.language })
       } catch (error) {
         console.error('Error loading CTAs:', error)
         this.$message.error('Failed to load call to actions')

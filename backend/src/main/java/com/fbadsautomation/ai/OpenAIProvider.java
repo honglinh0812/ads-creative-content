@@ -113,7 +113,7 @@ public class OpenAIProvider implements AIProvider {
                 "\n   - Create urgency without being pushy" +
                 "\n   - Maintain professional, conversational tone" +
                 "\n   - Focus on value proposition and benefits" +
-                "\n\n5. CALL TO ACTION: Must be exactly: " + callToAction.name() +
+                "\n\n5. CALL TO ACTION: " + (callToAction != null ? "Must be exactly: " + callToAction.name() : "Not specified") +
                 "\n\nReturn ONLY valid JSON with keys: \"headline\", \"description\", \"primaryText\". " +
                 "Double-check character limits before responding. If any field exceeds limits, shorten it immediately.";
         Map<String, Object> message1 = new HashMap<>();

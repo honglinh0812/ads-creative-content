@@ -139,8 +139,7 @@ export default {
       publishing: false,
       textProviders: [],
       showMediaModal: false,
-      selectedMediaUrl: '',
-      standardCTAs: []
+      selectedMediaUrl: ''
     }
   },
   async mounted() {
@@ -148,6 +147,16 @@ export default {
   },
   computed: {
     ...mapGetters('ad', ['currentAd', 'adContents', 'loading', 'error', 'generatingContent']),
+    ...mapGetters('cta', {
+      allCTAs: 'allCTAs',
+      ctaLoaded: 'isLoaded'
+    }),
+
+    // Use Vuex CTAs instead of local state
+    standardCTAs() {
+      return this.allCTAs
+    },
+
     ad() {
       const a = this.currentAd || {}
       return { ...a, imageUrl: a.imageUrl || a.mediaFileUrl || '' }
@@ -159,7 +168,8 @@ export default {
   methods: {
     ...mapActions('ad', ['fetchAd', 'generateContent', 'selectContent', 'publishAd']),
     ...mapActions('toast', ['showSuccess', 'showError']),
-    
+    ...mapActions('cta', ['loadCTAs']),
+
     async loadTextProviders() {
       try {
         const response = await api.providers.getTextProviders()
@@ -174,23 +184,10 @@ export default {
     
     async loadCallToActions() {
       try {
-        const response = await api.providers.getCallToActions('en') // Default to English
-        this.standardCTAs = response.data
+        // Load CTAs from Vuex store with Vietnamese language
+        await this.loadCTAs({ language: 'vi' })
       } catch (error) {
         console.error('Failed to load call to actions:', error)
-        // Fallback to default CTAs if API fails
-        this.standardCTAs = [
-          { value: 'SHOP_NOW', label: 'Shop Now' },
-          { value: 'LEARN_MORE', label: 'Learn More' },
-          { value: 'SIGN_UP', label: 'Sign Up' },
-          { value: 'DOWNLOAD', label: 'Download' },
-          { value: 'CONTACT_US', label: 'Contact Us' },
-          { value: 'APPLY_NOW', label: 'Apply Now' },
-          { value: 'BOOK_NOW', label: 'Book Now' },
-          { value: 'GET_OFFER', label: 'Get Offer' },
-          { value: 'MESSAGE_PAGE', label: 'Message Page' },
-          { value: 'SUBSCRIBE', label: 'Subscribe' }
-        ]
       }
     },
     

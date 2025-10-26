@@ -77,7 +77,7 @@
           </div>
           <div class="field mb-4">
             <label class="block text-sm font-medium text-secondary-700 mb-1">Call to Action:</label>
-            <p class="text-secondary-900">{{ selectedAd.callToAction || 'N/A' }}</p>
+            <p class="text-secondary-900">{{ getCTALabel(selectedAd.callToAction) || 'N/A' }}</p>
           </div>
           <div class="field mb-4">
             <label class="block text-sm font-medium text-secondary-700 mb-1">Media:</label>
@@ -178,7 +178,7 @@
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex"
+import { mapState, mapActions, mapGetters } from "vuex"
 import { Modal, Input, Select, Button, message } from "ant-design-vue"
 import { PlusOutlined } from "@ant-design/icons-vue"
 
@@ -186,7 +186,6 @@ import AdTable from '@/components/AdTable.vue'
 import CreativeEmptyState from '@/components/ui/CreativeEmptyState.vue'
 import ExportToFacebookModal from '@/components/ExportToFacebookModal.vue'
 import FacebookInstructionsModal from '@/components/FacebookInstructionsModal.vue'
-import api from '@/services/api'
 
 export default {
   name: "Ads",
@@ -215,7 +214,6 @@ export default {
       searchQuery: '',
       filteredAds: [],
       errors: {},
-      standardCTAs: [],
       selectedAdIds: [],
       showExportModal: false,
       showInstructionsModal: false,
@@ -233,20 +231,29 @@ export default {
     ...mapState("campaign", {
       campaigns: "campaigns"
     }),
-    
+    ...mapGetters('cta', {
+      allCTAs: 'allCTAs',
+      ctaLoaded: 'isLoaded'
+    }),
+
+    // Use Vuex CTAs instead of local state
+    standardCTAs() {
+      return this.allCTAs
+    },
+
     displayedAds() {
       if (!this.searchQuery.trim()) {
         return this.ads
       }
       return this.filteredAds
     },
-    
 
-    
+
+
     totalPages() {
       return Math.ceil(this.totalAds / this.size)
     },
-    
+
     totalItems() {
       return this.totalAds
     }
@@ -265,7 +272,19 @@ export default {
       setSelectedAdsForExport: "setSelectedAds",
       showFBInstructions: "showInstructions"
     }),
-    
+    ...mapActions('cta', ['loadCTAs']),
+
+    /**
+     * Get CTA display label from enum value
+     * @param {string} value - CTA enum value (e.g., 'LEARN_MORE')
+     * @returns {string} - Display label (e.g., 'Learn More')
+     */
+    getCTALabel(value) {
+      if (!value) return ''
+      const cta = this.standardCTAs.find(c => c.value === value)
+      return cta ? cta.label : value
+    },
+
     async loadAds() {
       try {
         await this.fetchAds({ page: this.page, size: this.size })
@@ -277,22 +296,11 @@ export default {
     
     async loadCallToActions() {
       try {
-        const response = await api.providers.getCallToActions('en')
-        this.standardCTAs = response.data
+        // Load CTAs from Vuex store
+        // Use Vietnamese by default, can be changed to user preference
+        await this.loadCTAs({ language: 'vi' })
       } catch (error) {
         console.error("Failed to load call to actions:", error)
-        this.standardCTAs = [
-          { value: 'SHOP_NOW', label: 'Shop Now' },
-          { value: 'LEARN_MORE', label: 'Learn More' },
-          { value: 'SIGN_UP', label: 'Sign Up' },
-          { value: 'DOWNLOAD', label: 'Download' },
-          { value: 'CONTACT_US', label: 'Contact Us' },
-          { value: 'APPLY_NOW', label: 'Apply Now' },
-          { value: 'BOOK_NOW', label: 'Book Now' },
-          { value: 'GET_OFFER', label: 'Get Offer' },
-          { value: 'MESSAGE_PAGE', label: 'Message Page' },
-          { value: 'SUBSCRIBE', label: 'Subscribe' }
-        ]
       }
     },
     

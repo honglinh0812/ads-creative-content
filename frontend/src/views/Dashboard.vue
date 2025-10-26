@@ -409,7 +409,7 @@
           <a-descriptions-item :label="$t('dashboard.headline')">{{ selectedAd.headline || 'N/A' }}</a-descriptions-item>
           <a-descriptions-item :label="$t('dashboard.primaryText')">{{ selectedAd.primaryText || 'N/A' }}</a-descriptions-item>
           <a-descriptions-item :label="$t('dashboard.description')">{{ selectedAd.description || 'N/A' }}</a-descriptions-item>
-          <a-descriptions-item :label="$t('dashboard.callToAction')">{{ selectedAd.callToAction || 'N/A' }}</a-descriptions-item>
+          <a-descriptions-item :label="$t('dashboard.callToAction')">{{ getCTALabel(selectedAd.callToAction) || 'N/A' }}</a-descriptions-item>
           <a-descriptions-item :label="$t('dashboard.media')">
             <div v-if="selectedAd.imageUrl || selectedAd.videoUrl">
               <div v-if="selectedAd.imageUrl" style="display: flex; align-items: center; gap: 12px;">
@@ -470,7 +470,7 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
+import { mapState, mapActions, mapGetters } from 'vuex'
 import {
   PlusOutlined,
   FolderOutlined,
@@ -553,7 +553,24 @@ export default {
   computed: {
     ...mapState('auth', ['user']),
     ...mapState('dashboard', ['stats', 'campaigns', 'recentAds', 'loading', 'error']),
-    
+    ...mapGetters('cta', {
+      allCTAs: 'allCTAs',
+      ctaLoaded: 'isLoaded'
+    }),
+
+    /**
+     * Get CTA display label from enum value
+     * @param {string} value - CTA enum value (e.g., 'LEARN_MORE')
+     * @returns {string} - Display label (e.g., 'Tìm hiểu thêm')
+     */
+    getCTALabel() {
+      return (value) => {
+        if (!value) return ''
+        const cta = this.allCTAs.find(c => c.value === value)
+        return cta ? cta.label : value
+      }
+    },
+
     dashboardLoading() {
       return this.loading
     },
@@ -642,6 +659,8 @@ export default {
     window.addEventListener('resize', this.checkMobile)
     await this.loadUserData()
     await this.loadDashboardData()
+    // Load CTAs for displaying ad details
+    await this.loadCTAs({ language: 'vi' })
   },
   
   beforeUnmount() {
@@ -650,7 +669,8 @@ export default {
   methods: {
     ...mapActions('dashboard', ['fetchDashboardData']),
     ...mapActions('auth', ['fetchUser', 'logout']),
-    
+    ...mapActions('cta', ['loadCTAs']),
+
     async loadUserData() {
       try {
         if (!this.user) {
