@@ -22,6 +22,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +38,9 @@ public class AIContentServiceImpl {
     private final MetaAdLibraryService metaAdLibraryService;
     private final AIContentValidationService validationService;
     private final MinIOStorageService minIOStorageService;
+
+    @Value("${ai.default.image-provider:gemini}")
+    private String defaultImageProvider;
 
     @Autowired(required = false)
     private com.fbadsautomation.service.PersonaSelectorService personaSelectorService;
@@ -103,23 +107,29 @@ public class AIContentServiceImpl {
 
             // Handle images
             if (mediaFileUrl != null && !mediaFileUrl.isBlank()) {
+                // Use provided media file URL
                 for (AdContent content : contents) {
                     content.setImageUrl(mediaFileUrl);
                 }
-            } else if (imageProvider != null && !imageProvider.isBlank()) {
+            } else {
+                // Use specified provider or default to Gemini
+                String effectiveImageProvider = (imageProvider != null && !imageProvider.isBlank())
+                    ? imageProvider
+                    : defaultImageProvider;
+
+                log.info("Generating images using AI provider: {}", effectiveImageProvider);
+
                 for (AdContent content : contents) {
                     try {
-                        String externalImageUrl = aiProviderService.generateImageWithReliability(content.getPrimaryText(), imageProvider);
+                        String externalImageUrl = aiProviderService.generateImageWithReliability(
+                            content.getPrimaryText(), effectiveImageProvider);
                         String storedImageUrl = downloadAndStoreImage(externalImageUrl);
                         content.setImageUrl(storedImageUrl);
                     } catch (Exception e) {
-                        log.error("Failed to generate/store image: {}", e.getMessage());
+                        log.error("Failed to generate/store image with provider {}: {}",
+                            effectiveImageProvider, e.getMessage());
                         content.setImageUrl("/img/placeholder.png");
                     }
-                }
-            } else {
-                for (AdContent content : contents) {
-                    content.setImageUrl("/img/placeholder.png");
                 }
             }
 
@@ -198,38 +208,39 @@ public class AIContentServiceImpl {
 
             // Handle image URL assignment
             // Priority 1: Use uploaded image from frontend (mediaFileUrl)
-            // Priority 2: Generate image with AI provider if specified
+            // Priority 2: Generate image with AI provider (specified or default to Gemini)
             if (mediaFileUrl != null && !mediaFileUrl.isBlank()) {
                 // User uploaded an image - use it for all variations
                 log.info("Using uploaded image for all {} variations: {}", contents.size(), mediaFileUrl);
                 for (AdContent content : contents) {
                     content.setImageUrl(mediaFileUrl);
                 }
-            } else if (imageProvider != null && !imageProvider.isBlank()) {
-                // No uploaded image - generate images with AI provider
-                log.info("Generating images for {} variations using provider: {}", contents.size(), imageProvider);
+            } else {
+                // Use specified provider or default to Gemini
+                String effectiveImageProvider = (imageProvider != null && !imageProvider.isBlank())
+                    ? imageProvider
+                    : defaultImageProvider;
+
+                log.info("Generating images for {} variations using provider: {}", contents.size(), effectiveImageProvider);
+
                 for (AdContent content : contents) {
                     try {
                         String imagePrompt = content.getPrimaryText();
-                        String externalImageUrl = aiProviderService.generateImageWithReliability(imagePrompt, imageProvider);
+                        String externalImageUrl = aiProviderService.generateImageWithReliability(
+                            imagePrompt, effectiveImageProvider);
 
                         // Download external AI image to MinIO to prevent expiration
                         String storedImageUrl = downloadAndStoreImage(externalImageUrl);
                         content.setImageUrl(storedImageUrl);
                         log.info("Generated and stored image for variation: {}", storedImageUrl);
                     } catch (Exception e) {
-                        log.error("Failed to generate/store image for variation: {}", e.getMessage());
+                        log.error("Failed to generate/store image for variation with provider {}: {}",
+                            effectiveImageProvider, e.getMessage());
                         // Keep default placeholder on error
                         content.setImageUrl("/img/placeholder.png");
                     }
                 }
                 log.info("Images added and stored using enhanced reliability features");
-            } else {
-                // No image upload and no image provider - use placeholder
-                log.info("No image source specified, using placeholder for all variations");
-                for (AdContent content : contents) {
-                    content.setImageUrl("/img/placeholder.png");
-                }
             }
 
             // Validate and filter generated content

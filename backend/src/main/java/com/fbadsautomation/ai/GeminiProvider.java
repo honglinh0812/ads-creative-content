@@ -3,12 +3,21 @@ package com.fbadsautomation.ai;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fbadsautomation.model.AdContent;
+import com.fbadsautomation.service.MinIOStorageService;
+import com.fbadsautomation.util.ByteArrayMultipartFile;
+import java.io.ByteArrayInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,16 +34,27 @@ public class GeminiProvider implements AIProvider {
     private final RestTemplate restTemplate;
     private final String apiKey;
     private final String apiUrl;
+    private final String imageApiUrl;
     private final ObjectMapper objectMapper = new ObjectMapper(); // For parsing JSON
+
+    @Autowired(required = false)
+    private MinIOStorageService minIOStorageService;
+
+    @Value("${app.image.storage.location:uploads/images}")
+    private String imageStoragePath;
+
     public GeminiProvider(
             RestTemplate restTemplate,
             @Value("${ai.gemini.api-key}") String apiKey,
-            @Value("${ai.gemini.api-url:https://generativelanguage.googleapis.com/v1beta/models}") String baseUrl) { // Use v1beta for JSON mode
+            @Value("${ai.gemini.api-url:https://generativelanguage.googleapis.com/v1beta/models}") String baseUrl,
+            @Value("${ai.gemini.image-api-url:https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict}") String imageApiUrl) {
         this.restTemplate = restTemplate;
         this.apiKey = apiKey;
         // Construct the full URL with the model name and action
         this.apiUrl = baseUrl + "/gemini-1.5-pro:generateContent";
-        log.info("Using Gemini API URL: {}", this.apiUrl);
+        this.imageApiUrl = imageApiUrl;
+        log.info("Using Gemini Text API URL: {}", this.apiUrl);
+        log.info("Using Gemini Image API URL: {}", this.imageApiUrl);
     }
     // Corrected return type to List<AdContent>
     @Override
@@ -209,13 +229,168 @@ public class GeminiProvider implements AIProvider {
 
     @Override
     public String generateImage(String prompt) {
-        log.warn("Gemini does not support image generation via this API.");
-        return "/img/placeholder.png"; // Return local placeholder
+        log.info("Generating image with Gemini Imagen 3 for prompt: {}", prompt);
+
+        if (apiKey == null || apiKey.isEmpty()) {
+            log.error("Gemini API key is missing. Cannot generate image.");
+            return "/img/placeholder.png";
+        }
+
+        try {
+            // Step 1: Enhance prompt for better quality
+            String enhancedPrompt = enhanceImagePrompt(prompt);
+            log.debug("Enhanced prompt: {}", enhancedPrompt);
+
+            // Step 2: Build Gemini Imagen API request
+            String fullUrl = imageApiUrl + "?key=" + apiKey;
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("x-goog-api-key", apiKey);
+
+            // Build request body according to Gemini Imagen format
+            Map<String, Object> instancePrompt = new HashMap<>();
+            instancePrompt.put("prompt", enhancedPrompt);
+
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("sampleCount", 1);
+            parameters.put("aspectRatio", "1:1");
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("instances", List.of(instancePrompt));
+            requestBody.put("parameters", parameters);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+
+            log.debug("Calling Gemini Imagen API at: {}", imageApiUrl);
+
+            // Step 3: Call API
+            Map<String, Object> response = restTemplate.postForObject(fullUrl, request, Map.class);
+
+            if (response != null) {
+                log.debug("Gemini Imagen response received");
+
+                // Step 4: Parse response and extract base64 image
+                String base64Image = extractBase64ImageFromResponse(response);
+
+                if (base64Image != null && !base64Image.isEmpty()) {
+                    // Step 5: Save image to storage
+                    String savedImageUrl = saveBase64ImageToStorage(base64Image);
+                    log.info("Image generated successfully and saved to: {}", savedImageUrl);
+                    return savedImageUrl;
+                } else {
+                    log.error("No image data found in Gemini response");
+                }
+            } else {
+                log.error("Gemini API returned null response");
+            }
+
+        } catch (Exception e) {
+            log.error("Error generating image with Gemini Imagen: {}", e.getMessage(), e);
+        }
+
+        // Return placeholder on any error
+        return "/img/placeholder.png";
+    }
+
+    /**
+     * Enhance prompt for better image generation quality
+     * Similar to OpenAI enhancement logic
+     */
+    private String enhanceImagePrompt(String prompt) {
+        return "Professional, high-quality advertisement image for: " + prompt +
+               ". Clear product focus, vibrant colors, professional lighting, " +
+               "crisp details, studio quality, advertising photography style, " +
+               "clean composition, eye-catching, suitable for Facebook ads.";
+    }
+
+    /**
+     * Extract base64 encoded image from Gemini Imagen API response
+     */
+    private String extractBase64ImageFromResponse(Map<String, Object> response) {
+        try {
+            // Response format: {predictions: [{generatedImages: [{imageBytes: "base64..."}]}]}
+            if (response.containsKey("predictions")) {
+                List<Map<String, Object>> predictions = (List<Map<String, Object>>) response.get("predictions");
+                if (!predictions.isEmpty()) {
+                    Map<String, Object> prediction = predictions.get(0);
+                    if (prediction.containsKey("generatedImages")) {
+                        List<Map<String, Object>> generatedImages = (List<Map<String, Object>>) prediction.get("generatedImages");
+                        if (!generatedImages.isEmpty()) {
+                            Map<String, Object> imageData = generatedImages.get(0);
+                            if (imageData.containsKey("imageBytes")) {
+                                return (String) imageData.get("imageBytes");
+                            }
+                        }
+                    }
+                }
+            }
+
+            log.warn("Could not find imageBytes in response structure: {}", response);
+        } catch (Exception e) {
+            log.error("Error extracting base64 image from response", e);
+        }
+
+        return null;
+    }
+
+    /**
+     * Save base64 encoded image to MinIO storage or local filesystem
+     */
+    private String saveBase64ImageToStorage(String base64Image) {
+        try {
+            // Decode base64 to byte array
+            byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+
+            // Generate unique filename
+            String filename = UUID.randomUUID().toString() + ".png";
+
+            // Try MinIO first, fallback to local storage
+            if (minIOStorageService != null) {
+                try {
+                    log.debug("Uploading image to MinIO: {}", filename);
+                    // Wrap byte array in MultipartFile wrapper
+                    ByteArrayMultipartFile multipartFile = new ByteArrayMultipartFile(
+                        imageBytes,
+                        "image",
+                        "image/png",
+                        filename
+                    );
+                    String storedFilename = minIOStorageService.uploadFile(multipartFile);
+                    String publicUrl = minIOStorageService.getFileUrl(storedFilename);
+                    log.info("Image uploaded to MinIO successfully: {}", publicUrl);
+                    return publicUrl;
+                } catch (Exception minioError) {
+                    log.warn("MinIO upload failed, falling back to local storage: {}", minioError.getMessage());
+                }
+            }
+
+            // Fallback to local filesystem
+            Path uploadPath = Paths.get(imageStoragePath);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            Path filePath = uploadPath.resolve(filename);
+            Files.write(filePath, imageBytes);
+
+            String localUrl = "/api/images/" + filename;
+            log.info("Image saved to local filesystem: {}", localUrl);
+            return localUrl;
+
+        } catch (Exception e) {
+            log.error("Error saving base64 image to storage", e);
+            return "/img/placeholder.png";
+        }
     }
 
     @Override
     public java.util.Set<com.fbadsautomation.model.Capability> getCapabilities() {
-        return java.util.EnumSet.of(com.fbadsautomation.model.Capability.TEXT_GENERATION);
+        // Gemini now supports both text and image generation
+        return java.util.EnumSet.of(
+            com.fbadsautomation.model.Capability.TEXT_GENERATION,
+            com.fbadsautomation.model.Capability.IMAGE_GENERATION
+        );
     }
 
     @Override
@@ -234,7 +409,8 @@ public class GeminiProvider implements AIProvider {
     }
 
     public boolean supportsImageGeneration() {
-        return false;
+        // Gemini now supports image generation via Imagen 3
+        return true;
     }
 
     @Override

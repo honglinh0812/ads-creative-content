@@ -61,10 +61,12 @@ public class AIProviderService {
         providerFallbacks.put("anthropic", Arrays.asList("openai", "gemini", "huggingface"));
         providerFallbacks.put("huggingface", Arrays.asList("openai", "gemini", "anthropic"));
 
-        // Image generation fallback chains
-        providerFallbacks.put("openai", Arrays.asList("fal-ai", "stable-diffusion"));
-        providerFallbacks.put("fal-ai", Arrays.asList("openai", "stable-diffusion"));
-        providerFallbacks.put("stable-diffusion", Arrays.asList("openai", "fal-ai"));
+        // Image generation fallback chains (Gemini Imagen 3 now included)
+        // Gemini is the new default, with OpenAI and others as fallbacks
+        providerFallbacks.put("gemini", Arrays.asList("openai", "fal-ai", "stable-diffusion"));
+        providerFallbacks.put("openai", Arrays.asList("gemini", "fal-ai", "stable-diffusion"));
+        providerFallbacks.put("fal-ai", Arrays.asList("gemini", "openai", "stable-diffusion"));
+        providerFallbacks.put("stable-diffusion", Arrays.asList("gemini", "openai", "fal-ai"));
     }
 
     public List<ProviderResponse> getTextProviders() {

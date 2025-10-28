@@ -916,7 +916,7 @@ export default {
         leadFormQuestions: [''],
         prompt: '',
         textProvider: 'openai',
-        imageProvider: 'openai',
+        imageProvider: 'gemini', // Default to Gemini Imagen 3 for image generation
         enhancementOptions: []
         // Issue #9: audienceSegment removed - now at campaign level
       },
