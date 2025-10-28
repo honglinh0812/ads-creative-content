@@ -28,7 +28,7 @@ public class GoogleTrendsApiService {
     private static final Logger log = LoggerFactory.getLogger(GoogleTrendsApiService.class);
     private static final String SERPAPI_BASE_URL = "https://serpapi.com/search";
 
-    @Value("${serpapi.api.key:}")
+    @Value("${SERPAPI_API_KEY:}")
     private String serpApiKey;
 
     private final RestTemplate restTemplate;
