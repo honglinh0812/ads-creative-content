@@ -41,17 +41,22 @@ public class CampaignController {
         this.campaignService = campaignService;
     }
     private CampaignDTO toDTO(Campaign campaign) {
+        // Calculate totalAds from ads collection
+        int totalAds = campaign.getAds() != null ? campaign.getAds().size() : 0;
+
         return new CampaignDTO(
             campaign.getId(),
             campaign.getName(),
-            campaign.getStatus().toString(),
+            campaign.getStatus() != null ? campaign.getStatus().toString() : null,
             campaign.getObjective() != null ? campaign.getObjective().toString() : null,
             campaign.getBudgetType() != null ? campaign.getBudgetType().toString() : null,
             campaign.getDailyBudget(),
             campaign.getTotalBudget(),
             campaign.getTargetAudience(),
             campaign.getStartDate(),
-            campaign.getEndDate()
+            campaign.getEndDate(),
+            totalAds,
+            campaign.getCreatedDate()
         );
     }
 
@@ -68,8 +73,9 @@ public class CampaignController {
         log.info("Getting all campaigns for user: {} with page {} and size {}", authentication.getName(), page, size);
         Long userId = Long.valueOf(authentication.getName());
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<Campaign> campaigns = campaignService.getAllCampaignsByUserPaginated(userId, pageable);
-        Page<CampaignDTO> dtos = campaigns.map(this::toDTO);
+
+        // Use new method that includes totalAds and createdDate (Issue #7 fix)
+        Page<CampaignDTO> dtos = campaignService.getAllCampaignsWithStatsByUserPaginated(userId, pageable);
         return ResponseEntity.ok(dtos);
     }
 

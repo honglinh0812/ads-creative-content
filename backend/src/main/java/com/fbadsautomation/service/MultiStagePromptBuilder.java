@@ -2,6 +2,7 @@ package com.fbadsautomation.service;
 
 import com.fbadsautomation.model.AdPersona;
 import com.fbadsautomation.model.AdType;
+import com.fbadsautomation.model.Campaign;
 import com.fbadsautomation.util.ValidationMessages.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +29,11 @@ public class MultiStagePromptBuilder {
                                        AdPersona persona,
                                       AdType adType,
                                       Language language,
-                                      com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
+                                      com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment,
+                                      com.fbadsautomation.model.AdStyle adStyle) {
 
-        log.info("Building multi-stage prompt with persona: {}, language: {}", persona.name(), language);
+        log.info("Building multi-stage prompt with persona: {}, style: {}, language: {}",
+                 persona.name(), adStyle != null ? adStyle.name() : "none", language);
 
         StringBuilder enhancedPrompt = new StringBuilder();
         boolean isVietnamese = (language == Language.VIETNAMESE);
@@ -42,6 +45,13 @@ public class MultiStagePromptBuilder {
         // Stage 2: Persona - Role, tone, vocabulary, examples
         enhancedPrompt.append(persona.getPersonaInstruction(isVietnamese));
         enhancedPrompt.append("\n\n");
+
+        // Stage 2.5: Creative Style (if specified) - Issue #8
+        if (adStyle != null) {
+            enhancedPrompt.append(adStyle.getStyleInstruction(isVietnamese));
+            enhancedPrompt.append("\n\n");
+            log.debug("Added style instruction: {}", adStyle.name());
+        }
 
         // Stage 3: Audience targeting (if provided)
         if (audienceSegment != null) {
@@ -57,6 +67,58 @@ public class MultiStagePromptBuilder {
         enhancedPrompt.append(buildCriticalInstructions(isVietnamese));
 
         log.debug("Enhanced prompt built (length: {} chars)", enhancedPrompt.length());
+        return enhancedPrompt.toString();
+    }
+
+    /**
+     * Issue #9: Build enhanced prompt with Campaign (audience at campaign level)
+     * This is the NEW method that gets audience from Campaign.targetAudience
+     */
+    public String buildEnhancedPrompt(String userPrompt,
+                                       AdPersona persona,
+                                       AdType adType,
+                                       Language language,
+                                       Campaign campaign,
+                                       com.fbadsautomation.model.AdStyle adStyle) {
+
+        log.info("Building prompt with campaign-level audience (Issue #9): campaign={}, persona={}, style={}",
+                 campaign != null ? campaign.getId() : "none",
+                 persona.name(),
+                 adStyle != null ? adStyle.name() : "none");
+
+        StringBuilder enhancedPrompt = new StringBuilder();
+        boolean isVietnamese = (language == Language.VIETNAMESE);
+
+        // Stage 1: Context - User's original request
+        enhancedPrompt.append(buildUserContextSection(userPrompt, isVietnamese));
+        enhancedPrompt.append("\n\n");
+
+        // Stage 2: Persona - Role, tone, vocabulary, examples
+        enhancedPrompt.append(persona.getPersonaInstruction(isVietnamese));
+        enhancedPrompt.append("\n\n");
+
+        // Stage 2.5: Creative Style (if specified) - Issue #8
+        if (adStyle != null) {
+            enhancedPrompt.append(adStyle.getStyleInstruction(isVietnamese));
+            enhancedPrompt.append("\n\n");
+            log.debug("Added style instruction: {}", adStyle.name());
+        }
+
+        // Stage 3: Audience targeting from Campaign (Issue #9)
+        if (campaign != null && campaign.getTargetAudience() != null && !campaign.getTargetAudience().trim().isEmpty()) {
+            enhancedPrompt.append(buildAudienceSectionFromCampaign(campaign.getTargetAudience(), isVietnamese));
+            enhancedPrompt.append("\n\n");
+            log.debug("Added campaign audience: {}", campaign.getTargetAudience());
+        }
+
+        // Stage 4: Technical constraints & format
+        enhancedPrompt.append(buildConstraintsSection(adType, isVietnamese));
+        enhancedPrompt.append("\n\n");
+
+        // Stage 5: Critical instructions (CTA handling, natural tone)
+        enhancedPrompt.append(buildCriticalInstructions(isVietnamese));
+
+        log.debug("Enhanced prompt built with campaign audience (length: {} chars)", enhancedPrompt.length());
         return enhancedPrompt.toString();
     }
 
@@ -129,6 +191,26 @@ public class MultiStagePromptBuilder {
             }
 
             section.append("\n💡 Create content suitable for this audience!");
+        }
+
+        return section.toString();
+    }
+
+    /**
+     * Issue #9: Build audience section from Campaign's targetAudience string
+     * This is simpler than AudienceSegmentRequest as it's a free-form text field
+     */
+    private String buildAudienceSectionFromCampaign(String targetAudience, boolean isVietnamese) {
+        StringBuilder section = new StringBuilder();
+
+        if (isVietnamese) {
+            section.append("🎯 ĐỐI TƯỢNG MỤC TIÊU (CẤP CHIẾN DỊCH):\n");
+            section.append(targetAudience);
+            section.append("\n\n💡 Tạo nội dung phù hợp với đối tượng này!");
+        } else {
+            section.append("🎯 TARGET AUDIENCE (CAMPAIGN LEVEL):\n");
+            section.append(targetAudience);
+            section.append("\n\n💡 Create content suitable for this audience!");
         }
 
         return section.toString();

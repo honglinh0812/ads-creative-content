@@ -88,6 +88,13 @@ public class StableDiffusionProvider implements AIProvider {
     }
 
     @Override
+    public String generateTextCompletion(String prompt, String systemPrompt, Integer maxTokens) {
+        // Stable Diffusion is image-only, doesn't support text completion
+        log.warn("Stable Diffusion does not support text completion");
+        return null;
+    }
+
+    @Override
     public String generateImage(String prompt) {
         if (!supportsImageGeneration()) {
             log.warn("Stable Diffusion image generation not supported (likely missing API key).");

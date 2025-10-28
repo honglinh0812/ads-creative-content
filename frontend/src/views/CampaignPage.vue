@@ -3,9 +3,9 @@
     <!-- Standardized Page Header -->
     <div class="page-header-standard">
       <div class="page-header-content">
-        <h1 class="page-title-standard">Campaigns</h1>
+        <h1 class="page-title-standard">{{ $t('campaign.page.title') }}</h1>
         <p class="page-subtitle-standard">
-          Manage your advertising campaigns and monitor their performance
+          {{ $t('campaign.page.subtitle') }}
         </p>
       </div>
 
@@ -13,7 +13,7 @@
         <router-link to="/campaign/create">
           <button class="btn-primary-standard">
             <PlusOutlined />
-            New Campaign
+            {{ $t('campaign.page.action.newCampaign') }}
           </button>
         </router-link>
       </div>
@@ -51,40 +51,40 @@
       <!-- Campaign Detail Modal -->
       <a-modal
         v-model:open="showDetailModal"
-        title="Campaign Details"
+        :title="$t('campaign.modal.details.title')"
         :width="800"
         :footer="null"
       >
         <div v-if="selectedCampaign">
           <a-descriptions :column="1" bordered>
-            <a-descriptions-item label="Name">
+            <a-descriptions-item :label="$t('campaign.modal.details.label.name')">
               {{ selectedCampaign.name }}
             </a-descriptions-item>
-            <a-descriptions-item label="Budget">
+            <a-descriptions-item :label="$t('campaign.modal.details.label.budget')">
               {{ selectedCampaign.budget }}
             </a-descriptions-item>
-            <a-descriptions-item label="Status">
+            <a-descriptions-item :label="$t('campaign.modal.details.label.status')">
               <a-tag :color="getStatusColor(selectedCampaign.status)">
                 {{ selectedCampaign.status }}
               </a-tag>
             </a-descriptions-item>
-            <a-descriptions-item label="Created Date">
+            <a-descriptions-item :label="$t('campaign.modal.details.label.createdDate')">
               {{ formatDate(selectedCampaign.createdDate) }}
             </a-descriptions-item>
-            <a-descriptions-item label="Total Ads">
+            <a-descriptions-item :label="$t('campaign.modal.details.label.totalAds')">
               {{ selectedCampaign.totalAds || 0 }}
             </a-descriptions-item>
           </a-descriptions>
         </div>
         <template #footer>
-          <a-button type="primary" @click="showDetailModal = false">OK</a-button>
+          <a-button type="primary" @click="showDetailModal = false">{{ $t('common.action.ok') }}</a-button>
         </template>
       </a-modal>
 
       <!-- Edit Campaign Modal -->
       <a-modal
         v-model:open="showEditModal"
-        title="Edit Campaign"
+        :title="$t('campaign.modal.edit.title')"
         :width="800"
         @ok="saveEditedCampaign"
         @cancel="confirmCancelEdit"
@@ -92,33 +92,33 @@
         <div v-if="editingCampaign">
           <a-form layout="vertical">
             <a-form-item
-              label="Name"
+              :label="$t('campaign.modal.details.label.name')"
               :validate-status="errors.name ? 'error' : ''"
               :help="errors.name"
             >
               <a-input
                 v-model:value="editingCampaign.name"
-                placeholder="Enter campaign name"
+                :placeholder="$t('campaign.modal.edit.placeholder.name')"
                 @blur="validateEditCampaign"
               />
             </a-form-item>
-            <a-form-item label="Budget">
+            <a-form-item :label="$t('campaign.modal.details.label.budget')">
               <a-input
                 v-model:value="editingCampaign.budget"
-                placeholder="Enter budget"
+                :placeholder="$t('campaign.modal.edit.placeholder.budget')"
               />
             </a-form-item>
-            <a-form-item label="Status">
+            <a-form-item :label="$t('campaign.modal.details.label.status')">
               <a-select
                 v-model:value="editingCampaign.status"
-                placeholder="Select status"
+                :placeholder="$t('campaign.modal.edit.placeholder.status')"
                 style="width: 100%;"
               >
-                <a-select-option value="DRAFT">DRAFT</a-select-option>
-                <a-select-option value="ACTIVE">ACTIVE</a-select-option>
-                <a-select-option value="PAUSED">PAUSED</a-select-option>
-                <a-select-option value="COMPLETED">COMPLETED</a-select-option>
-                <a-select-option value="FAILED">FAILED</a-select-option>
+                <a-select-option value="DRAFT">{{ $t('campaign.status.draft') }}</a-select-option>
+                <a-select-option value="ACTIVE">{{ $t('campaign.status.active') }}</a-select-option>
+                <a-select-option value="PAUSED">{{ $t('campaign.status.paused') }}</a-select-option>
+                <a-select-option value="COMPLETED">{{ $t('campaign.status.completed') }}</a-select-option>
+                <a-select-option value="FAILED">{{ $t('campaign.status.failed') }}</a-select-option>
               </a-select>
             </a-form-item>
           </a-form>
@@ -209,11 +209,11 @@ export default {
       this.errors = {};
       let isValid = true;
       if (!this.editingCampaign.name) {
-        this.errors.name = 'Name is required';
+        this.errors.name = this.$t('campaign.modal.edit.validation.nameRequired');
         isValid = false;
       }
       if (!isValid) {
-        this.$message.error('Please fill in all required fields.');
+        this.$message.error(this.$t('campaign.modal.edit.validation.fillRequired'));
         return;
       }
       try {
@@ -223,44 +223,44 @@ export default {
           campaignData: { name, budget, status }
         });
         this.showEditModal = false;
-        this.$message.success('Update campaign successfully');
+        this.$message.success(this.$t('campaign.modal.edit.success.updated'));
         await this.loadCampaigns();
       } catch (error) {
         console.error('Failed to save campaign:', error);
-        this.$message.error(error.message || 'Update campaign failed');
+        this.$message.error(error.message || this.$t('campaign.modal.edit.error.updateFailed'));
       }
     },
     confirmDeleteCampaign(campaignId) {
       Modal.confirm({
-        title: 'Confirm delete',
-        content: 'Are you sure you want to delete this campaign? This action cannot be undone.',
-        okText: 'Delete',
+        title: this.$t('campaign.modal.confirm.deleteTitle'),
+        content: this.$t('campaign.modal.confirm.deleteContent'),
+        okText: this.$t('common.action.delete'),
         okType: 'danger',
-        cancelText: 'Cancel',
+        cancelText: this.$t('common.action.cancel'),
         onOk: async () => {
           try {
             await this.deleteCampaign(campaignId);
-            this.$message.success('Delete campaign successfully');
+            this.$message.success(this.$t('campaign.modal.confirm.success.deleted'));
             await this.loadCampaigns();
           } catch (error) {
             console.error('Failed to delete campaign:', error);
-            this.$message.error(error.message || 'Delete campaign failed');
+            this.$message.error(error.message || this.$t('campaign.modal.confirm.error.deleteFailed'));
           }
         },
         onCancel: () => {
-          this.$message.info('Cancel delete campaign');
+          this.$message.info(this.$t('campaign.modal.confirm.info.cancelled'));
         }
       });
     },
     confirmCancelEdit() {
       Modal.confirm({
-        title: 'Confirm',
-        content: 'Are you sure you want to cancel? The changes you made will be lost.',
-        okText: 'Yes',
-        cancelText: 'No',
+        title: this.$t('common.action.confirm'),
+        content: this.$t('campaign.modal.confirmCancel.content'),
+        okText: this.$t('common.action.yes'),
+        cancelText: this.$t('common.action.no'),
         onOk: () => {
           this.showEditModal = false;
-          this.$message.info('Cancel changes');
+          this.$message.info(this.$t('campaign.modal.confirmCancel.info.cancelled'));
         }
       });
     },
@@ -279,8 +279,14 @@ export default {
       })
     },
     formatDate(dateString) {
-      if (!dateString) return ""
+      if (!dateString) return "Not available"
+
       const date = new Date(dateString)
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date:', dateString)
+        return "Invalid date"
+      }
+
       return date.toLocaleDateString("vi-VN", {
         month: "short",
         day: "numeric",
@@ -292,7 +298,7 @@ export default {
     },
     validateEditCampaign() {
       if (!this.editingCampaign.name) {
-        this.errors.name = 'Name is required';
+        this.errors.name = this.$t('campaign.modal.edit.validation.nameRequired');
       } else {
         this.errors.name = '';
       }

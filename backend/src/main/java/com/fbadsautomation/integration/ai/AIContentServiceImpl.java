@@ -55,6 +55,84 @@ public class AIContentServiceImpl {
         this.minIOStorageService = minIOStorageService;
     }
 
+    /**
+     * Issue #9: Generate content with Campaign-level audience
+     * This is the NEW method that accepts Campaign and AdStyle
+     */
+    public List<AdContent> generateContentWithCampaign(String prompt,
+                                                        AdContent.ContentType contentType,
+                                                        String textProvider,
+                                                        String imageProvider,
+                                                        int numberOfVariations,
+                                                        String language,
+                                                        List<String> adLinks,
+                                                        String promptStyle,
+                                                        String customPrompt,
+                                                        String extractedContent,
+                                                        String mediaFileUrl,
+                                                        com.fbadsautomation.model.FacebookCTA callToAction,
+                                                        com.fbadsautomation.model.Campaign campaign,
+                                                        com.fbadsautomation.model.AdStyle adStyle) {
+
+        String providerId = (textProvider == null || textProvider.isBlank())
+                ? "openai" : textProvider;
+        log.info("🔍 [Issue #9] Using campaign-level audience. Provider: '{}', campaign: {}, style: {}",
+                 providerId,
+                 campaign != null ? campaign.getId() : "none",
+                 adStyle != null ? adStyle.name() : "none");
+
+        AIProvider textAI = aiProviderService.getProvider(providerId);
+        if (textAI == null) {
+            log.error("Unsupported text AI provider: {}", providerId);
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported AI provider: " + providerId);
+        }
+
+        // Build final prompt
+        String finalPrompt = buildFinalPrompt(prompt, adLinks, promptStyle, customPrompt, extractedContent);
+
+        try {
+            AdType adType = convertContentTypeToAdType(contentType);
+            // Issue #9: Use new enhancePromptWithCampaign method
+            String enhancedPrompt = enhancePromptWithCampaign(finalPrompt, adType, campaign, adStyle);
+            log.info("[Issue #9] Generating {} variations with campaign audience", numberOfVariations);
+
+            // Generate content
+            com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
+            List<AdContent> contents = aiProviderService.generateContentWithReliability(
+                enhancedPrompt, textProvider, numberOfVariations, language, adLinks, cta);
+
+            // Handle images
+            if (mediaFileUrl != null && !mediaFileUrl.isBlank()) {
+                for (AdContent content : contents) {
+                    content.setImageUrl(mediaFileUrl);
+                }
+            } else if (imageProvider != null && !imageProvider.isBlank()) {
+                for (AdContent content : contents) {
+                    try {
+                        String externalImageUrl = aiProviderService.generateImageWithReliability(content.getPrimaryText(), imageProvider);
+                        String storedImageUrl = downloadAndStoreImage(externalImageUrl);
+                        content.setImageUrl(storedImageUrl);
+                    } catch (Exception e) {
+                        log.error("Failed to generate/store image: {}", e.getMessage());
+                        content.setImageUrl("/img/placeholder.png");
+                    }
+                }
+            } else {
+                for (AdContent content : contents) {
+                    content.setImageUrl("/img/placeholder.png");
+                }
+            }
+
+            // Validate
+            List<AdContent> validatedContents = validationService.validateAndFilterContent(contents);
+            return validatedContents.isEmpty() ? contents : validatedContents;
+
+        } catch (Exception e) {
+            log.error("[Issue #9] Failed to generate content: {}", e.getMessage(), e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate ad content: " + e.getMessage());
+        }
+    }
+
     public List<AdContent> generateContent(String prompt,
                                            AdContent.ContentType contentType,
                                            String textProvider,
@@ -288,10 +366,57 @@ public class AIContentServiceImpl {
     }
 
     /**
-     * Enhance user prompt based on ad type with validation constraints
-     * to improve first-pass content quality and reduce validation failures
-     * Now supports bilingual prompts (Vietnamese/English) and persona-based prompting
+     * Issue #9: Enhance prompt with Campaign-level audience
+     * This is the NEW method for Issue #9 that uses Campaign instead of AudienceSegment
      */
+    private String enhancePromptWithCampaign(String userPrompt, AdType adType,
+                                             com.fbadsautomation.model.Campaign campaign,
+                                             com.fbadsautomation.model.AdStyle adStyle) {
+        // Detect language for bilingual support
+        Language detectedLanguage = ValidationMessages.detectLanguage(userPrompt);
+        log.info("[Issue #9] Detected language: {}, campaign: {}", detectedLanguage,
+                 campaign != null ? campaign.getId() : "none");
+
+        // Try multi-stage persona-based prompting with campaign (Issue #9)
+        if (personaSelectorService != null && multiStagePromptBuilder != null) {
+            try {
+                log.info("[Issue #9] Using multi-stage prompting with campaign-level audience");
+
+                // Select appropriate persona based on product/service
+                com.fbadsautomation.model.AdPersona persona = personaSelectorService.selectPersona(
+                    userPrompt,
+                    detectedLanguage
+                );
+
+                // Build enhanced prompt with persona, campaign audience, and style (Issue #8 + #9)
+                String enhancedPrompt = multiStagePromptBuilder.buildEnhancedPrompt(
+                    userPrompt,
+                    persona,
+                    adType,
+                    detectedLanguage,
+                    campaign,  // Use Campaign instead of AudienceSegment (Issue #9)
+                    adStyle    // Include AdStyle (Issue #8)
+                );
+
+                log.info("[Issue #9] Multi-stage prompt built with campaign audience, persona: {}", persona.name());
+                return enhancedPrompt;
+
+            } catch (Exception e) {
+                log.warn("[Issue #9] Multi-stage prompting failed, falling back: {}", e.getMessage());
+            }
+        }
+
+        // Fallback to legacy prompting
+        log.info("[Issue #9] Using legacy prompt (no campaign audience integration)");
+        return buildLegacyPromptForAdType(userPrompt, adType, detectedLanguage);
+    }
+
+    /**
+     * Legacy: Enhance user prompt based on ad type with validation constraints
+     * This method uses AudienceSegment (deprecated in favor of Campaign)
+     * @deprecated Use enhancePromptWithCampaign instead (Issue #9)
+     */
+    @Deprecated
     private String enhancePromptForAdType(String userPrompt, AdType adType, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
         // Detect language for bilingual support
         Language detectedLanguage = ValidationMessages.detectLanguage(userPrompt);
@@ -314,7 +439,8 @@ public class AIContentServiceImpl {
                     persona,
                     adType,
                     detectedLanguage,
-                    audienceSegment // Now properly passed from caller
+                    audienceSegment, // Now properly passed from caller
+                    null  // AdStyle - will be passed from Ad object in Issue #9 refactor
                 );
 
                 log.info("Multi-stage prompt built successfully with persona: {}", persona.name());
@@ -327,7 +453,7 @@ public class AIContentServiceImpl {
 
         // Fallback to legacy prompting (old approach)
         log.info("Using legacy prompt enhancement (audience segment handled separately)");
-        String legacyPrompt = buildLegacyPrompt(userPrompt, adType, detectedLanguage);
+        String legacyPrompt = buildLegacyPromptForAdType(userPrompt, adType, detectedLanguage);
 
         // Inject audience segment for legacy approach
         if (audienceSegment != null) {
@@ -340,7 +466,7 @@ public class AIContentServiceImpl {
     /**
      * Legacy prompt builder (fallback when multi-stage prompting unavailable)
      */
-    private String buildLegacyPrompt(String userPrompt, AdType adType, Language detectedLanguage) {
+    private String buildLegacyPromptForAdType(String userPrompt, AdType adType, Language detectedLanguage) {
         StringBuilder enhanced = new StringBuilder(userPrompt);
 
         // Add validation constraints to guide AI generation in appropriate language

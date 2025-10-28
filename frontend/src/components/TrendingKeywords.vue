@@ -1,5 +1,5 @@
 <template>
-  <a-card title="📈 Trending Keywords" class="trending-keywords-card">
+  <a-card :title="cardTitle" class="trending-keywords-card">
     <a-row :gutter="16" class="search-row">
       <a-col :span="16">
         <a-form-item
@@ -122,7 +122,7 @@
         <template #icon>
           <plus-outlined />
         </template>
-        Add {{ selectedKeywords.length }} Keyword(s) to Prompt
+        {{ addButtonText }}
       </a-button>
     </div>
 
@@ -144,6 +144,12 @@ export default {
     ArrowUpOutlined,
     PlusOutlined
   },
+  props: {
+    language: {
+      type: String,
+      default: 'en'
+    }
+  },
   emits: ['keywords-selected', 'validation-change'],
   data() {
     return {
@@ -163,6 +169,9 @@ export default {
     };
   },
   computed: {
+    cardTitle() {
+      return this.language === 'vi' ? '📈 Từ khóa thịnh hành' : '📈 Trending Keywords'
+    },
     selectedKeywords() {
       return this.trends
         .filter(t => t.selected)
@@ -171,6 +180,12 @@ export default {
     isSearchValid() {
       const query = this.searchQuery.trim();
       return query.length >= 2 && query.length <= 100;
+    },
+    addButtonText() {
+      if (this.language === 'vi') {
+        return `Thêm ${this.selectedKeywords.length} từ khóa vào Prompt`
+      }
+      return `Add ${this.selectedKeywords.length} Keyword(s) to Prompt`
     }
   },
   methods: {

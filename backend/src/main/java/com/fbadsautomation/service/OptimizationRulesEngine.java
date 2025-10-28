@@ -179,8 +179,8 @@ public class OptimizationRulesEngine {
                     recommendation.setExpiresAt(LocalDateTime.now().plusDays(5));
 
                     recommendations.add(recommendation);
-                };
-    }
+                }
+            }
 
         } catch (Exception e) {
             log.error("Error generating budget recommendations: {}", e.getMessage(), e);
@@ -264,11 +264,10 @@ public class OptimizationRulesEngine {
                         recommendation.setExpiresAt(LocalDateTime.now().plusDays(14));
 
                         recommendations.add(recommendation);
-                    };
-    }
+                }
             }
 
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error generating AI provider recommendations: {}", e.getMessage(), e);
         }
 
@@ -374,14 +373,15 @@ public class OptimizationRulesEngine {
                     recommendation.setExpiresAt(LocalDateTime.now().plusDays(14));
 
                     recommendations.add(recommendation);
-                };
-    }
+                }
+            }
 
         } catch (Exception e) {
             log.error("Error generating campaign objective recommendations: {}", e.getMessage(), e);
         }
 
-        return recommendations; }
+        return recommendations;
+    }
 
     /**
      * Generate content type optimization recommendations
@@ -445,8 +445,8 @@ public class OptimizationRulesEngine {
                     recommendation.setExpiresAt(LocalDateTime.now().plusDays(21));
 
                     recommendations.add(recommendation);
-                };
-    }
+                }
+            }
 
         } catch (Exception e) {
             log.error("Error generating content type recommendations: {}", e.getMessage(), e);

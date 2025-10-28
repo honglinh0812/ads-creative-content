@@ -1,6 +1,7 @@
 package com.fbadsautomation.service;
 
 import com.fbadsautomation.dto.CampaignCreateRequest;
+import com.fbadsautomation.dto.CampaignDTO;
 import com.fbadsautomation.exception.ApiException;
 import com.fbadsautomation.model.Campaign;
 import com.fbadsautomation.model.User;
@@ -223,9 +224,95 @@ import org.springframework.util.StringUtils;
 
    public Page<Campaign> getAllCampaignsByUserPaginated(Long userId, Pageable pageable) {
        log.info("Getting campaigns for user ID: {} with pageable: {}", userId, pageable);
-       
+
        User user = userRepository.findById(userId)
                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
        return campaignRepository.findAllByUser(user, pageable);
+   }
+
+   /**
+    * Get campaigns with ad count and created date for display (Issue #7 fix)
+    * Returns CampaignDTO with totalAds and createdDate populated
+    * @param userId The user ID
+    * @param pageable Pagination parameters
+    * @return Page of CampaignDTO with all fields
+    */
+   public Page<CampaignDTO> getAllCampaignsWithStatsByUserPaginated(Long userId, Pageable pageable) {
+       log.info("Getting campaigns with stats for user ID: {} with pageable: {}", userId, pageable);
+
+       User user = userRepository.findById(userId)
+               .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+
+       // Use optimized query with ad count
+       Page<Object[]> results = campaignRepository.findAllByUserWithAdCount(user, pageable);
+
+       // Map Object[] to CampaignDTO
+       return results.map(row -> {
+           Campaign campaign = (Campaign) row[0];
+           Long adCount = (Long) row[1];
+
+           return new CampaignDTO(
+               campaign.getId(),
+               campaign.getName(),
+               campaign.getStatus() != null ? campaign.getStatus().toString() : null,
+               campaign.getObjective() != null ? campaign.getObjective().toString() : null,
+               campaign.getBudgetType() != null ? campaign.getBudgetType().toString() : null,
+               campaign.getDailyBudget(),
+               campaign.getTotalBudget(),
+               campaign.getTargetAudience(),
+               campaign.getStartDate(),
+               campaign.getEndDate(),
+               adCount.intValue(),
+               campaign.getCreatedDate()
+           );
+       });
+   }
+
+   /**
+    * Automatically update campaign status based on ads (Issue #7)
+    * DRAFT -> READY when first ad is created
+    * EXPORTED -> READY when new ad is added to exported campaign
+    * @param campaignId The campaign ID
+    * @param userId The user ID
+    */
+   @Transactional
+   public void updateCampaignStatusBasedOnAds(Long campaignId, Long userId) {
+       log.info("Checking campaign status update for campaign: {} user: {}", campaignId, userId);
+
+       Campaign campaign = getCampaignByIdAndUser(campaignId, userId);
+
+       // Count ads in this campaign
+       long adCount = campaign.getAds() != null ? campaign.getAds().size() : 0;
+
+       if (adCount > 0 && campaign.getStatus() == Campaign.CampaignStatus.DRAFT) {
+           campaign.setStatus(Campaign.CampaignStatus.READY);
+           campaignRepository.save(campaign);
+           log.info("Campaign {} status changed: DRAFT -> READY (first ad created)", campaignId);
+       } else if (adCount > 0 && campaign.getStatus() == Campaign.CampaignStatus.EXPORTED) {
+           campaign.setStatus(Campaign.CampaignStatus.READY);
+           campaignRepository.save(campaign);
+           log.info("Campaign {} status changed: EXPORTED -> READY (new ad added)", campaignId);
+       }
+   }
+
+   /**
+    * Mark campaign as exported after successful Facebook export (Issue #7)
+    * @param campaignId The campaign ID
+    * @param userId The user ID
+    */
+   @Transactional
+   public void markCampaignAsExported(Long campaignId, Long userId) {
+       log.info("Marking campaign {} as EXPORTED for user: {}", campaignId, userId);
+
+       Campaign campaign = getCampaignByIdAndUser(campaignId, userId);
+
+       if (campaign.getStatus() == Campaign.CampaignStatus.READY) {
+           campaign.setStatus(Campaign.CampaignStatus.EXPORTED);
+           campaignRepository.save(campaign);
+           log.info("Campaign {} status changed: READY -> EXPORTED", campaignId);
+       } else {
+           log.warn("Cannot mark campaign {} as EXPORTED: current status is {}",
+                    campaignId, campaign.getStatus());
+       }
    }
 }

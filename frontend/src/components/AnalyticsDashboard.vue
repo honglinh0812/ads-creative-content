@@ -358,10 +358,10 @@ export default {
       try {
         loading.value = true
         error.value = null
-        
+
         const response = await api.analyticsAPI.getDashboard(selectedTimeRange.value)
-        analytics.value = response.data
-        
+        analytics.value = response.data.data  // Fix: Backend returns ApiResponse wrapper with nested data
+
       } catch (err) {
         console.error('Error fetching analytics:', err)
         error.value = err.response?.data?.message || 'Failed to load analytics data'

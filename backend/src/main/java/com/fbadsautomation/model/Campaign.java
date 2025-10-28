@@ -77,7 +77,14 @@ public class Campaign {
     private LocalDateTime updatedAt;
     
     public enum CampaignStatus {
-        DRAFT, PENDING, ACTIVE, PAUSED, COMPLETED, FAILED;
+        DRAFT,      // Campaign has no ads yet
+        READY,      // Campaign has ads and is ready to export
+        EXPORTED,   // Campaign ads have been exported to Facebook
+        PENDING,    // Campaign is pending approval
+        ACTIVE,     // Campaign is actively running
+        PAUSED,     // Campaign is temporarily paused
+        COMPLETED,  // Campaign has finished running
+        FAILED;     // Campaign creation/execution failed
     }
     
     public enum CampaignObjective {

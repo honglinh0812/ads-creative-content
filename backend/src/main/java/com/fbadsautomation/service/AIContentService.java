@@ -37,16 +37,33 @@ import org.springframework.stereotype.Service;
     * @return List of generated ad contents
     */
    public List<AdContent> generateAdContent(Ad ad, String prompt, org.springframework.web.multipart.MultipartFile mediaFile, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
-       log.info("Generating content for ad: {}, mediaFileUrl: {}", ad.getId(), mediaFileUrl);
+       log.info("[Issue #9] Generating content for ad: {}, campaign: {}, mediaFileUrl: {}",
+                ad.getId(),
+                ad.getCampaign() != null ? ad.getCampaign().getId() : "none",
+                mediaFileUrl);
 
        // Determine content type based on ad type
        AdContent.ContentType contentType = determineContentType(ad.getAdType());
 
+       // Issue #9: Get Campaign from Ad for campaign-level audience targeting
+       com.fbadsautomation.model.Campaign campaign = ad.getCampaign();
+       if (campaign != null && campaign.getTargetAudience() != null && !campaign.getTargetAudience().trim().isEmpty()) {
+           log.info("[Issue #9] Using campaign-level target audience: {}", campaign.getTargetAudience());
+       } else {
+           log.warn("[Issue #9] Campaign has no target audience defined");
+       }
+
        // Always use original prompt, extractedContent will be handled in buildFinalPrompt
        // Sử dụng CTA được truyền hoặc default nếu null
        com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
-       List<AdContent> generatedContents = aiIntegrationService.generateContent(
-               prompt, contentType, textProvider, imageProvider, numberOfVariations != null ? numberOfVariations : DEFAULT_VARIATIONS, language, adLinks, promptStyle, customPrompt, extractedContent, mediaFileUrl, cta, audienceSegment);
+
+       // Issue #9: Pass Campaign and AdStyle instead of AudienceSegment
+       // Note: We still accept audienceSegment parameter for backward compatibility but prefer Campaign
+       List<AdContent> generatedContents = aiIntegrationService.generateContentWithCampaign(
+               prompt, contentType, textProvider, imageProvider,
+               numberOfVariations != null ? numberOfVariations : DEFAULT_VARIATIONS,
+               language, adLinks, promptStyle, customPrompt, extractedContent,
+               mediaFileUrl, cta, campaign, ad.getAdStyle());
        
        // Set ad reference and preview order for each content
        for (int i = 0; i < generatedContents.size(); i++) {

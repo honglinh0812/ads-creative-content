@@ -8,7 +8,63 @@
     "logout": "Logout",
     "logoutTitle": "Confirm Logout",
     "logoutConfirmation": "Are you sure you want to logout?",
-    "loginFailed": "Login failed: Unable to fetch user information."
+    "loginFailed": "Login failed: Unable to fetch user information.",
+    "page": {
+      "title": "Facebook Ads Automation",
+      "description": "Create and manage Facebook ads with AI-powered content generation",
+      "logoAlt": "Ads Creative Logo"
+    },
+    "loginForm": {
+      "title": "Login",
+      "facebookButton": "Login with Facebook",
+      "or": "Or",
+      "usernamePlaceholder": "Username or Email",
+      "passwordPlaceholder": "Password",
+      "submitButton": "Login",
+      "registerLink": "Register",
+      "forgotLink": "Forgot password?",
+      "success": "Login successful!",
+      "error": "Login failed"
+    },
+    "registerForm": {
+      "title": "Register",
+      "usernamePlaceholder": "Username",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Password",
+      "confirmPasswordPlaceholder": "Confirm password",
+      "submitButton": "Register",
+      "backToLogin": "Back to login",
+      "success": "Register successful! Please login.",
+      "error": "Register failed",
+      "validation": {
+        "allRequired": "Please fill in all information.",
+        "usernameRequired": "Username is required",
+        "emailRequired": "Email is required",
+        "passwordRequired": "Password is required",
+        "passwordMismatch": "The re-entered password does not match.",
+        "confirmPasswordMismatch": "Password confirmation does not match"
+      }
+    },
+    "forgotForm": {
+      "title": "Forgot Password",
+      "emailPlaceholder": "Enter your email",
+      "submitButton": "Send password reset request",
+      "backToLogin": "Back to login",
+      "success": "Password reset email sent (if email exists).",
+      "successAlert": "Email sent to reset password (if email exists).",
+      "error": "Failed to send email",
+      "validation": {
+        "emailRequired": "Please enter your email.",
+        "emailFieldRequired": "Email is required"
+      }
+    },
+    "features": {
+      "title": "Features",
+      "aiPowered": "AI-powered ad content generation",
+      "automated": "Automated campaign management",
+      "multiFormat": "Multiple ad formats support",
+      "secure": "Secure Facebook integration"
+    }
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -38,13 +94,509 @@
     "lightMode": "Light mode enabled",
     "darkMode": "Dark mode enabled"
   },
-  "campaigns": {
+  "campaign": {
+    "page": {
+      "title": "Campaigns",
+      "subtitle": "Manage your advertising campaigns and monitor their performance",
+      "action": {
+        "newCampaign": "New Campaign"
+      }
+    },
+    "modal": {
+      "details": {
+        "title": "Campaign Details",
+        "label": {
+          "name": "Name",
+          "budget": "Budget",
+          "status": "Status",
+          "createdDate": "Created Date",
+          "totalAds": "Total Ads"
+        }
+      },
+      "edit": {
+        "title": "Edit Campaign",
+        "placeholder": {
+          "name": "Enter campaign name",
+          "budget": "Enter budget",
+          "status": "Select status"
+        },
+        "validation": {
+          "nameRequired": "Name is required",
+          "fillRequired": "Please fill in all required fields."
+        },
+        "success": {
+          "updated": "Campaign updated successfully"
+        },
+        "error": {
+          "updateFailed": "Failed to update campaign"
+        }
+      },
+      "confirm": {
+        "deleteTitle": "Confirm Delete",
+        "deleteContent": "Are you sure you want to delete this campaign? This action cannot be undone.",
+        "success": {
+          "deleted": "Campaign deleted successfully"
+        },
+        "error": {
+          "deleteFailed": "Failed to delete campaign"
+        },
+        "info": {
+          "cancelled": "Campaign deletion cancelled"
+        }
+      },
+      "confirmCancel": {
+        "content": "Are you sure you want to cancel? Your changes will be lost.",
+        "info": {
+          "cancelled": "Changes cancelled"
+        }
+      }
+    },
+    "create": {
+      "page": {
+        "title": "Create New Campaign",
+        "subtitle": "Set up your advertising campaign with objectives and budget",
+        "help": "Help",
+        "backToCampaigns": "Back to Campaigns"
+      },
+      "card": {
+        "title": "Campaign Information",
+        "subtitle": "Configure your campaign settings and budget"
+      },
+      "form": {
+        "label": {
+          "campaignName": "Campaign Name",
+          "objective": "Campaign Objective",
+          "budgetType": "Budget Type",
+          "dailyBudget": "Daily Budget",
+          "totalBudget": "Total Budget",
+          "startDate": "Start Date & Time",
+          "endDate": "End Date & Time"
+        },
+        "placeholder": {
+          "campaignName": "Enter a memorable campaign name...",
+          "objective": "Select your campaign objective...",
+          "budgetType": "Select budget type...",
+          "dailyBudget": "Enter daily budget...",
+          "totalBudget": "Enter total budget...",
+          "startDate": "Select start date and time...",
+          "endDate": "Select end date and time..."
+        },
+        "budgetType": {
+          "daily": "Daily Budget",
+          "dailyDesc": "Set daily spending limit",
+          "lifetime": "Lifetime Budget",
+          "lifetimeDesc": "Set total budget for entire campaign"
+        },
+        "action": {
+          "cancel": "Cancel",
+          "creating": "Creating...",
+          "create": "Create Campaign"
+        }
+      },
+      "help": {
+        "title": "Campaign Creation Guide",
+        "intro": "This guide will help you create a professional Facebook advertising campaign in 3 simple steps.",
+        "steps": {
+          "title": "Steps to Complete",
+          "step1": {
+            "title": "Basic Information",
+            "desc": "Enter campaign name, select objective, budget type."
+          },
+          "step2": {
+            "title": "Target Audience & Budget",
+            "desc": "Choose target audience, set budget and runtime."
+          },
+          "step3": {
+            "title": "Preview & Save",
+            "desc": "Review campaign information and save."
+          }
+        }
+      }
+    },
+    "table": {
+      "placeholder": {
+        "search": "Search campaigns...",
+        "status": "Status",
+        "objective": "Objective"
+      },
+      "filter": {
+        "allStatus": "All Status",
+        "allObjectives": "All Objectives"
+      },
+      "action": {
+        "reset": "Reset",
+        "viewDetails": "View Details",
+        "edit": "Edit Campaign",
+        "cannotEdit": "Cannot edit exported campaign",
+        "viewAds": "View Ads",
+        "delete": "Delete Campaign",
+        "confirmDelete": "Are you sure you want to delete this campaign?"
+      },
+      "view": {
+        "cards": "Cards",
+        "table": "Table"
+      },
+      "column": {
+        "name": "Campaign Name",
+        "status": "Status",
+        "objective": "Objective",
+        "budget": "Budget",
+        "ads": "Ads",
+        "createdDate": "Created Date",
+        "actions": "Actions"
+      },
+      "results": {
+        "showing": "Showing {filtered} of {total} campaigns",
+        "filtered": "(filtered)"
+      },
+      "label": {
+        "budget": "Budget",
+        "totalAds": "Total Ads"
+      },
+      "budget": {
+        "perDay": "/day",
+        "total": "total",
+        "notSet": "Not set"
+      },
+      "date": {
+        "notAvailable": "Not available",
+        "invalid": "Invalid date"
+      }
+    },
+    "status": {
+      "draft": "Draft",
+      "ready": "Ready",
+      "exported": "Exported",
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed",
+      "failed": "Failed",
+      "pending": "Pending",
+      "unknown": "Unknown"
+    },
+    "objective": {
+      "brandAwareness": "Brand Awareness",
+      "reach": "Reach",
+      "traffic": "Traffic",
+      "engagement": "Engagement",
+      "appInstalls": "App Installs",
+      "videoViews": "Video Views",
+      "leadGeneration": "Lead Generation",
+      "conversions": "Conversions",
+      "catalogSales": "Catalog Sales",
+      "storeTraffic": "Store Traffic"
+    },
+    "date": {
+      "notAvailable": "Not available",
+      "invalid": "Invalid date"
+    },
     "createGuide": "Campaign Creation Guide",
     "guideDescription": "This guide will help you create a professional Facebook advertising campaign in 3 simple steps."
   },
-  "ads": {
+  "ad": {
+    "page": {
+      "title": "Ads",
+      "subtitle": "Manage your advertising content",
+      "action": {
+        "newAd": "New Ad"
+      }
+    },
+    "modal": {
+      "details": {
+        "title": "Ad Details",
+        "label": {
+          "name": "Name:",
+          "campaign": "Campaign:",
+          "adType": "Ad Type:",
+          "status": "Status:",
+          "headline": "Headline:",
+          "description": "Description:",
+          "primaryText": "Primary Text:",
+          "callToAction": "Call to Action:",
+          "media": "Media:"
+        },
+        "media": {
+          "imageAlt": "Ad Image",
+          "imageUrl": "Image URL:",
+          "videoUrl": "Video URL:",
+          "videoPreview": "Video Preview",
+          "noMedia": "No image/video for this ad",
+          "imageLoadFailed": "Failed to load image"
+        }
+      },
+      "edit": {
+        "title": "Edit Ad",
+        "label": {
+          "name": "Name:",
+          "headline": "Headline:",
+          "description": "Description:",
+          "primaryText": "Primary Text:",
+          "callToAction": "Call to Action:",
+          "status": "Status:"
+        },
+        "placeholder": {
+          "callToAction": "Select Call to Action",
+          "status": "Select Status"
+        },
+        "validation": {
+          "nameRequired": "Name is required",
+          "headlineRequired": "Headline is required",
+          "ctaRequired": "Call to Action is required",
+          "statusRequired": "Status is required",
+          "fillRequired": "Please fill in all required fields."
+        },
+        "success": {
+          "updated": "Ad updated successfully"
+        },
+        "error": {
+          "updateFailed": "Failed to update ad"
+        }
+      },
+      "confirm": {
+        "deleteTitle": "Delete Confirmation",
+        "deleteContent": "Do you really want to delete this ad? This action cannot be undone.",
+        "success": {
+          "deleted": "Ad deleted successfully"
+        },
+        "error": {
+          "deleteFailed": "Failed to delete ad"
+        },
+        "info": {
+          "cancelled": "Delete operation cancelled"
+        }
+      },
+      "confirmCancel": {
+        "content": "Are you sure you want to cancel? Your unsaved changes will be lost.",
+        "action": {
+          "yes": "Yes, Cancel",
+          "no": "No, Stay"
+        },
+        "info": {
+          "discarded": "Changes discarded"
+        }
+      }
+    },
+    "table": {
+      "placeholder": {
+        "search": "Search ads..."
+      },
+      "filter": {
+        "allStatus": "All Status",
+        "allTypes": "All Types",
+        "allCampaigns": "All Campaigns"
+      },
+      "action": {
+        "reset": "Reset",
+        "cardsView": "Cards",
+        "tableView": "Table",
+        "viewDetails": "View Details",
+        "edit": "Edit Ad",
+        "duplicate": "Duplicate Ad",
+        "export": "Export to Facebook",
+        "delete": "Delete Ad"
+      },
+      "bulk": {
+        "selected": "{count} ad(s) selected",
+        "clearSelection": "Clear Selection",
+        "exportSelected": "Export Selected"
+      },
+      "column": {
+        "name": "Ad Name",
+        "campaign": "Campaign",
+        "status": "Status",
+        "type": "Type",
+        "content": "Content",
+        "media": "Media",
+        "createdDate": "Created Date",
+        "actions": "Actions"
+      },
+      "summary": {
+        "showing": "Showing {count} of {total} ads",
+        "filtered": "(filtered)"
+      },
+      "row": {
+        "idLabel": "ID: {id}",
+        "campaignIdLabel": "Campaign ID: {id}"
+      },
+      "content": {
+        "headline": "Headline:",
+        "text": "Text:"
+      },
+      "card": {
+        "noMedia": "No Media",
+        "label": {
+          "headline": "Headline:",
+          "text": "Text:"
+        },
+        "campaign": "Campaign: {name}"
+      },
+      "default": {
+        "untitledAd": "Untitled Ad",
+        "unknownStatus": "Unknown",
+        "noCampaign": "No Campaign",
+        "campaignId": "Campaign #{id}"
+      },
+      "pagination": {
+        "perPage": "{count} / page"
+      },
+      "confirm": {
+        "deleteContent": "Are you sure you want to delete this ad?"
+      }
+    },
+    "action": {
+      "export": {
+        "error": {
+          "invalidData": "Invalid ad data for export"
+        },
+        "warning": {
+          "selectAd": "Please select at least one ad to export"
+        },
+        "success": {
+          "exported": "Successfully exported {count} ad(s)!"
+        }
+      },
+      "duplicate": {
+        "suffix": {
+          "copy": "(Copy)"
+        },
+        "error": {
+          "notFound": "Ad not found",
+          "noCampaign": "Cannot duplicate ad: campaign information missing",
+          "failed": "Error duplicating ad: {error}"
+        },
+        "success": {
+          "duplicated": "Ad duplicated successfully!"
+        }
+      }
+    },
+    "status": {
+      "draft": "Draft",
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed",
+      "failed": "Failed",
+      "archived": "Archived"
+    },
+    "type": {
+      "image": "Image",
+      "video": "Video",
+      "carousel": "Carousel",
+      "collection": "Collection"
+    },
     "notFound": "Ad not found for copying",
     "cannotExtract": "Cannot extract content"
+  },
+  "analytics": {
+    "dashboard": {
+      "title": "Analytics Dashboard",
+      "subtitle": "Comprehensive insights into your Facebook advertising performance"
+    },
+    "timeRange": {
+      "last7Days": "Last 7 days",
+      "last30Days": "Last 30 days",
+      "last90Days": "Last 90 days",
+      "lastYear": "Last year"
+    },
+    "state": {
+      "loading": "Loading analytics data...",
+      "errorTitle": "Failed to load analytics"
+    },
+    "demo": {
+      "title": "Preview Mode",
+      "message": "You're viewing sample analytics data. Create your first campaign to see real performance metrics.",
+      "action": {
+        "createCampaign": "Create Your First Campaign"
+      }
+    },
+    "section": {
+      "kpi": "Key Performance Indicators",
+      "trends": "Performance Trends",
+      "topContent": "Top Performing Content"
+    },
+    "kpi": {
+      "totalCampaigns": "Total Campaigns",
+      "totalAds": "Total Ads",
+      "totalImpressions": "Total Impressions",
+      "averageCTR": "Average CTR",
+      "totalBudget": "Total Budget",
+      "roi": "ROI",
+      "contentGenerated": "AI Content Generated",
+      "costSavings": "AI Cost Savings"
+    },
+    "metric": {
+      "impressions": "Impressions",
+      "clicks": "Clicks",
+      "ctr": "CTR (%)",
+      "cpc": "CPC ($)",
+      "conversions": "Conversions",
+      "spend": "Spend ($)"
+    },
+    "card": {
+      "campaign": "Campaign Performance",
+      "aiProvider": "AI Provider Performance",
+      "budget": "Budget Analysis",
+      "content": "Content Performance"
+    }
+  },
+  "trending": {
+    "card": {
+      "title": {
+        "vi": "📈 Từ khóa thịnh hành",
+        "en": "📈 Trending Keywords"
+      }
+    },
+    "search": {
+      "placeholder": "Search trends (e.g., 'tech gadgets', 'fashion')"
+    },
+    "region": {
+      "unitedStates": "🇺🇸 United States",
+      "vietnam": "🇻🇳 Vietnam",
+      "unitedKingdom": "🇬🇧 United Kingdom",
+      "japan": "🇯🇵 Japan",
+      "singapore": "🇸🇬 Singapore"
+    },
+    "state": {
+      "noTrends": "No trends found. Try a different search term.",
+      "noSearch": {
+        "title": "Enter a search term to discover trending keywords",
+        "description": "Find popular topics related to your product or service"
+      }
+    },
+    "alert": {
+      "maxSelected": {
+        "title": "Maximum keywords selected",
+        "description": "You have selected the maximum of 5 keywords. Deselect some to add different ones."
+      }
+    },
+    "selected": {
+      "label": "Selected Keywords ({count}/5):"
+    },
+    "action": {
+      "addButton": {
+        "vi": "Thêm {count} từ khóa vào Prompt",
+        "en": "Add {count} Keyword(s) to Prompt"
+      }
+    },
+    "searchInfo": "Last searched: \"{query}\" in {region} - {count} results",
+    "validation": {
+      "invalidQuery": "Please enter a valid search query (2-100 characters)",
+      "emptyQuery": "Please enter a search query",
+      "tooShort": "Search query must be at least 2 characters",
+      "tooLong": "Search query must not exceed 100 characters",
+      "invalidCharacters": "Search query contains invalid characters",
+      "selectKeyword": "Please select at least one keyword"
+    },
+    "success": {
+      "foundKeywords": "Found {count} trending keywords",
+      "addedToPrompt": "Added {count} keyword(s) to prompt"
+    },
+    "error": {
+      "invalidFormat": "Invalid response format",
+      "fetchFailed": "Failed to fetch trending keywords. Please try again."
+    },
+    "warning": {
+      "maxKeywords": "You can select up to 5 keywords maximum"
+    }
   },
   "legal": {
     "dataDeletion": {
@@ -60,12 +612,28 @@
     "note": "Note: Only use one of the following Call to Action for ads: {ctaList}. Do not create other CTAs."
   },
   "common": {
-    "cancel": "Cancel",
-    "save": "Save",
-    "delete": "Delete",
-    "edit": "Edit",
-    "create": "Create",
-    "close": "Close"
+    "action": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "delete": "Delete",
+      "edit": "Edit",
+      "create": "Create",
+      "close": "Close",
+      "ok": "OK",
+      "yes": "Yes",
+      "no": "No",
+      "confirm": "Confirm",
+      "retry": "Retry",
+      "export": "Export",
+      "search": "Search",
+      "start": "Getting Started"
+    },
+    "default": {
+      "notAvailable": "N/A"
+    },
+    "state": {
+      "loading": "Loading..."
+    }
   },
   "sidebar": {
     "openSidebar": "Open sidebar",
@@ -75,6 +643,8 @@
     "title": "Dashboard",
     "subtitle": "Overview of your campaigns and ads",
     "newCampaign": "New Campaign",
+    "letsGo": "Let's go!",
+    "noCampaign": "No campaign",
     "newAd": "New Ad",
     "errorLoading": "Error loading dashboard",
     "tryAgain": "Try Again",

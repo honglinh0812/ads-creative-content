@@ -38,7 +38,12 @@ public class Ad {
     @Enumerated(EnumType.STRING)
     @Column(name = "ad_type")
     private AdType adType;
-    
+
+    // Creative style for ad content generation (Issue #8)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ad_style", length = 50)
+    private AdStyle adStyle;
+
     // Fields apparently used by AdService/AdContentService in original code
     @Column(length = 500) // Increased from 255 to accommodate AI-generated content
     private String headline;
@@ -106,6 +111,8 @@ public class Ad {
     public void setUser(User user) { this.user = user; }
     public AdType getAdType() { return adType; }
     public void setAdType(AdType adType) { this.adType = adType; }
+    public AdStyle getAdStyle() { return adStyle; }
+    public void setAdStyle(AdStyle adStyle) { this.adStyle = adStyle; }
     public String getHeadline() { return headline; }
     public void setHeadline(String headline) { this.headline = headline; }
     public String getPrimaryText() { return primaryText; }

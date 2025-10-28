@@ -1,6 +1,7 @@
 package com.fbadsautomation.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class CampaignDTO {
     private Long id;
@@ -13,6 +14,8 @@ public class CampaignDTO {
     private String targetAudience;
     private LocalDate startDate;
     private LocalDate endDate;
+    private Integer totalAds;           // Total number of ads in this campaign
+    private LocalDateTime createdDate;  // Campaign creation date
 
     // Constructors
     public CampaignDTO() {
@@ -31,6 +34,23 @@ public class CampaignDTO {
         this.targetAudience = targetAudience;
         this.startDate = startDate;
         this.endDate = endDate;
+    }
+
+    public CampaignDTO(Long id, String name, String status, String objective, String budgetType,
+                       Double dailyBudget, Double totalBudget, String targetAudience,
+                       LocalDate startDate, LocalDate endDate, Integer totalAds, LocalDateTime createdDate) {
+        this.id = id;
+        this.name = name;
+        this.status = status;
+        this.objective = objective;
+        this.budgetType = budgetType;
+        this.dailyBudget = dailyBudget;
+        this.totalBudget = totalBudget;
+        this.targetAudience = targetAudience;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.totalAds = totalAds;
+        this.createdDate = createdDate;
     }
 
     // Getters and Setters
@@ -63,4 +83,10 @@ public class CampaignDTO {
     
     public LocalDate getEndDate() { return endDate; }
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+
+    public Integer getTotalAds() { return totalAds; }
+    public void setTotalAds(Integer totalAds) { this.totalAds = totalAds; }
+
+    public LocalDateTime getCreatedDate() { return createdDate; }
+    public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
 }

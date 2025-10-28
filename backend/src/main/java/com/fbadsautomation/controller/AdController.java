@@ -224,7 +224,8 @@ public class AdController {
                     request.getCallToAction(), // truyền call to action vào
                     request.getWebsiteUrl(), // truyền website URL vào
                     request.getLeadFormQuestions(), // truyền lead form questions vào
-                    request.getAudienceSegment() // truyền audience segment vào
+                    request.getAudienceSegment(), // truyền audience segment vào
+                    request.getAdStyle() // truyền ad style vào (Issue #8)
                 );
                 List<AdContent> contents = (List<AdContent>) adResult.get("contents");
                 Ad ad = (Ad) adResult.get("ad");
@@ -500,24 +501,70 @@ public class AdController {
         @ApiResponse(responseCode = "500", description = "External service error")
     })
     @PostMapping("/extract-from-library")
-    public ResponseEntity<List<Map<String, Object>>> extractFromMetaAdLibrary(
+    public ResponseEntity<?> extractFromMetaAdLibrary(
             @RequestBody Map<String, Object> request,
             Authentication authentication) {
-        
+
         log.info("Extracting content from Meta Ad Library for user: {}", authentication.getName());
-        Long userId = Long.parseLong(authentication.getName());
+
         try {
             @SuppressWarnings("unchecked")
             List<String> adLinks = (List<String>) request.get("adLinks");
+
             if (adLinks == null || adLinks.isEmpty()) {
-                return ResponseEntity.ok(new ArrayList<>());
+                return ResponseEntity.badRequest().body(Map.of(
+                    "error", "INVALID_REQUEST",
+                    "message", "Danh sách link quảng cáo trống"
+                ));
             }
+
             List<Map<String, Object>> result = metaAdLibraryService.extractAdTextAndImages(adLinks);
-            return ResponseEntity.ok(result);
-            
+
+            // Check xem có kết quả thành công không
+            long successCount = result.stream()
+                .filter(r -> !r.containsKey("error"))
+                .count();
+
+            long errorCount = result.size() - successCount;
+
+            if (successCount == 0) {
+                // Tất cả đều lỗi
+                log.error("❌ All ad extraction attempts failed");
+                return ResponseEntity.status(500).body(Map.of(
+                    "error", "EXTRACTION_FAILED",
+                    "message", "Không thể trích xuất nội dung từ tất cả các link",
+                    "details", result
+                ));
+            }
+
+            if (errorCount > 0) {
+                // Một số thành công, một số lỗi
+                log.warn("⚠️ Partial extraction success: {} success, {} errors",
+                        successCount, errorCount);
+            }
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", result,
+                "summary", Map.of(
+                    "total", result.size(),
+                    "success", successCount,
+                    "errors", errorCount
+                )
+            ));
+
+        } catch (ClassCastException e) {
+            log.error("❌ Invalid request format", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "INVALID_FORMAT",
+                "message", "Format request không hợp lệ"
+            ));
         } catch (Exception e) {
-            log.error("Error extracting from Meta Ad Library", e);
-            return ResponseEntity.ok(new ArrayList<>());
+            log.error("❌ Error extracting from Meta Ad Library", e);
+            return ResponseEntity.status(500).body(Map.of(
+                "error", "SERVER_ERROR",
+                "message", "Lỗi server: " + e.getMessage()
+            ));
         }
     }
 

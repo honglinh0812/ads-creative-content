@@ -80,6 +80,13 @@ public class FalAiProvider implements AIProvider {
     }
 
     @Override
+    public String generateTextCompletion(String prompt, String systemPrompt, Integer maxTokens) {
+        // Fal.ai is image-only, doesn't support text completion
+        log.warn("Fal.ai does not support text completion");
+        return null;
+    }
+
+    @Override
     public String generateImage(String prompt) {
         if (!supportsImageGeneration()) {
             log.warn("Fal.ai image generation not supported (likely missing API key).");

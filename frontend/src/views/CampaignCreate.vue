@@ -3,8 +3,8 @@
     <!-- Page Header -->
     <div class="page-header">
       <a-page-header
-        title="Create New Campaign"
-        sub-title="Set up your advertising campaign with objectives and budget"
+        :title="$t('campaign.create.page.title')"
+        :sub-title="$t('campaign.create.page.subtitle')"
       >
         <template #extra>
           <a-space>
@@ -12,14 +12,14 @@
               <template #icon>
                 <question-circle-outlined />
               </template>
-              Help
+              {{ $t('campaign.create.page.help') }}
             </a-button>
             <router-link to="/campaigns">
               <a-button type="default">
                 <template #icon>
                   <arrow-left-outlined />
                 </template>
-                Back to Campaigns
+                {{ $t('campaign.create.page.backToCampaigns') }}
               </a-button>
             </router-link>
           </a-space>
@@ -28,25 +28,25 @@
     </div>
 
     <!-- Campaign Form -->
-    <a-card class="campaign-form-card" title="Campaign Information" style="margin-bottom: 24px;">
+    <a-card class="campaign-form-card" :title="$t('campaign.create.card.title')" style="margin-bottom: 24px;">
       <template #extra>
-        <a-typography-text type="secondary">Configure your campaign settings and budget</a-typography-text>
+        <a-typography-text type="secondary">{{ $t('campaign.create.card.subtitle') }}</a-typography-text>
       </template>
       
       <form @submit.prevent="handleSubmit">
         <a-row :gutter="[24, 24]">
           <!-- Campaign Name -->
           <a-col :span="24">
-            <a-form-item 
-              label="Campaign Name" 
+            <a-form-item
+              :label="$t('campaign.create.form.label.campaignName')"
               :validate-status="errors.name ? 'error' : ''"
               :help="errors.name"
               required
             >
-              <a-input 
-                v-model:value="form.name" 
+              <a-input
+                v-model:value="form.name"
                 size="large"
-                placeholder="Enter a memorable campaign name..." 
+                :placeholder="$t('campaign.create.form.placeholder.campaignName')"
                 @blur="validateForm()"
               />
             </a-form-item>
@@ -54,18 +54,18 @@
 
           <!-- Objective -->
           <a-col :xs="24" :md="12">
-            <a-form-item 
-              label="Campaign Objective" 
+            <a-form-item
+              :label="$t('campaign.create.form.label.objective')"
               :validate-status="errors.objective ? 'error' : ''"
               :help="errors.objective"
               required
             >
-              <a-select 
-                v-model:value="form.objective" 
+              <a-select
+                v-model:value="form.objective"
                 size="large"
-                placeholder="Select your campaign objective..." 
+                :placeholder="$t('campaign.create.form.placeholder.objective')"
               >
-                <a-select-option v-for="option in objectives" :key="option.value" :value="option.value">
+                <a-select-option v-for="option in objectiveOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </a-select-option>
               </a-select>
@@ -74,18 +74,18 @@
 
           <!-- Budget Type -->
           <a-col :xs="24" :md="12">
-            <a-form-item 
-              label="Budget Type" 
+            <a-form-item
+              :label="$t('campaign.create.form.label.budgetType')"
               :validate-status="errors.budgetType ? 'error' : ''"
               :help="errors.budgetType"
               required
             >
-              <a-select 
-                v-model:value="form.budgetType" 
+              <a-select
+                v-model:value="form.budgetType"
                 size="large"
-                placeholder="Select budget type..." 
+                :placeholder="$t('campaign.create.form.placeholder.budgetType')"
               >
-                <a-select-option v-for="option in budgetTypes" :key="option.value" :value="option.value">
+                <a-select-option v-for="option in budgetTypeOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </a-select-option>
               </a-select>
@@ -94,18 +94,18 @@
 
           <!-- Daily Budget -->
           <a-col v-if="form.budgetType === 'DAILY'" :xs="24" :md="12">
-            <a-form-item 
-              label="Daily Budget" 
+            <a-form-item
+              :label="$t('campaign.create.form.label.dailyBudget')"
               :validate-status="errors.dailyBudget ? 'error' : ''"
               :help="errors.dailyBudget"
               required
             >
-              <a-input-number 
-                v-model:value="form.dailyBudget" 
-                :min="1" 
+              <a-input-number
+                v-model:value="form.dailyBudget"
+                :min="1"
                 size="large"
                 style="width: 100%"
-                placeholder="Enter daily budget..." 
+                :placeholder="$t('campaign.create.form.placeholder.dailyBudget')"
                 :formatter="value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
                 :parser="value => value.replace(/\$\s?|(,*)/g, '')"
               />
@@ -114,18 +114,18 @@
 
           <!-- Total Budget -->
           <a-col v-if="form.budgetType === 'LIFETIME'" :xs="24" :md="12">
-            <a-form-item 
-              label="Total Budget" 
+            <a-form-item
+              :label="$t('campaign.create.form.label.totalBudget')"
               :validate-status="errors.totalBudget ? 'error' : ''"
               :help="errors.totalBudget"
               required
             >
-              <a-input-number 
-                v-model:value="form.totalBudget" 
-                :min="1" 
+              <a-input-number
+                v-model:value="form.totalBudget"
+                :min="1"
                 size="large"
                 style="width: 100%"
-                placeholder="Enter total budget..." 
+                :placeholder="$t('campaign.create.form.placeholder.totalBudget')"
                 :formatter="value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
                 :parser="value => value.replace(/\$\s?|(,*)/g, '')"
               />
@@ -134,42 +134,47 @@
 
           <!-- Start Date -->
           <a-col :xs="24" :md="12">
-            <a-form-item 
-              label="Start Date & Time" 
+            <a-form-item
+              :label="$t('campaign.create.form.label.startDate')"
               :validate-status="errors.startDate ? 'error' : ''"
               :help="errors.startDate"
               required
             >
-              <a-date-picker 
-                v-model:value="form.startDate" 
+              <a-date-picker
+                v-model:value="form.startDate"
                 :disabled-date="(current) => current && current < new Date().setHours(0,0,0,0)"
                 show-time
                 format="DD/MM/YYYY HH:mm"
                 size="large"
                 style="width: 100%"
-                placeholder="Select start date and time..." 
+                :placeholder="$t('campaign.create.form.placeholder.startDate')"
               />
             </a-form-item>
           </a-col>
 
           <!-- End Date -->
           <a-col :xs="24" :md="12">
-            <a-form-item 
-              label="End Date & Time" 
+            <a-form-item
+              :label="$t('campaign.create.form.label.endDate')"
               :validate-status="errors.endDate ? 'error' : ''"
               :help="errors.endDate"
               required
             >
-              <a-date-picker 
-                v-model:value="form.endDate" 
+              <a-date-picker
+                v-model:value="form.endDate"
                 :disabled-date="(current) => current && current < (form.startDate || new Date().setHours(0,0,0,0))"
                 show-time
                 format="DD/MM/YYYY HH:mm"
                 size="large"
                 style="width: 100%"
-                placeholder="Select end date and time..." 
+                :placeholder="$t('campaign.create.form.placeholder.endDate')"
               />
             </a-form-item>
+          </a-col>
+
+          <!-- Issue #9: Target Audience (Campaign Level) -->
+          <a-col :span="24">
+            <AudienceSegmentForm v-model="form.audienceSegment" />
           </a-col>
 
           <!-- Error Display -->
@@ -183,7 +188,7 @@
               <a-space style="width: 100%; justify-content: flex-end;">
                 <router-link to="/campaigns">
                   <a-button size="large">
-                    Cancel
+                    {{ $t('campaign.create.form.action.cancel') }}
                   </a-button>
                 </router-link>
                 <a-button
@@ -192,7 +197,7 @@
                   html-type="submit"
                   :loading="isSubmitting"
                 >
-                  {{ isSubmitting ? 'Creating...' : 'Create Campaign' }}
+                  {{ isSubmitting ? $t('campaign.create.form.action.creating') : $t('campaign.create.form.action.create') }}
                 </a-button>
               </a-space>
             </a-form-item>
@@ -200,36 +205,36 @@
         </a-row>
       </form>
     </a-card>
-    <a-modal v-model:open="showHelp" title="Hướng dẫn tạo chiến dịch" :footer="null" class="help-dialog">
+    <a-modal v-model:open="showHelp" :title="$t('campaign.create.help.title')" :footer="null" class="help-dialog">
       <div class="help-content">
         <div class="help-section">
-          <h3 class="help-title">Bắt đầu</h3>
+          <h3 class="help-title">{{ $t('common.action.start') }}</h3>
           <p class="help-text">
-            Trình hướng dẫn này sẽ giúp bạn tạo chiến dịch quảng cáo Facebook chuyên nghiệp qua 3 bước đơn giản.
+            {{ $t('campaign.create.help.intro') }}
           </p>
         </div>
         <div class="help-section">
-          <h3 class="help-title">Các bước thực hiện</h3>
+          <h3 class="help-title">{{ $t('campaign.create.help.steps.title') }}</h3>
           <div class="help-steps">
             <div class="help-step">
               <div class="step-number">1</div>
               <div class="step-content">
-                <h4>Thông tin cơ bản</h4>
-                <p>Nhập tên chiến dịch, chọn mục tiêu, loại ngân sách.</p>
+                <h4>{{ $t('campaign.create.help.steps.step1.title') }}</h4>
+                <p>{{ $t('campaign.create.help.steps.step1.desc') }}</p>
               </div>
             </div>
             <div class="help-step">
               <div class="step-number">2</div>
               <div class="step-content">
-                <h4>Đối tượng mục tiêu & ngân sách</h4>
-                <p>Chọn đối tượng khách hàng, thiết lập ngân sách và thời gian chạy.</p>
+                <h4>{{ $t('campaign.create.help.steps.step2.title') }}</h4>
+                <p>{{ $t('campaign.create.help.steps.step2.desc') }}</p>
               </div>
             </div>
             <div class="help-step">
               <div class="step-number">3</div>
               <div class="step-content">
-                <h4>Xem trước & Lưu</h4>
-                <p>Xem lại thông tin chiến dịch và lưu lại.</p>
+                <h4>{{ $t('campaign.create.help.steps.step3.title') }}</h4>
+                <p>{{ $t('campaign.create.help.steps.step3.desc') }}</p>
               </div>
             </div>
           </div>
@@ -243,6 +248,7 @@
 import { mapState, mapActions } from 'vuex'
 import api from '@/services/api'
 import FieldError from '@/components/FieldError.vue'
+import AudienceSegmentForm from '@/components/AudienceSegmentForm.vue'
 
 import {
   InputNumber,
@@ -282,7 +288,8 @@ export default {
     ATypographyText: Typography.Text,
     QuestionCircleOutlined,
     ArrowLeftOutlined,
-    FieldError
+    FieldError,
+    AudienceSegmentForm
   },
   data() {
     return {
@@ -294,45 +301,56 @@ export default {
         budgetType: 'DAILY',
         dailyBudget: null,
         totalBudget: null,
-        targetAudience: '',
+        // Issue #9: Target audience at campaign level
+        audienceSegment: {
+          gender: 'ALL',
+          minAge: 18,
+          maxAge: 65,
+          location: '',
+          interests: ''
+        },
         startDate: '',
         endDate: ''
       },
 
       errors: {},
       submitError: null,
-
-      objectives: [
-        { value: 'BRAND_AWARENESS', label: 'Brand Awareness' },
-        { value: 'REACH', label: 'Reach' },
-        { value: 'TRAFFIC', label: 'Traffic' },
-        { value: 'ENGAGEMENT', label: 'Engagement' },
-        { value: 'APP_INSTALLS', label: 'App Installs' },
-        { value: 'VIDEO_VIEWS', label: 'Video Views' },
-        { value: 'LEAD_GENERATION', label: 'Lead Generation' },
-        { value: 'CONVERSIONS', label: 'Conversions' },
-        { value: 'CATALOG_SALES', label: 'Catalog Sales' },
-        { value: 'STORE_TRAFFIC', label: 'Store Traffic' }
-      ],
-      
-      budgetTypes: [
-        {
-          value: 'DAILY',
-          label: 'Daily Budget',
-          description: 'Set daily spending limit'
-        },
-        {
-          value: 'LIFETIME',
-          label: 'Lifetime Budget',
-          description: 'Set total budget for entire campaign'
-        }
-      ],
       showHelp: false
     }
   },
-  
+
   computed: {
     ...mapState('auth', ['user']),
+
+    objectiveOptions() {
+      return [
+        { value: 'BRAND_AWARENESS', label: this.$t('campaign.objective.brandAwareness') },
+        { value: 'REACH', label: this.$t('campaign.objective.reach') },
+        { value: 'TRAFFIC', label: this.$t('campaign.objective.traffic') },
+        { value: 'ENGAGEMENT', label: this.$t('campaign.objective.engagement') },
+        { value: 'APP_INSTALLS', label: this.$t('campaign.objective.appInstalls') },
+        { value: 'VIDEO_VIEWS', label: this.$t('campaign.objective.videoViews') },
+        { value: 'LEAD_GENERATION', label: this.$t('campaign.objective.leadGeneration') },
+        { value: 'CONVERSIONS', label: this.$t('campaign.objective.conversions') },
+        { value: 'CATALOG_SALES', label: this.$t('campaign.objective.catalogSales') },
+        { value: 'STORE_TRAFFIC', label: this.$t('campaign.objective.storeTraffic') }
+      ]
+    },
+
+    budgetTypeOptions() {
+      return [
+        {
+          value: 'DAILY',
+          label: this.$t('campaign.create.form.budgetType.daily'),
+          description: this.$t('campaign.create.form.budgetType.dailyDesc')
+        },
+        {
+          value: 'LIFETIME',
+          label: this.$t('campaign.create.form.budgetType.lifetime'),
+          description: this.$t('campaign.create.form.budgetType.lifetimeDesc')
+        }
+      ]
+    },
     
     userInitials() {
       if (!this.user?.name) return 'U'
@@ -361,7 +379,38 @@ export default {
   methods: {
     ...mapActions('auth', ['logout']),
     ...mapActions('toast', ['showToast']),
-    
+
+    // Issue #9: Convert audienceSegment object to targetAudience string
+    formatTargetAudienceString(segment) {
+      if (!segment) return '';
+
+      const parts = [];
+
+      // Gender
+      if (segment.gender && segment.gender !== 'ALL') {
+        parts.push(`Gender: ${segment.gender}`);
+      }
+
+      // Age range
+      if (segment.minAge && segment.maxAge) {
+        parts.push(`Age: ${segment.minAge}-${segment.maxAge}`);
+      } else if (segment.minAge) {
+        parts.push(`Age: ${segment.minAge}+`);
+      }
+
+      // Location
+      if (segment.location && segment.location.trim()) {
+        parts.push(`Location: ${segment.location.trim()}`);
+      }
+
+      // Interests
+      if (segment.interests && segment.interests.trim()) {
+        parts.push(`Interests: ${segment.interests.trim()}`);
+      }
+
+      return parts.join(', ');
+    },
+
     validateForm() {
       console.log('validateForm called')
       this.errors = {}
@@ -432,10 +481,18 @@ export default {
       this.isSubmitting = true
       this.submitError = null
       try {
-        console.log('Submitting campaign form:', this.form)
+        // Issue #9: Convert audienceSegment to targetAudience string
+        const campaignData = {
+          ...this.form,
+          targetAudience: this.formatTargetAudienceString(this.form.audienceSegment)
+        };
+        // Remove audienceSegment from payload (it's converted to targetAudience)
+        delete campaignData.audienceSegment;
+
+        console.log('Submitting campaign form:', campaignData)
         console.log('API object:', api)
         console.log('API campaigns:', api.campaigns)
-        const response = await api.campaigns.create(this.form)
+        const response = await api.campaigns.create(campaignData)
         console.log('Campaign create response:', response)
         this.showToast({
           type: 'success',

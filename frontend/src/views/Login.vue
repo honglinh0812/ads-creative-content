@@ -7,14 +7,14 @@
       <template #title>
         <div class="login-header">
           <div class="logo-container">
-            <img src="/logo.svg" alt="Ads Creative Logo" class="facebook-logo" />
+            <img src="/logo.svg" :alt="$t('auth.page.logoAlt')" class="facebook-logo" />
           </div>
-          <h1 class="login-title">Facebook Ads Automation</h1>
+          <h1 class="login-title">{{ $t('auth.page.title') }}</h1>
         </div>
       </template>
       <div class="login-content">
         <p class="login-description">
-          Create and manage Facebook ads with AI-powered content generation
+          {{ $t('auth.page.description') }}
         </p>
 
         <div v-if="mode === 'login'" class="login-options">
@@ -30,18 +30,18 @@
               <template #icon>
                 <facebook-outlined />
               </template>
-              Login with Facebook
+              {{ $t('auth.loginForm.facebookButton') }}
             </a-button>
 
-            <a-divider>Or</a-divider>
+            <a-divider>{{ $t('auth.loginForm.or') }}</a-divider>
 
             <!-- Login Error Display -->
             <FieldError :error="loginError" />
 
             <form @submit.prevent="handleLoginApp" class="login-form">
-              <a-input 
-                v-model:value="loginForm.usernameOrEmail" 
-                placeholder="Username or Email" 
+              <a-input
+                v-model:value="loginForm.usernameOrEmail"
+                :placeholder="$t('auth.loginForm.usernamePlaceholder')"
                 size="large"
                 autocomplete="username"
               >
@@ -49,10 +49,10 @@
                   <user-outlined />
                 </template>
               </a-input>
-              
-              <a-input-password 
-                v-model:value="loginForm.password" 
-                placeholder="Password" 
+
+              <a-input-password
+                v-model:value="loginForm.password"
+                :placeholder="$t('auth.loginForm.passwordPlaceholder')"
                 size="large"
                 autocomplete="current-password"
               >
@@ -60,23 +60,23 @@
                   <lock-outlined />
                 </template>
               </a-input-password>
-              
-              <a-button 
-                type="primary" 
-                html-type="submit" 
+
+              <a-button
+                type="primary"
+                html-type="submit"
                 size="large"
                 :loading="loadingLoginApp"
                 block
               >
-                Login
+                {{ $t('auth.loginForm.submitButton') }}
               </a-button>
             </form>
-            
+
             <div class="login-links">
               <a-space>
-                <a-button type="link" @click="mode = 'register'">Register</a-button>
+                <a-button type="link" @click="mode = 'register'">{{ $t('auth.loginForm.registerLink') }}</a-button>
                 <a-divider type="vertical" />
-                <a-button type="link" @click="mode = 'forgot'">Forgot password?</a-button>
+                <a-button type="link" @click="mode = 'forgot'">{{ $t('auth.loginForm.forgotLink') }}</a-button>
               </a-space>
             </div>
           </div>
@@ -87,9 +87,9 @@
           <FieldError :error="registerError" />
 
           <form @submit.prevent="handleRegister" class="register-form">
-            <a-input 
-              v-model:value="registerForm.username" 
-              placeholder="Username" 
+            <a-input
+              v-model:value="registerForm.username"
+              :placeholder="$t('auth.registerForm.usernamePlaceholder')"
               size="large"
               autocomplete="username"
             >
@@ -97,10 +97,10 @@
                 <user-outlined />
               </template>
             </a-input>
-            
-            <a-input 
-              v-model:value="registerForm.email" 
-              placeholder="Email" 
+
+            <a-input
+              v-model:value="registerForm.email"
+              :placeholder="$t('auth.registerForm.emailPlaceholder')"
               size="large"
               autocomplete="email"
             >
@@ -108,10 +108,10 @@
                 <mail-outlined />
               </template>
             </a-input>
-            
-            <a-input-password 
-              v-model:value="registerForm.password" 
-              placeholder="Password" 
+
+            <a-input-password
+              v-model:value="registerForm.password"
+              :placeholder="$t('auth.registerForm.passwordPlaceholder')"
               size="large"
               autocomplete="new-password"
             >
@@ -119,10 +119,10 @@
                 <lock-outlined />
               </template>
             </a-input-password>
-            
-            <a-input-password 
-              v-model:value="registerForm.confirmPassword" 
-              placeholder="Confirm password" 
+
+            <a-input-password
+              v-model:value="registerForm.confirmPassword"
+              :placeholder="$t('auth.registerForm.confirmPasswordPlaceholder')"
               size="large"
               autocomplete="new-password"
             >
@@ -130,20 +130,20 @@
                 <lock-outlined />
               </template>
             </a-input-password>
-            
-            <a-button 
-              type="primary" 
-              html-type="submit" 
+
+            <a-button
+              type="primary"
+              html-type="submit"
               size="large"
               :loading="loadingRegister"
               block
             >
-              Register
+              {{ $t('auth.registerForm.submitButton') }}
             </a-button>
           </form>
-          
+
           <div class="login-links">
-            <a-button type="link" @click="mode = 'login'">Back to login</a-button>
+            <a-button type="link" @click="mode = 'login'">{{ $t('auth.registerForm.backToLogin') }}</a-button>
           </div>
         </div>
 
@@ -152,9 +152,9 @@
           <FieldError :error="forgotError" />
 
           <form @submit.prevent="handleForgotPassword" class="forgot-form">
-            <a-input 
-              v-model:value="forgotForm.email" 
-              placeholder="Enter your email" 
+            <a-input
+              v-model:value="forgotForm.email"
+              :placeholder="$t('auth.forgotForm.emailPlaceholder')"
               size="large"
               autocomplete="email"
             >
@@ -162,25 +162,25 @@
                 <mail-outlined />
               </template>
             </a-input>
-            
-            <a-button 
-              type="primary" 
-              html-type="submit" 
+
+            <a-button
+              type="primary"
+              html-type="submit"
               size="large"
               :loading="loadingForgot"
               block
             >
-              Send password reset request
+              {{ $t('auth.forgotForm.submitButton') }}
             </a-button>
           </form>
-          
+
           <div class="login-links">
-            <a-button type="link" @click="mode = 'login'">Back to login</a-button>
+            <a-button type="link" @click="mode = 'login'">{{ $t('auth.forgotForm.backToLogin') }}</a-button>
           </div>
-          
+
           <a-alert
             v-if="forgotSuccess"
-            message="Email sent to reset password (if email exists)."
+            :message="$t('auth.forgotForm.successAlert')"
             type="success"
             show-icon
             style="margin-top: 16px;"
@@ -188,41 +188,41 @@
         </div>
 
         <div class="login-features">
-          <a-typography-title :level="3" class="features-title">Features</a-typography-title>
+          <a-typography-title :level="3" class="features-title">{{ $t('auth.features.title') }}</a-typography-title>
           <a-row :gutter="[16, 16]" class="features-grid">
             <a-col :span="12">
               <div class="feature-item">
                 <div class="feature-icon">
                   <thunderbolt-outlined />
                 </div>
-                <span>AI-powered ad content generation</span>
+                <span>{{ $t('auth.features.aiPowered') }}</span>
               </div>
             </a-col>
-            
+
             <a-col :span="12">
               <div class="feature-item">
                 <div class="feature-icon">
                   <line-chart-outlined />
                 </div>
-                <span>Automated campaign management</span>
+                <span>{{ $t('auth.features.automated') }}</span>
               </div>
             </a-col>
-            
+
             <a-col :span="12">
               <div class="feature-item">
                 <div class="feature-icon">
                   <picture-outlined />
                 </div>
-                <span>Multiple ad formats support</span>
+                <span>{{ $t('auth.features.multiFormat') }}</span>
               </div>
             </a-col>
-            
+
             <a-col :span="12">
               <div class="feature-item">
                 <div class="feature-icon">
                   <safety-outlined />
                 </div>
-                <span>Secure Facebook integration</span>
+                <span>{{ $t('auth.features.secure') }}</span>
               </div>
             </a-col>
           </a-row>
@@ -326,11 +326,11 @@ export default {
           await this.$store.dispatch('auth/fetchUser')
         } catch (e) {
           // Nếu lỗi khi fetch user, hiển thị thông báo và không redirect
-          this.showError({ message: 'Đăng nhập thất bại: Không lấy được thông tin người dùng.' })
+          this.showError({ message: this.$t('auth.loginFailed') })
           throw e
         }
         console.log('Token set in localStorage:', localStorage.getItem('token'))
-        this.showSuccess({ message: 'Login successful!' })
+        this.showSuccess({ message: this.$t('auth.loginForm.success') })
 
         // Redirect to intended page or dashboard
         const redirectPath = this.$route.query.redirect || '/dashboard'
@@ -346,11 +346,11 @@ export default {
       this.registerError = null
       this.loadingRegister = true
       if (!this.registerForm.username || !this.registerForm.email || !this.registerForm.password) {
-        const error = new Error('Please fill in all information.')
+        const error = new Error(this.$t('auth.registerForm.validation.allRequired'))
         error.fieldErrors = {
-          username: !this.registerForm.username ? 'Username is required' : '',
-          email: !this.registerForm.email ? 'Email is required' : '',
-          password: !this.registerForm.password ? 'Password is required' : ''
+          username: !this.registerForm.username ? this.$t('auth.registerForm.validation.usernameRequired') : '',
+          email: !this.registerForm.email ? this.$t('auth.registerForm.validation.emailRequired') : '',
+          password: !this.registerForm.password ? this.$t('auth.registerForm.validation.passwordRequired') : ''
         }
         // Remove empty field errors
         Object.keys(error.fieldErrors).forEach(key => {
@@ -362,9 +362,9 @@ export default {
         return
       }
       if (this.registerForm.password !== this.registerForm.confirmPassword) {
-        const error = new Error('The re-entered password does not match.')
+        const error = new Error(this.$t('auth.registerForm.validation.passwordMismatch'))
         error.fieldErrors = {
-          confirmPassword: 'Password confirmation does not match'
+          confirmPassword: this.$t('auth.registerForm.validation.confirmPasswordMismatch')
         }
         this.registerError = error
         this.showError({ message: error.message })
@@ -399,7 +399,7 @@ export default {
         this.error = ''
         this.registerError = null
         this.registerForm = { username: '', email: '', password: '', confirmPassword: '' }
-        this.showSuccess({ message: 'Register successful! Please login.' })
+        this.showSuccess({ message: this.$t('auth.registerForm.success') })
       } catch (e) {
         this.error = e.message
       } finally {
@@ -412,9 +412,9 @@ export default {
       this.loadingForgot = true
       this.forgotSuccess = false
       if (!this.forgotForm.email) {
-        const error = new Error('Please enter your email.')
+        const error = new Error(this.$t('auth.forgotForm.validation.emailRequired'))
         error.fieldErrors = {
-          email: 'Email is required'
+          email: this.$t('auth.forgotForm.validation.emailFieldRequired')
         }
         this.forgotError = error
         this.showError({ message: error.message })
@@ -443,7 +443,7 @@ export default {
         this.forgotSuccess = true
         this.error = ''
         this.forgotError = null
-        this.showSuccess({ message: 'Password reset email sent (if email exists).' })
+        this.showSuccess({ message: this.$t('auth.forgotForm.success') })
       } catch (e) {
         this.error = e.message
       } finally {

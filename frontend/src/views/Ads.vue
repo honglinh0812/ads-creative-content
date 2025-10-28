@@ -259,9 +259,9 @@ export default {
     }
   },
   async mounted() {
+    await this.$store.dispatch('campaign/fetchCampaigns')
     await this.loadAds()
     await this.loadCallToActions()
-    await this.$store.dispatch('campaign/fetchCampaigns')
   },
   created() {
     this.$confirm = this.$confirm || Modal.confirm;
@@ -358,10 +358,30 @@ export default {
       }
 
       try {
-        const { id, headline, primaryText, description, callToAction, imageUrl, name } = this.editingAd;
+        const {
+          id,
+          name,
+          headline,
+          primaryText,
+          description,
+          callToAction,
+          imageUrl,
+          videoUrl,
+          status
+        } = this.editingAd;
+
         await this.updateAd({
           adId: id,
-          adData: { headline, primaryText, description, callToAction, imageUrl, name }
+          adData: {
+            name,
+            headline,
+            primaryText,
+            description,
+            callToAction,
+            imageUrl,
+            videoUrl,
+            status
+          }
         });
         this.showEditModal = false;
         message.success('Ad updated successfully');
@@ -500,26 +520,44 @@ export default {
 
     
     // Facebook Export Methods
-    exportAdToFacebook(adId) {
-      // Single ad export (from AdTable action button)
-      if (typeof adId === 'number') {
-        this.selectedAdIds = [adId]
-      } else if (Array.isArray(adId)) {
-        // Bulk export (from selection)
-        this.selectedAdIds = adId
+    exportAdToFacebook(adIdOrRecord) {
+      let adIds = [];
+
+      // Handle single ad ID (number)
+      if (typeof adIdOrRecord === 'number') {
+        adIds = [adIdOrRecord];
+      }
+      // Handle ad object with id property (from AdTable button click)
+      else if (adIdOrRecord && typeof adIdOrRecord === 'object' && !Array.isArray(adIdOrRecord)) {
+        if (adIdOrRecord.id) {
+          adIds = [adIdOrRecord.id];
+        } else {
+          message.error('Invalid ad data for export');
+          return;
+        }
+      }
+      // Handle array of IDs (bulk export)
+      else if (Array.isArray(adIdOrRecord)) {
+        adIds = adIdOrRecord;
+      }
+      // Invalid input
+      else {
+        message.error('Invalid export data');
+        return;
       }
 
-      if (this.selectedAdIds.length === 0) {
-        message.warning('Please select at least one ad to export')
-        return
+      if (adIds.length === 0) {
+        message.warning('Please select at least one ad to export');
+        return;
       }
 
       // Set selected ads in store
-      this.setSelectedAdsForExport(this.selectedAdIds)
+      this.selectedAdIds = adIds;
+      this.setSelectedAdsForExport(adIds);
 
       // Show export modal
-      this.showExportModal = true
-      this.exportTimestamp = Date.now()
+      this.showExportModal = true;
+      this.exportTimestamp = Date.now();
     },
 
     handleExportSuccess() {
@@ -572,9 +610,14 @@ export default {
           callToAction: adToDuplicate.callToAction,
           imageUrl: adToDuplicate.imageUrl,
           videoUrl: adToDuplicate.videoUrl,
-          campaignId: adToDuplicate.campaignId,
+          campaignId: adToDuplicate.campaignId || adToDuplicate.campaign?.id,
           adType: adToDuplicate.adType,
           status: 'DRAFT'
+        }
+
+        if (!duplicatedAdData.campaignId) {
+          message.error('Cannot duplicate ad: campaign information missing')
+          return
         }
 
         await this.$store.dispatch('ad/createAd', duplicatedAdData)

@@ -122,7 +122,7 @@ public class AdService {
      */
     @Transactional
     public Map<String, Object> createAdWithAIContent(Long campaignId, String adType, String prompt,
-                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
+                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, String adStyle) {
         log.info("Creating ad with AI content for user ID: {}", userId);
         
         User user = userRepository.findById(userId)
@@ -140,7 +140,18 @@ public class AdService {
         ad.setStatus("GENERATING");
         ad.setCreatedBy(user.getId().toString());
         ad.setCreatedDate(LocalDateTime.now());
-        
+
+        // Set ad style if provided (Issue #8)
+        if (adStyle != null && !adStyle.trim().isEmpty()) {
+            try {
+                ad.setAdStyle(com.fbadsautomation.model.AdStyle.valueOf(adStyle.toUpperCase()));
+                log.info("Ad style set to: {}", adStyle);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid ad style: {}, using null", adStyle);
+                ad.setAdStyle(null);
+            }
+        }
+
         // Set ad type specific fields
         if (websiteUrl != null && !websiteUrl.trim().isEmpty()) {
             ad.setWebsiteUrl(websiteUrl);
@@ -199,7 +210,26 @@ public class AdService {
         Map<String, Object> result = new HashMap<>();
         result.put("ad", ad);
         result.put("contents", contents);
-        
+
+        // Update campaign status: DRAFT -> READY when first ad is created (Issue #7)
+        try {
+            Campaign refreshedCampaign = campaignRepository.findById(campaignId)
+                    .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Campaign not found"));
+            long adCount = refreshedCampaign.getAds() != null ? refreshedCampaign.getAds().size() : 0;
+
+            if (adCount >= 1 && refreshedCampaign.getStatus() == Campaign.CampaignStatus.DRAFT) {
+                refreshedCampaign.setStatus(Campaign.CampaignStatus.READY);
+                campaignRepository.save(refreshedCampaign);
+                log.info("Campaign {} status auto-updated: DRAFT -> READY (ad created)", campaignId);
+            } else if (adCount >= 1 && refreshedCampaign.getStatus() == Campaign.CampaignStatus.EXPORTED) {
+                refreshedCampaign.setStatus(Campaign.CampaignStatus.READY);
+                campaignRepository.save(refreshedCampaign);
+                log.info("Campaign {} status auto-updated: EXPORTED -> READY (new ad added)", campaignId);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to update campaign status after ad creation: {}", e.getMessage());
+        }
+
         return result;
     }
 

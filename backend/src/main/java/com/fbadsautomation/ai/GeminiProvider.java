@@ -137,6 +137,76 @@ public class GeminiProvider implements AIProvider {
         return adContents;
     }
 
+    /**
+     * Generate simple text completion for prompt enhancement
+     * Returns plain text without structured JSON parsing
+     */
+    @Override
+    public String generateTextCompletion(String prompt, String systemPrompt, Integer maxTokens) {
+        if (apiKey == null || apiKey.isEmpty()) {
+            log.warn("Gemini API key is missing for text completion");
+            return null;
+        }
+
+        try {
+            String fullUrl = apiUrl + "?key=" + apiKey;
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Combine system prompt and user prompt
+            String combinedPrompt = "";
+            if (systemPrompt != null && !systemPrompt.trim().isEmpty()) {
+                combinedPrompt = systemPrompt + "\n\n" + prompt;
+            } else {
+                combinedPrompt = prompt;
+            }
+
+            // Build Gemini request format
+            Map<String, Object> contentPart = new HashMap<>();
+            contentPart.put("text", combinedPrompt);
+
+            Map<String, Object> content = new HashMap<>();
+            content.put("role", "user");
+            content.put("parts", List.of(contentPart));
+
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("contents", List.of(content));
+
+            // Add generation config
+            Map<String, Object> generationConfig = new HashMap<>();
+            generationConfig.put("maxOutputTokens", maxTokens != null ? maxTokens : 300);
+            generationConfig.put("temperature", 0.7);
+            requestBody.put("generationConfig", generationConfig);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+
+            log.debug("Calling Gemini Text Completion API for prompt enhancement");
+
+            Map<String, Object> response = restTemplate.postForObject(fullUrl, request, Map.class);
+
+            if (response != null && response.containsKey("candidates")) {
+                List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
+                if (!candidates.isEmpty() && candidates.get(0).containsKey("content")) {
+                    Map<String, Object> contentResponse = (Map<String, Object>) candidates.get(0).get("content");
+                    List<Map<String, Object>> parts = (List<Map<String, Object>>) contentResponse.get("parts");
+
+                    if (!parts.isEmpty() && parts.get(0).containsKey("text")) {
+                        String text = (String) parts.get(0).get("text");
+                        log.info("Gemini text completion successful, length: {}", text != null ? text.length() : 0);
+                        return text != null ? text.trim() : null;
+                    }
+                }
+            }
+
+            log.warn("Gemini text completion returned empty response");
+            return null;
+
+        } catch (Exception e) {
+            log.error("Error calling Gemini for text completion: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
     @Override
     public String generateImage(String prompt) {
         log.warn("Gemini does not support image generation via this API.");

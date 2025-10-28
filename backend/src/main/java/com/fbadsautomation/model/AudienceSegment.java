@@ -35,9 +35,11 @@ public class AudienceSegment {
     @Column(length = 1000)
     private String interests;
 
+    // Issue #9: Moved from ad_id to campaign_id
+    // Target audience is now at campaign level, not ad level
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ad_id", nullable = false)
-    private Ad ad;
+    @JoinColumn(name = "campaign_id", nullable = false)
+    private Campaign campaign;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

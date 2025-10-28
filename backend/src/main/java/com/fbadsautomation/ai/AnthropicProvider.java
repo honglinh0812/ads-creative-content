@@ -122,6 +122,63 @@ public class AnthropicProvider implements AIProvider {
         }
         return adContents;
     }
+
+    /**
+     * Generate simple text completion for prompt enhancement
+     * Returns plain text without structured JSON parsing
+     */
+    @Override
+    public String generateTextCompletion(String prompt, String systemPrompt, Integer maxTokens) {
+        if (apiKey == null || apiKey.isEmpty()) {
+            log.warn("Anthropic API key is missing for text completion");
+            return null;
+        }
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("x-api-key", apiKey);
+            headers.set("anthropic-version", "2023-06-01");
+
+            // Build request body
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", "claude-3-sonnet-20240229");
+            requestBody.put("max_tokens", maxTokens != null ? maxTokens : 300);
+
+            // Combine system prompt and user prompt
+            String combinedPrompt = "";
+            if (systemPrompt != null && !systemPrompt.trim().isEmpty()) {
+                combinedPrompt = systemPrompt + "\n\n" + prompt;
+            } else {
+                combinedPrompt = prompt;
+            }
+
+            requestBody.put("messages", List.of(Map.of("role", "user", "content", combinedPrompt)));
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+
+            log.debug("Calling Anthropic Text Completion API for prompt enhancement");
+
+            Map<String, Object> response = restTemplate.postForObject(apiUrl, request, Map.class);
+
+            if (response != null && response.containsKey("content")) {
+                List<Map<String, Object>> contentList = (List<Map<String, Object>>) response.get("content");
+                if (!contentList.isEmpty() && contentList.get(0).containsKey("text")) {
+                    String text = (String) contentList.get(0).get("text");
+                    log.info("Anthropic text completion successful, length: {}", text != null ? text.length() : 0);
+                    return text != null ? text.trim() : null;
+                }
+            }
+
+            log.warn("Anthropic text completion returned empty response");
+            return null;
+
+        } catch (Exception e) {
+            log.error("Error calling Anthropic for text completion: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
     public String generateImage(String prompt) {
         log.warn("Anthropic Claude does not support image generation via this API.");
         return "/img/placeholder.png";

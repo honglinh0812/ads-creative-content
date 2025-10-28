@@ -84,6 +84,10 @@ public class AdGenerationRequest {
     @Positive(message = "Persona ID must be positive")
     private Long personaId; // Optional: persona to use for prompt enhancement
 
+    @Pattern(regexp = "^(PROFESSIONAL|CASUAL|HUMOROUS|URGENT|LUXURY|EDUCATIONAL|INSPIRATIONAL|MINIMALIST)$",
+             message = "Invalid ad style. Must be one of: PROFESSIONAL, CASUAL, HUMOROUS, URGENT, LUXURY, EDUCATIONAL, INSPIRATIONAL, MINIMALIST")
+    private String adStyle; // Optional: creative style/tone for ad content (Issue #8)
+
     // Inner class for lead form questions
     public static class LeadFormQuestion {
         @NotBlank(message = "Question type is required")
@@ -178,4 +182,7 @@ public class AdGenerationRequest {
 
     public Long getPersonaId() { return personaId; }
     public void setPersonaId(Long personaId) { this.personaId = personaId; }
+
+    public String getAdStyle() { return adStyle; }
+    public void setAdStyle(String adStyle) { this.adStyle = adStyle; }
 }

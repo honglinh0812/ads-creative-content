@@ -59,6 +59,9 @@ app.config.errorHandler = (err, vm, info) => {
 // Initialize authentication before mounting app
 async function initializeApp() {
   try {
+    // Initialize locale (Issue: I18n Phase 1)
+    await store.dispatch('locale/initializeLocale')
+
     // Initialize theme from localStorage or system preference
     const savedTheme = localStorage.getItem('theme')
     if (savedTheme) {

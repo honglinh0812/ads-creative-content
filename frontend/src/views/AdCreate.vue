@@ -69,23 +69,46 @@
           <a-form layout="vertical">
             <!-- Campaign Selection -->
             <a-form-item label="Campaign" required>
-              <a-select 
-                v-model:value="formData.campaignId" 
+              <a-select
+                v-model:value="formData.campaignId"
                 placeholder="Select a campaign"
                 :loading="loadingCampaigns"
                 show-search
                 :filter-option="false"
                 @search="loadCampaigns"
+                @change="handleCampaignChange"
               >
-                <a-select-option 
-                  v-for="campaign in campaigns" 
-                  :key="campaign.id" 
+                <a-select-option
+                  v-for="campaign in campaigns"
+                  :key="campaign.id"
                   :value="campaign.id"
                 >
                   {{ campaign.name }}
                 </a-select-option>
               </a-select>
             </a-form-item>
+
+            <!-- Issue #9: Display Campaign Target Audience (Read-only) -->
+            <a-card
+              v-if="selectedCampaign && selectedCampaign.targetAudience"
+              class="campaign-audience-card"
+              style="margin-bottom: 24px; background: linear-gradient(135deg, #f0f7ff 0%, #e6f4ff 100%); border: 1px solid #91caff;"
+            >
+              <template #title>
+                <span style="color: #1890ff;">🎯 {{ formData.language === 'vi' ? 'Đối tượng mục tiêu (Cấp chiến dịch)' : 'Target Audience (Campaign Level)' }}</span>
+              </template>
+              <div style="padding: 12px;">
+                <div style="font-size: 14px; color: #262626; margin-bottom: 8px; white-space: pre-wrap;">
+                  {{ selectedCampaign.targetAudience }}
+                </div>
+                <div style="font-size: 12px; color: #8c8c8c; margin-top: 12px;">
+                  💡 {{ formData.language === 'vi'
+                    ? 'Tất cả quảng cáo trong chiến dịch này nhắm đến đối tượng này. Để thay đổi, chỉnh sửa cài đặt chiến dịch.'
+                    : 'All ads in this campaign target this audience. To change, edit the campaign settings.'
+                  }}
+                </div>
+              </div>
+            </a-card>
 
             <!-- Ad Type Selection -->
             <a-form-item>
@@ -133,6 +156,47 @@
                 <a-select-option value="vi">Vietnamese</a-select-option>
                 <a-select-option value="en">English</a-select-option>
               </a-select>
+            </a-form-item>
+
+            <!-- Issue #8: Creative Style/Tone -->
+            <a-form-item>
+              <template #label>
+                <span>{{ formData.language === 'vi' ? 'Phong cách sáng tạo' : 'Creative Style' }}</span>
+                <a-tooltip>
+                  <template #title>
+                    {{ formData.language === 'vi'
+                      ? 'Chọn phong cách viết cho quảng cáo. Phong cách này sẽ kết hợp với Ad Persona để tạo nội dung phù hợp.'
+                      : 'Choose the writing style for your ad. This style will combine with Ad Persona to create appropriate content.'
+                    }}
+                  </template>
+                  <question-circle-outlined style="margin-left: 4px; color: #999;" />
+                </a-tooltip>
+              </template>
+              <a-select
+                v-model:value="formData.adStyle"
+                :placeholder="formData.language === 'vi' ? 'Chọn phong cách (tùy chọn)' : 'Select style (optional)'"
+                allow-clear
+              >
+                <a-select-option
+                  v-for="style in adStyleOptions"
+                  :key="style.value"
+                  :value="style.value"
+                >
+                  <div class="style-option">
+                    <div class="style-label">{{ style.label }}</div>
+                    <div class="style-description">{{ style.description }}</div>
+                  </div>
+                </a-select-option>
+              </a-select>
+
+              <!-- Preview selected style -->
+              <div v-if="formData.adStyle && stylePreviewDescription" class="style-preview">
+                <div class="preview-icon">🎨</div>
+                <div class="preview-content">
+                  <div class="preview-title">{{ stylePreviewTitle }}</div>
+                  <div class="preview-desc">{{ stylePreviewDescription }}</div>
+                </div>
+              </div>
             </a-form-item>
 
             <!-- Call to Action -->
@@ -256,30 +320,26 @@
                     </template>
                   </a-input>
                 </div>
-                <a-button 
-                  type="dashed" 
-                  @click="addAdLink" 
+                <a-button
+                  type="dashed"
+                  @click="addAdLink"
                   block
                   style="margin-top: 8px"
                 >
                   <template #icon><plus-outlined /></template>
                   Add Link
                 </a-button>
-                <a-button 
-                  type="primary" 
-                  @click="extractFromLibrary" 
-                  :loading="extracting"
-                  style="margin-top: 8px"
-                  block
-                >
-                  <template #icon><download-outlined /></template>
-                  Extract Content from Links
-                </a-button>
+                <a-alert
+                  message="Tự động trích xuất"
+                  description="Nội dung sẽ được tự động trích xuất khi bạn chuyển sang bước tiếp theo"
+                  type="info"
+                  show-icon
+                  style="margin-top: 12px"
+                />
               </div>
             </a-form-item>
 
-            <!-- Audience Segment Targeting -->
-            <AudienceSegmentForm v-model="formData.audienceSegment" />
+            <!-- Issue #9: Audience Segment removed - now at campaign level -->
 
             <!-- Persona Selector -->
             <PersonaSelector
@@ -288,7 +348,10 @@
             />
 
             <!-- Trending Keywords -->
-            <TrendingKeywords @keywords-selected="handleKeywordsSelected" />
+            <TrendingKeywords
+              :language="formData.language"
+              @keywords-selected="handleKeywordsSelected"
+            />
           </a-form>
 
           <!-- Error Display -->
@@ -735,9 +798,9 @@
     </a-modal>
 
     <!-- Help Dialog -->
-    <a-modal 
-      v-model:open="showHelpDialog" 
-      title="How to Write Effective Prompts" 
+    <a-modal
+      v-model:open="showHelpDialog"
+      title="How to Write Effective Prompts"
       :footer="null"
       width="700px"
     >
@@ -745,11 +808,11 @@
         <div class="help-section">
           <h3 class="help-title">What is a Prompt?</h3>
           <p class="help-text">
-            A prompt is a description or instruction that tells the AI what kind of ad content you want to create. 
+            A prompt is a description or instruction that tells the AI what kind of ad content you want to create.
             The more specific and detailed your prompt, the better the AI can understand your needs.
           </p>
         </div>
-        
+
         <div class="help-section">
           <h3 class="help-title">Tips for Writing Great Prompts</h3>
           <div class="help-steps">
@@ -785,6 +848,16 @@
         </div>
       </div>
     </a-modal>
+
+    <!-- Extracted Content Preview Modal -->
+    <ExtractedContentPreview
+      v-model:visible="showExtractPreviewModal"
+      :extracted-data="extractedDataForPreview"
+      :summary="extractionSummary"
+      @accept="handleExtractedContentAccept"
+      @cancel="handleExtractedContentCancel"
+      @skip="handleExtractedContentSkip"
+    />
   </div>
 </template>
 
@@ -796,19 +869,19 @@ import {
   QuestionCircleOutlined,
   DeleteOutlined,
   PlusOutlined,
-  DownloadOutlined,
   ThunderboltOutlined,
   EditOutlined,
   SaveOutlined
 } from '@ant-design/icons-vue'
 import api from '@/services/api'
 import PromptValidator from '@/components/PromptValidator.vue'
-import AudienceSegmentForm from '@/components/AudienceSegmentForm.vue'
 import PersonaSelector from '@/components/PersonaSelector.vue'
 import TrendingKeywords from '@/components/TrendingKeywords.vue'
 import FieldError from '@/components/FieldError.vue'
 import QualityScore from '@/components/QualityScore.vue'
+import ExtractedContentPreview from '@/components/ExtractedContentPreview.vue'
 import qualityApi from '@/services/qualityApi'
+import { detectLanguage, i18nTemplates, getKeywordSuccessMessage } from '@/utils/languageDetector'
 
 export default {
   name: 'AdCreate',
@@ -818,16 +891,15 @@ export default {
     QuestionCircleOutlined,
     DeleteOutlined,
     PlusOutlined,
-    DownloadOutlined,
     ThunderboltOutlined,
     EditOutlined,
     SaveOutlined,
     PromptValidator,
-    AudienceSegmentForm,
     PersonaSelector,
     TrendingKeywords,
     FieldError,
-    QualityScore
+    QualityScore,
+    ExtractedContentPreview
   },
   data() {
     return {
@@ -838,20 +910,15 @@ export default {
         name: '',
         numberOfVariations: 3,
         language: 'vi',
+        adStyle: null, // Issue #8: Creative style/tone for ad content
         callToAction: '',
         websiteUrl: '',
         leadFormQuestions: [''],
         prompt: '',
         textProvider: 'openai',
         imageProvider: 'openai',
-        enhancementOptions: [],
-        audienceSegment: {
-          gender: 'ALL',
-          minAge: 18,
-          maxAge: 65,
-          location: '',
-          interests: ''
-        }
+        enhancementOptions: []
+        // Issue #9: audienceSegment removed - now at campaign level
       },
       steps: [
         { title: 'Basic Information', description: 'Campaign details and ad type' },
@@ -879,6 +946,7 @@ export default {
         }
       ],
       campaigns: [],
+      selectedCampaign: null, // Issue #9: Track selected campaign for audience display
       textProviders: [
         {
           value: 'openai',
@@ -940,7 +1008,8 @@ export default {
       showMediaModal: false,
       showAdTypeHelp: false,
       showHelpDialog: false,
-      
+      showExtractPreviewModal: false,
+
       // Other states
       showValidation: false,
       adId: null,
@@ -951,6 +1020,11 @@ export default {
       isEnhancing: false,
       generateError: null,
       saveError: null,
+
+      // Extraction states
+      extractedContentCache: null,
+      extractedDataForPreview: [],
+      extractionSummary: null,
 
       // Quality scoring states
       loadingQualityScores: false,
@@ -991,6 +1065,82 @@ export default {
     hasUploadedImage() {
       // Check if user has uploaded an image
       return this.uploadedFileUrl && this.uploadedFileUrl.trim() !== ''
+    },
+
+    // Issue #8: Reactive multilingual ad style options
+    adStyleOptions() {
+      const isVietnamese = this.formData.language === 'vi'
+
+      return [
+        {
+          value: 'PROFESSIONAL',
+          label: isVietnamese ? 'Chuyên nghiệp' : 'Professional',
+          description: isVietnamese
+            ? 'Ngôn ngữ trang trọng, đáng tin cậy, tập trung vào uy tín và chuyên môn'
+            : 'Formal, credible language focusing on expertise and trust'
+        },
+        {
+          value: 'CASUAL',
+          label: isVietnamese ? 'Thân thiện' : 'Casual',
+          description: isVietnamese
+            ? 'Ngôn ngữ thân thiện, trò chuyện tự nhiên như nói chuyện với bạn bè'
+            : 'Friendly, conversational language like talking to a friend'
+        },
+        {
+          value: 'HUMOROUS',
+          label: isVietnamese ? 'Hài hước' : 'Humorous',
+          description: isVietnamese
+            ? 'Kết hợp yếu tố hài hước, dí dỏm để tạo ấn tượng và dễ nhớ'
+            : 'Incorporate humor and wit to be memorable and entertaining'
+        },
+        {
+          value: 'URGENT',
+          label: isVietnamese ? 'Khẩn cấp' : 'Urgent',
+          description: isVietnamese
+            ? 'Tạo cảm giác cấp bách với ưu đãi có thời hạn, số lượng giới hạn hoặc lợi ích tức thì'
+            : 'Create urgency with time-limited offers, limited availability, or immediate benefits'
+        },
+        {
+          value: 'LUXURY',
+          label: isVietnamese ? 'Cao cấp' : 'Luxury',
+          description: isVietnamese
+            ? 'Nhấn mạnh chất lượng cao cấp, tính độc quyền và sự tinh tế'
+            : 'Emphasize premium quality, exclusivity, and sophistication'
+        },
+        {
+          value: 'EDUCATIONAL',
+          label: isVietnamese ? 'Giáo dục' : 'Educational',
+          description: isVietnamese
+            ? 'Tập trung cung cấp giá trị qua thông tin, mẹo hay insights hữu ích'
+            : 'Focus on providing value through information, tips, or insights'
+        },
+        {
+          value: 'INSPIRATIONAL',
+          label: isVietnamese ? 'Truyền cảm hứng' : 'Inspirational',
+          description: isVietnamese
+            ? 'Sử dụng ngôn ngữ động viên, trao quyền và nâng cao tinh thần'
+            : 'Use motivational language that empowers and uplifts'
+        },
+        {
+          value: 'MINIMALIST',
+          label: isVietnamese ? 'Tối giản' : 'Minimalist',
+          description: isVietnamese
+            ? 'Giữ thông điệp đơn giản, trực tiếp và gọn gàng'
+            : 'Keep messaging simple, direct, and uncluttered'
+        }
+      ]
+    },
+
+    // Issue #8: Preview display for selected style
+    stylePreviewTitle() {
+      const isVietnamese = this.formData.language === 'vi'
+      return isVietnamese ? 'Phong cách đã chọn' : 'Selected Style'
+    },
+
+    stylePreviewDescription() {
+      if (!this.formData.adStyle) return null
+      const selectedStyle = this.adStyleOptions.find(s => s.value === this.formData.adStyle)
+      return selectedStyle ? selectedStyle.description : null
     }
   },
   async mounted() {
@@ -998,6 +1148,15 @@ export default {
   },
   methods: {
     ...mapActions('cta', ['loadCTAs']),
+
+    // Issue #9: Handle campaign selection to display target audience
+    handleCampaignChange(campaignId) {
+      if (campaignId) {
+        this.selectedCampaign = this.campaigns.find(c => c.id === campaignId)
+      } else {
+        this.selectedCampaign = null
+      }
+    },
 
     /**
      * Get CTA display label from enum value
@@ -1011,16 +1170,56 @@ export default {
     },
 
     handleKeywordsSelected(keywords) {
-      // Format trending keywords for prompt injection
-      const keywordText = keywords.map(k => `• ${k}`).join('\n')
-      const trendingSection = `\n\n📈 TRENDING KEYWORDS:\n${keywordText}\n\n💡 Incorporate these trending topics naturally into the ad content.`
+      // Detect language of current prompt
+      const currentLanguage = detectLanguage(this.formData.prompt || '')
 
-      // Append to prompt (or custom prompt if it exists)
-      if (!this.formData.prompt.includes('TRENDING KEYWORDS')) {
+      // Get localized templates
+      const templates = i18nTemplates.trendingKeywords[currentLanguage]
+
+      // Format keywords
+      const keywordText = keywords.map(k => `• ${k}`).join('\n')
+
+      // Build section with appropriate language
+      const trendingSection = `\n\n${templates.title}:\n${keywordText}\n\n${templates.instruction}`
+
+      // Check if section already exists (check both languages for safety)
+      const viMarker = 'TỪ KHÓA THỊNH HÀNH'
+      const enMarker = 'TRENDING KEYWORDS'
+
+      if (!this.formData.prompt.includes(viMarker) && !this.formData.prompt.includes(enMarker)) {
+        // No existing section, append new one
         this.formData.prompt += trendingSection
+      } else {
+        // Update existing section
+        this.formData.prompt = this.updateTrendingSection(
+          this.formData.prompt,
+          trendingSection,
+          currentLanguage
+        )
       }
 
-      this.$message.success(`Added ${keywords.length} trending keyword(s) to prompt`)
+      // Localized success message
+      const successMsg = getKeywordSuccessMessage(keywords.length, currentLanguage)
+      this.$message.success(successMsg)
+    },
+
+    updateTrendingSection(prompt, newSection) {
+      // Find and replace existing trending section (check both languages)
+      const viMarker = 'TỪ KHÓA THỊNH HÀNH'
+      const enMarker = 'TRENDING KEYWORDS'
+
+      // Try to match either Vietnamese or English version
+      const viRegex = new RegExp(`\\n\\n📈 ${viMarker}:[\\s\\S]*?(?=\\n\\n|$)`, 'g')
+      const enRegex = new RegExp(`\\n\\n📈 ${enMarker}:[\\s\\S]*?(?=\\n\\n|$)`, 'g')
+
+      if (viRegex.test(prompt)) {
+        return prompt.replace(viRegex, newSection)
+      } else if (enRegex.test(prompt)) {
+        return prompt.replace(enRegex, newSection)
+      }
+
+      // If no match found, append to end
+      return prompt + newSection
     },
 
     handlePersonaSelected(persona) {
@@ -1143,10 +1342,121 @@ export default {
       }
     },
     
-    nextStep() {
+    async nextStep() {
       if (this.currentStep < 3) {
-        this.currentStep++
+        // Auto-extract content from ad links when moving from Step 1 to Step 2
+        if (this.currentStep === 1 && this.adLinks.some(link => link.trim())) {
+          await this.autoExtractContent()
+        } else {
+          this.currentStep++
+        }
       }
+    },
+
+    async autoExtractContent() {
+      const validLinks = this.adLinks.filter(link => link.trim())
+
+      if (validLinks.length === 0) {
+        // No links, just proceed to next step
+        this.currentStep++
+        return
+      }
+
+      this.extracting = true
+
+      try {
+        const response = await api.ads.extractFromLibrary({
+          adLinks: validLinks
+        })
+
+        // Handle new API response format
+        if (response.data.error) {
+          // API returned error
+          this.$message.error(response.data.message || 'Không thể trích xuất nội dung')
+          this.currentStep++
+          return
+        }
+
+        const { data, summary } = response.data
+
+        if (!data || data.length === 0) {
+          this.$message.warning('Không tìm thấy nội dung quảng cáo')
+          this.currentStep++
+          return
+        }
+
+        // Show preview modal
+        this.extractedDataForPreview = data
+        this.extractionSummary = summary
+        this.showExtractPreviewModal = true
+
+      } catch (error) {
+        console.error('Auto-extraction error:', error)
+
+        let errorMessage = 'Không thể trích xuất nội dung quảng cáo'
+
+        if (error.response) {
+          const data = error.response.data
+          errorMessage = data.message || errorMessage
+
+          if (data.error === 'API_KEY_NOT_CONFIGURED') {
+            errorMessage = 'Hệ thống chưa được cấu hình API key. Bạn có thể tiếp tục với prompt thủ công.'
+          }
+        }
+
+        this.$message.warning(errorMessage)
+        // Still proceed to next step on error
+        this.currentStep++
+      } finally {
+        this.extracting = false
+      }
+    },
+
+    handleExtractedContentAccept(validExtractions) {
+      // Combine all extracted texts
+      const allTexts = validExtractions
+        .map(item => item.text)
+        .filter(text => text)
+        .join('\n\n---\n\n')
+
+      // Detect language for localized section title
+      const currentLanguage = detectLanguage(this.formData.prompt || '')
+      const templates = i18nTemplates.adReference[currentLanguage]
+
+      // Append to prompt with localized section title
+      if (allTexts) {
+        const referenceSection = `\n\n${templates.title}:\n${allTexts}\n\n${templates.instruction}`
+
+        if (this.formData.prompt) {
+          this.formData.prompt += referenceSection
+        } else {
+          this.formData.prompt = `${templates.title}:\n${allTexts}\n\n${templates.instruction}`
+        }
+
+        // Cache for later use in generateAd
+        this.extractedContentCache = allTexts
+
+        // Localized success message
+        const successMsg = currentLanguage === 'vi'
+          ? `Đã thêm nội dung từ ${validExtractions.length} quảng cáo vào prompt`
+          : `Added content from ${validExtractions.length} ad(s) to prompt`
+
+        this.$message.success(successMsg)
+      }
+
+      // Proceed to next step
+      this.currentStep++
+    },
+
+    handleExtractedContentCancel() {
+      // User cancelled, don't proceed to next step
+      this.$message.info('Đã hủy trích xuất nội dung')
+    },
+
+    handleExtractedContentSkip() {
+      // User chose to skip extraction, proceed to next step
+      this.$message.info('Đã bỏ qua trích xuất nội dung')
+      this.currentStep++
     },
     
     prevStep() {
@@ -1250,45 +1560,9 @@ export default {
           this.showValidation = true
           return
         }
-        
-        // Extract content from ad links if provided
-        const validLinks = this.adLinks.filter(link => link.trim())
-        let extractedContent = ''
-        let extractFailed = false
-        
-        if (validLinks.length > 0) {
-          try {
-            const extractionResponse = await api.ads.extractFromLibrary({
-              adLinks: validLinks,
-              promptStyle: this.selectedPromptTemplate || 'Dynamic',
-              customPrompt: this.customPromptAddition
-            })
-            
-            let success = false
-            if (Array.isArray(extractionResponse.data)) {
-              success = extractionResponse.data.some(this.hasAdBody)
-              if (success) {
-                const found = extractionResponse.data.find(this.hasAdBody)
-                extractedContent = found.body || (found.snapshot && found.snapshot.body) || found.text || ''
-              }
-            } else {
-              success = this.hasAdBody(extractionResponse.data)
-              if (success) {
-                extractedContent = extractionResponse.data.body || (extractionResponse.data.snapshot && extractionResponse.data.snapshot.body) || extractionResponse.data.text || ''
-              }
-            }
-            if (!success) extractFailed = true
-          } catch (extractionError) {
-            extractFailed = true
-          }
-        }
-        
-        // If extraction failed, show dialog
-        if (validLinks.length > 0 && extractFailed) {
-          this.showExtractErrorDialog = true
-          this.isGenerating = false
-          return
-        }
+
+        // Use cached extracted content if available (from auto-extraction)
+        const extractedContent = this.extractedContentCache || ''
         
         // Generate ad preview
         let promptWithCTA = this.formData.prompt || ''
@@ -1313,6 +1587,7 @@ export default {
           callToAction: this.formData.callToAction,
           extractedContent: extractedContent,
           personaId: this.formData.personaId || null,
+          adStyle: this.formData.adStyle || null, // Issue #8: Creative style/tone
           isPreview: true
         }
         
@@ -1520,6 +1795,7 @@ export default {
           mediaFileUrl: this.uploadedFileUrl,
           extractedContent: null,
           personaId: this.formData.personaId || null,
+          adStyle: this.formData.adStyle || null, // Issue #8: Creative style/tone
           isPreview: true
         }
         
@@ -2913,6 +3189,77 @@ export default {
   .best-quality-badge {
     font-size: 11px;
     padding: 4px 8px;
+  }
+}
+
+/* Issue #8: Creative Style Dropdown and Preview */
+.style-option {
+  padding: 8px 0;
+}
+
+.style-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #262626;
+  margin-bottom: 4px;
+}
+
+.style-description {
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 1.4;
+}
+
+.style-preview {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f4ff 100%);
+  border-radius: 8px;
+  border: 1px solid #91caff;
+}
+
+.preview-icon {
+  font-size: 24px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.preview-content {
+  flex: 1;
+}
+
+.preview-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1677ff;
+  margin-bottom: 4px;
+}
+
+.preview-desc {
+  font-size: 12px;
+  color: #595959;
+  line-height: 1.5;
+}
+
+/* Mobile responsive for style preview */
+@media (max-width: 768px) {
+  .style-preview {
+    padding: 10px 12px;
+  }
+
+  .preview-icon {
+    font-size: 20px;
+    margin-right: 8px;
+  }
+
+  .preview-title {
+    font-size: 12px;
+  }
+
+  .preview-desc {
+    font-size: 11px;
   }
 }
 </style>

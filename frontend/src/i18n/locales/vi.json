@@ -8,7 +8,63 @@
     "logout": "Đăng xuất",
     "logoutTitle": "Xác nhận đăng xuất",
     "logoutConfirmation": "Bạn có chắc chắn muốn đăng xuất?",
-    "loginFailed": "Đăng nhập thất bại: Không lấy được thông tin người dùng."
+    "loginFailed": "Đăng nhập thất bại: Không lấy được thông tin người dùng.",
+    "page": {
+      "title": "Facebook Ads Automation",
+      "description": "Tạo và quản lý quảng cáo Facebook với tạo nội dung hỗ trợ AI",
+      "logoAlt": "Logo Ads Creative"
+    },
+    "loginForm": {
+      "title": "Đăng nhập",
+      "facebookButton": "Đăng nhập bằng Facebook",
+      "or": "Hoặc",
+      "usernamePlaceholder": "Tên đăng nhập hoặc Email",
+      "passwordPlaceholder": "Mật khẩu",
+      "submitButton": "Đăng nhập",
+      "registerLink": "Đăng ký",
+      "forgotLink": "Quên mật khẩu?",
+      "success": "Đăng nhập thành công!",
+      "error": "Đăng nhập thất bại"
+    },
+    "registerForm": {
+      "title": "Đăng ký",
+      "usernamePlaceholder": "Tên đăng nhập",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Mật khẩu",
+      "confirmPasswordPlaceholder": "Xác nhận mật khẩu",
+      "submitButton": "Đăng ký",
+      "backToLogin": "Quay lại đăng nhập",
+      "success": "Đăng ký thành công! Vui lòng đăng nhập.",
+      "error": "Đăng ký thất bại",
+      "validation": {
+        "allRequired": "Vui lòng điền đầy đủ thông tin.",
+        "usernameRequired": "Tên đăng nhập là bắt buộc",
+        "emailRequired": "Email là bắt buộc",
+        "passwordRequired": "Mật khẩu là bắt buộc",
+        "passwordMismatch": "Mật khẩu nhập lại không khớp.",
+        "confirmPasswordMismatch": "Xác nhận mật khẩu không khớp"
+      }
+    },
+    "forgotForm": {
+      "title": "Quên mật khẩu",
+      "emailPlaceholder": "Nhập email của bạn",
+      "submitButton": "Gửi yêu cầu đặt lại mật khẩu",
+      "backToLogin": "Quay lại đăng nhập",
+      "success": "Email đặt lại mật khẩu đã được gửi (nếu email tồn tại).",
+      "successAlert": "Email đã được gửi để đặt lại mật khẩu (nếu email tồn tại).",
+      "error": "Không thể gửi email",
+      "validation": {
+        "emailRequired": "Vui lòng nhập email của bạn.",
+        "emailFieldRequired": "Email là bắt buộc"
+      }
+    },
+    "features": {
+      "title": "Tính năng",
+      "aiPowered": "Tạo nội dung quảng cáo hỗ trợ AI",
+      "automated": "Quản lý chiến dịch tự động",
+      "multiFormat": "Hỗ trợ nhiều định dạng quảng cáo",
+      "secure": "Tích hợp Facebook an toàn"
+    }
   },
   "navigation": {
     "dashboard": "Bảng điều khiển",
@@ -38,13 +94,509 @@
     "lightMode": "Chế độ sáng đang bật",
     "darkMode": "Chế độ tối đang bật"
   },
-  "campaigns": {
+  "campaign": {
+    "page": {
+      "title": "Chiến dịch",
+      "subtitle": "Quản lý các chiến dịch quảng cáo và theo dõi hiệu suất của chúng",
+      "action": {
+        "newCampaign": "Chiến dịch mới"
+      }
+    },
+    "modal": {
+      "details": {
+        "title": "Chi tiết chiến dịch",
+        "label": {
+          "name": "Tên",
+          "budget": "Ngân sách",
+          "status": "Trạng thái",
+          "createdDate": "Ngày tạo",
+          "totalAds": "Tổng số quảng cáo"
+        }
+      },
+      "edit": {
+        "title": "Chỉnh sửa chiến dịch",
+        "placeholder": {
+          "name": "Nhập tên chiến dịch",
+          "budget": "Nhập ngân sách",
+          "status": "Chọn trạng thái"
+        },
+        "validation": {
+          "nameRequired": "Tên là bắt buộc",
+          "fillRequired": "Vui lòng điền đầy đủ các trường bắt buộc."
+        },
+        "success": {
+          "updated": "Cập nhật chiến dịch thành công"
+        },
+        "error": {
+          "updateFailed": "Cập nhật chiến dịch thất bại"
+        }
+      },
+      "confirm": {
+        "deleteTitle": "Xác nhận xóa",
+        "deleteContent": "Bạn có chắc chắn muốn xóa chiến dịch này? Hành động này không thể hoàn tác.",
+        "success": {
+          "deleted": "Xóa chiến dịch thành công"
+        },
+        "error": {
+          "deleteFailed": "Xóa chiến dịch thất bại"
+        },
+        "info": {
+          "cancelled": "Đã hủy xóa chiến dịch"
+        }
+      },
+      "confirmCancel": {
+        "content": "Bạn có chắc chắn muốn hủy? Các thay đổi của bạn sẽ bị mất.",
+        "info": {
+          "cancelled": "Đã hủy thay đổi"
+        }
+      }
+    },
+    "create": {
+      "page": {
+        "title": "Tạo chiến dịch mới",
+        "subtitle": "Thiết lập chiến dịch quảng cáo với mục tiêu và ngân sách",
+        "help": "Trợ giúp",
+        "backToCampaigns": "Quay lại Chiến dịch"
+      },
+      "card": {
+        "title": "Thông tin chiến dịch",
+        "subtitle": "Cấu hình cài đặt chiến dịch và ngân sách của bạn"
+      },
+      "form": {
+        "label": {
+          "campaignName": "Tên chiến dịch",
+          "objective": "Mục tiêu chiến dịch",
+          "budgetType": "Loại ngân sách",
+          "dailyBudget": "Ngân sách hàng ngày",
+          "totalBudget": "Tổng ngân sách",
+          "startDate": "Ngày & Giờ bắt đầu",
+          "endDate": "Ngày & Giờ kết thúc"
+        },
+        "placeholder": {
+          "campaignName": "Nhập tên chiến dịch đáng nhớ...",
+          "objective": "Chọn mục tiêu chiến dịch của bạn...",
+          "budgetType": "Chọn loại ngân sách...",
+          "dailyBudget": "Nhập ngân sách hàng ngày...",
+          "totalBudget": "Nhập tổng ngân sách...",
+          "startDate": "Chọn ngày và giờ bắt đầu...",
+          "endDate": "Chọn ngày và giờ kết thúc..."
+        },
+        "budgetType": {
+          "daily": "Ngân sách hàng ngày",
+          "dailyDesc": "Đặt giới hạn chi tiêu hàng ngày",
+          "lifetime": "Ngân sách toàn bộ",
+          "lifetimeDesc": "Đặt tổng ngân sách cho toàn bộ chiến dịch"
+        },
+        "action": {
+          "cancel": "Hủy",
+          "creating": "Đang tạo...",
+          "create": "Tạo chiến dịch"
+        }
+      },
+      "help": {
+        "title": "Hướng dẫn tạo chiến dịch",
+        "intro": "Trình hướng dẫn này sẽ giúp bạn tạo chiến dịch quảng cáo Facebook chuyên nghiệp qua 3 bước đơn giản.",
+        "steps": {
+          "title": "Các bước thực hiện",
+          "step1": {
+            "title": "Thông tin cơ bản",
+            "desc": "Nhập tên chiến dịch, chọn mục tiêu, loại ngân sách."
+          },
+          "step2": {
+            "title": "Đối tượng mục tiêu & ngân sách",
+            "desc": "Chọn đối tượng khách hàng, thiết lập ngân sách và thời gian chạy."
+          },
+          "step3": {
+            "title": "Xem trước & Lưu",
+            "desc": "Xem lại thông tin chiến dịch và lưu lại."
+          }
+        }
+      }
+    },
+    "table": {
+      "placeholder": {
+        "search": "Tìm kiếm chiến dịch...",
+        "status": "Trạng thái",
+        "objective": "Mục tiêu"
+      },
+      "filter": {
+        "allStatus": "Tất cả trạng thái",
+        "allObjectives": "Tất cả mục tiêu"
+      },
+      "action": {
+        "reset": "Đặt lại",
+        "viewDetails": "Xem chi tiết",
+        "edit": "Chỉnh sửa chiến dịch",
+        "cannotEdit": "Không thể chỉnh sửa chiến dịch đã xuất",
+        "viewAds": "Xem quảng cáo",
+        "delete": "Xóa chiến dịch",
+        "confirmDelete": "Bạn có chắc chắn muốn xóa chiến dịch này?"
+      },
+      "view": {
+        "cards": "Thẻ",
+        "table": "Bảng"
+      },
+      "column": {
+        "name": "Tên chiến dịch",
+        "status": "Trạng thái",
+        "objective": "Mục tiêu",
+        "budget": "Ngân sách",
+        "ads": "Quảng cáo",
+        "createdDate": "Ngày tạo",
+        "actions": "Hành động"
+      },
+      "results": {
+        "showing": "Hiển thị {filtered} trong số {total} chiến dịch",
+        "filtered": "(đã lọc)"
+      },
+      "label": {
+        "budget": "Ngân sách",
+        "totalAds": "Tổng số quảng cáo"
+      },
+      "budget": {
+        "perDay": "/ngày",
+        "total": "tổng",
+        "notSet": "Chưa đặt"
+      },
+      "date": {
+        "notAvailable": "Không có sẵn",
+        "invalid": "Ngày không hợp lệ"
+      }
+    },
+    "status": {
+      "draft": "Nháp",
+      "ready": "Sẵn sàng",
+      "exported": "Đã xuất",
+      "active": "Hoạt động",
+      "paused": "Tạm dừng",
+      "completed": "Hoàn thành",
+      "failed": "Thất bại",
+      "pending": "Đang chờ",
+      "unknown": "Không xác định"
+    },
+    "objective": {
+      "brandAwareness": "Nhận diện thương hiệu",
+      "reach": "Tiếp cận",
+      "traffic": "Lưu lượng truy cập",
+      "engagement": "Tương tác",
+      "appInstalls": "Cài đặt ứng dụng",
+      "videoViews": "Lượt xem video",
+      "leadGeneration": "Tạo khách hàng tiềm năng",
+      "conversions": "Chuyển đổi",
+      "catalogSales": "Bán hàng từ danh mục",
+      "storeTraffic": "Lưu lượng đến cửa hàng"
+    },
+    "date": {
+      "notAvailable": "Không có sẵn",
+      "invalid": "Ngày không hợp lệ"
+    },
     "createGuide": "Hướng dẫn tạo chiến dịch",
     "guideDescription": "Trình hướng dẫn này sẽ giúp bạn tạo chiến dịch quảng cáo Facebook chuyên nghiệp qua 3 bước đơn giản."
   },
-  "ads": {
+  "ad": {
+    "page": {
+      "title": "Quảng cáo",
+      "subtitle": "Quản lý nội dung quảng cáo của bạn",
+      "action": {
+        "newAd": "Quảng cáo mới"
+      }
+    },
+    "modal": {
+      "details": {
+        "title": "Chi tiết quảng cáo",
+        "label": {
+          "name": "Tên:",
+          "campaign": "Chiến dịch:",
+          "adType": "Loại quảng cáo:",
+          "status": "Trạng thái:",
+          "headline": "Tiêu đề:",
+          "description": "Mô tả:",
+          "primaryText": "Văn bản chính:",
+          "callToAction": "Lời kêu gọi hành động:",
+          "media": "Media:"
+        },
+        "media": {
+          "imageAlt": "Hình ảnh quảng cáo",
+          "imageUrl": "URL hình ảnh:",
+          "videoUrl": "URL video:",
+          "videoPreview": "Xem trước video",
+          "noMedia": "Không có hình ảnh/video cho quảng cáo này",
+          "imageLoadFailed": "Không tải được ảnh"
+        }
+      },
+      "edit": {
+        "title": "Chỉnh sửa quảng cáo",
+        "label": {
+          "name": "Tên:",
+          "headline": "Tiêu đề:",
+          "description": "Mô tả:",
+          "primaryText": "Văn bản chính:",
+          "callToAction": "Lời kêu gọi hành động:",
+          "status": "Trạng thái:"
+        },
+        "placeholder": {
+          "callToAction": "Chọn lời kêu gọi hành động",
+          "status": "Chọn trạng thái"
+        },
+        "validation": {
+          "nameRequired": "Tên là bắt buộc",
+          "headlineRequired": "Tiêu đề là bắt buộc",
+          "ctaRequired": "Lời kêu gọi hành động là bắt buộc",
+          "statusRequired": "Trạng thái là bắt buộc",
+          "fillRequired": "Vui lòng điền đầy đủ các trường bắt buộc."
+        },
+        "success": {
+          "updated": "Cập nhật quảng cáo thành công"
+        },
+        "error": {
+          "updateFailed": "Cập nhật quảng cáo thất bại"
+        }
+      },
+      "confirm": {
+        "deleteTitle": "Xác nhận xóa",
+        "deleteContent": "Bạn có thực sự muốn xóa quảng cáo này? Hành động này không thể hoàn tác.",
+        "success": {
+          "deleted": "Xóa quảng cáo thành công"
+        },
+        "error": {
+          "deleteFailed": "Xóa quảng cáo thất bại"
+        },
+        "info": {
+          "cancelled": "Đã hủy thao tác xóa"
+        }
+      },
+      "confirmCancel": {
+        "content": "Bạn có chắc chắn muốn hủy? Các thay đổi chưa lưu của bạn sẽ bị mất.",
+        "action": {
+          "yes": "Có, hủy",
+          "no": "Không, ở lại"
+        },
+        "info": {
+          "discarded": "Đã hủy thay đổi"
+        }
+      }
+    },
+    "table": {
+      "placeholder": {
+        "search": "Tìm kiếm quảng cáo..."
+      },
+      "filter": {
+        "allStatus": "Tất cả trạng thái",
+        "allTypes": "Tất cả loại",
+        "allCampaigns": "Tất cả chiến dịch"
+      },
+      "action": {
+        "reset": "Đặt lại",
+        "cardsView": "Thẻ",
+        "tableView": "Bảng",
+        "viewDetails": "Xem chi tiết",
+        "edit": "Chỉnh sửa quảng cáo",
+        "duplicate": "Sao chép quảng cáo",
+        "export": "Xuất sang Facebook",
+        "delete": "Xóa quảng cáo"
+      },
+      "bulk": {
+        "selected": "{count} quảng cáo đã chọn",
+        "clearSelection": "Xóa lựa chọn",
+        "exportSelected": "Xuất đã chọn"
+      },
+      "column": {
+        "name": "Tên quảng cáo",
+        "campaign": "Chiến dịch",
+        "status": "Trạng thái",
+        "type": "Loại",
+        "content": "Nội dung",
+        "media": "Media",
+        "createdDate": "Ngày tạo",
+        "actions": "Hành động"
+      },
+      "summary": {
+        "showing": "Hiển thị {count} trong số {total} quảng cáo",
+        "filtered": "(đã lọc)"
+      },
+      "row": {
+        "idLabel": "ID: {id}",
+        "campaignIdLabel": "ID chiến dịch: {id}"
+      },
+      "content": {
+        "headline": "Tiêu đề:",
+        "text": "Văn bản:"
+      },
+      "card": {
+        "noMedia": "Không có Media",
+        "label": {
+          "headline": "Tiêu đề:",
+          "text": "Văn bản:"
+        },
+        "campaign": "Chiến dịch: {name}"
+      },
+      "default": {
+        "untitledAd": "Quảng cáo chưa đặt tên",
+        "unknownStatus": "Không xác định",
+        "noCampaign": "Không có chiến dịch",
+        "campaignId": "Chiến dịch #{id}"
+      },
+      "pagination": {
+        "perPage": "{count} / trang"
+      },
+      "confirm": {
+        "deleteContent": "Bạn có chắc chắn muốn xóa quảng cáo này?"
+      }
+    },
+    "action": {
+      "export": {
+        "error": {
+          "invalidData": "Dữ liệu quảng cáo không hợp lệ để xuất"
+        },
+        "warning": {
+          "selectAd": "Vui lòng chọn ít nhất một quảng cáo để xuất"
+        },
+        "success": {
+          "exported": "Đã xuất thành công {count} quảng cáo!"
+        }
+      },
+      "duplicate": {
+        "suffix": {
+          "copy": "(Bản sao)"
+        },
+        "error": {
+          "notFound": "Không tìm thấy quảng cáo",
+          "noCampaign": "Không thể sao chép quảng cáo: thiếu thông tin chiến dịch",
+          "failed": "Lỗi khi sao chép quảng cáo: {error}"
+        },
+        "success": {
+          "duplicated": "Đã sao chép quảng cáo thành công!"
+        }
+      }
+    },
+    "status": {
+      "draft": "Nháp",
+      "active": "Hoạt động",
+      "paused": "Tạm dừng",
+      "completed": "Hoàn thành",
+      "failed": "Thất bại",
+      "archived": "Đã lưu trữ"
+    },
+    "type": {
+      "image": "Hình ảnh",
+      "video": "Video",
+      "carousel": "Băng chuyền",
+      "collection": "Bộ sưu tập"
+    },
     "notFound": "Không tìm thấy quảng cáo để sao chép",
     "cannotExtract": "Không thể trích xuất nội dung"
+  },
+  "analytics": {
+    "dashboard": {
+      "title": "Bảng phân tích",
+      "subtitle": "Thông tin chi tiết toàn diện về hiệu suất quảng cáo Facebook của bạn"
+    },
+    "timeRange": {
+      "last7Days": "7 ngày qua",
+      "last30Days": "30 ngày qua",
+      "last90Days": "90 ngày qua",
+      "lastYear": "Năm qua"
+    },
+    "state": {
+      "loading": "Đang tải dữ liệu phân tích...",
+      "errorTitle": "Không tải được dữ liệu phân tích"
+    },
+    "demo": {
+      "title": "Chế độ xem trước",
+      "message": "Bạn đang xem dữ liệu phân tích mẫu. Tạo chiến dịch đầu tiên để xem số liệu hiệu suất thực tế.",
+      "action": {
+        "createCampaign": "Tạo chiến dịch đầu tiên của bạn"
+      }
+    },
+    "section": {
+      "kpi": "Chỉ số hiệu suất chính",
+      "trends": "Xu hướng hiệu suất",
+      "topContent": "Nội dung hiệu suất cao nhất"
+    },
+    "kpi": {
+      "totalCampaigns": "Tổng số chiến dịch",
+      "totalAds": "Tổng số quảng cáo",
+      "totalImpressions": "Tổng lượt hiển thị",
+      "averageCTR": "CTR trung bình",
+      "totalBudget": "Tổng ngân sách",
+      "roi": "ROI",
+      "contentGenerated": "Nội dung AI đã tạo",
+      "costSavings": "Tiết kiệm chi phí AI"
+    },
+    "metric": {
+      "impressions": "Lượt hiển thị",
+      "clicks": "Lượt nhấp",
+      "ctr": "CTR (%)",
+      "cpc": "CPC ($)",
+      "conversions": "Chuyển đổi",
+      "spend": "Chi tiêu ($)"
+    },
+    "card": {
+      "campaign": "Hiệu suất chiến dịch",
+      "aiProvider": "Hiệu suất nhà cung cấp AI",
+      "budget": "Phân tích ngân sách",
+      "content": "Hiệu suất nội dung"
+    }
+  },
+  "trending": {
+    "card": {
+      "title": {
+        "vi": "📈 Từ khóa thịnh hành",
+        "en": "📈 Trending Keywords"
+      }
+    },
+    "search": {
+      "placeholder": "Tìm kiếm xu hướng (ví dụ: 'đồ công nghệ', 'thời trang')"
+    },
+    "region": {
+      "unitedStates": "🇺🇸 Hoa Kỳ",
+      "vietnam": "🇻🇳 Việt Nam",
+      "unitedKingdom": "🇬🇧 Vương quốc Anh",
+      "japan": "🇯🇵 Nhật Bản",
+      "singapore": "🇸🇬 Singapore"
+    },
+    "state": {
+      "noTrends": "Không tìm thấy xu hướng. Thử từ khóa tìm kiếm khác.",
+      "noSearch": {
+        "title": "Nhập từ khóa để khám phá từ khóa thịnh hành",
+        "description": "Tìm các chủ đề phổ biến liên quan đến sản phẩm hoặc dịch vụ của bạn"
+      }
+    },
+    "alert": {
+      "maxSelected": {
+        "title": "Đã chọn tối đa từ khóa",
+        "description": "Bạn đã chọn tối đa 5 từ khóa. Bỏ chọn một số để thêm các từ khác."
+      }
+    },
+    "selected": {
+      "label": "Từ khóa đã chọn ({count}/5):"
+    },
+    "action": {
+      "addButton": {
+        "vi": "Thêm {count} từ khóa vào Prompt",
+        "en": "Add {count} Keyword(s) to Prompt"
+      }
+    },
+    "searchInfo": "Tìm kiếm gần nhất: \"{query}\" trong {region} - {count} kết quả",
+    "validation": {
+      "invalidQuery": "Vui lòng nhập truy vấn tìm kiếm hợp lệ (2-100 ký tự)",
+      "emptyQuery": "Vui lòng nhập truy vấn tìm kiếm",
+      "tooShort": "Truy vấn tìm kiếm phải có ít nhất 2 ký tự",
+      "tooLong": "Truy vấn tìm kiếm không được vượt quá 100 ký tự",
+      "invalidCharacters": "Truy vấn tìm kiếm chứa ký tự không hợp lệ",
+      "selectKeyword": "Vui lòng chọn ít nhất một từ khóa"
+    },
+    "success": {
+      "foundKeywords": "Tìm thấy {count} từ khóa thịnh hành",
+      "addedToPrompt": "Đã thêm {count} từ khóa vào prompt"
+    },
+    "error": {
+      "invalidFormat": "Định dạng phản hồi không hợp lệ",
+      "fetchFailed": "Không tải được từ khóa thịnh hành. Vui lòng thử lại."
+    },
+    "warning": {
+      "maxKeywords": "Bạn có thể chọn tối đa 5 từ khóa"
+    }
   },
   "legal": {
     "dataDeletion": {
@@ -60,12 +612,28 @@
     "note": "Lưu ý: Chỉ sử dụng một trong các Call to Action sau cho quảng cáo: {ctaList}. Không tạo CTA khác."
   },
   "common": {
-    "cancel": "Hủy",
-    "save": "Lưu",
-    "delete": "Xóa",
-    "edit": "Sửa",
-    "create": "Tạo",
-    "close": "Đóng"
+    "action": {
+      "cancel": "Hủy",
+      "save": "Lưu",
+      "delete": "Xóa",
+      "edit": "Sửa",
+      "create": "Tạo",
+      "close": "Đóng",
+      "ok": "OK",
+      "yes": "Có",
+      "no": "Không",
+      "confirm": "Xác nhận",
+      "retry": "Thử lại",
+      "export": "Xuất",
+      "search": "Tìm kiếm",
+      "start": "Bắt đầu"
+    },
+    "default": {
+      "notAvailable": "Không có sẵn"
+    },
+    "state": {
+      "loading": "Đang tải..."
+    }
   },
   "sidebar": {
     "openSidebar": "Mở sidebar",
@@ -75,6 +643,8 @@
     "title": "Bảng điều khiển",
     "subtitle": "Tổng quan về các chiến dịch và quảng cáo của bạn",
     "newCampaign": "Chiến dịch mới",
+    "letsGo": "Bắt đầu thôi!",
+    "noCampaign": "Không có chiến dịch",
     "newAd": "Quảng cáo mới",
     "errorLoading": "Lỗi tải bảng điều khiển",
     "tryAgain": "Thử lại",

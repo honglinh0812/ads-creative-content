@@ -180,6 +180,76 @@ public class OpenAIProvider implements AIProvider {
         return adContents;
     }
 
+    /**
+     * Generate simple text completion for prompt enhancement
+     * Returns plain text without structured JSON parsing
+     */
+    @Override
+    public String generateTextCompletion(String prompt, String systemPrompt, Integer maxTokens) {
+        if (apiKey == null || apiKey.isEmpty()) {
+            log.warn("OpenAI API key is missing for text completion");
+            return null;
+        }
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(apiKey);
+
+            // Build messages array
+            List<Map<String, Object>> messages = new ArrayList<>();
+
+            // Add system prompt if provided
+            if (systemPrompt != null && !systemPrompt.trim().isEmpty()) {
+                Map<String, Object> systemMessage = new HashMap<>();
+                systemMessage.put("role", "system");
+                systemMessage.put("content", systemPrompt);
+                messages.add(systemMessage);
+            }
+
+            // Add user prompt
+            Map<String, Object> userMessage = new HashMap<>();
+            userMessage.put("role", "user");
+            userMessage.put("content", prompt);
+            messages.add(userMessage);
+
+            // Build request body
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", "gpt-3.5-turbo");
+            requestBody.put("messages", messages);
+            requestBody.put("temperature", 0.7);
+            requestBody.put("max_tokens", maxTokens != null ? maxTokens : 300);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+
+            log.debug("Calling OpenAI Text Completion API for prompt enhancement");
+
+            Map<String, Object> responseBody = restTemplate.postForObject(textApiUrl, request, Map.class);
+
+            if (responseBody != null && responseBody.containsKey("choices")) {
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+                if (!choices.isEmpty()) {
+                    Map<String, Object> firstChoice = choices.get(0);
+                    Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
+                    String content = (String) message.get("content");
+
+                    log.info("OpenAI text completion successful, length: {}", content != null ? content.length() : 0);
+                    return content != null ? content.trim() : null;
+                }
+            }
+
+            log.warn("OpenAI text completion returned empty response");
+            return null;
+
+        } catch (HttpClientErrorException e) {
+            log.error("HTTP Error calling OpenAI for text completion: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            return null;
+        } catch (Exception e) {
+            log.error("Error calling OpenAI for text completion: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
     public String generateImage(String prompt) {
         if (!supportsImageGeneration()) {
             log.warn("OpenAI image generation not supported (likely missing API key).");

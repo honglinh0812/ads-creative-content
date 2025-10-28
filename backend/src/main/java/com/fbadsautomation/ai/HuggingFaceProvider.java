@@ -126,6 +126,15 @@ public class HuggingFaceProvider implements AIProvider {
         }
         return adContents;
     }
+
+    @Override
+    public String generateTextCompletion(String prompt, String systemPrompt, Integer maxTokens) {
+        // HuggingFace could support text completion, but implementation would be model-specific
+        // For now, return null as we don't have a generic implementation
+        log.warn("HuggingFace text completion not implemented for this model");
+        return null;
+    }
+
     @Override
     public String generateImage(String prompt) {
         if (!supportsImageGeneration()) {

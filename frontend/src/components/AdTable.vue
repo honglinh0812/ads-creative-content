@@ -656,8 +656,16 @@ export default {
     }
     
     const getCampaignName = (campaignId) => {
-      const campaign = props.campaigns.find(c => c.id === campaignId)
-      return campaign ? campaign.name : `Campaign ${campaignId}`
+      if (!campaignId) return 'No Campaign'
+
+      // Check if campaigns are loaded
+      if (!props.campaigns || props.campaigns.length === 0) {
+        return 'Loading...'
+      }
+
+      // Convert to string for comparison (handle type mismatch)
+      const campaign = props.campaigns.find(c => c.id?.toString() === campaignId?.toString())
+      return campaign?.name || `Campaign #${campaignId}`
     }
     
     const truncateText = (text, maxLength) => {

@@ -70,29 +70,32 @@ public class AIPromptImprovementService {
     }
 
     /**
-     * Call AI provider to improve prompt
+     * Call AI provider to improve prompt using text completion
+     * This method now uses generateTextCompletion() instead of generateAdContent()
+     * to avoid creating structured ad content when we only need prompt improvement
      */
     private String callAIForImprovement(com.fbadsautomation.ai.AIProvider provider, String improvementPrompt) {
         try {
-            // Use AI provider's generateAdContent with special prompt
-            // This reuses existing API call infrastructure
-            var contents = provider.generateAdContent(improvementPrompt, 1, null, null);
+            // Use the new generateTextCompletion method for simple text response
+            // This preserves the original content's intent while enhancing it
+            String improved = provider.generateTextCompletion(
+                improvementPrompt,  // The full improvement prompt with original content
+                null,               // No separate system prompt (already in improvementPrompt)
+                300                 // Max 300 tokens for improved prompt (about 1-2 paragraphs)
+            );
 
-            if (contents != null && !contents.isEmpty()) {
-                // Return the primary text as improved prompt (most detailed and contextual)
-                String improved = contents.get(0).getPrimaryText();
-
-                // Fallback to headline + description if primaryText is empty
-                if (improved == null || improved.trim().isEmpty()) {
-                    improved = contents.get(0).getHeadline() + ". " + contents.get(0).getDescription();
-                }
-
+            if (improved != null && !improved.trim().isEmpty()) {
+                log.info("Successfully generated improved prompt via text completion");
                 return improved;
             }
+
+            log.debug("AI text completion returned empty result");
+            return null;
+
         } catch (Exception e) {
-            log.error("AI API call failed for prompt improvement: {}", e.getMessage());
+            log.error("AI API call failed for prompt improvement: {}", e.getMessage(), e);
+            return null;
         }
-        return null;
     }
 
     /**

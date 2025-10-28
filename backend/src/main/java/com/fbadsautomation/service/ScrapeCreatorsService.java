@@ -41,39 +41,79 @@ public class ScrapeCreatorsService {
      */
     public Map<String, Object> scrapeCreators(String adId, boolean getTranscript) {
         log.info("Calling ScrapeCreators API for ad ID: {}", adId);
-        
+
+        // Kiểm tra API key với logging rõ ràng
         if (apiKey == null || apiKey.isEmpty() || "your-api-key-here".equals(apiKey)) {
+            log.error("❌ SCRAPE_CREATORS_API_KEY chưa được cấu hình hoặc không hợp lệ");
+            log.error("Vui lòng thêm scrape.creators.api.key vào application.properties");
             Map<String, Object> error = new HashMap<>();
-            error.put("error", "SCRAPE_CREATORS_API_KEY chưa được cấu hình");
+            error.put("error", "API_KEY_NOT_CONFIGURED");
+            error.put("message", "ScrapeCreators API key chưa được cấu hình");
+            error.put("userMessage", "Vui lòng liên hệ admin để cấu hình API key");
             return error;
         }
-        
+
         try {
             String url = baseUrl + "/facebook/adLibrary/ad?id=" + adId;
             if (getTranscript) {
                 url += "&get_transcript=true";
             }
-            
+
+            log.info("📡 Calling ScrapeCreators API: {}", url);
+
             HttpHeaders headers = new HttpHeaders();
             headers.set("x-api-key", apiKey);
             headers.set("Accept", "application/json");
-            
+
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-            
+
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                log.info("ScrapeCreators API call successful for ad ID: {}", adId);
-                return response.getBody();
+                Map<String, Object> body = response.getBody();
+
+                // Validate response có data không
+                if (body.containsKey("error") || body.isEmpty()) {
+                    log.warn("⚠️ ScrapeCreators API returned error or empty data for ad ID: {}", adId);
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("error", "API_RETURNED_ERROR");
+                    error.put("message", body.getOrDefault("error", "API không trả về dữ liệu"));
+                    error.put("adId", adId);
+                    return error;
+                }
+
+                log.info("✅ ScrapeCreators API call successful for ad ID: {}", adId);
+                return body;
             } else {
-                log.error("ScrapeCreators API returned error status: {}", response.getStatusCode());
+                log.error("❌ ScrapeCreators API returned error status: {}", response.getStatusCode());
                 Map<String, Object> error = new HashMap<>();
-                error.put("error", "API returned status: " + response.getStatusCode());
+                error.put("error", "API_ERROR_STATUS");
+                error.put("message", "API returned status: " + response.getStatusCode());
+                error.put("statusCode", response.getStatusCode().value());
                 return error;
             }
-        } catch (Exception e) {
-            log.error("Error calling ScrapeCreators API for ad ID {}: {}", adId, e.getMessage(), e);
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            // 4xx errors (authentication, not found, etc.)
+            log.error("❌ ScrapeCreators API client error for ad ID {}: {} - {}",
+                     adId, e.getStatusCode(), e.getResponseBodyAsString());
             Map<String, Object> error = new HashMap<>();
-            error.put("error", "Lỗi gọi ScrapeCreators API: " + e.getMessage());
+            error.put("error", "API_CLIENT_ERROR");
+            error.put("message", "Lỗi từ API: " + e.getMessage());
+            error.put("statusCode", e.getStatusCode().value());
+            error.put("details", e.getResponseBodyAsString());
+            return error;
+        } catch (org.springframework.web.client.HttpServerErrorException e) {
+            // 5xx errors (server error)
+            log.error("❌ ScrapeCreators API server error for ad ID {}: {}", adId, e.getMessage());
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "API_SERVER_ERROR");
+            error.put("message", "API server đang gặp sự cố");
+            error.put("statusCode", e.getStatusCode().value());
+            return error;
+        } catch (Exception e) {
+            log.error("❌ Error calling ScrapeCreators API for ad ID {}: {}", adId, e.getMessage(), e);
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "NETWORK_ERROR");
+            error.put("message", "Không thể kết nối tới API: " + e.getMessage());
             return error;
         }
     }

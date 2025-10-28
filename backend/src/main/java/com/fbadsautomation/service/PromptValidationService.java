@@ -110,14 +110,24 @@ public class PromptValidationService {
         String improvedPrompt = null;
         if (aiPromptImprovementService != null) {
             try {
-                improvedPrompt = aiPromptImprovementService.generateImprovedPrompt(prompt, adType, targetAudience);
-                log.debug("AI-powered improvement generated successfully");
+                String aiImprovedPrompt = aiPromptImprovementService.generateImprovedPrompt(prompt, adType, targetAudience);
+
+                // VALIDATION: Ensure improved prompt contains meaningful parts of original
+                if (aiImprovedPrompt != null && isValidImprovement(prompt, aiImprovedPrompt)) {
+                    improvedPrompt = aiImprovedPrompt;
+                    log.debug("AI-powered improvement validated and accepted");
+                } else if (aiImprovedPrompt != null) {
+                    log.warn("AI improvement rejected: does not preserve original content sufficiently. " +
+                            "Original: '{}', Improved: '{}'", prompt.substring(0, Math.min(50, prompt.length())),
+                            aiImprovedPrompt.substring(0, Math.min(50, aiImprovedPrompt.length())));
+                    // Fall through to rule-based improvement
+                }
             } catch (Exception e) {
                 log.warn("AI prompt improvement failed, falling back to rule-based: {}", e.getMessage());
             }
         }
 
-        // Fallback to rule-based if AI unavailable or failed
+        // Fallback to rule-based if AI unavailable or failed validation
         if (improvedPrompt == null) {
             improvedPrompt = generateImprovedPrompt(prompt, issues, adType, targetAudience);
         }
@@ -253,5 +263,95 @@ public class PromptValidationService {
         }
 
         return null; // No significant improvement needed
+    }
+
+    /**
+     * Validate that the improved prompt preserves meaningful content from the original
+     * This prevents AI from generating completely new content that loses user's intent
+     *
+     * @param original The original user prompt
+     * @param improved The AI-improved prompt
+     * @return true if improvement is valid, false if it strays too far from original
+     */
+    private boolean isValidImprovement(String original, String improved) {
+        if (improved == null || improved.trim().isEmpty()) {
+            return false;
+        }
+
+        // Normalize for comparison (lowercase, remove punctuation)
+        String normalizedOriginal = normalizeForComparison(original);
+        String normalizedImproved = normalizeForComparison(improved);
+
+        // Check 1: Improved prompt should contain key words from original
+        // Extract significant words (> 3 characters, not common words)
+        List<String> originalKeywords = extractKeywords(normalizedOriginal);
+
+        if (originalKeywords.isEmpty()) {
+            // Original is too short/generic, accept any improvement
+            return true;
+        }
+
+        // Count how many original keywords are preserved in improved version
+        long preservedCount = originalKeywords.stream()
+            .filter(normalizedImproved::contains)
+            .count();
+
+        double preservationRate = (double) preservedCount / originalKeywords.size();
+
+        // Require at least 40% of key terms to be preserved
+        if (preservationRate < 0.4) {
+            log.debug("Preservation rate too low: {}/{} keywords preserved ({}%)",
+                     preservedCount, originalKeywords.size(), (int)(preservationRate * 100));
+            return false;
+        }
+
+        // Check 2: Length should not deviate too extremely
+        // Improved can be 3x longer but not shorter than 80% of original (unless original is very short)
+        if (original.length() > 50 && improved.length() < original.length() * 0.8) {
+            log.debug("Improved prompt too short: {} vs {} chars", improved.length(), original.length());
+            return false;
+        }
+
+        if (improved.length() > original.length() * 3.5) {
+            log.debug("Improved prompt too long: {} vs {} chars (>3.5x)", improved.length(), original.length());
+            return false;
+        }
+
+        log.debug("Validation passed: preservation={}%, length={}→{} chars",
+                 (int)(preservationRate * 100), original.length(), improved.length());
+        return true;
+    }
+
+    /**
+     * Normalize text for comparison by removing punctuation and converting to lowercase
+     */
+    private String normalizeForComparison(String text) {
+        return text.toLowerCase()
+                  .replaceAll("[^a-zA-Zàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ0-9\\s]", "")
+                  .replaceAll("\\s+", " ")
+                  .trim();
+    }
+
+    /**
+     * Extract significant keywords from text (words > 3 chars, excluding common terms)
+     */
+    private List<String> extractKeywords(String text) {
+        // Common words to exclude (both English and Vietnamese)
+        List<String> commonWords = List.of(
+            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with",
+            "is", "are", "was", "were", "been", "being", "have", "has", "had", "do", "does", "did",
+            "will", "would", "should", "could", "may", "might", "must", "can",
+            "this", "that", "these", "those", "i", "you", "he", "she", "it", "we", "they",
+            "my", "your", "his", "her", "its", "our", "their",
+            "về", "của", "và", "với", "cho", "từ", "trong", "trên", "dưới", "các", "những",
+            "là", "được", "có", "không", "đã", "sẽ", "đang", "này", "đó", "kia",
+            "tôi", "bạn", "chúng", "anh", "chị", "em"
+        );
+
+        return java.util.Arrays.stream(text.split("\\s+"))
+            .filter(word -> word.length() > 3)
+            .filter(word -> !commonWords.contains(word))
+            .distinct()
+            .collect(java.util.stream.Collectors.toList());
     }
 }

@@ -166,7 +166,7 @@
                 <h3 class="action-title">{{ quickActions[0].name }}</h3>
                 <p class="action-desc">{{ quickActions[0].description }}</p>
                 <div class="action-cta">
-                  <span>Let's go!</span>
+                  <span>{{ $t('dashboard.letsGo') }}</span>
                   <div class="arrow-icon">→</div>
                 </div>
               </div>
@@ -344,7 +344,7 @@
               <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
                 <div class="flex-1 min-w-0">
                   <h3 class="font-semibold text-sm sm:text-base text-gray-800 truncate mb-1" :title="ad.name">{{ ad.name }}</h3>
-                  <p class="text-xs text-gray-500 truncate" :title="ad.campaignName">{{ ad.campaignName || 'No campaign' }}</p>
+                  <p class="text-xs text-gray-500 truncate" :title="ad.campaignName">{{ ad.campaignName || $t('dashboard.noCampaign') }}</p>
                 </div>
               </div>
               

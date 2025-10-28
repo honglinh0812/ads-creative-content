@@ -88,4 +88,17 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
      * Count campaigns by user and date range
      */
     long countByUserAndCreatedDateBetween(User user, LocalDateTime startDate, LocalDateTime endDate);
+
+    /**
+     * Find campaigns with ad count for pagination (optimized for Issue #7)
+     * Returns Object[] with [Campaign, Long adCount]
+     */
+    @Query("SELECT c, COUNT(a) as adCount " +
+           "FROM Campaign c LEFT JOIN c.ads a " +
+           "WHERE c.user = :user " +
+           "GROUP BY c.id, c.name, c.status, c.objective, c.budget, c.budgetType, " +
+           "c.dailyBudget, c.totalBudget, c.targetAudience, c.startDate, c.endDate, " +
+           "c.createdDate, c.updatedAt, c.user " +
+           "ORDER BY c.createdDate DESC")
+    Page<Object[]> findAllByUserWithAdCount(@Param("user") User user, Pageable pageable);
 }

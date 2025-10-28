@@ -1,15 +1,17 @@
 <template>
-  <div id="app" class="app-layout">
-    <!-- Loading screen với Ant Design -->
-    <div v-if="authLoading" class="auth-loading">
-      <div class="loading-content">
-        <div class="loading-logo">
-          <a-icon type="thunderbolt" style="font-size: 48px; color: #1890ff;" />
+  <!-- Wrap entire app with ConfigProvider for Ant Design locale support (Issue: I18n Phase 1) -->
+  <a-config-provider :locale="antdLocale">
+    <div id="app" class="app-layout">
+      <!-- Loading screen với Ant Design -->
+      <div v-if="authLoading" class="auth-loading">
+        <div class="loading-content">
+          <div class="loading-logo">
+            <a-icon type="thunderbolt" style="font-size: 48px; color: #1890ff;" />
+          </div>
+          <a-spin size="large" />
+          <p class="loading-text">{{ $t('app.loading') }}</p>
         </div>
-        <a-spin size="large" />
-        <p class="loading-text">{{ $t('app.loading') }}</p>
       </div>
-    </div>
     
     <!-- Layout chính cho người dùng đã đăng nhập -->
     <template v-else-if="isAuthenticated">
@@ -28,8 +30,8 @@
             <span v-if="!collapsed" class="logo-text">Ads Creative</span>
           </div>
           
-          <a-menu 
-            mode="inline" 
+          <a-menu
+            mode="inline"
             :selected-keys="selectedKeys"
             :open-keys="openKeys"
             @select="onMenuSelect"
@@ -37,31 +39,31 @@
           >
             <a-menu-item key="dashboard">
               <template #icon><a-icon type="dashboard" /></template>
-              <span>Dashboard</span>
+              <span>{{ $t('navigation.dashboard') }}</span>
             </a-menu-item>
-            
+
             <a-sub-menu key="campaigns">
               <template #icon><a-icon type="project" /></template>
-              <template #title>Campaigns</template>
-              <a-menu-item key="campaigns-list">All Campaigns</a-menu-item>
-              <a-menu-item key="campaigns-create">Create Campaign</a-menu-item>
+              <template #title>{{ $t('navigation.campaigns') }}</template>
+              <a-menu-item key="campaigns-list">{{ $t('navigation.allCampaigns') }}</a-menu-item>
+              <a-menu-item key="campaigns-create">{{ $t('navigation.createCampaign') }}</a-menu-item>
             </a-sub-menu>
-            
+
             <a-sub-menu key="ads">
               <template #icon><a-icon type="picture" /></template>
-              <template #title>Ads</template>
-              <a-menu-item key="ads-list">All Ads</a-menu-item>
-              <a-menu-item key="ads-create">Create Ad</a-menu-item>
+              <template #title>{{ $t('navigation.ads') }}</template>
+              <a-menu-item key="ads-list">{{ $t('navigation.allAds') }}</a-menu-item>
+              <a-menu-item key="ads-create">{{ $t('navigation.createAd') }}</a-menu-item>
             </a-sub-menu>
-            
+
             <a-menu-item key="analytics">
               <template #icon><a-icon type="bar-chart" /></template>
-              <span>Analytics</span>
+              <span>{{ $t('navigation.analytics') }}</span>
             </a-menu-item>
-            
+
             <a-menu-item key="optimization">
               <template #icon><a-icon type="rocket" /></template>
-              <span>Optimization</span>
+              <span>{{ $t('navigation.optimization') }}</span>
             </a-menu-item>
           </a-menu>
         </a-layout-sider>
@@ -129,16 +131,16 @@
                   <a-menu @click="onUserMenuClick">
                     <a-menu-item key="profile">
                       <a-icon type="user" />
-                      Profile
+                      {{ $t('navigation.profile') }}
                     </a-menu-item>
                     <a-menu-item key="settings">
                       <a-icon type="setting" />
-                      Settings
+                      {{ $t('navigation.settings') }}
                     </a-menu-item>
                     <a-menu-divider />
                     <a-menu-item key="logout">
                       <a-icon type="logout" />
-                      Logout
+                      {{ $t('auth.logout') }}
                     </a-menu-item>
                   </a-menu>
                 </template>
@@ -167,9 +169,10 @@
       </div>
     </template>
 
-    <!-- Toast notifications -->
-    <ToastNotifications />
-  </div>
+      <!-- Toast notifications -->
+      <ToastNotifications />
+    </div>
+  </a-config-provider>
 </template>
 
 <script>
@@ -198,6 +201,7 @@ export default {
   computed: {
     ...mapGetters('auth', ['isAuthenticated', 'loading', 'user']),
     ...mapGetters('toast', ['toasts']),
+    ...mapGetters('locale', { antdLocale: 'antdLocale' }), // Issue: I18n Phase 1
     notificationCountFunc() {
       return this.toasts.length
     },

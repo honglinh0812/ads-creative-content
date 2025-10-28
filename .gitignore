@@ -86,6 +86,7 @@ docs/
 backend/target/
 .editorconfig
 .vscode/
+.claude/
 README-INDEXING.md
 claude-code-review.yml
 CLAUDE.md

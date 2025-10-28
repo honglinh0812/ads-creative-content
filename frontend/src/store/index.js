@@ -9,6 +9,7 @@ import fbExport from './modules/fbExport'
 import fbImport from './modules/fbImport'
 import competitor from './modules/competitor'
 import cta from './modules/cta'
+import locale from './modules/locale' // Issue: I18n Phase 1
 import api from '../services/api'
 
 export default createStore({
@@ -99,7 +100,8 @@ export default createStore({
     fbExport,
     fbImport,
     competitor,
-    cta
+    cta,
+    locale // Issue: I18n Phase 1
   }
 })
 

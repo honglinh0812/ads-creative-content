@@ -655,9 +655,12 @@ public class FacebookExportService {
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             headers.setContentDispositionFormData("attachment", "facebook_ad_" + adId + ".csv");
             headers.setContentLength(csvBytes.length);
-            
+
+            // Mark campaign as EXPORTED (Issue #7)
+            markCampaignAsExportedForAd(ad);
+
             return new ResponseEntity<>(csvBytes, headers, HttpStatus.OK);
-            
+
         } catch (Exception e) {
             log.error("Error exporting ad {} to Facebook template: {}", adId, e.getMessage(), e);
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi xuất quảng cáo: " + e.getMessage());
@@ -694,9 +697,14 @@ public class FacebookExportService {
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             headers.setContentDispositionFormData("attachment", "facebook_ads_bulk_" + System.currentTimeMillis() + ".csv");
             headers.setContentLength(csvBytes.length);
-            
+
+            // Mark campaigns as EXPORTED (Issue #7)
+            for (Ad ad : ads) {
+                markCampaignAsExportedForAd(ad);
+            }
+
             return new ResponseEntity<>(csvBytes, headers, HttpStatus.OK);
-            
+
         } catch (Exception e) {
             log.error("Error exporting multiple ads to Facebook template: {}", e.getMessage(), e);
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi xuất quảng cáo: " + e.getMessage());
@@ -792,6 +800,11 @@ public class FacebookExportService {
                 "facebook_ads_" + System.currentTimeMillis() + ".xlsx");
             headers.setContentLength(excelBytes.length);
             headers.set("X-Export-Count", String.valueOf(ads.size()));
+
+            // Mark campaigns as EXPORTED (Issue #7)
+            for (Ad ad : ads) {
+                markCampaignAsExportedForAd(ad);
+            }
 
             log.info("Successfully exported {} ads to Excel", ads.size());
             return new ResponseEntity<>(excelBytes, headers, HttpStatus.OK);
@@ -970,6 +983,37 @@ public class FacebookExportService {
             return exportAdsToExcel(adIds);
         } else {
             return exportMultipleAdsToFacebookTemplate(adIds);
+        }
+    }
+
+    /**
+     * Helper method to mark campaign as EXPORTED after ad export (Issue #7)
+     * @param ad The ad that was exported
+     */
+    private void markCampaignAsExportedForAd(Ad ad) {
+        try {
+            if (ad.getCampaign() != null) {
+                Campaign campaign = ad.getCampaign();
+                if (campaign.getStatus() == Campaign.CampaignStatus.READY) {
+                    campaign.setStatus(Campaign.CampaignStatus.EXPORTED);
+                    campaignService.updateCampaign(campaign.getId(),
+                        new com.fbadsautomation.dto.CampaignCreateRequest(
+                            campaign.getName(),
+                            campaign.getObjective() != null ? campaign.getObjective().toString() : null,
+                            campaign.getBudgetType() != null ? campaign.getBudgetType().toString() : null,
+                            campaign.getDailyBudget(),
+                            campaign.getTotalBudget(),
+                            campaign.getTargetAudience(),
+                            campaign.getStartDate(),
+                            campaign.getEndDate()
+                        ),
+                        campaign.getUser().getId()
+                    );
+                    log.info("Campaign {} marked as EXPORTED after ad {} export", campaign.getId(), ad.getId());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to mark campaign as EXPORTED for ad {}: {}", ad.getId(), e.getMessage());
         }
     }
 

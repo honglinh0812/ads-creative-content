@@ -16,6 +16,17 @@ public interface AIProvider {
     List<AdContent> generateAdContent(String prompt, int numberOfVariations, String language, FacebookCTA callToAction);
     CompletableFuture<List<AdContent>> generateAdContentAsync(String prompt, int numberOfVariations, String language, FacebookCTA callToAction);
 
+    /**
+     * Generate simple text completion without structured output
+     * Used for prompt enhancement where we just need improved text, not ad structure
+     *
+     * @param prompt The input prompt to complete/improve
+     * @param systemPrompt Optional system prompt to guide the AI
+     * @param maxTokens Maximum tokens in response
+     * @return Simple text response from AI
+     */
+    String generateTextCompletion(String prompt, String systemPrompt, Integer maxTokens);
+
     String generateImage(String prompt);
     CompletableFuture<String> generateImageAsync(String prompt);
 

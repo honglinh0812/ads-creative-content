@@ -6,7 +6,7 @@
         <a-col :xs="24" :sm="12" :md="6">
           <a-input
             v-model:value="searchQuery"
-            placeholder="Search campaigns..."
+            :placeholder="$t('campaign.table.placeholder.search')"
             size="large"
             allow-clear
             aria-label="Search campaigns"
@@ -23,40 +23,40 @@
         <a-col :xs="24" :sm="12" :md="4">
           <a-select
             v-model:value="statusFilter"
-            placeholder="Status"
+            :placeholder="$t('campaign.table.placeholder.status')"
             size="large"
             allow-clear
             style="width: 100%"
             aria-label="Filter by status"
             @change="handleFilterChange"
           >
-            <a-select-option value="">All Status</a-select-option>
-            <a-select-option value="ACTIVE">Active</a-select-option>
-            <a-select-option value="PAUSED">Paused</a-select-option>
-            <a-select-option value="DRAFT">Draft</a-select-option>
-            <a-select-option value="COMPLETED">Completed</a-select-option>
+            <a-select-option value="">{{ $t('campaign.table.filter.allStatus') }}</a-select-option>
+            <a-select-option value="ACTIVE">{{ $t('campaign.status.active') }}</a-select-option>
+            <a-select-option value="PAUSED">{{ $t('campaign.status.paused') }}</a-select-option>
+            <a-select-option value="DRAFT">{{ $t('campaign.status.draft') }}</a-select-option>
+            <a-select-option value="COMPLETED">{{ $t('campaign.status.completed') }}</a-select-option>
           </a-select>
         </a-col>
         
         <a-col :xs="24" :sm="12" :md="4">
           <a-select
             v-model:value="objectiveFilter"
-            placeholder="Objective"
+            :placeholder="$t('campaign.table.placeholder.objective')"
             size="large"
             allow-clear
             style="width: 100%"
             aria-label="Filter by objective"
             @change="handleFilterChange"
           >
-            <a-select-option value="">All Objectives</a-select-option>
-            <a-select-option value="BRAND_AWARENESS">Brand Awareness</a-select-option>
-            <a-select-option value="REACH">Reach</a-select-option>
-            <a-select-option value="TRAFFIC">Traffic</a-select-option>
-            <a-select-option value="ENGAGEMENT">Engagement</a-select-option>
-            <a-select-option value="APP_INSTALLS">App Installs</a-select-option>
-            <a-select-option value="VIDEO_VIEWS">Video Views</a-select-option>
-            <a-select-option value="LEAD_GENERATION">Lead Generation</a-select-option>
-            <a-select-option value="CONVERSIONS">Conversions</a-select-option>
+            <a-select-option value="">{{ $t('campaign.table.filter.allObjectives') }}</a-select-option>
+            <a-select-option value="BRAND_AWARENESS">{{ $t('campaign.objective.brandAwareness') }}</a-select-option>
+            <a-select-option value="REACH">{{ $t('campaign.objective.reach') }}</a-select-option>
+            <a-select-option value="TRAFFIC">{{ $t('campaign.objective.traffic') }}</a-select-option>
+            <a-select-option value="ENGAGEMENT">{{ $t('campaign.objective.engagement') }}</a-select-option>
+            <a-select-option value="APP_INSTALLS">{{ $t('campaign.objective.appInstalls') }}</a-select-option>
+            <a-select-option value="VIDEO_VIEWS">{{ $t('campaign.objective.videoViews') }}</a-select-option>
+            <a-select-option value="LEAD_GENERATION">{{ $t('campaign.objective.leadGeneration') }}</a-select-option>
+            <a-select-option value="CONVERSIONS">{{ $t('campaign.objective.conversions') }}</a-select-option>
           </a-select>
         </a-col>
         
@@ -80,7 +80,7 @@
             <template #icon>
               <ClearOutlined aria-hidden="true" />
             </template>
-            Reset
+            {{ $t('campaign.table.action.reset') }}
           </a-button>
         </a-col>
         
@@ -95,7 +95,7 @@
             <template #icon>
               <component :is="viewMode === 'table' ? 'AppstoreOutlined' : 'TableOutlined'" aria-hidden="true" />
             </template>
-            {{ viewMode === 'table' ? 'Cards' : 'Table' }}
+            {{ viewMode === 'table' ? $t('campaign.table.view.cards') : $t('campaign.table.view.table') }}
           </a-button>
         </a-col>
       </a-row>
@@ -104,8 +104,8 @@
     <!-- Results Summary -->
     <div id="results-summary" class="results-summary" role="status" aria-live="polite">
       <a-typography-text type="secondary">
-        Showing {{ filteredCampaigns.length }} of {{ totalCampaigns }} campaigns
-        <span v-if="hasActiveFilters"> (filtered)</span>
+        {{ $t('campaign.table.results.showing', { filtered: filteredCampaigns.length, total: totalCampaigns }) }}
+        <span v-if="hasActiveFilters"> {{ $t('campaign.table.results.filtered') }}</span>
       </a-typography-text>
     </div>
 
@@ -139,7 +139,8 @@
           
           <template v-else-if="column.key === 'status'">
             <a-tag :color="getStatusColor(record.status)">
-              {{ record.status || 'Unknown' }}
+              <component :is="getStatusIcon(record.status)" style="margin-right: 4px;" />
+              {{ getStatusLabel(record.status) }}
             </a-tag>
           </template>
           
@@ -153,12 +154,12 @@
           <template v-else-if="column.key === 'budget'">
             <div class="budget-cell">
               <div v-if="record.dailyBudget">
-                <strong>${{ formatNumber(record.dailyBudget) }}</strong>/day
+                <strong>${{ formatNumber(record.dailyBudget) }}</strong> {{ $t('campaign.table.budget.perDay') }}
               </div>
               <div v-else-if="record.totalBudget">
-                <strong>${{ formatNumber(record.totalBudget) }}</strong> total
+                <strong>${{ formatNumber(record.totalBudget) }}</strong> {{ $t('campaign.table.budget.total') }}
               </div>
-              <span v-else class="text-gray-400">Not set</span>
+              <span v-else class="text-gray-400">{{ $t('campaign.table.budget.notSet') }}</span>
             </div>
           </template>
           
@@ -177,9 +178,9 @@
           
           <template v-else-if="column.key === 'actions'">
             <a-space size="small">
-              <a-tooltip title="View Details">
-                <a-button 
-                  size="small" 
+              <a-tooltip :title="$t('campaign.table.action.viewDetails')">
+                <a-button
+                  size="small"
                   aria-label="View details for {{ record.name }}"
                   @click="$emit('view-details', record)"
                 >
@@ -188,10 +189,11 @@
                   </template>
                 </a-button>
               </a-tooltip>
-              
-              <a-tooltip title="Edit Campaign">
-                <a-button 
-                  size="small" 
+
+              <a-tooltip :title="record.status === 'EXPORTED' ? $t('campaign.table.action.cannotEdit') : $t('campaign.table.action.edit')">
+                <a-button
+                  size="small"
+                  :disabled="record.status === 'EXPORTED'"
                   aria-label="Edit {{ record.name }}"
                   @click="$emit('edit-campaign', record)"
                 >
@@ -200,10 +202,10 @@
                   </template>
                 </a-button>
               </a-tooltip>
-              
-              <a-tooltip title="View Ads">
-                <a-button 
-                  size="small" 
+
+              <a-tooltip :title="$t('campaign.table.action.viewAds')">
+                <a-button
+                  size="small"
                   aria-label="View ads for {{ record.name }}"
                   @click="$emit('view-ads', record)"
                 >
@@ -212,14 +214,14 @@
                   </template>
                 </a-button>
               </a-tooltip>
-              
+
               <a-popconfirm
-                title="Are you sure you want to delete this campaign?"
-                ok-text="Yes"
-                cancel-text="No"
+                :title="$t('campaign.table.action.confirmDelete')"
+                :ok-text="$t('common.action.yes')"
+                :cancel-text="$t('common.action.no')"
                 @confirm="$emit('delete-campaign', record.id)"
               >
-                <a-tooltip title="Delete Campaign">
+                <a-tooltip :title="$t('campaign.table.action.delete')">
                   <a-button size="small" danger>
                     <template #icon>
                       <DeleteOutlined />
@@ -253,7 +255,8 @@
             
             <div style="margin: 12px 0;">
               <a-tag :color="getStatusColor(campaign.status)">
-                {{ campaign.status || 'Unknown' }}
+                <component :is="getStatusIcon(campaign.status)" style="margin-right: 4px;" />
+                {{ getStatusLabel(campaign.status) }}
               </a-tag>
               <a-tag color="blue" v-if="campaign.objective" style="margin-left: 4px;">
                 {{ formatObjective(campaign.objective) }}
@@ -263,21 +266,21 @@
             <a-row :gutter="[12, 12]" style="margin-bottom: 16px;">
               <a-col :span="12">
                 <a-typography-text type="secondary" style="font-size: 12px; font-weight: 500;">
-                  Budget
+                  {{ $t('campaign.table.label.budget') }}
                 </a-typography-text>
                 <div style="font-size: 14px; font-weight: 600;">
                   <div v-if="campaign.dailyBudget">
-                    ${{ formatNumber(campaign.dailyBudget) }}/day
+                    ${{ formatNumber(campaign.dailyBudget) }} {{ $t('campaign.table.budget.perDay') }}
                   </div>
                   <div v-else-if="campaign.totalBudget">
-                    ${{ formatNumber(campaign.totalBudget) }} total
+                    ${{ formatNumber(campaign.totalBudget) }} {{ $t('campaign.table.budget.total') }}
                   </div>
-                  <span v-else class="text-gray-400">Not set</span>
+                  <span v-else class="text-gray-400">{{ $t('campaign.table.budget.notSet') }}</span>
                 </div>
               </a-col>
               <a-col :span="12">
                 <a-typography-text type="secondary" style="font-size: 12px; font-weight: 500;">
-                  Total Ads
+                  {{ $t('campaign.table.label.totalAds') }}
                 </a-typography-text>
                 <div style="font-size: 14px; font-weight: 600;">
                   {{ campaign.totalAds || 0 }}
@@ -290,30 +293,34 @@
             <a-row justify="space-between" align="middle">
               <a-col>
                 <a-space size="small">
-                  <a-button size="small" @click="$emit('edit-campaign', campaign)">
+                  <a-button
+                    size="small"
+                    :disabled="campaign.status === 'EXPORTED'"
+                    @click="$emit('edit-campaign', campaign)"
+                  >
                     <template #icon>
                       <EditOutlined />
                     </template>
-                    Edit
+                    {{ $t('common.action.edit') }}
                   </a-button>
                   <a-popconfirm
-                    title="Are you sure you want to delete this campaign?"
-                    ok-text="Yes"
-                    cancel-text="No"
+                    :title="$t('campaign.table.action.confirmDelete')"
+                    :ok-text="$t('common.action.yes')"
+                    :cancel-text="$t('common.action.no')"
                     @confirm="$emit('delete-campaign', campaign.id)"
                   >
                     <a-button size="small" danger>
                       <template #icon>
                         <DeleteOutlined />
                       </template>
-                      Delete
+                      {{ $t('common.action.delete') }}
                     </a-button>
                   </a-popconfirm>
                 </a-space>
               </a-col>
               <a-col>
                 <a-button type="primary" size="small" @click="$emit('view-details', campaign)">
-                  View Details
+                  {{ $t('campaign.table.action.viewDetails') }}
                 </a-button>
               </a-col>
             </a-row>
@@ -345,6 +352,7 @@
 
 <script>
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   SearchOutlined,
   ClearOutlined,
@@ -352,7 +360,16 @@ import {
   AppstoreOutlined,
   EyeOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  FileOutlined,
+  CheckCircleOutlined,
+  ExportOutlined,
+  PlayCircleOutlined,
+  PauseCircleOutlined,
+  CheckOutlined,
+  CloseCircleOutlined,
+  ClockCircleOutlined,
+  QuestionCircleOutlined
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -368,7 +385,16 @@ export default {
     AppstoreOutlined,
     EyeOutlined,
     EditOutlined,
-    DeleteOutlined
+    DeleteOutlined,
+    FileOutlined,
+    CheckCircleOutlined,
+    ExportOutlined,
+    PlayCircleOutlined,
+    PauseCircleOutlined,
+    CheckOutlined,
+    CloseCircleOutlined,
+    ClockCircleOutlined,
+    QuestionCircleOutlined
   },
   props: {
     campaigns: {
@@ -381,8 +407,9 @@ export default {
     }
   },
   emits: ['view-details', 'edit-campaign', 'delete-campaign', 'view-ads'],
-  
+
   setup(props) {
+    const { t } = useI18n()
     // Reactive data
     const searchQuery = ref('')
     const statusFilter = ref('')
@@ -395,9 +422,9 @@ export default {
     const sortOrder = ref('desc')
     
     // Table columns configuration
-    const columns = ref([
+    const columns = computed(() => [
       {
-        title: 'Campaign Name',
+        title: t('campaign.table.column.name'),
         key: 'name',
         dataIndex: 'name',
         sorter: true,
@@ -405,33 +432,33 @@ export default {
         fixed: 'left'
       },
       {
-        title: 'Status',
+        title: t('campaign.table.column.status'),
         key: 'status',
         dataIndex: 'status',
         sorter: true,
         width: 120,
         filters: [
-          { text: 'Active', value: 'ACTIVE' },
-          { text: 'Paused', value: 'PAUSED' },
-          { text: 'Draft', value: 'DRAFT' },
-          { text: 'Completed', value: 'COMPLETED' }
+          { text: t('campaign.status.active'), value: 'ACTIVE' },
+          { text: t('campaign.status.paused'), value: 'PAUSED' },
+          { text: t('campaign.status.draft'), value: 'DRAFT' },
+          { text: t('campaign.status.completed'), value: 'COMPLETED' }
         ]
       },
       {
-        title: 'Objective',
+        title: t('campaign.table.column.objective'),
         key: 'objective',
         dataIndex: 'objective',
         sorter: true,
         width: 150
       },
       {
-        title: 'Budget',
+        title: t('campaign.table.column.budget'),
         key: 'budget',
         sorter: true,
         width: 150
       },
       {
-        title: 'Ads',
+        title: t('campaign.table.column.ads'),
         key: 'adsCount',
         dataIndex: 'totalAds',
         sorter: true,
@@ -439,14 +466,14 @@ export default {
         align: 'center'
       },
       {
-        title: 'Created Date',
+        title: t('campaign.table.column.createdDate'),
         key: 'createdDate',
         dataIndex: 'createdDate',
         sorter: true,
         width: 150
       },
       {
-        title: 'Actions',
+        title: t('campaign.table.column.actions'),
         key: 'actions',
         width: 200,
         fixed: 'right'
@@ -565,17 +592,59 @@ export default {
     // Utility functions
     const getStatusColor = (status) => {
       const colors = {
-        'ACTIVE': 'green',
-        'PAUSED': 'orange',
-        'DRAFT': 'blue',
-        'COMPLETED': 'purple',
-        'DELETED': 'red'
+        'DRAFT': 'default',        // Gray - chưa có ads
+        'READY': 'cyan',           // Cyan - có ads, sẵn sàng export
+        'EXPORTED': 'green',       // Green - đã export
+        'ACTIVE': 'blue',          // Blue - đang chạy
+        'PAUSED': 'orange',        // Orange - tạm dừng
+        'COMPLETED': 'purple',     // Purple - hoàn thành
+        'FAILED': 'red',           // Red - thất bại
+        'PENDING': 'gold'          // Gold - đang chờ
       }
       return colors[status] || 'default'
     }
+
+    const getStatusIcon = (status) => {
+      const icons = {
+        'DRAFT': 'FileOutlined',
+        'READY': 'CheckCircleOutlined',
+        'EXPORTED': 'ExportOutlined',
+        'ACTIVE': 'PlayCircleOutlined',
+        'PAUSED': 'PauseCircleOutlined',
+        'COMPLETED': 'CheckOutlined',
+        'FAILED': 'CloseCircleOutlined',
+        'PENDING': 'ClockCircleOutlined'
+      }
+      return icons[status] || 'QuestionCircleOutlined'
+    }
+
+    const getStatusLabel = (status) => {
+      const labels = {
+        'DRAFT': t('campaign.status.draft'),
+        'READY': t('campaign.status.ready'),
+        'EXPORTED': t('campaign.status.exported'),
+        'ACTIVE': t('campaign.status.active'),
+        'PAUSED': t('campaign.status.paused'),
+        'COMPLETED': t('campaign.status.completed'),
+        'FAILED': t('campaign.status.failed'),
+        'PENDING': t('campaign.status.pending')
+      }
+      return labels[status] || status || t('campaign.status.unknown')
+    }
     
     const formatObjective = (objective) => {
-      return objective?.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
+      if (!objective) return ''
+      const objectiveMap = {
+        'BRAND_AWARENESS': t('campaign.objective.brandAwareness'),
+        'REACH': t('campaign.objective.reach'),
+        'TRAFFIC': t('campaign.objective.traffic'),
+        'ENGAGEMENT': t('campaign.objective.engagement'),
+        'APP_INSTALLS': t('campaign.objective.appInstalls'),
+        'VIDEO_VIEWS': t('campaign.objective.videoViews'),
+        'LEAD_GENERATION': t('campaign.objective.leadGeneration'),
+        'CONVERSIONS': t('campaign.objective.conversions')
+      }
+      return objectiveMap[objective] || objective.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
     }
     
     const formatNumber = (num) => {
@@ -586,11 +655,24 @@ export default {
     }
     
     const formatDate = (date) => {
-      return dayjs(date).format('MMM DD, YYYY')
+      if (!date) return t('campaign.table.date.notAvailable')
+
+      const dayjsDate = dayjs(date)
+      if (!dayjsDate.isValid()) {
+        console.warn('Invalid date:', date)
+        return t('campaign.table.date.invalid')
+      }
+
+      return dayjsDate.format('MMM DD, YYYY')
     }
-    
+
     const formatRelativeTime = (date) => {
-      return dayjs(date).fromNow()
+      if (!date) return ''
+
+      const dayjsDate = dayjs(date)
+      if (!dayjsDate.isValid()) return ''
+
+      return dayjsDate.fromNow()
     }
     
     // Watchers
@@ -623,6 +705,8 @@ export default {
       handlePageChange,
       handlePageSizeChange,
       getStatusColor,
+      getStatusIcon,
+      getStatusLabel,
       formatObjective,
       formatNumber,
       formatDate,
