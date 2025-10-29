@@ -30,7 +30,7 @@ services:
     container_name: fbads-redis
     restart: unless-stopped
     command: >
-      bash -lc 'if [ -n "$REDIS_PASSWORD" ];
+      sh -c 'if [ -n "$REDIS_PASSWORD" ];
         then exec redis-server --appendonly yes --requirepass "$REDIS_PASSWORD";
         else exec redis-server --appendonly yes;
       fi'
@@ -174,15 +174,11 @@ services:
     image: nginx:alpine
     container_name: fbads-nginx
     restart: unless-stopped
-    profiles:
-      - production
     depends_on:
       - backend
       - frontend
     volumes:
-      - ./deployment/nginx-production.conf:/etc/nginx/nginx.conf:ro
-      - ./deployment/ssl:/etc/nginx/ssl:ro
-      - nginx_logs:/var/log/nginx
+      - ./deployment/nginx-frontend.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "80:80"
       - "443:443"
