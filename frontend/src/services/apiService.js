@@ -3,7 +3,7 @@ import store from '@/store'
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api',
+  baseURL: process.env.VUE_APP_API_BASE_URL || '/api',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json'

@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Create axios instance
 const apiClient = axios.create({
-  baseURL: process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api',
+  baseURL: process.env.VUE_APP_API_BASE_URL || '/api',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -79,7 +79,7 @@ export default {
   
   // Auth endpoints
   auth: {
-    login: () => `${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api'}/auth/oauth2/authorize/facebook`,
+    login: () => `${window.location.origin}/api/auth/oauth2/authorize/facebook`,
     callback: () => '/auth/oauth2/callback/facebook',
     logout: () => apiClient.post('/auth/logout'),
     getUser: () => apiClient.get('/auth/user'),
