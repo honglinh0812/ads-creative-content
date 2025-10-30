@@ -113,13 +113,18 @@ services:
       # OAuth Configuration
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_FACEBOOK_CLIENT_ID: ${FACEBOOK_APP_ID}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_FACEBOOK_CLIENT_SECRET: ${FACEBOOK_APP_SECRET}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_FACEBOOK_REDIRECT_URI: https://linhnh.site/api/auth/oauth2/callback/facebook
 
       # JWT Configuration
       APP_JWT_SECRET: ${JWT_SECRET}
       APP_JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
 
+      # Server Configuration
+      SERVER_SERVLET_CONTEXT_PATH: ${SERVER_CONTEXT_PATH:-}
+      SERVER_USE_FORWARD_HEADERS: true
+
       # CORS Configuration
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8081,http://localhost:80}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://linhnh.site,https://api.linhnh.site}
 
       # SerpApi Configuration
       SERPAPI_KEY: ${SERPAPI_API_KEY}
