@@ -169,7 +169,7 @@ services:
     networks:
       - fbads-network
 
-  # Nginx Reverse Proxy 
+  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
     container_name: fbads-nginx

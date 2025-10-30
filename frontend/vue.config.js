@@ -2,6 +2,7 @@ const path = require('path')
 const fs = require('fs')
 
 module.exports = {
+  publicPath: '/',
   devServer: {
     port: 8081,
     historyApiFallback: true,
