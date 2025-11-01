@@ -14,7 +14,7 @@ COPY . .
 
 # Remove .env files to prevent Vue CLI from reading them
 # This ensures environment variables come from ARG/ENV only
-RUN rm -f .env .env.* 2>/dev/null || true
+RUN rm -f .env .env.local .env.production .env.development .env.staging || true
 
 # Accept build arguments for environment variables
 ARG VUE_APP_API_BASE_URL=/api
