@@ -9,25 +9,36 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy source code
-COPY . .
-
-# Remove .env files to prevent Vue CLI from reading them
-# This ensures environment variables come from ARG/ENV only
-RUN rm -f .env .env.local .env.production .env.development .env.staging || true
-
-# Accept build arguments for environment variables
+# Accept build arguments for environment variables BEFORE copying source
+# This ensures they are available when webpack processes the code
 ARG VUE_APP_API_BASE_URL=/api
 ARG VUE_APP_SENTRY_DSN
 ARG VUE_APP_ENVIRONMENT=production
 
-# Set environment variables for build
+# Set environment variables for build BEFORE copying source
 ENV VUE_APP_API_BASE_URL=$VUE_APP_API_BASE_URL
 ENV VUE_APP_SENTRY_DSN=$VUE_APP_SENTRY_DSN
 ENV VUE_APP_ENVIRONMENT=$VUE_APP_ENVIRONMENT
 
+# Copy source code (.env files are excluded by .dockerignore)
+COPY . .
+
+# Double-check: Remove any .env files that might have been copied despite .dockerignore
+RUN rm -f .env .env.local .env.production .env.development .env.staging || true
+
+# Verify environment variables are set correctly
+RUN echo "Building with VUE_APP_API_BASE_URL=$VUE_APP_API_BASE_URL"
+
 # Build the application
 RUN npm run build
+
+# Verify the build output doesn't contain localhost:8080
+RUN if grep -r "localhost:8080" /app/dist/js/ 2>/dev/null; then \
+      echo "ERROR: Found localhost:8080 in built files!"; \
+      exit 1; \
+    else \
+      echo "SUCCESS: No localhost:8080 found in built files"; \
+    fi
 
 # Production stage
 FROM nginx:alpine

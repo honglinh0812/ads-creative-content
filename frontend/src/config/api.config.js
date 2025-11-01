@@ -8,10 +8,13 @@
  * Priority:
  * 1. VUE_APP_API_BASE_URL from environment variables (set during build)
  * 2. Relative path '/api' (works in both dev and production with proxy/nginx)
+ *
+ * IMPORTANT: This MUST be a constant, not a function, to ensure webpack
+ * replaces it correctly during build with the environment variable value
  */
-export const getApiBaseUrl = () => {
-  return process.env.VUE_APP_API_BASE_URL || '/api'
-}
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || '/api'
+
+export const getApiBaseUrl = () => API_BASE_URL
 
 /**
  * Get the full API URL (including origin)
