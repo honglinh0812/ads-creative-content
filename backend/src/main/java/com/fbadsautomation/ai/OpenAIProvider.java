@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fbadsautomation.model.AdContent;
 import com.fbadsautomation.model.FacebookCTA;
 import com.fbadsautomation.model.Capability;
+import com.fbadsautomation.service.MinIOStorageService;
+import com.fbadsautomation.util.ByteArrayMultipartFile;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
@@ -21,6 +23,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -37,9 +40,9 @@ import java.util.concurrent.CompletableFuture;
 @Service
 
 public class OpenAIProvider implements AIProvider {
-    
+
     private static final Logger log = LoggerFactory.getLogger(OpenAIProvider.class);
-    
+
     private final RestTemplate restTemplate;
     private final String apiKey;
     private final String textApiUrl;
@@ -48,6 +51,9 @@ public class OpenAIProvider implements AIProvider {
         // For parsing JSON;
     @Value("${app.image.storage.location:uploads/images}")
     private String imageStorageLocation;
+
+    @Autowired(required = false)
+    private MinIOStorageService minIOStorageService;
     public OpenAIProvider(
             RestTemplate restTemplate,
             @Value("${ai.openai.api-key:}") String apiKey,
@@ -273,20 +279,42 @@ public class OpenAIProvider implements AIProvider {
             if (!data.isEmpty() && data.get(0).containsKey("url")) {
                 String imageUrl = (String) data.get(0).get("url");
                 log.info("Successfully received image URL from OpenAI: {}", imageUrl);
-                // Tải ảnh về local
+
+                // Download image from OpenAI
                 try (InputStream in = new URL(imageUrl).openStream()) {
+                    byte[] imageBytes = in.readAllBytes();
                     String filename = UUID.randomUUID().toString() + ".png";
+
+                    // Try MinIO first
+                    if (minIOStorageService != null) {
+                        try {
+                            log.debug("Uploading OpenAI image to MinIO: {}", filename);
+                            ByteArrayMultipartFile multipartFile = new ByteArrayMultipartFile(
+                                imageBytes, "image", "image/png", filename
+                            );
+                            String storedFilename = minIOStorageService.uploadFile(multipartFile);
+                            String publicUrl = minIOStorageService.getFileUrl(storedFilename);
+                            log.info("OpenAI image uploaded to MinIO successfully: {}", publicUrl);
+                            return publicUrl;
+                        } catch (Exception minioError) {
+                            log.warn("MinIO upload failed, falling back to local storage: {}", minioError.getMessage());
+                        }
+                    }
+
+                    // Fallback to local filesystem
                     Path uploadPath = Paths.get(imageStorageLocation);
                     if (!Files.exists(uploadPath)) {
                         Files.createDirectories(uploadPath);
                     }
                     Path filePath = uploadPath.resolve(filename);
-                    Files.copy(in, filePath);
+                    Files.write(filePath, imageBytes);
+
                     String localUrl = "/api/images/" + filename;
                     log.info("Saved OpenAI image to local: {} | URL: {}", filePath, localUrl);
                     return localUrl;
+
                 } catch (Exception ex) {
-                    log.error("Failed to save OpenAI image to local: {}", ex.getMessage(), ex);
+                    log.error("Failed to save OpenAI image: {}", ex.getMessage(), ex);
                     return "/img/placeholder.png";
                 }
     }

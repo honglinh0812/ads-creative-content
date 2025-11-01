@@ -315,19 +315,35 @@ public class GeminiProvider implements AIProvider {
 
     /**
      * Extract base64 encoded image from Gemini Imagen API response
+     * Supports both new (candidates) and old (generatedImages) response structures
      */
     private String extractBase64ImageFromResponse(Map<String, Object> response) {
         try {
-            // Response format: {predictions: [{generatedImages: [{imageBytes: "base64..."}]}]}
             if (response.containsKey("predictions")) {
                 List<Map<String, Object>> predictions = (List<Map<String, Object>>) response.get("predictions");
                 if (!predictions.isEmpty()) {
                     Map<String, Object> prediction = predictions.get(0);
+
+                    // Try new API structure first: predictions[0].candidates[0].content
+                    if (prediction.containsKey("candidates")) {
+                        List<Map<String, Object>> candidates = (List<Map<String, Object>>) prediction.get("candidates");
+                        if (!candidates.isEmpty()) {
+                            Map<String, Object> candidateData = candidates.get(0);
+                            if (candidateData.containsKey("content")) {
+                                String mimeType = (String) candidateData.get("mimeType");
+                                log.debug("Found image in candidates structure, mimeType: {}", mimeType);
+                                return (String) candidateData.get("content");
+                            }
+                        }
+                    }
+
+                    // Fallback to old structure: predictions[0].generatedImages[0].imageBytes
                     if (prediction.containsKey("generatedImages")) {
                         List<Map<String, Object>> generatedImages = (List<Map<String, Object>>) prediction.get("generatedImages");
                         if (!generatedImages.isEmpty()) {
                             Map<String, Object> imageData = generatedImages.get(0);
                             if (imageData.containsKey("imageBytes")) {
+                                log.debug("Found image in generatedImages structure (legacy)");
                                 return (String) imageData.get("imageBytes");
                             }
                         }
@@ -335,7 +351,7 @@ public class GeminiProvider implements AIProvider {
                 }
             }
 
-            log.warn("Could not find imageBytes in response structure: {}", response);
+            log.warn("Could not find image data in response structure: {}", response);
         } catch (Exception e) {
             log.error("Error extracting base64 image from response", e);
         }

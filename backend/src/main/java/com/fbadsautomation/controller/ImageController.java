@@ -8,8 +8,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -30,7 +35,10 @@ public class ImageController {
 
     @Autowired
     private MinIOStorageService minioStorageService;
-    
+
+    @Value("${app.image.storage.location:uploads/images}")
+    private String imageStorageLocation;
+
     @Operation(summary = "Serve image file", description = "Serves an image file by filename")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Image file served successfully"),
@@ -42,32 +50,54 @@ public class ImageController {
         log.info("🖼️  [IMAGE REQUEST] Serving image: {}", filename);
 
         try {
-            // Check if file exists in MinIO
-            if (!minioStorageService.fileExists(filename)) {
-                log.warn("⚠️  [IMAGE NOT FOUND] File does not exist in MinIO: {}", filename);
-                return ResponseEntity.notFound().build();
+            // Try MinIO first
+            if (minioStorageService.fileExists(filename)) {
+                log.debug("✅ [IMAGE FOUND IN MINIO] File exists: {}", filename);
+
+                // Get file info and stream from MinIO
+                StatObjectResponse fileInfo = minioStorageService.getFileInfo(filename);
+                InputStream inputStream = minioStorageService.downloadFile(filename);
+
+                Resource resource = new InputStreamResource(inputStream);
+
+                // Determine content type
+                String contentType = fileInfo.contentType();
+                if (contentType == null || contentType.isEmpty()) {
+                    contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+                }
+
+                log.info("✅ [SERVED FROM MINIO] {} (type: {})", filename, contentType);
+
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                        .contentType(MediaType.parseMediaType(contentType))
+                        .body(resource);
             }
 
-            log.debug("✅ [IMAGE FOUND] File exists in MinIO: {}", filename);
+            // Fallback to local filesystem
+            log.debug("File not in MinIO, checking local filesystem: {}", filename);
 
-            // Get file info and stream from MinIO
-            StatObjectResponse fileInfo = minioStorageService.getFileInfo(filename);
-            InputStream inputStream = minioStorageService.downloadFile(filename);
+            Path localPath = Paths.get(imageStorageLocation).resolve(filename);
+            if (Files.exists(localPath)) {
+                log.info("✅ [IMAGE FOUND IN LOCAL] Serving from: {}", localPath);
 
-            Resource resource = new InputStreamResource(inputStream);
+                Resource resource = new FileSystemResource(localPath);
+                String contentType = Files.probeContentType(localPath);
+                if (contentType == null) {
+                    contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+                }
 
-            // Determine content type
-            String contentType = fileInfo.contentType();
-            if (contentType == null || contentType.isEmpty()) {
-                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+                log.info("✅ [SERVED FROM LOCAL] {} (type: {})", filename, contentType);
+
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                        .contentType(MediaType.parseMediaType(contentType))
+                        .body(resource);
             }
 
-            log.info("✅ [IMAGE SERVED] Successfully serving {} (type: {})", filename, contentType);
-
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .body(resource);
+            // Both MinIO and local failed
+            log.warn("⚠️  [IMAGE NOT FOUND] File does not exist in MinIO or local: {}", filename);
+            return ResponseEntity.notFound().build();
 
         } catch (Exception e) {
             log.error("❌ [IMAGE ERROR] Failed to serve image {}: {}", filename, e.getMessage(), e);
