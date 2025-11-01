@@ -8,7 +8,8 @@ module.exports = {
     historyApiFallback: true,
     proxy: {
       '/api': {
-        target: 'http://api.linhnh.site:8080',
+        // Use localhost for local dev (this won't affect production build)
+        target: process.env.VUE_APP_DEV_PROXY_TARGET || 'http://localhost:8080',
         changeOrigin: true
       }
     }
@@ -45,7 +46,8 @@ module.exports = {
         '@': path.resolve(__dirname, 'src')
       }
     },
-    devtool: process.env.NODE_ENV === 'development' ? 'eval-source-map' : 'source-map'
+    // Disable source maps in production to prevent config leakage and reduce bundle size
+    devtool: process.env.NODE_ENV === 'development' ? 'eval-source-map' : false
   },
 
   chainWebpack: config => {
