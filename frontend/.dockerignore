@@ -50,10 +50,13 @@ Dockerfile*
 docker-compose*
 .dockerignore
 
-# Environment files
+# Environment files - exclude ALL .env files to prevent override
 .env
+.env.*
 .env.local
-.env.*.local
+.env.production
+.env.development
+.env.staging
 
 # Application specific
 logs-build.txt
