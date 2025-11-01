@@ -60,6 +60,33 @@ public class AIContentServiceImpl {
     }
 
     /**
+     * Determines if a URL is external (needs downloading) or already local
+     *
+     * @param url The URL to check
+     * @return true if URL is external and needs downloading, false if local or invalid
+     */
+    private boolean isExternalUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return false;
+        }
+
+        // Local paths don't need downloading
+        if (url.startsWith("/api/images/") || url.startsWith("/img/")) {
+            return false;
+        }
+
+        // Check if it's a valid external HTTP/HTTPS URL
+        try {
+            java.net.URL urlObj = new java.net.URL(url);
+            String protocol = urlObj.getProtocol();
+            return "http".equalsIgnoreCase(protocol) || "https".equalsIgnoreCase(protocol);
+        } catch (java.net.MalformedURLException e) {
+            // Invalid URL format, treat as local path
+            return false;
+        }
+    }
+
+    /**
      * Issue #9: Generate content with Campaign-level audience
      * This is the NEW method that accepts Campaign and AdStyle
      */
@@ -121,10 +148,19 @@ public class AIContentServiceImpl {
 
                 for (AdContent content : contents) {
                     try {
-                        String externalImageUrl = aiProviderService.generateImageWithReliability(
+                        String imageUrl = aiProviderService.generateImageWithReliability(
                             content.getPrimaryText(), effectiveImageProvider);
-                        String storedImageUrl = downloadAndStoreImage(externalImageUrl);
-                        content.setImageUrl(storedImageUrl);
+
+                        // Only download if it's truly an external URL
+                        if (isExternalUrl(imageUrl)) {
+                            log.debug("External image URL detected, downloading: {}", imageUrl);
+                            String storedImageUrl = downloadAndStoreImage(imageUrl);
+                            content.setImageUrl(storedImageUrl);
+                        } else {
+                            // Already local, use as-is
+                            log.debug("Local image path detected, using directly: {}", imageUrl);
+                            content.setImageUrl(imageUrl);
+                        }
                     } catch (Exception e) {
                         log.error("Failed to generate/store image with provider {}: {}",
                             effectiveImageProvider, e.getMessage());
@@ -226,13 +262,21 @@ public class AIContentServiceImpl {
                 for (AdContent content : contents) {
                     try {
                         String imagePrompt = content.getPrimaryText();
-                        String externalImageUrl = aiProviderService.generateImageWithReliability(
+                        String imageUrl = aiProviderService.generateImageWithReliability(
                             imagePrompt, effectiveImageProvider);
 
-                        // Download external AI image to MinIO to prevent expiration
-                        String storedImageUrl = downloadAndStoreImage(externalImageUrl);
-                        content.setImageUrl(storedImageUrl);
-                        log.info("Generated and stored image for variation: {}", storedImageUrl);
+                        // Only download if it's truly an external URL
+                        if (isExternalUrl(imageUrl)) {
+                            log.debug("External image URL detected, downloading: {}", imageUrl);
+                            String storedImageUrl = downloadAndStoreImage(imageUrl);
+                            content.setImageUrl(storedImageUrl);
+                            log.info("Generated and stored image for variation: {}", storedImageUrl);
+                        } else {
+                            // Already local, use as-is
+                            log.debug("Local image path detected, using directly: {}", imageUrl);
+                            content.setImageUrl(imageUrl);
+                            log.info("Using local image for variation: {}", imageUrl);
+                        }
                     } catch (Exception e) {
                         log.error("Failed to generate/store image for variation with provider {}: {}",
                             effectiveImageProvider, e.getMessage());

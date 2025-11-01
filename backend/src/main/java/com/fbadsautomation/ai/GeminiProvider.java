@@ -280,17 +280,26 @@ public class GeminiProvider implements AIProvider {
                     return savedImageUrl;
                 } else {
                     log.error("No image data found in Gemini response");
+                    throw new RuntimeException("No image data in Gemini response");
                 }
             } else {
                 log.error("Gemini API returned null response");
+                throw new RuntimeException("Gemini API returned null response");
             }
 
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            // Check for specific billing error
+            if (e.getStatusCode().value() == 400 &&
+                e.getResponseBodyAsString().contains("billed users")) {
+                log.error("Gemini Imagen requires billing - triggering fallback to next provider");
+                throw new RuntimeException("Gemini Imagen API requires billing account", e);
+            }
+            log.error("HTTP error from Gemini Imagen: {} - {}", e.getStatusCode(), e.getMessage());
+            throw new RuntimeException("Failed to generate image with Gemini Imagen: " + e.getMessage(), e);
         } catch (Exception e) {
             log.error("Error generating image with Gemini Imagen: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to generate image with Gemini", e);
         }
-
-        // Return placeholder on any error
-        return "/img/placeholder.png";
     }
 
     /**

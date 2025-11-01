@@ -148,7 +148,9 @@ public class MinIOStorageService {
     }
 
     public String getFileUrl(String filename) {
-        return String.format("%s/%s/%s", endpoint, bucketName, filename);
+        // Return API gateway path for frontend access
+        // Backend ImageController serves images from MinIO at /api/images/
+        return "/api/images/" + filename;
     }
 
     public StatObjectResponse getFileInfo(String filename) {
