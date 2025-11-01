@@ -61,35 +61,42 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .authorizeRequests()
             // Public endpoints - order matters! Most specific patterns first
             .antMatchers(
-                "/api/health",
+                "/health",
                 "/actuator/**",
-                "/api/images/**",
-                "/api/auth/register",
-                "/api/auth/login-app",
-                "/api/auth/forgot-password",
-                "/api/auth/reset-password",
-                "/api/auth/oauth2/**",
-                "/api/public/**",
-                "/api/ai-providers/**",
-                "/api/trends/**",
+                "/images/**",
+                "/auth/register",
+                "/auth/login-app",
+                "/auth/forgot-password",
+                "/auth/reset-password",
+                "/auth/oauth2/**",
+                "/public/**",
+                "/ai-providers/**",
+                "/trends/**",
                 "/swagger-ui/**",
                 "/v3/api-docs/**"
             ).permitAll()
-            .antMatchers("/api/auth/user").authenticated()
-            .antMatchers("/api/prompt/**").authenticated()
+            .antMatchers("/auth/user").authenticated()
+            .antMatchers("/prompt/**").authenticated()
             .anyRequest().authenticated()
             .and()
             .oauth2Login()
+            .loginPage("/login")  // Prevent auto-redirect to OAuth
             .authorizationEndpoint()
-            .baseUri("/api/auth/oauth2/authorize")
+            .baseUri("/auth/oauth2/authorize")
             .and()
             .redirectionEndpoint()
-            .baseUri("/api/auth/oauth2/callback/*")
+            .baseUri("/auth/oauth2/callback/*")
             .and()
             .userInfoEndpoint()
             .and()
             .successHandler(oauth2AuthenticationSuccessHandler())
-            .failureHandler(oauth2AuthenticationFailureHandler());
+            .failureHandler(oauth2AuthenticationFailureHandler())
+            .and()
+            .exceptionHandling()
+            .authenticationEntryPoint((request, response, authException) -> {
+                // Don't redirect to OAuth for API calls
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+            });
 
         // Add JWT filter before UsernamePasswordAuthenticationFilter
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
