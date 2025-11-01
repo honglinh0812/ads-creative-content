@@ -315,7 +315,7 @@ public class GeminiProvider implements AIProvider {
 
     /**
      * Extract base64 encoded image from Gemini Imagen API response
-     * Supports both new (candidates) and old (generatedImages) response structures
+     * Supports multiple response structure variations from Google's API
      */
     private String extractBase64ImageFromResponse(Map<String, Object> response) {
         try {
@@ -324,7 +324,13 @@ public class GeminiProvider implements AIProvider {
                 if (!predictions.isEmpty()) {
                     Map<String, Object> prediction = predictions.get(0);
 
-                    // Try new API structure first: predictions[0].candidates[0].content
+                    // Try structure 1: predictions[0].bytesBase64Encoded (current API format)
+                    if (prediction.containsKey("bytesBase64Encoded")) {
+                        log.debug("Found image in bytesBase64Encoded structure");
+                        return (String) prediction.get("bytesBase64Encoded");
+                    }
+
+                    // Try structure 2: predictions[0].candidates[0].content
                     if (prediction.containsKey("candidates")) {
                         List<Map<String, Object>> candidates = (List<Map<String, Object>>) prediction.get("candidates");
                         if (!candidates.isEmpty()) {
@@ -337,7 +343,7 @@ public class GeminiProvider implements AIProvider {
                         }
                     }
 
-                    // Fallback to old structure: predictions[0].generatedImages[0].imageBytes
+                    // Try structure 3: predictions[0].generatedImages[0].imageBytes (legacy)
                     if (prediction.containsKey("generatedImages")) {
                         List<Map<String, Object>> generatedImages = (List<Map<String, Object>>) prediction.get("generatedImages");
                         if (!generatedImages.isEmpty()) {
