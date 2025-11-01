@@ -144,12 +144,24 @@ public class AIContentServiceImpl {
                     ? imageProvider
                     : defaultImageProvider;
 
-                log.info("Generating images using AI provider: {}", effectiveImageProvider);
+                log.info("🎨 Generating images for {} variations using provider: {}", contents.size(), effectiveImageProvider);
 
-                for (AdContent content : contents) {
+                // Smart fallback: Track provider state across variations to reduce API calls
+                String workingProvider = effectiveImageProvider;
+                boolean primaryProviderFailed = false;
+                int totalApiCalls = 0;
+                int successfulGenerations = 0;
+
+                for (int i = 0; i < contents.size(); i++) {
+                    AdContent content = contents.get(i);
+                    boolean retryWithFallback = false;
+
                     try {
+                        totalApiCalls++;
+                        log.debug("[VARIATION {}/{}] Generating image with provider: {}", i + 1, contents.size(), workingProvider);
+
                         String imageUrl = aiProviderService.generateImageWithReliability(
-                            content.getPrimaryText(), effectiveImageProvider);
+                            content.getPrimaryText(), workingProvider);
 
                         // Only download if it's truly an external URL
                         if (isExternalUrl(imageUrl)) {
@@ -161,11 +173,63 @@ public class AIContentServiceImpl {
                             log.debug("Local image path detected, using directly: {}", imageUrl);
                             content.setImageUrl(imageUrl);
                         }
+
+                        successfulGenerations++;
+                        log.debug("✅ [VARIATION {}/{}] Image generated successfully with {}", i + 1, contents.size(), workingProvider);
+
                     } catch (Exception e) {
-                        log.error("Failed to generate/store image with provider {}: {}",
-                            effectiveImageProvider, e.getMessage());
-                        content.setImageUrl("/img/placeholder.png");
+                        // Smart fallback: If primary provider fails on first variation, switch for all remaining
+                        if (!primaryProviderFailed && workingProvider.equals(effectiveImageProvider) && i == 0) {
+                            primaryProviderFailed = true;
+                            String fallbackProvider = getFallbackProvider(effectiveImageProvider);
+                            log.warn("⚠️ [SMART FALLBACK] Primary provider '{}' failed on first variation. " +
+                                "Switching to '{}' for all remaining {} variations to reduce API calls.",
+                                effectiveImageProvider, fallbackProvider, contents.size() - 1);
+                            workingProvider = fallbackProvider;
+                            retryWithFallback = true;
+                        }
+
+                        // Retry current variation with fallback provider if it's the first failure
+                        if (retryWithFallback) {
+                            try {
+                                totalApiCalls++;
+                                log.debug("[VARIATION {}/{}] Retrying with fallback provider: {}", i + 1, contents.size(), workingProvider);
+
+                                String imageUrl = aiProviderService.generateImageWithReliability(
+                                    content.getPrimaryText(), workingProvider);
+
+                                if (isExternalUrl(imageUrl)) {
+                                    String storedImageUrl = downloadAndStoreImage(imageUrl);
+                                    content.setImageUrl(storedImageUrl);
+                                } else {
+                                    content.setImageUrl(imageUrl);
+                                }
+
+                                successfulGenerations++;
+                                log.info("✅ [VARIATION {}/{}] Image generated successfully after fallback to {}",
+                                    i + 1, contents.size(), workingProvider);
+
+                            } catch (Exception retryException) {
+                                log.error("❌ [VARIATION {}/{}] Failed to generate/store image even with fallback provider {}: {}",
+                                    i + 1, contents.size(), workingProvider, retryException.getMessage());
+                                content.setImageUrl("/img/placeholder.png");
+                            }
+                        } else {
+                            log.error("❌ [VARIATION {}/{}] Failed to generate/store image with provider {}: {}",
+                                i + 1, contents.size(), workingProvider, e.getMessage());
+                            content.setImageUrl("/img/placeholder.png");
+                        }
                     }
+                }
+
+                // Summary logging
+                log.info("📊 [IMAGE GENERATION SUMMARY] Provider: {} | Variations: {} | Successful: {} | Total API calls: {} | Avg calls/variation: {.2f}",
+                    effectiveImageProvider, contents.size(), successfulGenerations, totalApiCalls,
+                    (double) totalApiCalls / contents.size());
+
+                if (totalApiCalls > contents.size() * 2) {
+                    log.warn("⚠️ [HIGH API USAGE] Total API calls ({}) exceeds 2x variations ({}). Check provider reliability.",
+                        totalApiCalls, contents.size());
                 }
             }
 
@@ -257,13 +321,25 @@ public class AIContentServiceImpl {
                     ? imageProvider
                     : defaultImageProvider;
 
-                log.info("Generating images for {} variations using provider: {}", contents.size(), effectiveImageProvider);
+                log.info("🎨 Generating images for {} variations using provider: {}", contents.size(), effectiveImageProvider);
 
-                for (AdContent content : contents) {
+                // Smart fallback: Track provider state across variations to reduce API calls
+                String workingProvider = effectiveImageProvider;
+                boolean primaryProviderFailed = false;
+                int totalApiCalls = 0;
+                int successfulGenerations = 0;
+
+                for (int i = 0; i < contents.size(); i++) {
+                    AdContent content = contents.get(i);
+                    boolean retryWithFallback = false;
+
                     try {
+                        totalApiCalls++;
                         String imagePrompt = content.getPrimaryText();
+                        log.debug("[VARIATION {}/{}] Generating image with provider: {}", i + 1, contents.size(), workingProvider);
+
                         String imageUrl = aiProviderService.generateImageWithReliability(
-                            imagePrompt, effectiveImageProvider);
+                            imagePrompt, workingProvider);
 
                         // Only download if it's truly an external URL
                         if (isExternalUrl(imageUrl)) {
@@ -277,13 +353,69 @@ public class AIContentServiceImpl {
                             content.setImageUrl(imageUrl);
                             log.info("Using local image for variation: {}", imageUrl);
                         }
+
+                        successfulGenerations++;
+                        log.debug("✅ [VARIATION {}/{}] Image generated successfully with {}", i + 1, contents.size(), workingProvider);
+
                     } catch (Exception e) {
-                        log.error("Failed to generate/store image for variation with provider {}: {}",
-                            effectiveImageProvider, e.getMessage());
-                        // Keep default placeholder on error
-                        content.setImageUrl("/img/placeholder.png");
+                        // Smart fallback: If primary provider fails on first variation, switch for all remaining
+                        if (!primaryProviderFailed && workingProvider.equals(effectiveImageProvider) && i == 0) {
+                            primaryProviderFailed = true;
+                            String fallbackProvider = getFallbackProvider(effectiveImageProvider);
+                            log.warn("⚠️ [SMART FALLBACK] Primary provider '{}' failed on first variation. " +
+                                "Switching to '{}' for all remaining {} variations to reduce API calls.",
+                                effectiveImageProvider, fallbackProvider, contents.size() - 1);
+                            workingProvider = fallbackProvider;
+                            retryWithFallback = true;
+                        }
+
+                        // Retry current variation with fallback provider if it's the first failure
+                        if (retryWithFallback) {
+                            try {
+                                totalApiCalls++;
+                                String imagePrompt = content.getPrimaryText();
+                                log.debug("[VARIATION {}/{}] Retrying with fallback provider: {}", i + 1, contents.size(), workingProvider);
+
+                                String imageUrl = aiProviderService.generateImageWithReliability(
+                                    imagePrompt, workingProvider);
+
+                                if (isExternalUrl(imageUrl)) {
+                                    String storedImageUrl = downloadAndStoreImage(imageUrl);
+                                    content.setImageUrl(storedImageUrl);
+                                    log.info("Generated and stored image after fallback: {}", storedImageUrl);
+                                } else {
+                                    content.setImageUrl(imageUrl);
+                                    log.info("Using local image after fallback: {}", imageUrl);
+                                }
+
+                                successfulGenerations++;
+                                log.info("✅ [VARIATION {}/{}] Image generated successfully after fallback to {}",
+                                    i + 1, contents.size(), workingProvider);
+
+                            } catch (Exception retryException) {
+                                log.error("❌ [VARIATION {}/{}] Failed to generate/store image even with fallback provider {}: {}",
+                                    i + 1, contents.size(), workingProvider, retryException.getMessage());
+                                content.setImageUrl("/img/placeholder.png");
+                            }
+                        } else {
+                            log.error("❌ [VARIATION {}/{}] Failed to generate/store image with provider {}: {}",
+                                i + 1, contents.size(), workingProvider, e.getMessage());
+                            // Keep default placeholder on error
+                            content.setImageUrl("/img/placeholder.png");
+                        }
                     }
                 }
+
+                // Summary logging
+                log.info("📊 [IMAGE GENERATION SUMMARY] Provider: {} | Variations: {} | Successful: {} | Total API calls: {} | Avg calls/variation: {.2f}",
+                    effectiveImageProvider, contents.size(), successfulGenerations, totalApiCalls,
+                    (double) totalApiCalls / contents.size());
+
+                if (totalApiCalls > contents.size() * 2) {
+                    log.warn("⚠️ [HIGH API USAGE] Total API calls ({}) exceeds 2x variations ({}). Check provider reliability.",
+                        totalApiCalls, contents.size());
+                }
+
                 log.info("Images added and stored using enhanced reliability features");
             }
 
@@ -585,6 +717,24 @@ public class AIContentServiceImpl {
                 audienceSegment.getLocation());
 
         return enhanced.toString();
+    }
+
+    /**
+     * Get first fallback provider from the chain when primary provider fails
+     * This helps reduce redundant API calls by switching providers early
+     *
+     * @param primaryProvider The primary provider that failed
+     * @return The first fallback provider from the chain
+     */
+    private String getFallbackProvider(String primaryProvider) {
+        // Return first fallback from provider chain
+        return switch (primaryProvider.toLowerCase()) {
+            case "gemini" -> "openai";
+            case "openai" -> "gemini";
+            case "fal-ai" -> "stable-diffusion";
+            case "stable-diffusion" -> "fal-ai";
+            default -> "gemini"; // Default fallback
+        };
     }
 
     /**

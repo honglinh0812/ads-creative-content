@@ -124,20 +124,26 @@ public class AIProviderService {
      */
     public String generateImageWithReliability(String prompt, String providerId) {
         String normalizedProviderId = normalizeKey(providerId);
-        // Cache temporarily disabled
-        // String cacheKey = cacheService.generateImageCacheKey(prompt, normalizedProviderId);
-        // String cachedImage = cacheService.getCachedImage(cacheKey);
-        // if (cachedImage != null) {
-        //     log.info("Retrieved cached image for provider: {}", providerId);
-        //     return cachedImage;
-        // }
+
+        // Check cache first to avoid duplicate API calls
+        String cacheKey = cacheService.generateImageCacheKey(prompt, normalizedProviderId);
+        String cachedImage = cacheService.getCachedImage(cacheKey);
+        if (cachedImage != null) {
+            log.info("✅ [CACHE HIT] Retrieved cached image for provider '{}', prompt hash: {}",
+                providerId, cacheKey.substring(cacheKey.lastIndexOf(':') + 1, Math.min(cacheKey.length(), cacheKey.lastIndexOf(':') + 9)));
+            return cachedImage;
+        }
+
+        log.debug("⚪ [CACHE MISS] No cached image found for provider '{}', generating new image", providerId);
 
         // Try primary provider with circuit breaker and retry
         String imageUrl = generateImageWithFallback(prompt, normalizedProviderId);
-        // Cache successful results
-        // if (imageUrl != null && !imageUrl.equals("/img/placeholder.png")) {
-        //     cacheService.cacheImage(cacheKey, imageUrl, Duration.ofHours(24));
-        // }
+
+        // Cache successful results (24 hour TTL)
+        if (imageUrl != null && !imageUrl.equals("/img/placeholder.png")) {
+            cacheService.cacheImage(cacheKey, imageUrl, Duration.ofHours(24));
+            log.info("💾 [CACHE STORED] Cached image for provider '{}' with 24h TTL", providerId);
+        }
 
         return imageUrl;
     }
