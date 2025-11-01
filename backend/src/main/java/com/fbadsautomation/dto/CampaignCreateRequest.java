@@ -11,7 +11,7 @@ public class CampaignCreateRequest {
 
     @NotBlank(message = "Campaign name is required")
     @Size(min = 3, max = 255, message = "Campaign name must be between 3 and 255 characters")
-    @Pattern(regexp = "^[a-zA-Z0-9\\s\\-_.,()]+$", message = "Campaign name contains invalid characters")
+    @Pattern(regexp = "^[\\p{L}\\p{N}\\s\\-_.,()]+$", message = "Campaign name contains invalid characters")
     private String name;
 
     @NotBlank(message = "Campaign objective is required")

@@ -414,11 +414,20 @@ export default {
     validateForm() {
       console.log('validateForm called')
       this.errors = {}
-      
+
+      // Validate campaign name
       if (!this.form.name) {
         this.errors.name = 'Campaign name is required'
+      } else if (this.form.name.length < 3 || this.form.name.length > 255) {
+        this.errors.name = 'Campaign name must be between 3 and 255 characters'
+      } else {
+        // Check for invalid characters (must match backend regex: [\p{L}\p{N}\s\-_.,()]+ )
+        const validPattern = /^[\p{L}\p{N}\s\-_.,()]+$/u
+        if (!validPattern.test(this.form.name)) {
+          this.errors.name = 'Campaign name contains invalid characters. Only letters, numbers, spaces, and -_.,() are allowed'
+        }
       }
-      
+
       if (!this.form.objective) {
         this.errors.objective = 'Campaign objective is required'
       }

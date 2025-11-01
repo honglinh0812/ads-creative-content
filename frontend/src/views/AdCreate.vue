@@ -1563,7 +1563,10 @@ export default {
 
         // Use cached extracted content if available (from auto-extraction)
         const extractedContent = this.extractedContentCache || ''
-        
+
+        // Filter valid ad links (non-empty)
+        const validLinks = this.adLinks.filter(link => link.trim())
+
         // Generate ad preview
         let promptWithCTA = this.formData.prompt || ''
         if (promptWithCTA.indexOf('Call to Action') === -1) {
