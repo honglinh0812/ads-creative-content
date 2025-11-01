@@ -235,6 +235,7 @@
 <script>
 import { mapActions } from 'vuex'
 import FieldError from '@/components/FieldError.vue'
+import { getApiBaseUrl, getFacebookLoginUrl } from '@/config/api.config'
 import {
   FacebookOutlined,
   UserOutlined,
@@ -292,14 +293,14 @@ export default {
       this.loadingFacebook = true
       const redirectPath = this.$route.query.redirect || '/dashboard'
       sessionStorage.setItem('redirectAfterLogin', redirectPath)
-      window.location.href = `${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api'}/auth/facebook`
+      window.location.href = getFacebookLoginUrl()
     },
     async handleLoginApp() {
       this.error = ''
       this.loginError = null
       this.loadingLoginApp = true
       try {
-        const res = await fetch(`${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api'}/auth/login-app`, {
+        const res = await fetch(`${getApiBaseUrl()}/auth/login-app`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(this.loginForm)
@@ -372,7 +373,7 @@ export default {
         return
       }
       try {
-        const res = await fetch(`${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api'}/auth/register`, {
+        const res = await fetch(`${getApiBaseUrl()}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -422,7 +423,7 @@ export default {
         return
       }
       try {
-        const res = await fetch(`${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api'}/auth/forgot-password`, {
+        const res = await fetch(`${getApiBaseUrl()}/auth/forgot-password`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: this.forgotForm.email })

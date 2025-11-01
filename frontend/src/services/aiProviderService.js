@@ -1,6 +1,7 @@
 import axios from 'axios'
+import { getApiBaseUrl } from '@/config/api.config'
 
-const API_URL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8081/api'
+const API_URL = getApiBaseUrl()
 
 export default {
   /**

@@ -23,6 +23,7 @@
 
 <script>
 import { Input, Button, Card } from 'ant-design-vue'
+import { getApiBaseUrl } from '@/config/api.config'
 
 export default {
   name: 'ResetPassword',
@@ -70,7 +71,7 @@ export default {
       }
       this.loading = true
       try {
-        const res = await fetch(`${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080/api'}/auth/reset-password`, {
+        const res = await fetch(`${getApiBaseUrl()}/auth/reset-password`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: this.token, newPassword: this.newPassword })

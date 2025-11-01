@@ -13,9 +13,9 @@ RUN npm ci
 COPY . .
 
 # Accept build arguments for environment variables
-ARG VUE_APP_API_BASE_URL=http://localhost:8080/api
+ARG VUE_APP_API_BASE_URL=/api
 ARG VUE_APP_SENTRY_DSN
-ARG VUE_APP_ENVIRONMENT=docker
+ARG VUE_APP_ENVIRONMENT=production
 
 # Set environment variables for build
 ENV VUE_APP_API_BASE_URL=$VUE_APP_API_BASE_URL
