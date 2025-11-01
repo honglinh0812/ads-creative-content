@@ -12,6 +12,10 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Remove .env files to prevent Vue CLI from reading them
+# This ensures environment variables come from ARG/ENV only
+RUN rm -f .env .env.* 2>/dev/null || true
+
 # Accept build arguments for environment variables
 ARG VUE_APP_API_BASE_URL=/api
 ARG VUE_APP_SENTRY_DSN
