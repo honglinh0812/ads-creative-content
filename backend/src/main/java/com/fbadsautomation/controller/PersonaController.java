@@ -35,7 +35,7 @@ import java.util.List;
  * API Design: RESTful with standard HTTP methods and status codes.
  */
 @RestController
-@RequestMapping("/api/personas")
+@RequestMapping("/personas")
 @CrossOrigin(origins = "*")
 @Tag(name = "Personas", description = "API endpoints for managing target audience personas")
 @SecurityRequirement(name = "Bearer Authentication")

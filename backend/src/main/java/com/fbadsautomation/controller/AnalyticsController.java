@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/analytics")
+@RequestMapping("/analytics")
 @Tag(name = "Analytics", description = "Analytics and reporting endpoints")
 @SecurityRequirement(name = "bearerAuth")
 public class AnalyticsController {

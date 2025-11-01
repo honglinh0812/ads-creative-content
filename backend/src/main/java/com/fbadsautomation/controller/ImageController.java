@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/images")
+@RequestMapping("/images")
 @CrossOrigin(origins = "*")
 @Tag(name = "Images", description = "Image serving endpoints")
 public class ImageController {

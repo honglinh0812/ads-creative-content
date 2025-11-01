@@ -29,7 +29,7 @@ import java.util.Optional;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/ads/async")
+@RequestMapping("/ads/async")
 @CrossOrigin(origins = "*")
 @Tag(name = "Async Ads", description = "API endpoints for asynchronous advertisement content generation")
 @SecurityRequirement(name = "Bearer Authentication")

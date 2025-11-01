@@ -15,7 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/optimization")
+@RequestMapping("/optimization")
 public class OptimizationController {
 
     private static final Logger log = LoggerFactory.getLogger(OptimizationController.class);

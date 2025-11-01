@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/facebook-export")
+@RequestMapping("/facebook-export")
 @RequiredArgsConstructor
 @Tag(name = "Facebook Export", description = "Export ads to Facebook-compatible formats")
 @SecurityRequirement(name = "bearerAuth")

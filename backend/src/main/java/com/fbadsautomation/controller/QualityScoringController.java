@@ -13,7 +13,7 @@ import java.util.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/quality")
+@RequestMapping("/quality")
 @RequiredArgsConstructor
 public class QualityScoringController {
 

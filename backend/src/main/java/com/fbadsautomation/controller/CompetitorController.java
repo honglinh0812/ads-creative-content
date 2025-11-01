@@ -49,7 +49,7 @@ import java.util.Map;
  * @security All endpoints require authentication, enforce user ownership
  */
 @RestController
-@RequestMapping("/api/competitors")
+@RequestMapping("/competitors")
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin(origins = "*")

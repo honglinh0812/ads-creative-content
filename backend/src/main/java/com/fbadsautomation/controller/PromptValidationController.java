@@ -14,7 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/prompt")
+@RequestMapping("/prompt")
 @Tag(name = "Prompt Validation", description = "APIs for validating and improving ad prompts")
 public class PromptValidationController {
 

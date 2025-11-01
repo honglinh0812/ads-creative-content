@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/export")
+@RequestMapping("/export")
 @CrossOrigin(origins = {"https://linhnh.site", "https://api.linhnh.site"})
 @Tag(name = "Export", description = "Data export endpoints")
 @SecurityRequirement(name = "bearerAuth")

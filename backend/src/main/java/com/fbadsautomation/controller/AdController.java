@@ -33,7 +33,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/ads")
+@RequestMapping("/ads")
 @CrossOrigin(origins = "*")
 @Tag(name = "Ads", description = "API endpoints for advertisement management and AI content generation")
 @SecurityRequirement(name = "Bearer Authentication")

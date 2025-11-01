@@ -40,7 +40,7 @@ import java.util.Map;
  * @since 2025-10-10
  */
 @RestController
-@RequestMapping("/api/facebook-report")
+@RequestMapping("/facebook-report")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Facebook Report Import", description = "Import and manage Facebook Ads Manager performance reports")

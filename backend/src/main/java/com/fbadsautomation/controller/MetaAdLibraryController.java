@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/meta-ad-library")
+@RequestMapping("/meta-ad-library")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Meta Ad Library", description = "API endpoints for extracting content from Meta Ad Library")

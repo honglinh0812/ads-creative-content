@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/database/performance")
+@RequestMapping("/database/performance")
 @Tag(name = "Database Performance", description = "Database performance monitoring and optimization endpoints")
 @SecurityRequirement(name = "bearerAuth")
 public class DatabasePerformanceController {

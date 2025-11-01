@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/scrape-creators")
+@RequestMapping("/scrape-creators")
 @CrossOrigin(origins = "*")
 @Tag(name = "Scrape Creators", description = "API endpoints for scraping ad content from external sources")
 public class ScrapeCreatorsController {

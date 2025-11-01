@@ -23,7 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/ai/monitoring")
+@RequestMapping("/ai/monitoring")
 @Tag(name = "AI Monitoring", description = "AI provider monitoring and management endpoints")
 @SecurityRequirement(name = "bearerAuth")
 public class AIMonitoringController {

@@ -19,7 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @CrossOrigin(origins = {"https://linhnh.site", "https://api.linhnh.site"})
 @Tag(name = "Authentication", description = "API endpoints for user authentication and account management")
 

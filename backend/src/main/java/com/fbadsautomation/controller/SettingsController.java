@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/settings")
+@RequestMapping("/settings")
 @CrossOrigin(origins = {"https://linhnh.site", "https://api.linhnh.site"})
 public class SettingsController {
 

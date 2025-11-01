@@ -25,7 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/campaigns")
+@RequestMapping("/campaigns")
 @CrossOrigin(origins = "*")
 @Tag(name = "Campaigns", description = "API endpoints for campaign management")
 @SecurityRequirement(name = "Bearer Authentication")

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/trends")
+@RequestMapping("/trends")
 @Tag(name = "Trending Keywords", description = "Public APIs for fetching trending keywords - no authentication required")
 public class TrendingKeywordsController {
 

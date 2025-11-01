@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/ai-providers")
+@RequestMapping("/ai-providers")
 @CrossOrigin(origins = "*")
 
 public class AIProviderController {
