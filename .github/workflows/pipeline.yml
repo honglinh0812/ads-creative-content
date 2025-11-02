@@ -65,11 +65,10 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
+          no-cache: true  # Force fresh build to ensure latest code
           tags: |
             ${{ env.BACKEND_IMAGE }}:latest
             ${{ env.BACKEND_IMAGE }}:${{ steps.vars.outputs.sha_short }}
-          cache-from: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache
-          cache-to: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache,mode=max
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
@@ -129,19 +128,21 @@ jobs:
             BACKEND_HEALTHY=$(docker inspect --format='{{.State.Health.Status}}' fbads-backend 2>/dev/null || echo "none")
             echo "Current backend health: $BACKEND_HEALTHY"
 
-            # Rolling update - Backend first
-            echo "Performing rolling update for backend..."
+            # Clean up old backend images to avoid tag conflicts
+            echo "Cleaning up old backend images..."
+            docker images ${{ env.BACKEND_IMAGE }} --format "{{.ID}} {{.Tag}}" | grep "<none>" | awk '{print $1}' | xargs -r docker rmi -f || true
 
-            # Start new backend container with different name
-            docker-compose up -d --no-deps --scale backend=2 backend || true
+            # Force recreate backend with new image
+            echo "Force recreating backend container with latest image..."
+            docker-compose up -d --force-recreate --no-deps backend
 
             # Wait for new backend to be healthy
-            echo "Waiting for new backend to be healthy..."
+            echo "Waiting for backend to be healthy..."
             TIMEOUT=120
             ELAPSED=0
             while [ $ELAPSED -lt $TIMEOUT ]; do
-              NEW_BACKEND_HEALTHY=$(docker inspect --format='{{.State.Health.Status}}' fbads-backend 2>/dev/null || echo "none")
-              if [ "$NEW_BACKEND_HEALTHY" = "healthy" ]; then
+              BACKEND_HEALTHY=$(docker inspect --format='{{.State.Health.Status}}' fbads-backend 2>/dev/null || echo "none")
+              if [ "$BACKEND_HEALTHY" = "healthy" ]; then
                 echo "Backend is healthy!"
                 break
               fi
@@ -151,8 +152,7 @@ jobs:
             done
 
             if [ $ELAPSED -ge $TIMEOUT ]; then
-              echo "Backend failed health check! Rolling back..."
-              docker-compose up -d --force-recreate --no-deps backend
+              echo "Backend failed health check! Check logs with: docker logs fbads-backend"
               exit 1
             fi
 
