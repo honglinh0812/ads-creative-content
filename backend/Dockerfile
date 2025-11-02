@@ -13,7 +13,7 @@ COPY src ./src
 COPY checkstyle.xml checkstyle-suppressions.xml ./
 
 # Build the application (skip tests for faster builds)
-RUN mvn clean package -DskipTests -B -q
+RUN mvn clean install -DskipTests -B -q
 
 # Stage 2: Runtime with JRE only
 FROM eclipse-temurin:17-jre-alpine
