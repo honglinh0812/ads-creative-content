@@ -1,21 +1,21 @@
 <template>
   <div class="quality-score-card" :class="{ compact: compact }">
     <div class="score-header">
-      <h3 v-if="!compact">Quality Score</h3>
+      <h3 v-if="!compact">{{ $t('qualityScore.title') }}</h3>
       <div class="total-score" :class="getScoreClass(score.totalScore)">
         <span class="score-number">{{ score.totalScore?.toFixed(1) || 0 }}</span>
-        <span class="score-max">/100</span>
+        <span class="score-max">{{ $t('qualityScore.totalMax') }}</span>
       </div>
       <div class="grade-badge" :class="getGradeClass(score.grade)">
-        {{ score.grade || 'N/A' }}
+        {{ score.grade || $t('qualityScore.gradeNA') }}
       </div>
     </div>
 
     <div v-if="!compact" class="score-breakdown">
       <div class="score-item">
         <div class="score-label">
-          <span class="label-text">Compliance</span>
-          <span class="score-value">{{ score.complianceScore?.toFixed(1) || 0 }}/30</span>
+          <span class="label-text">{{ $t('qualityScore.breakdown.compliance') }}</span>
+          <span class="score-value">{{ score.complianceScore?.toFixed(1) || 0 }}{{ $t('qualityScore.breakdown.complianceMax') }}</span>
         </div>
         <a-progress
           :percent="(score.complianceScore / 30) * 100"
@@ -26,8 +26,8 @@
 
       <div class="score-item">
         <div class="score-label">
-          <span class="label-text">Linguistic Quality</span>
-          <span class="score-value">{{ score.linguisticScore?.toFixed(1) || 0 }}/30</span>
+          <span class="label-text">{{ $t('qualityScore.breakdown.linguisticQuality') }}</span>
+          <span class="score-value">{{ score.linguisticScore?.toFixed(1) || 0 }}{{ $t('qualityScore.breakdown.linguisticMax') }}</span>
         </div>
         <a-progress
           :percent="(score.linguisticScore / 30) * 100"
@@ -38,8 +38,8 @@
 
       <div class="score-item">
         <div class="score-label">
-          <span class="label-text">Persuasiveness</span>
-          <span class="score-value">{{ score.persuasivenessScore?.toFixed(1) || 0 }}/20</span>
+          <span class="label-text">{{ $t('qualityScore.breakdown.persuasiveness') }}</span>
+          <span class="score-value">{{ score.persuasivenessScore?.toFixed(1) || 0 }}{{ $t('qualityScore.breakdown.persuasivenessMax') }}</span>
         </div>
         <a-progress
           :percent="(score.persuasivenessScore / 20) * 100"
@@ -50,8 +50,8 @@
 
       <div class="score-item">
         <div class="score-label">
-          <span class="label-text">Completeness</span>
-          <span class="score-value">{{ score.completenessScore?.toFixed(1) || 0 }}/20</span>
+          <span class="label-text">{{ $t('qualityScore.breakdown.completeness') }}</span>
+          <span class="score-value">{{ score.completenessScore?.toFixed(1) || 0 }}{{ $t('qualityScore.breakdown.completenessMax') }}</span>
         </div>
         <a-progress
           :percent="(score.completenessScore / 20) * 100"
@@ -62,7 +62,7 @@
     </div>
 
     <div v-if="!compact && score.suggestions && score.suggestions.length > 0" class="suggestions">
-      <h4>💡 Suggestions for Improvement</h4>
+      <h4>{{ $t('qualityScore.suggestions.title') }}</h4>
       <ul>
         <li v-for="(suggestion, index) in score.suggestions" :key="index">
           {{ suggestion }}

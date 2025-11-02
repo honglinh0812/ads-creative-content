@@ -3,11 +3,11 @@
     <div class="ad-create-content">
 
       <!-- Page Header -->
-      <a-page-header title="Create New Ad" sub-title="Generate compelling ads with AI assistance">
+      <a-page-header :title="$t('adCreate.pageHeader.title')" :sub-title="$t('adCreate.pageHeader.subtitle')">
         <template #extra>
           <a-button @click="$router.push('/dashboard')">
             <template #icon><arrow-left-outlined /></template>
-            Back to Dashboard
+            {{ $t('adCreate.pageHeader.backToDashboard') }}
           </a-button>
         </template>
       </a-page-header>
@@ -15,8 +15,8 @@
       <!-- Creative Progress Steps -->
       <div class="creative-progress-container">
         <div class="progress-header">
-          <h2 class="progress-title">Let's create your ad</h2>
-          <div class="progress-subtitle">Step {{ currentStep }} of 3</div>
+          <h2 class="progress-title">{{ $t('adCreate.progress.headerTitle') }}</h2>
+          <div class="progress-subtitle">{{ $t('adCreate.progress.stepOf', {step: currentStep, total: 3}) }}</div>
         </div>
 
         <div class="creative-progress-tracker">
@@ -56,22 +56,22 @@
             <span v-else>🎉</span>
           </div>
           <div class="progress-message">
-            <span v-if="currentStep === 1">Tell us about your ad</span>
-            <span v-else-if="currentStep === 2">Pick your AI superpowers</span>
-            <span v-else>Almost there!</span>
+            <span v-if="currentStep === 1">{{ $t('adCreate.progress.step1Message') }}</span>
+            <span v-else-if="currentStep === 2">{{ $t('adCreate.progress.step2Message') }}</span>
+            <span v-else>{{ $t('adCreate.progress.step3Message') }}</span>
           </div>
         </div>
       </div>
 
       <!-- Step 1: Basic Information -->
       <div v-if="currentStep === 1" class="step-content">
-        <a-card title="Basic Information" class="enhanced-card">
+        <a-card :title="$t('adCreate.step1.cardTitle')" class="enhanced-card">
           <a-form layout="vertical">
             <!-- Campaign Selection -->
-            <a-form-item label="Campaign" required>
+            <a-form-item :label="$t('adCreate.step1.campaign.label')" required>
               <a-select
                 v-model:value="formData.campaignId"
-                placeholder="Select a campaign"
+                :placeholder="$t('adCreate.step1.campaign.placeholder')"
                 :loading="loadingCampaigns"
                 show-search
                 :filter-option="false"
@@ -95,17 +95,14 @@
               style="margin-bottom: 24px; background: linear-gradient(135deg, #f0f7ff 0%, #e6f4ff 100%); border: 1px solid #91caff;"
             >
               <template #title>
-                <span style="color: #1890ff;">🎯 {{ formData.language === 'vi' ? 'Đối tượng mục tiêu (Cấp chiến dịch)' : 'Target Audience (Campaign Level)' }}</span>
+                <span style="color: #1890ff;">🎯 {{ $t('adCreate.step1.targetAudience.title') }}</span>
               </template>
               <div style="padding: 12px;">
                 <div style="font-size: 14px; color: #262626; margin-bottom: 8px; white-space: pre-wrap;">
                   {{ selectedCampaign.targetAudience }}
                 </div>
                 <div style="font-size: 12px; color: #8c8c8c; margin-top: 12px;">
-                  💡 {{ formData.language === 'vi'
-                    ? 'Tất cả quảng cáo trong chiến dịch này nhắm đến đối tượng này. Để thay đổi, chỉnh sửa cài đặt chiến dịch.'
-                    : 'All ads in this campaign target this audience. To change, edit the campaign settings.'
-                  }}
+                  💡 {{ $t('adCreate.step1.targetAudience.info') }}
                 </div>
               </div>
             </a-card>
@@ -113,15 +110,15 @@
             <!-- Ad Type Selection -->
             <a-form-item>
               <template #label>
-                <span>Ad Type</span>
+                <span>{{ $t('adCreate.step1.adType.label') }}</span>
                 <a-button type="text" size="small" @click="showAdTypeHelp = true">
                   <template #icon><question-circle-outlined /></template>
                 </a-button>
               </template>
               <a-radio-group v-model:value="formData.adType" @change="onAdTypeChange">
-                <a-radio 
-                  v-for="type in adTypes" 
-                  :key="type.value" 
+                <a-radio
+                  v-for="type in adTypes"
+                  :key="type.value"
                   :value="type.value"
                   class="ad-type-radio"
                 >
@@ -131,50 +128,47 @@
             </a-form-item>
 
             <!-- Ad Name -->
-            <a-form-item label="Ad Name" required>
-              <a-input 
-                v-model:value="formData.name" 
-                placeholder="Enter ad name"
+            <a-form-item :label="$t('adCreate.step1.adName.label')" required>
+              <a-input
+                v-model:value="formData.name"
+                :placeholder="$t('adCreate.step1.adName.placeholder')"
                 :maxlength="100"
                 show-count
               />
             </a-form-item>
 
             <!-- Number of Variations -->
-            <a-form-item label="Number of Variations">
-              <a-input-number 
-                v-model:value="formData.numberOfVariations" 
-                :min="1" 
-                :max="5" 
+            <a-form-item :label="$t('adCreate.step1.variations.label')">
+              <a-input-number
+                v-model:value="formData.numberOfVariations"
+                :min="1"
+                :max="5"
                 style="width: 100%"
               />
             </a-form-item>
 
             <!-- Language -->
-            <a-form-item label="Language">
-              <a-select v-model:value="formData.language" placeholder="Select language">
-                <a-select-option value="vi">Vietnamese</a-select-option>
-                <a-select-option value="en">English</a-select-option>
+            <a-form-item :label="$t('adCreate.step1.language.label')">
+              <a-select v-model:value="formData.language" :placeholder="$t('adCreate.step1.language.placeholder')">
+                <a-select-option value="vi">{{ $t('adCreate.step1.language.vietnamese') }}</a-select-option>
+                <a-select-option value="en">{{ $t('adCreate.step1.language.english') }}</a-select-option>
               </a-select>
             </a-form-item>
 
             <!-- Issue #8: Creative Style/Tone -->
             <a-form-item>
               <template #label>
-                <span>{{ formData.language === 'vi' ? 'Phong cách sáng tạo' : 'Creative Style' }}</span>
+                <span>{{ $t('adCreate.step1.creativeStyle.label') }}</span>
                 <a-tooltip>
                   <template #title>
-                    {{ formData.language === 'vi'
-                      ? 'Chọn phong cách viết cho quảng cáo. Phong cách này sẽ kết hợp với Ad Persona để tạo nội dung phù hợp.'
-                      : 'Choose the writing style for your ad. This style will combine with Ad Persona to create appropriate content.'
-                    }}
+                    {{ $t('adCreate.step1.creativeStyle.tooltip') }}
                   </template>
                   <question-circle-outlined style="margin-left: 4px; color: #999;" />
                 </a-tooltip>
               </template>
               <a-select
                 v-model:value="formData.adStyle"
-                :placeholder="formData.language === 'vi' ? 'Chọn phong cách (tùy chọn)' : 'Select style (optional)'"
+                :placeholder="$t('adCreate.step1.creativeStyle.placeholder')"
                 allow-clear
               >
                 <a-select-option
@@ -193,22 +187,22 @@
               <div v-if="formData.adStyle && stylePreviewDescription" class="style-preview">
                 <div class="preview-icon">🎨</div>
                 <div class="preview-content">
-                  <div class="preview-title">{{ stylePreviewTitle }}</div>
+                  <div class="preview-title">{{ $t('adCreate.step1.creativeStyle.previewTitle') }}</div>
                   <div class="preview-desc">{{ stylePreviewDescription }}</div>
                 </div>
               </div>
             </a-form-item>
 
             <!-- Call to Action -->
-            <a-form-item label="Call to Action">
-              <a-select 
-                v-model:value="formData.callToAction" 
-                placeholder="Select call to action"
+            <a-form-item :label="$t('adCreate.step1.callToAction.label')">
+              <a-select
+                v-model:value="formData.callToAction"
+                :placeholder="$t('adCreate.step1.callToAction.placeholder')"
                 :loading="loadingCTAs"
               >
-                <a-select-option 
-                  v-for="cta in standardCTAs" 
-                  :key="cta.value" 
+                <a-select-option
+                  v-for="cta in standardCTAs"
+                  :key="cta.value"
                   :value="cta.value"
                 >
                   {{ cta.label }}
@@ -217,37 +211,37 @@
             </a-form-item>
 
             <!-- Website URL (for website conversion ads) -->
-            <a-form-item 
-              v-if="formData.adType === 'website_conversion'" 
-              label="Website URL" 
+            <a-form-item
+              v-if="formData.adType === 'website_conversion'"
+              :label="$t('adCreate.step1.websiteUrl.label')"
               required
             >
-              <a-input 
-                v-model:value="formData.websiteUrl" 
-                placeholder="https://example.com"
+              <a-input
+                v-model:value="formData.websiteUrl"
+                :placeholder="$t('adCreate.step1.websiteUrl.placeholder')"
                 type="url"
               />
             </a-form-item>
 
             <!-- Lead Form Questions (for lead generation ads) -->
-            <a-form-item 
-              v-if="formData.adType === 'lead_generation'" 
-              label="Lead Form Questions"
+            <a-form-item
+              v-if="formData.adType === 'lead_generation'"
+              :label="$t('adCreate.step1.leadFormQuestions.label')"
             >
               <div class="lead-form-questions">
-                <div 
-                  v-for="(question, index) in formData.leadFormQuestions" 
-                  :key="index" 
+                <div
+                  v-for="(question, index) in formData.leadFormQuestions"
+                  :key="index"
                   class="question-item"
                 >
-                  <a-input 
-                    v-model:value="formData.leadFormQuestions[index]" 
-                    placeholder="Enter question"
+                  <a-input
+                    v-model:value="formData.leadFormQuestions[index]"
+                    :placeholder="$t('adCreate.step1.leadFormQuestions.placeholder')"
                   >
                     <template #suffix>
-                      <a-button 
-                        type="text" 
-                        size="small" 
+                      <a-button
+                        type="text"
+                        size="small"
                         @click="removeLeadFormQuestion(index)"
                         danger
                       >
@@ -256,14 +250,14 @@
                     </template>
                   </a-input>
                 </div>
-                <a-button 
-                  type="dashed" 
-                  @click="addLeadFormQuestion" 
+                <a-button
+                  type="dashed"
+                  @click="addLeadFormQuestion"
                   block
                   style="margin-top: 8px"
                 >
                   <template #icon><plus-outlined /></template>
-                  Add Question
+                  {{ $t('adCreate.step1.leadFormQuestions.addButton') }}
                 </a-button>
               </div>
             </a-form-item>
@@ -271,19 +265,19 @@
             <!-- Prompt -->
             <a-form-item>
               <template #label>
-                <span>Prompt</span>
+                <span>{{ $t('adCreate.step1.prompt.label') }}</span>
                 <a-button type="text" size="small" @click="showHelpDialog = true">
                   <template #icon><question-circle-outlined /></template>
                 </a-button>
               </template>
-              <a-textarea 
-                v-model:value="formData.prompt" 
-                placeholder="Describe your product/service or enter specific instructions for the AI..."
+              <a-textarea
+                v-model:value="formData.prompt"
+                :placeholder="$t('adCreate.step1.prompt.placeholder')"
                 :rows="4"
                 :maxlength="2000"
                 show-count
               />
-              
+
               <!-- Prompt Validator Component -->
               <PromptValidator
                 :prompt="formData.prompt"
@@ -296,22 +290,22 @@
             </a-form-item>
 
             <!-- Ad Links -->
-            <a-form-item label="Ad Links (Optional)">
+            <a-form-item :label="$t('adCreate.step1.adLinks.label')">
               <div class="ad-links-container">
-                <div 
-                  v-for="(link, index) in adLinks" 
-                  :key="index" 
+                <div
+                  v-for="(link, index) in adLinks"
+                  :key="index"
                   class="ad-link-item"
                 >
-                  <a-input 
-                    v-model:value="adLinks[index]" 
-                    placeholder="https://example.com/ad"
+                  <a-input
+                    v-model:value="adLinks[index]"
+                    :placeholder="$t('adCreate.step1.adLinks.placeholder')"
                     ref="adLinkInput"
                   >
                     <template #suffix>
-                      <a-button 
-                        type="text" 
-                        size="small" 
+                      <a-button
+                        type="text"
+                        size="small"
                         @click="removeAdLink(index)"
                         danger
                       >
@@ -327,11 +321,11 @@
                   style="margin-top: 8px"
                 >
                   <template #icon><plus-outlined /></template>
-                  Add Link
+                  {{ $t('adCreate.step1.adLinks.addButton') }}
                 </a-button>
                 <a-alert
-                  message="Tự động trích xuất"
-                  description="Nội dung sẽ được tự động trích xuất khi bạn chuyển sang bước tiếp theo"
+                  :message="$t('adCreate.step1.adLinks.autoExtract.message')"
+                  :description="$t('adCreate.step1.adLinks.autoExtract.description')"
                   type="info"
                   show-icon
                   style="margin-top: 12px"
@@ -365,7 +359,7 @@
               :disabled="!validateStep1()"
               size="large"
             >
-              Next: AI Configuration
+              {{ $t('adCreate.step1.navigation.next') }}
               <template #icon><arrow-right-outlined /></template>
             </a-button>
           </div>
@@ -376,8 +370,8 @@
       <div v-if="currentStep === 2" class="step-content">
         <div class="ai-config-container">
           <div class="ai-section-header">
-            <h2 class="section-title-magic">Choose your AI superpowers! 🤖</h2>
-            <p class="section-subtitle-magic">Select the best AI providers for your creative needs</p>
+            <h2 class="section-title-magic">{{ $t('adCreate.step2.sectionTitle') }}</h2>
+            <p class="section-subtitle-magic">{{ $t('adCreate.step2.sectionSubtitle') }}</p>
           </div>
 
           <!-- Text Provider Selection - Creative Layout -->
@@ -385,8 +379,8 @@
             <div class="provider-section-header">
               <div class="section-icon">✍️</div>
               <div>
-                <h3 class="provider-title">Text Generation</h3>
-                <p class="provider-subtitle">Pick your copywriting assistant</p>
+                <h3 class="provider-title">{{ $t('adCreate.step2.textGeneration.title') }}</h3>
+                <p class="provider-subtitle">{{ $t('adCreate.step2.textGeneration.subtitle') }}</p>
               </div>
             </div>
 
@@ -449,16 +443,16 @@
             <div class="provider-section-header">
               <div class="section-icon">🎨</div>
               <div>
-                <h3 class="provider-title">Image Generation</h3>
-                <p class="provider-subtitle">Choose your visual artist</p>
+                <h3 class="provider-title">{{ $t('adCreate.step2.imageGeneration.title') }}</h3>
+                <p class="provider-subtitle">{{ $t('adCreate.step2.imageGeneration.subtitle') }}</p>
               </div>
             </div>
 
             <!-- Image Upload Info Message -->
             <a-alert
               v-if="hasUploadedImage"
-              message="Image already uploaded"
-              description="You've uploaded an image, so AI image generation is disabled. Remove the uploaded image to enable AI image providers."
+              :message="$t('adCreate.step2.imageUpload.message')"
+              :description="$t('adCreate.step2.imageUpload.description')"
               type="info"
               show-icon
               closable
@@ -523,7 +517,7 @@
           <div class="ai-power-indicator">
             <div class="power-header">
               <span class="power-icon">⚡</span>
-              <span class="power-title">AI Power Level</span>
+              <span class="power-title">{{ $t('adCreate.step2.powerLevel.title') }}</span>
             </div>
             <div class="power-bar">
               <div class="power-fill" :style="{ width: calculateAIPowerLevel() + '%' }"></div>
@@ -533,7 +527,7 @@
         </div>
 
           <!-- Optional Media Upload -->
-          <a-form-item label="Upload Media (Optional)">
+          <a-form-item :label="$t('adCreate.step2.uploadMedia.label')">
             <a-upload
               :file-list="uploadedFiles"
               :before-upload="handleFileUpload"
@@ -543,27 +537,27 @@
             >
               <div v-if="uploadedFiles.length < 1">
                 <plus-outlined />
-                <div style="margin-top: 8px">Upload</div>
+                <div style="margin-top: 8px">{{ $t('adCreate.step2.uploadMedia.button') }}</div>
               </div>
             </a-upload>
           </a-form-item>
 
           <!-- Enhancement Options -->
-          <a-form-item label="Image Enhancement Options" v-if="uploadedFiles.length > 0">
+          <a-form-item :label="$t('adCreate.step2.enhancement.label')" v-if="uploadedFiles.length > 0">
             <a-checkbox-group v-model:value="formData.enhancementOptions">
-              <a-checkbox value="upscale">Upscale Image</a-checkbox>
-              <a-checkbox value="remove_background">Remove Background</a-checkbox>
-              <a-checkbox value="style_transfer">Style Transfer</a-checkbox>
+              <a-checkbox value="upscale">{{ $t('adCreate.step2.enhancement.upscale') }}</a-checkbox>
+              <a-checkbox value="remove_background">{{ $t('adCreate.step2.enhancement.removeBackground') }}</a-checkbox>
+              <a-checkbox value="style_transfer">{{ $t('adCreate.step2.enhancement.styleTransfer') }}</a-checkbox>
             </a-checkbox-group>
-            <a-button @click="enhanceImages" :loading="isEnhancing" style="margin-top: 10px;">Apply Enhancements & Preview</a-button>
+            <a-button @click="enhanceImages" :loading="isEnhancing" style="margin-top: 10px;">{{ $t('adCreate.step2.enhancement.applyButton') }}</a-button>
           </a-form-item>
 
           <!-- Enhancement Previews -->
-          <a-form-item label="Enhanced Images Preview" v-if="enhancedImages.length > 0">
+          <a-form-item :label="$t('adCreate.step2.enhancement.previewLabel')" v-if="enhancedImages.length > 0">
             <div class="enhanced-previews">
               <div v-for="(img, index) in enhancedImages" :key="index" class="preview-item">
                 <img :src="img.url" alt="Enhanced Preview" style="max-width: 300px;" />
-                <p>Original: {{ img.originalName }}</p>
+                <p>{{ $t('adCreate.step2.enhancement.originalLabel', { name: img.originalName }) }}</p>
               </div>
             </div>
           </a-form-item>
@@ -575,7 +569,7 @@
           <div class="step-navigation">
             <a-button @click="prevStep" size="large">
               <template #icon><arrow-left-outlined /></template>
-              Previous
+              {{ $t('adCreate.navigation.previous') }}
             </a-button>
             <a-button
               type="primary"
@@ -585,7 +579,7 @@
               size="large"
             >
               <template #icon><thunderbolt-outlined /></template>
-              Generate Ad
+              {{ $t('adCreate.step2.navigation.generateAd') }}
             </a-button>
           </div>
         </div>
@@ -593,10 +587,10 @@
 
       <!-- Step 3: Preview & Save -->
       <div v-if="currentStep === 3" class="step-content">
-        <a-card title="Preview & Save" class="enhanced-card">
+        <a-card :title="$t('adCreate.step3.cardTitle')" class="enhanced-card">
           <div v-if="adVariations.length > 0" class="ad-preview-container">
             <p class="preview-instruction">
-              Select your preferred ad variation. Quality scores help you choose the best one!
+              {{ $t('adCreate.step3.instruction') }}
             </p>
 
             <!-- Quality Score Summary Card -->
@@ -604,12 +598,12 @@
               <div class="summary-card">
                 <span class="summary-icon">⭐</span>
                 <div class="summary-content">
-                  <div class="summary-label">Best Quality Score</div>
+                  <div class="summary-label">{{ $t('adCreate.step3.qualityScore.bestLabel') }}</div>
                   <div class="summary-value">{{ bestQualityScore }}</div>
                 </div>
               </div>
               <div v-if="loadingQualityScores" class="summary-loading">
-                <a-spin size="small" /> Analyzing quality...
+                <a-spin size="small" /> {{ $t('adCreate.step3.qualityScore.analyzing') }}
               </div>
             </div>
 
@@ -629,7 +623,7 @@
                   v-if="variation.qualityScore?.totalScore === bestQualityScoreValue && bestQualityScoreValue >= 80"
                   class="best-quality-badge"
                 >
-                  🏆 Best Quality
+                  {{ $t('adCreate.step3.qualityScore.bestBadge') }}
                 </div>
 
                 <div class="ad-preview-content">
@@ -657,7 +651,7 @@
                   <QualityScore :score="variation.qualityScore" :compact="true" />
                 </div>
                 <div v-else-if="loadingQualityScores" class="quality-score-loading">
-                  <a-spin size="small" /> Loading quality score...
+                  <a-spin size="small" /> {{ $t('adCreate.step3.qualityScore.loading') }}
                 </div>
 
                 <div class="ad-preview-actions">
@@ -667,14 +661,14 @@
                     size="small"
                   >
                     <template #icon><edit-outlined /></template>
-                    Edit
+                    {{ $t('adCreate.step3.actions.edit') }}
                   </a-button>
                 </div>
               </div>
             </div>
           </div>
 
-          <a-empty v-else description="No ad variations generated yet" />
+          <a-empty v-else :description="$t('adCreate.step3.emptyState')" />
 
           <!-- Error Display -->
           <FieldError :error="saveError" />
@@ -683,7 +677,7 @@
           <div class="step-navigation">
             <a-button @click="prevStep" size="large">
               <template #icon><arrow-left-outlined /></template>
-              Previous
+              {{ $t('adCreate.navigation.previous') }}
             </a-button>
             <a-button
               type="primary"
@@ -693,34 +687,34 @@
               size="large"
             >
               <template #icon><save-outlined /></template>
-              Save Ad
+              {{ $t('adCreate.step3.navigation.saveAd') }}
             </a-button>
           </div>
         </a-card>
       </div>
 
       <!-- Edit Modal -->
-    <a-modal 
-      v-model:open="showEditModal" 
-      title="Edit Ad Variation" 
+    <a-modal
+      v-model:open="showEditModal"
+      :title="$t('adCreate.modals.edit.title')"
       width="600px"
       @ok="saveEdit"
       @cancel="cancelEdit"
     >
       <a-form v-if="editingVariation" layout="vertical">
-        <a-form-item label="Headline">
+        <a-form-item :label="$t('adCreate.modals.edit.headline.label')">
           <a-input v-model:value="editingVariation.headline" />
         </a-form-item>
-        <a-form-item label="Primary Text">
+        <a-form-item :label="$t('adCreate.modals.edit.primaryText.label')">
           <a-textarea v-model:value="editingVariation.primaryText" :rows="3" />
         </a-form-item>
-        <a-form-item label="Description">
+        <a-form-item :label="$t('adCreate.modals.edit.description.label')">
           <a-textarea v-model:value="editingVariation.description" :rows="2" />
         </a-form-item>
-        <a-form-item label="Call to Action">
+        <a-form-item :label="$t('adCreate.modals.edit.callToAction.label')">
           <a-select
             v-model:value="editingVariation.callToAction"
-            placeholder="Select call to action"
+            :placeholder="$t('adCreate.modals.edit.callToAction.placeholder')"
             :loading="loadingCTAs"
           >
             <a-select-option
@@ -736,13 +730,13 @@
     </a-modal>
 
     <!-- Confirm Save Modal -->
-    <a-modal 
-      v-model:open="showConfirmModal" 
-      title="Confirm Save" 
+    <a-modal
+      v-model:open="showConfirmModal"
+      :title="$t('adCreate.modals.confirmSave.title')"
       @ok="confirmSave"
       @cancel="showConfirmModal = false"
     >
-      <p>Are you sure you want to save this ad variation?</p>
+      <p>{{ $t('adCreate.modals.confirmSave.message') }}</p>
       <div v-if="selectedVariation" class="confirm-preview">
         <h4>{{ selectedVariation.headline }}</h4>
         <p>{{ selectedVariation.primaryText }}</p>
@@ -750,39 +744,39 @@
     </a-modal>
 
     <!-- Extract Error Dialog -->
-    <a-modal 
-      v-model:open="showExtractErrorDialog" 
-      title="Content Extraction Failed" 
+    <a-modal
+      v-model:open="showExtractErrorDialog"
+      :title="$t('adCreate.modals.extractionFailed.title')"
       @ok="onExtractErrorYes"
       @cancel="onExtractErrorNo"
-      ok-text="Continue Anyway"
-      cancel-text="Go Back"
+      :ok-text="$t('adCreate.modals.extractionFailed.continueButton')"
+      :cancel-text="$t('adCreate.modals.extractionFailed.goBackButton')"
     >
-      <p>We couldn't extract content from the provided ad links. Would you like to continue generating the ad with just your prompt, or go back to fix the links?</p>
+      <p>{{ $t('adCreate.modals.extractionFailed.message') }}</p>
     </a-modal>
 
     <!-- Media Modal -->
-    <a-modal 
-      v-model:open="showMediaModal" 
-      title="Media Preview" 
+    <a-modal
+      v-model:open="showMediaModal"
+      :title="$t('adCreate.modals.mediaPreview.title')"
       :footer="null"
       width="80%"
       centered
     >
       <div class="media-modal-content">
-        <img 
-          v-if="selectedMediaUrl" 
-          :src="selectedMediaUrl" 
-          alt="Media preview" 
+        <img
+          v-if="selectedMediaUrl"
+          :src="selectedMediaUrl"
+          :alt="$t('adCreate.modals.mediaPreview.altText')"
           style="max-width: 100%; height: auto;"
         />
       </div>
     </a-modal>
 
     <!-- Ad Type Help Dialog -->
-    <a-modal 
-      v-model:open="showAdTypeHelp" 
-      title="Ad Types Guide" 
+    <a-modal
+      v-model:open="showAdTypeHelp"
+      :title="$t('adCreate.modals.adTypesGuide.title')"
       :footer="null"
       width="700px"
     >
@@ -800,48 +794,47 @@
     <!-- Help Dialog -->
     <a-modal
       v-model:open="showHelpDialog"
-      title="How to Write Effective Prompts"
+      :title="$t('adCreate.modals.helpDialog.title')"
       :footer="null"
       width="700px"
     >
       <div class="help-content">
         <div class="help-section">
-          <h3 class="help-title">What is a Prompt?</h3>
+          <h3 class="help-title">{{ $t('adCreate.modals.helpDialog.whatIsPrompt.title') }}</h3>
           <p class="help-text">
-            A prompt is a description or instruction that tells the AI what kind of ad content you want to create.
-            The more specific and detailed your prompt, the better the AI can understand your needs.
+            {{ $t('adCreate.modals.helpDialog.whatIsPrompt.description') }}
           </p>
         </div>
 
         <div class="help-section">
-          <h3 class="help-title">Tips for Writing Great Prompts</h3>
+          <h3 class="help-title">{{ $t('adCreate.modals.helpDialog.tips.title') }}</h3>
           <div class="help-steps">
             <div class="help-step">
               <div class="step-number">1</div>
               <div class="step-content">
-                <h4>Describe Your Product/Service</h4>
-                <p>Clearly explain what you're selling, its main benefits, and target audience.</p>
+                <h4>{{ $t('adCreate.modals.helpDialog.tips.tip1.title') }}</h4>
+                <p>{{ $t('adCreate.modals.helpDialog.tips.tip1.description') }}</p>
               </div>
             </div>
             <div class="help-step">
               <div class="step-number">2</div>
               <div class="step-content">
-                <h4>Specify the Tone</h4>
-                <p>Mention if you want the ad to be professional, casual, exciting, trustworthy, etc.</p>
+                <h4>{{ $t('adCreate.modals.helpDialog.tips.tip2.title') }}</h4>
+                <p>{{ $t('adCreate.modals.helpDialog.tips.tip2.description') }}</p>
               </div>
             </div>
             <div class="help-step">
               <div class="step-number">3</div>
               <div class="step-content">
-                <h4>Include Key Features</h4>
-                <p>List the most important features or benefits you want to highlight.</p>
+                <h4>{{ $t('adCreate.modals.helpDialog.tips.tip3.title') }}</h4>
+                <p>{{ $t('adCreate.modals.helpDialog.tips.tip3.description') }}</p>
               </div>
             </div>
             <div class="help-step">
               <div class="step-number">4</div>
               <div class="step-content">
-                <h4>Mention Your Audience</h4>
-                <p>Describe who your ideal customers are (age, interests, problems they face).</p>
+                <h4>{{ $t('adCreate.modals.helpDialog.tips.tip4.title') }}</h4>
+                <p>{{ $t('adCreate.modals.helpDialog.tips.tip4.description') }}</p>
               </div>
             </div>
           </div>
@@ -921,28 +914,40 @@ export default {
         // Issue #9: audienceSegment removed - now at campaign level
       },
       steps: [
-        { title: 'Basic Information', description: 'Campaign details and ad type' },
-        { title: 'AI Configuration', description: 'Choose AI providers and settings' },
-        { title: 'Preview & Save', description: 'Review and save your ad' }
+        { title: this.$t('adCreate.steps.step1.title'), description: this.$t('adCreate.steps.step1.description') },
+        { title: this.$t('adCreate.steps.step2.title'), description: this.$t('adCreate.steps.step2.description') },
+        { title: this.$t('adCreate.steps.step3.title'), description: this.$t('adCreate.steps.step3.description') }
       ],
       adTypes: [
         {
           value: 'website_conversion',
-          label: 'Website Conversion',
-          description: 'Drive traffic to your website and increase conversions',
-          features: ['Website URL required', 'Conversion tracking', 'Traffic optimization']
+          label: this.$t('adCreate.adTypes.websiteConversion.label'),
+          description: this.$t('adCreate.adTypes.websiteConversion.description'),
+          features: [
+            this.$t('adCreate.adTypes.websiteConversion.features.0'),
+            this.$t('adCreate.adTypes.websiteConversion.features.1'),
+            this.$t('adCreate.adTypes.websiteConversion.features.2')
+          ]
         },
         {
           value: 'lead_generation',
-          label: 'Lead Generation',
-          description: 'Collect leads directly through Facebook forms',
-          features: ['Custom form questions', 'Lead collection', 'Contact information']
+          label: this.$t('adCreate.adTypes.leadGeneration.label'),
+          description: this.$t('adCreate.adTypes.leadGeneration.description'),
+          features: [
+            this.$t('adCreate.adTypes.leadGeneration.features.0'),
+            this.$t('adCreate.adTypes.leadGeneration.features.1'),
+            this.$t('adCreate.adTypes.leadGeneration.features.2')
+          ]
         },
         {
           value: 'page_post',
-          label: 'Page Post',
-          description: 'Promote your page posts to increase engagement',
-          features: ['Post promotion', 'Engagement boost', 'Social interaction']
+          label: this.$t('adCreate.adTypes.pagePost.label'),
+          description: this.$t('adCreate.adTypes.pagePost.description'),
+          features: [
+            this.$t('adCreate.adTypes.pagePost.features.0'),
+            this.$t('adCreate.adTypes.pagePost.features.1'),
+            this.$t('adCreate.adTypes.pagePost.features.2')
+          ]
         }
       ],
       campaigns: [],
@@ -950,39 +955,59 @@ export default {
       textProviders: [
         {
           value: 'openai',
-          name: 'OpenAI GPT',
-          description: 'Advanced language model for high-quality ad copy',
-          features: ['Creative writing', 'Multiple languages', 'Context awareness'],
+          name: this.$t('adCreate.providers.text.openai.name'),
+          description: this.$t('adCreate.providers.text.openai.description'),
+          features: [
+            this.$t('adCreate.providers.text.openai.features.0'),
+            this.$t('adCreate.providers.text.openai.features.1'),
+            this.$t('adCreate.providers.text.openai.features.2')
+          ],
           enabled: true
         },
         {
           value: 'claude',
-          name: 'Anthropic Claude',
-          description: 'Reliable and safe AI for professional ad content',
-          features: ['Professional tone', 'Safety focused', 'Detailed responses'],
+          name: this.$t('adCreate.providers.text.claude.name'),
+          description: this.$t('adCreate.providers.text.claude.description'),
+          features: [
+            this.$t('adCreate.providers.text.claude.features.0'),
+            this.$t('adCreate.providers.text.claude.features.1'),
+            this.$t('adCreate.providers.text.claude.features.2')
+          ],
           enabled: true
         }
       ],
       imageProviders: [
         {
           value: 'openai',
-          name: 'OpenAI DALL-E',
-          description: 'Create stunning, original images for your ads',
-          features: ['High quality', 'Creative styles', 'Custom prompts'],
+          name: this.$t('adCreate.providers.image.openai.name'),
+          description: this.$t('adCreate.providers.image.openai.description'),
+          features: [
+            this.$t('adCreate.providers.image.openai.features.0'),
+            this.$t('adCreate.providers.image.openai.features.1'),
+            this.$t('adCreate.providers.image.openai.features.2')
+          ],
           enabled: true
         },
         {
           value: 'fal-ai',
-          name: 'FAL AI',
-          description: 'Advanced AI image generation',
-          features: ['High resolution', 'Fast generation', 'Multiple models'],
+          name: this.$t('adCreate.providers.image.falai.name'),
+          description: this.$t('adCreate.providers.image.falai.description'),
+          features: [
+            this.$t('adCreate.providers.image.falai.features.0'),
+            this.$t('adCreate.providers.image.falai.features.1'),
+            this.$t('adCreate.providers.image.falai.features.2')
+          ],
           enabled: false
         },
         {
           value: 'stable-diffusion',
-          name: 'Stable Diffusion',
-          description: 'Open-source image generation',
-          features: ['Open source', 'Customizable', 'Fast generation'],
+          name: this.$t('adCreate.providers.image.stableDiffusion.name'),
+          description: this.$t('adCreate.providers.image.stableDiffusion.description'),
+          features: [
+            this.$t('adCreate.providers.image.stableDiffusion.features.0'),
+            this.$t('adCreate.providers.image.stableDiffusion.features.1'),
+            this.$t('adCreate.providers.image.stableDiffusion.features.2')
+          ],
           enabled: false
         }
       ],
@@ -1046,19 +1071,19 @@ export default {
     progressSteps() {
       return [
         {
-          title: 'Basic Info',
-          description: 'Tell us about your ad',
-          emoji: '📝'
+          title: this.$t('adCreate.progressSteps.step1.title'),
+          description: this.$t('adCreate.progressSteps.step1.description'),
+          emoji: this.$t('adCreate.progressSteps.step1.emoji')
         },
         {
-          title: 'AI Magic',
-          description: 'Choose your AI tools',
-          emoji: '🤖'
+          title: this.$t('adCreate.progressSteps.step2.title'),
+          description: this.$t('adCreate.progressSteps.step2.description'),
+          emoji: this.$t('adCreate.progressSteps.step2.emoji')
         },
         {
-          title: 'Preview',
-          description: 'See your creation',
-          emoji: '✨'
+          title: this.$t('adCreate.progressSteps.step3.title'),
+          description: this.$t('adCreate.progressSteps.step3.description'),
+          emoji: this.$t('adCreate.progressSteps.step3.emoji')
         }
       ]
     },
@@ -1069,72 +1094,53 @@ export default {
 
     // Issue #8: Reactive multilingual ad style options
     adStyleOptions() {
-      const isVietnamese = this.formData.language === 'vi'
-
       return [
         {
           value: 'PROFESSIONAL',
-          label: isVietnamese ? 'Chuyên nghiệp' : 'Professional',
-          description: isVietnamese
-            ? 'Ngôn ngữ trang trọng, đáng tin cậy, tập trung vào uy tín và chuyên môn'
-            : 'Formal, credible language focusing on expertise and trust'
+          label: this.$t('adCreate.adStyles.professional.label'),
+          description: this.$t('adCreate.adStyles.professional.description')
         },
         {
           value: 'CASUAL',
-          label: isVietnamese ? 'Thân thiện' : 'Casual',
-          description: isVietnamese
-            ? 'Ngôn ngữ thân thiện, trò chuyện tự nhiên như nói chuyện với bạn bè'
-            : 'Friendly, conversational language like talking to a friend'
+          label: this.$t('adCreate.adStyles.casual.label'),
+          description: this.$t('adCreate.adStyles.casual.description')
         },
         {
           value: 'HUMOROUS',
-          label: isVietnamese ? 'Hài hước' : 'Humorous',
-          description: isVietnamese
-            ? 'Kết hợp yếu tố hài hước, dí dỏm để tạo ấn tượng và dễ nhớ'
-            : 'Incorporate humor and wit to be memorable and entertaining'
+          label: this.$t('adCreate.adStyles.humorous.label'),
+          description: this.$t('adCreate.adStyles.humorous.description')
         },
         {
           value: 'URGENT',
-          label: isVietnamese ? 'Khẩn cấp' : 'Urgent',
-          description: isVietnamese
-            ? 'Tạo cảm giác cấp bách với ưu đãi có thời hạn, số lượng giới hạn hoặc lợi ích tức thì'
-            : 'Create urgency with time-limited offers, limited availability, or immediate benefits'
+          label: this.$t('adCreate.adStyles.urgent.label'),
+          description: this.$t('adCreate.adStyles.urgent.description')
         },
         {
           value: 'LUXURY',
-          label: isVietnamese ? 'Cao cấp' : 'Luxury',
-          description: isVietnamese
-            ? 'Nhấn mạnh chất lượng cao cấp, tính độc quyền và sự tinh tế'
-            : 'Emphasize premium quality, exclusivity, and sophistication'
+          label: this.$t('adCreate.adStyles.luxury.label'),
+          description: this.$t('adCreate.adStyles.luxury.description')
         },
         {
           value: 'EDUCATIONAL',
-          label: isVietnamese ? 'Giáo dục' : 'Educational',
-          description: isVietnamese
-            ? 'Tập trung cung cấp giá trị qua thông tin, mẹo hay insights hữu ích'
-            : 'Focus on providing value through information, tips, or insights'
+          label: this.$t('adCreate.adStyles.educational.label'),
+          description: this.$t('adCreate.adStyles.educational.description')
         },
         {
           value: 'INSPIRATIONAL',
-          label: isVietnamese ? 'Truyền cảm hứng' : 'Inspirational',
-          description: isVietnamese
-            ? 'Sử dụng ngôn ngữ động viên, trao quyền và nâng cao tinh thần'
-            : 'Use motivational language that empowers and uplifts'
+          label: this.$t('adCreate.adStyles.inspirational.label'),
+          description: this.$t('adCreate.adStyles.inspirational.description')
         },
         {
           value: 'MINIMALIST',
-          label: isVietnamese ? 'Tối giản' : 'Minimalist',
-          description: isVietnamese
-            ? 'Giữ thông điệp đơn giản, trực tiếp và gọn gàng'
-            : 'Keep messaging simple, direct, and uncluttered'
+          label: this.$t('adCreate.adStyles.minimalist.label'),
+          description: this.$t('adCreate.adStyles.minimalist.description')
         }
       ]
     },
 
     // Issue #8: Preview display for selected style
     stylePreviewTitle() {
-      const isVietnamese = this.formData.language === 'vi'
-      return isVietnamese ? 'Phong cách đã chọn' : 'Selected Style'
+      return this.$t('adCreate.step1.selectedStyle')
     },
 
     stylePreviewDescription() {
@@ -1227,22 +1233,22 @@ export default {
       if (persona) {
         // The personaId is already bound via v-model
         // We can optionally show a success message or update UI
-        this.$message.success(`Targeting persona: ${persona.name}`)
+        this.$message.success(this.$t('adCreate.messages.success.personaSelected', { name: persona.name }))
 
         // Note: The backend PersonaService.enrichPromptWithPersona() will automatically
         // enhance the prompt with persona details when personaId is included in the request
       } else {
-        this.$message.info('Persona selection cleared')
+        this.$message.info(this.$t('adCreate.messages.info.personaCleared'))
       }
     },
 
     async enhanceImages() {
       if (!this.formData.enhancementOptions.length) {
-        this.$message.warning('Please select at least one enhancement option');
+        this.$message.warning(this.$t('adCreate.messages.warning.selectEnhancementOption'));
         return;
       }
       if (!this.uploadedFiles.length) {
-        this.$message.warning('Please upload images first');
+        this.$message.warning(this.$t('adCreate.messages.warning.uploadImagesFirst'));
         return;
       }
       this.isEnhancing = true;
@@ -1264,9 +1270,9 @@ export default {
           };
         });
         this.enhancedImages = await Promise.all(enhancementPromises);
-        this.$message.success('Images enhanced successfully with real-time preview');
+        this.$message.success(this.$t('adCreate.messages.success.imagesEnhanced'));
       } catch (error) {
-        this.$message.error('Failed to enhance images');
+        this.$message.error(this.$t('adCreate.messages.error.enhanceImagesFailed'));
       } finally {
         this.isEnhancing = false;
       }
@@ -1286,7 +1292,7 @@ export default {
         this.campaigns = response.data.content || []
       } catch (error) {
         console.error('Error loading campaigns:', error)
-        this.$message.error('Failed to load campaigns')
+        this.$message.error(this.$t('adCreate.messages.error.loadCampaignsFailed'))
       } finally {
         this.loadingCampaigns = false
       }
@@ -1299,7 +1305,7 @@ export default {
         await this.loadCTAs({ language: this.formData.language })
       } catch (error) {
         console.error('Error loading CTAs:', error)
-        this.$message.error('Failed to load call to actions')
+        this.$message.error(this.$t('adCreate.messages.error.loadCTAsFailed'))
       } finally {
         this.loadingCTAs = false
       }
@@ -1337,7 +1343,7 @@ export default {
         
       } catch (error) {
         console.error('Error loading providers:', error)
-        this.$message.warning('Failed to load AI providers, using default options')
+        this.$message.warning(this.$t('adCreate.messages.warning.loadProvidersFailed'))
         // Keep the hardcoded providers as fallback
       }
     },
@@ -1372,7 +1378,7 @@ export default {
         // Handle new API response format
         if (response.data.error) {
           // API returned error
-          this.$message.error(response.data.message || 'Không thể trích xuất nội dung')
+          this.$message.error(response.data.message || this.$t('adCreate.messages.error.extractContentFailed'))
           this.currentStep++
           return
         }
@@ -1380,7 +1386,7 @@ export default {
         const { data, summary } = response.data
 
         if (!data || data.length === 0) {
-          this.$message.warning('Không tìm thấy nội dung quảng cáo')
+          this.$message.warning(this.$t('adCreate.messages.warning.noAdContentFound'))
           this.currentStep++
           return
         }
@@ -1393,14 +1399,14 @@ export default {
       } catch (error) {
         console.error('Auto-extraction error:', error)
 
-        let errorMessage = 'Không thể trích xuất nội dung quảng cáo'
+        let errorMessage = this.$t('adCreate.messages.error.extractContentFailed')
 
         if (error.response) {
           const data = error.response.data
           errorMessage = data.message || errorMessage
 
           if (data.error === 'API_KEY_NOT_CONFIGURED') {
-            errorMessage = 'Hệ thống chưa được cấu hình API key. Bạn có thể tiếp tục với prompt thủ công.'
+            errorMessage = this.$t('adCreate.messages.error.apiKeyNotConfigured')
           }
         }
 
@@ -1450,12 +1456,12 @@ export default {
 
     handleExtractedContentCancel() {
       // User cancelled, don't proceed to next step
-      this.$message.info('Đã hủy trích xuất nội dung')
+      this.$message.info(this.$t('adCreate.messages.info.extractionCancelled'))
     },
 
     handleExtractedContentSkip() {
       // User chose to skip extraction, proceed to next step
-      this.$message.info('Đã bỏ qua trích xuất nội dung')
+      this.$message.info(this.$t('adCreate.messages.info.extractionSkipped'))
       this.currentStep++
     },
     
@@ -1501,10 +1507,10 @@ export default {
         });
         if (response.data.success) {
           this.uploadedFileUrl = response.data.fileUrl;
-          this.$message.success('File uploaded successfully');
+          this.$message.success(this.$t('adCreate.messages.success.fileUploaded'));
         }
       } catch (error) {
-        this.$message.error('Failed to upload file');
+        this.$message.error(this.$t('adCreate.messages.error.fileUploadFailed'));
         this.uploadedFiles = [];
       }
       return false;
@@ -1525,17 +1531,17 @@ export default {
         <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
           <rect width="400" height="300" fill="#f0f0f0"/>
           <text x="50%" y="45%" text-anchor="middle" fill="#999" font-size="16" font-family="Arial, sans-serif">
-            Không tải được ảnh
+            ${this.$t('adCreate.messages.error.imageLoadError')}
           </text>
           <text x="50%" y="55%" text-anchor="middle" fill="#ccc" font-size="12" font-family="Arial, sans-serif">
-            ${variation.headline || 'Image unavailable'}
+            ${variation.headline || this.$t('adCreate.messages.error.imageUnavailable')}
           </text>
         </svg>
       `)
 
       // Show a warning toast to user (only once per session to avoid spam)
       if (!this.$root.imageErrorShown) {
-        this.$message.warning('Some images failed to load. Using placeholder images.')
+        this.$message.warning(this.$t('adCreate.messages.warning.imageLoadFailed'))
         this.$root.imageErrorShown = true
       }
     },
@@ -1555,7 +1561,7 @@ export default {
       try {
         // Validate required fields
         if (!this.formData.prompt && !this.adLinks.some(link => link.trim())) {
-          this.$message.error('Please enter prompt content or provide ad links')
+          this.$message.error(this.$t('adCreate.messages.error.promptOrLinksRequired'))
           this.currentStep = 1
           this.showValidation = true
           return
@@ -1604,7 +1610,7 @@ export default {
 
           this.adId = response.data.adId
           this.currentStep = 3
-          this.$message.success('Ad created successfully! Please preview and save.')
+          this.$message.success(this.$t('adCreate.messages.success.adCreated'))
 
           // Load quality scores for variations
           await this.loadQualityScoresForVariations()
@@ -1617,7 +1623,7 @@ export default {
         // Store entire error object for FieldError component
         this.generateError = error
 
-        const errorMessage = error.message || 'Could not create ad. Please try again.'
+        const errorMessage = error.message || this.$t('adCreate.messages.error.generateAdFailed')
 
         this.$message.error(errorMessage)
 
@@ -1660,7 +1666,7 @@ export default {
     
     saveAd() {
       if (!this.selectedVariation) {
-        this.$message.warning('Vui lòng chọn một quảng cáo để lưu')
+        this.$message.warning(this.$t('adCreate.messages.warning.selectVariation'))
         return
       }
       this.showConfirmModal = true
@@ -1699,9 +1705,9 @@ export default {
         }
         
         const response = await api.ads.saveExisting(requestData)
-        
+
         if (response.data.status === 'success') {
-          this.$message.success('Ad saved successfully!')
+          this.$message.success(this.$t('adCreate.messages.success.adSaved'))
           await this.$store.dispatch('dashboard/fetchDashboardData', null, { root: true })
           this.$router.push('/dashboard')
         } else {
@@ -1713,7 +1719,7 @@ export default {
         // Store entire error object for FieldError component
         this.saveError = error
 
-        this.$message.error(error.message || 'Could not save ad. Please try again.')
+        this.$message.error(error.message || this.$t('adCreate.messages.error.saveAdFailed'))
       } finally {
         this.isSaving = false
       }
@@ -1721,12 +1727,12 @@ export default {
     
     async extractFromLibrary() {
       if (!this.adLinks.length || !this.adLinks[0].trim()) {
-        this.$message.warning('Vui lòng nhập ít nhất một link quảng cáo')
+        this.$message.warning(this.$t('adCreate.messages.warning.enterAdLink'))
         return
       }
-      
+
       this.extracting = true
-      
+
       try {
         const validLinks = this.adLinks.filter(link => link.trim())
         const response = await api.ads.extractFromLibrary({
@@ -1734,7 +1740,7 @@ export default {
           promptStyle: this.selectedPromptTemplate || 'Dynamic',
           customPrompt: this.customPromptAddition
         })
-        
+
         let success = false
         let content = ''
         if (Array.isArray(response.data)) {
@@ -1749,16 +1755,18 @@ export default {
             content = response.data.body || (response.data.snapshot && response.data.snapshot.body) || response.data.text || ''
           }
         }
-        
+
         if (success) {
           this.formData.prompt = content
-          this.$message.success('Đã trích xuất nội dung thành công!')
+          this.$message.success(this.$t('adCreate.messages.success.contentExtracted'))
         } else {
-          this.$message.warning(response.data.message || 'Không thể trích xuất nội dung')
+          this.$message.warning(response.data.message || this.$t('adCreate.messages.warning.extractContentFailed'))
         }
       } catch (error) {
         console.error('Error extracting from library:', error)
-        this.$message.error('Lỗi khi trích xuất nội dung: ' + (error.response?.data?.message || error.message))
+        this.$message.error(this.$t('adCreate.messages.error.extractError', {
+          message: error.response?.data?.message || error.message
+        }))
       } finally {
         this.extracting = false
       }
@@ -1811,7 +1819,7 @@ export default {
           }))
           this.adId = response.data.adId
           this.currentStep = 3
-          this.$message.success('Ad created successfully! Please preview and save.')
+          this.$message.success(this.$t('adCreate.messages.success.adCreated'))
         } else {
           throw new Error(response.data.message)
         }
@@ -1819,7 +1827,7 @@ export default {
         // Store entire error object for FieldError component
         this.generateError = error
 
-        const errorMessage = error.message || 'Could not create ad. Please try again.'
+        const errorMessage = error.message || this.$t('adCreate.messages.error.generateAdFailed')
         this.$message.error(errorMessage)
 
         if (errorMessage.includes('Please enter prompt content') || errorMessage.includes('valid ad link')) {
@@ -1851,7 +1859,7 @@ export default {
 
     onPromptUpdated(improvedPrompt) {
       this.formData.prompt = improvedPrompt
-      this.$message.success('Prompt updated with improved version!')
+      this.$message.success(this.$t('adCreate.messages.success.promptUpdated'))
     },
 
     // New Creative Methods for Phase 3 Implementation
@@ -1887,14 +1895,14 @@ export default {
 
     getProviderRatingText(provider) {
       const texts = {
-        openai: 'Most Popular',
-        claude: 'Reliable',
-        gemini: 'Fast',
-        stability: 'High Quality',
-        fal: 'Experimental',
-        huggingface: 'Open Source'
+        openai: this.$t('adCreate.providers.ratings.mostPopular'),
+        claude: this.$t('adCreate.providers.ratings.reliable'),
+        gemini: this.$t('adCreate.providers.ratings.fast'),
+        stability: this.$t('adCreate.providers.ratings.highQuality'),
+        fal: this.$t('adCreate.providers.ratings.experimental'),
+        huggingface: this.$t('adCreate.providers.ratings.openSource')
       }
-      return texts[provider] || 'Good Choice'
+      return texts[provider] || this.$t('adCreate.providers.ratings.goodChoice')
     },
 
     calculateAIPowerLevel() {
@@ -1923,10 +1931,10 @@ export default {
 
     getAIPowerMessage() {
       const level = this.calculateAIPowerLevel()
-      if (level >= 80) return "🔥 Ultra powerful combo! Your ads will be amazing!"
-      if (level >= 60) return "⚡ Great combination! Ready for high-quality results!"
-      if (level >= 40) return "✨ Solid choice! Your ads will look professional!"
-      return "🌱 Good start! Your ads will be decent!"
+      if (level >= 80) return this.$t('adCreate.step2.powerLevel.ultra')
+      if (level >= 60) return this.$t('adCreate.step2.powerLevel.great')
+      if (level >= 40) return this.$t('adCreate.step2.powerLevel.solid')
+      return this.$t('adCreate.step2.powerLevel.good')
     },
 
     async loadQualityScoresForVariations() {
@@ -1971,7 +1979,7 @@ export default {
         }
       } catch (error) {
         console.error('Error loading quality scores:', error)
-        this.$message.warning('Could not load quality scores')
+        this.$message.warning(this.$t('adCreate.messages.warning.loadQualityScoresFailed'))
       } finally {
         this.loadingQualityScores = false
       }

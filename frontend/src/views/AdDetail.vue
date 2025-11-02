@@ -6,10 +6,10 @@
         <span :class="getStatusClass(ad.status)">{{ ad.status }}</span>
       </div>
       <div class="flex gap-2">
-        <Button 
-          label="Publish to Facebook" 
-          icon="pi pi-send" 
-          @click="publishAd" 
+        <Button
+          :label="$t('adDetail.header.publishButton')"
+          icon="pi pi-send"
+          @click="publishAd"
           :disabled="!canPublish || publishing"
           :loading="publishing"
           v-if="ad.status !== 'ACTIVE'"
@@ -21,11 +21,11 @@
       <template #content>
         <div v-if="loading" class="flex flex-col items-center justify-center py-12">
           <ProgressSpinner />
-          <p class="mt-4 text-secondary-600">Loading ad details...</p>
+          <p class="mt-4 text-secondary-600">{{ $t('adDetail.loading.message') }}</p>
         </div>
         <div v-else-if="error" class="alert alert-error mb-6">
           <p class="error-message">{{ error }}</p>
-          <Button label="Retry" icon="pi pi-refresh" @click="fetchAd" class="btn btn-secondary mt-3" />
+          <Button :label="$t('adDetail.error.retryButton')" icon="pi pi-refresh" @click="fetchAd" class="btn btn-secondary mt-3" />
         </div>
         <div v-else>
           <div class="ad-preview-container flex flex-col md:flex-row gap-8">
@@ -33,9 +33,9 @@
               <div class="ad-preview-header flex items-center justify-between mb-4">
                 <div class="page-info flex items-center gap-3">
                   <div class="page-avatar w-10 h-10 bg-gray-200 rounded-full"></div>
-                  <div class="page-name font-semibold">Your Page Name</div>
+                  <div class="page-name font-semibold">{{ $t('adDetail.preview.pageName') }}</div>
                 </div>
-                <div class="post-time text-xs text-secondary-500">Just now · <i class="pi pi-globe"></i></div>
+                <div class="post-time text-xs text-secondary-500">{{ $t('adDetail.preview.postTime') }} · <i class="pi pi-globe"></i></div>
               </div>
               <div class="ad-preview-content">
                 <p class="primary-text text-lg text-secondary-900 mb-4">{{ ad.primaryText }}</p>
@@ -54,26 +54,26 @@
               </div>
             </div>
             <div class="ad-details flex-1">
-              <h3 class="font-semibold text-lg mb-4">Ad Details</h3>
+              <h3 class="font-semibold text-lg mb-4">{{ $t('adDetail.details.title') }}</h3>
               <div class="details-grid grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="detail-item">
-                  <span class="label text-secondary-600">Type:</span>
+                  <span class="label text-secondary-600">{{ $t('adDetail.details.type') }}</span>
                   <span class="value text-secondary-900 font-semibold">{{ ad.adType }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="label text-secondary-600">Status:</span>
+                  <span class="label text-secondary-600">{{ $t('adDetail.details.status') }}</span>
                   <span class="value font-semibold" :class="getStatusClass(ad.status)">{{ ad.status }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="label text-secondary-600">Call to Action:</span>
+                  <span class="label text-secondary-600">{{ $t('adDetail.details.callToAction') }}</span>
                   <span class="value text-secondary-900 font-semibold">{{ formatCTA(ad.cta) }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="label text-secondary-600">Created:</span>
+                  <span class="label text-secondary-600">{{ $t('adDetail.details.created') }}</span>
                   <span class="value text-secondary-900 font-semibold">{{ formatDate(ad.createdDate) }}</span>
                 </div>
                 <div class="detail-item" v-if="ad.fbAdId">
-                  <span class="label text-secondary-600">Facebook Ad ID:</span>
+                  <span class="label text-secondary-600">{{ $t('adDetail.details.facebookAdId') }}</span>
                   <span class="value text-secondary-900 font-semibold">{{ ad.fbAdId }}</span>
                 </div>
               </div>
@@ -81,14 +81,14 @@
           </div>
           <Divider class="my-8" />
           <div class="ad-content-section">
-            <h3 class="font-semibold text-lg mb-4">Generated Content</h3>
+            <h3 class="font-semibold text-lg mb-4">{{ $t('adDetail.content.title') }}</h3>
             <div v-if="adContents.length === 0" class="empty-state text-center py-8">
-              <p class="text-secondary-600 mb-4">No AI-generated content yet</p>
+              <p class="text-secondary-600 mb-4">{{ $t('adDetail.content.emptyState') }}</p>
               <div class="ai-prompt-container flex flex-col sm:flex-row gap-4 items-center justify-center">
-                <Textarea 
-                  v-model="aiPrompt" 
-                  rows="3" 
-                  placeholder="Describe what you want to advertise..."
+                <Textarea
+                  v-model="aiPrompt"
+                  rows="3"
+                  :placeholder="$t('adDetail.content.promptPlaceholder')"
                   class="form-input w-full max-w-md"
                 />
                 <div class="ai-provider-selection flex gap-4">
@@ -97,7 +97,7 @@
                     <label :for="provider.id" class="text-secondary-700">{{ provider.name }}</label>
                   </div>
                 </div>
-                <Button label="Generate" icon="pi pi-magic" @click="generateContent" class="btn btn-primary btn-lg" :disabled="!aiPrompt || !textProvider" />
+                <Button :label="$t('adDetail.content.generateButton')" icon="pi pi-magic" @click="generateContent" class="btn btn-primary btn-lg" :disabled="!aiPrompt || !textProvider" />
               </div>
             </div>
             <div v-else class="generated-content-list grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -105,7 +105,7 @@
                 <h4 class="font-semibold text-lg mb-2">{{ content.title }}</h4>
                 <p class="text-secondary-700 mb-2">{{ content.body }}</p>
                 <div class="flex gap-2 mt-4">
-                  <Button label="Use This" class="btn btn-success btn-sm" @click="useGeneratedContent(content)" />
+                  <Button :label="$t('adDetail.content.useThisButton')" class="btn btn-success btn-sm" @click="useGeneratedContent(content)" />
                 </div>
               </div>
             </div>
@@ -200,7 +200,7 @@ export default {
     
     async generateContent() {
       if (!this.aiPrompt) return
-      
+
       try {
         await this.generateContent({
           campaignId: this.campaignId,
@@ -211,8 +211,8 @@ export default {
         this.aiPrompt = ''
       } catch (error) {
         this.showError({
-          title: 'Error',
-          message: `Failed to generate content: ${error.message}`
+          title: this.$t('adDetail.messages.generateError.title'),
+          message: this.$t('adDetail.messages.generateError.message', { error: error.message })
         })
       }
     },
@@ -225,33 +225,33 @@ export default {
           contentId: content.id
         })
         this.showSuccess({
-          title: 'Success',
-          message: 'Content selected successfully'
+          title: this.$t('adDetail.messages.selectSuccess.title'),
+          message: this.$t('adDetail.messages.selectSuccess.message')
         })
       } catch (error) {
         this.showError({
-          title: 'Error',
-          message: `Failed to select content: ${error.message}`
+          title: this.$t('adDetail.messages.selectError.title'),
+          message: this.$t('adDetail.messages.selectError.message', { error: error.message })
         })
       }
     },
     
     async publishAd() {
       this.publishing = true
-      
+
       try {
         await this.publishAd({
           campaignId: this.campaignId,
           adId: this.adId
         })
         this.showSuccess({
-          title: 'Success',
-          message: 'Ad published successfully to Facebook'
+          title: this.$t('adDetail.messages.publishSuccess.title'),
+          message: this.$t('adDetail.messages.publishSuccess.message')
         })
       } catch (error) {
         this.showError({
-          title: 'Error',
-          message: `Failed to publish ad: ${error.message}`
+          title: this.$t('adDetail.messages.publishError.title'),
+          message: this.$t('adDetail.messages.publishError.message', { error: error.message })
         })
       } finally {
         this.publishing = false
@@ -304,13 +304,13 @@ export default {
           contentId: content.id
         });
         this.showSuccess({
-          title: 'Success',
-          message: 'Content selected successfully'
+          title: this.$t('adDetail.messages.selectSuccess.title'),
+          message: this.$t('adDetail.messages.selectSuccess.message')
         });
       } catch (error) {
         this.showError({
-          title: 'Error',
-          message: `Failed to select content: ${error.message}`
+          title: this.$t('adDetail.messages.selectError.title'),
+          message: this.$t('adDetail.messages.selectError.message', { error: error.message })
         });
       }
     }

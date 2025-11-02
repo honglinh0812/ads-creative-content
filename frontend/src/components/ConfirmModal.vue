@@ -14,10 +14,10 @@
       </div>
       <div class="flex justify-end space-x-3">
         <button @click="$emit('update:visible', false)" class="btn btn-secondary">
-          {{ cancelText || 'Cancel' }}
+          {{ cancelText || $t('confirmModal.defaultCancel') }}
         </button>
         <button @click="handleConfirm" class="btn btn-primary">
-          {{ confirmText || 'Confirm' }}
+          {{ confirmText || $t('confirmModal.defaultConfirm') }}
         </button>
       </div>
     </div>

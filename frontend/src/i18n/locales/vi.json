@@ -293,6 +293,186 @@
     "createGuide": "Hướng dẫn tạo chiến dịch",
     "guideDescription": "Trình hướng dẫn này sẽ giúp bạn tạo chiến dịch quảng cáo Facebook chuyên nghiệp qua 3 bước đơn giản."
   },
+  "ads": {
+    "pageTitle": "Quảng cáo",
+    "pageSubtitle": "Quản lý nội dung quảng cáo của bạn",
+    "buttons": {
+      "newAd": "Quảng cáo mới",
+      "tryAgain": "Thử lại",
+      "createFirstAd": "Tạo quảng cáo đầu tiên",
+      "cancel": "Hủy",
+      "save": "Lưu"
+    },
+    "modal": {
+      "detailsTitle": "Chi tiết quảng cáo",
+      "editTitle": "Chỉnh sửa quảng cáo"
+    },
+    "labels": {
+      "name": "Tên:",
+      "campaign": "Chiến dịch:",
+      "adType": "Loại quảng cáo:",
+      "status": "Trạng thái:",
+      "headline": "Tiêu đề:",
+      "description": "Mô tả:",
+      "primaryText": "Văn bản chính:",
+      "callToAction": "Lời kêu gọi hành động:",
+      "media": "Media:",
+      "imageUrl": "URL hình ảnh:",
+      "videoUrl": "URL video:"
+    },
+    "placeholders": {
+      "selectCallToAction": "Chọn lời kêu gọi hành động",
+      "selectStatus": "Chọn trạng thái"
+    },
+    "status": {
+      "draft": "NHÁP",
+      "active": "HOẠT ĐỘNG",
+      "paused": "TẠM DỪNG",
+      "completed": "HOÀN THÀNH",
+      "failed": "THẤT BẠI"
+    },
+    "messages": {
+      "noMedia": "Không có hình ảnh/video cho quảng cáo này",
+      "imageLoadFailed": "Không tải được ảnh",
+      "loadingFailed": "Tải dữ liệu thất bại",
+      "validationNameRequired": "Tên là bắt buộc",
+      "validationHeadlineRequired": "Tiêu đề là bắt buộc",
+      "validationCtaRequired": "Lời kêu gọi hành động là bắt buộc",
+      "validationStatusRequired": "Trạng thái là bắt buộc",
+      "validationFillRequired": "Vui lòng điền đầy đủ các trường bắt buộc.",
+      "updateSuccess": "Cập nhật quảng cáo thành công",
+      "updateError": "Cập nhật quảng cáo thất bại",
+      "deleteSuccess": "Xóa quảng cáo thành công",
+      "deleteError": "Xóa quảng cáo thất bại",
+      "deleteCancelled": "Đã hủy thao tác xóa",
+      "changesCancelled": "Đã hủy thay đổi",
+      "duplicateSuccess": "Đã sao chép quảng cáo thành công!",
+      "duplicateError": "Lỗi khi sao chép quảng cáo: {error}",
+      "adNotFound": "Không tìm thấy quảng cáo",
+      "campaignMissing": "Không thể sao chép quảng cáo: thiếu thông tin chiến dịch",
+      "exportSuccess": "Đã xuất thành công {count} quảng cáo!",
+      "exportError": "Không thể xuất quảng cáo: {error}",
+      "invalidExportData": "Dữ liệu quảng cáo không hợp lệ để xuất",
+      "selectAtLeastOne": "Vui lòng chọn ít nhất một quảng cáo để xuất",
+      "success": {
+        "adUpdated": "Cập nhật quảng cáo thành công",
+        "adDeleted": "Xóa quảng cáo thành công",
+        "adDuplicated": "Đã sao chép quảng cáo thành công!",
+        "changesDiscarded": "Đã hủy các thay đổi",
+        "deleteCancelled": "Đã hủy thao tác xóa",
+        "exportSuccess": "Xuất thành công {count} quảng cáo!"
+      },
+      "error": {
+        "loadAdsFailed": "Không thể tải danh sách quảng cáo",
+        "loadCtaFailed": "Không thể tải lời kêu gọi hành động",
+        "updateAdFailed": "Không thể cập nhật quảng cáo",
+        "deleteAdFailed": "Không thể xóa quảng cáo",
+        "adNotFound": "Không tìm thấy quảng cáo",
+        "campaignMissing": "Không thể sao chép quảng cáo: thiếu thông tin chiến dịch",
+        "duplicateError": "Lỗi khi sao chép quảng cáo: {error}",
+        "invalidExportData": "Dữ liệu xuất không hợp lệ",
+        "invalidAdData": "Dữ liệu quảng cáo không hợp lệ để xuất",
+        "exportError": "Không thể xuất quảng cáo: {error}"
+      },
+      "warning": {
+        "selectAdToExport": "Vui lòng chọn ít nhất một quảng cáo để xuất"
+      }
+    },
+    "confirmations": {
+      "deleteTitle": "Xác nhận xóa",
+      "deleteContent": "Bạn có thực sự muốn xóa quảng cáo này? Hành động này không thể hoàn tác.",
+      "deleteButton": "Xóa",
+      "cancelButton": "Hủy",
+      "cancelEditTitle": "Xác nhận",
+      "cancelEditContent": "Bạn có chắc chắn muốn hủy? Các thay đổi chưa lưu của bạn sẽ bị mất.",
+      "yesCancelButton": "Có, hủy",
+      "noStayButton": "Không, ở lại"
+    },
+    "emptyState": {
+      "noAds": "Chưa có quảng cáo",
+      "createFirst": "Tạo quảng cáo đầu tiên của bạn"
+    },
+    "media": {
+      "imageAlt": "Hình ảnh quảng cáo"
+    },
+    "pageHeader": {
+      "title": "Quảng cáo",
+      "subtitle": "Quản lý nội dung quảng cáo của bạn",
+      "newAdButton": "Quảng cáo mới"
+    },
+    "table": {
+      "columns": {
+        "name": "Tên",
+        "campaign": "Chiến dịch",
+        "status": "Trạng thái",
+        "adType": "Loại quảng cáo",
+        "createdDate": "Ngày tạo",
+        "actions": "Thao tác"
+      }
+    },
+    "detailModal": {
+      "title": "Chi tiết quảng cáo",
+      "fields": {
+        "name": "Tên",
+        "campaign": "Chiến dịch",
+        "adType": "Loại quảng cáo",
+        "status": "Trạng thái",
+        "headline": "Tiêu đề",
+        "description": "Mô tả",
+        "primaryText": "Văn bản chính",
+        "callToAction": "Lời kêu gọi hành động",
+        "media": "Phương tiện",
+        "imageUrl": "URL hình ảnh",
+        "videoUrl": "URL video"
+      },
+      "noMedia": "Không có hình ảnh/video cho quảng cáo này",
+      "notAvailable": "Không có"
+    },
+    "editModal": {
+      "title": "Chỉnh sửa quảng cáo",
+      "fields": {
+        "name": "Tên",
+        "headline": "Tiêu đề",
+        "description": "Mô tả",
+        "primaryText": "Văn bản chính",
+        "callToAction": "Lời kêu gọi hành động",
+        "status": "Trạng thái"
+      },
+      "statusOptions": {
+        "draft": "BẢN NHÁP",
+        "active": "ĐANG HOẠT ĐỘNG",
+        "paused": "TẠM DỪNG",
+        "completed": "HOÀN THÀNH",
+        "failed": "THẤT BẠI"
+      },
+      "buttons": {
+        "cancel": "Hủy",
+        "save": "Lưu"
+      },
+      "validation": {
+        "nameRequired": "Tên là bắt buộc",
+        "headlineRequired": "Tiêu đề là bắt buộc",
+        "callToActionRequired": "Lời kêu gọi hành động là bắt buộc",
+        "statusRequired": "Trạng thái là bắt buộc",
+        "fillAllFields": "Vui lòng điền đầy đủ các trường bắt buộc."
+      },
+      "cancelConfirm": {
+        "title": "Xác nhận",
+        "message": "Bạn có chắc chắn muốn hủy? Các thay đổi chưa lưu sẽ bị mất.",
+        "okText": "Có, Hủy",
+        "cancelText": "Không, Ở lại"
+      }
+    },
+    "deleteConfirm": {
+      "title": "Xác nhận xóa",
+      "message": "Bạn có thực sự muốn xóa quảng cáo này không? Hành động này không thể hoàn tác.",
+      "okText": "Xóa",
+      "cancelText": "Hủy"
+    },
+    "imageError": {
+      "cannotLoad": "Không tải được ảnh"
+    }
+  },
   "ad": {
     "page": {
       "title": "Quảng cáo",
@@ -633,6 +813,24 @@
     },
     "state": {
       "loading": "Đang tải..."
+    },
+    "actions": {
+      "cancel": "Hủy",
+      "save": "Lưu",
+      "delete": "Xóa",
+      "edit": "Sửa",
+      "create": "Tạo",
+      "close": "Đóng",
+      "ok": "OK",
+      "yes": "Có",
+      "no": "Không",
+      "confirm": "Xác nhận",
+      "retry": "Thử lại",
+      "export": "Xuất",
+      "search": "Tìm kiếm",
+      "start": "Bắt đầu",
+      "tryAgain": "Thử lại",
+      "createFirstAd": "Tạo quảng cáo đầu tiên"
     }
   },
   "sidebar": {
@@ -755,5 +953,582 @@
     "selectForAd": "Chọn persona để tự động điều chỉnh nội dung quảng cáo",
     "promptEnhancement": "Nội dung quảng cáo của bạn sẽ được tự động làm phong phú với hồ sơ persona này",
     "targeting": "Nhắm mục tiêu persona:"
+  },
+  "adCreate": {
+    "pageHeader": {
+      "title": "Tạo quảng cáo mới",
+      "subtitle": "Tạo quảng cáo hấp dẫn với sự hỗ trợ của AI",
+      "backToDashboard": "Quay lại Dashboard"
+    },
+    "progress": {
+      "headerTitle": "Hãy tạo quảng cáo của bạn",
+      "stepOf": "Bước {step} trong {total}",
+      "step1Message": "Cho chúng tôi biết về quảng cáo của bạn",
+      "step2Message": "Chọn siêu năng lực AI của bạn",
+      "step3Message": "Gần xong rồi!"
+    },
+    "progressSteps": {
+      "step1": {
+        "title": "Thông tin cơ bản",
+        "description": "Cho chúng tôi biết về quảng cáo của bạn",
+        "emoji": "📝"
+      },
+      "step2": {
+        "title": "Phép thuật AI",
+        "description": "Chọn công cụ AI của bạn",
+        "emoji": "🤖"
+      },
+      "step3": {
+        "title": "Xem trước",
+        "description": "Xem tác phẩm của bạn",
+        "emoji": "✨"
+      }
+    },
+    "steps": {
+      "step1": {
+        "title": "Thông tin cơ bản",
+        "description": "Chi tiết chiến dịch và loại quảng cáo"
+      },
+      "step2": {
+        "title": "Cấu hình AI",
+        "description": "Chọn nhà cung cấp AI và cài đặt"
+      },
+      "step3": {
+        "title": "Xem trước & Lưu",
+        "description": "Xem lại và lưu quảng cáo của bạn"
+      }
+    },
+    "step1": {
+      "cardTitle": "Thông tin cơ bản",
+      "campaign": {
+        "label": "Chiến dịch",
+        "placeholder": "Chọn một chiến dịch"
+      },
+      "targetAudience": {
+        "title": "Đối tượng mục tiêu (Cấp chiến dịch)",
+        "info": "Tất cả quảng cáo trong chiến dịch này nhắm đến đối tượng này. Để thay đổi, chỉnh sửa cài đặt chiến dịch."
+      },
+      "adType": {
+        "label": "Loại quảng cáo"
+      },
+      "adName": {
+        "label": "Tên quảng cáo",
+        "placeholder": "Nhập tên quảng cáo"
+      },
+      "variations": {
+        "label": "Số lượng biến thể"
+      },
+      "language": {
+        "label": "Ngôn ngữ",
+        "placeholder": "Chọn ngôn ngữ",
+        "vietnamese": "Tiếng Việt",
+        "english": "Tiếng Anh"
+      },
+      "creativeStyle": {
+        "label": "Phong cách sáng tạo",
+        "tooltip": "Chọn phong cách viết cho quảng cáo. Phong cách này sẽ kết hợp với Ad Persona để tạo nội dung phù hợp.",
+        "placeholder": "Chọn phong cách (tùy chọn)",
+        "previewTitle": "Phong cách đã chọn"
+      },
+      "callToAction": {
+        "label": "Call to Action",
+        "placeholder": "Chọn call to action"
+      },
+      "websiteUrl": {
+        "label": "URL trang web",
+        "placeholder": "https://example.com"
+      },
+      "leadFormQuestions": {
+        "label": "Câu hỏi mẫu thu thập khách hàng",
+        "placeholder": "Nhập câu hỏi",
+        "addButton": "Thêm câu hỏi"
+      },
+      "prompt": {
+        "label": "Prompt",
+        "placeholder": "Mô tả sản phẩm/dịch vụ của bạn hoặc nhập hướng dẫn cụ thể cho AI..."
+      },
+      "adLinks": {
+        "label": "Link quảng cáo (Tùy chọn)",
+        "placeholder": "https://example.com/ad",
+        "addButton": "Thêm link",
+        "autoExtract": {
+          "message": "Tự động trích xuất",
+          "description": "Nội dung sẽ được tự động trích xuất khi bạn chuyển sang bước tiếp theo"
+        }
+      },
+      "navigation": {
+        "next": "Tiếp theo: Cấu hình AI"
+      }
+    },
+    "adTypes": {
+      "websiteConversion": {
+        "label": "Website Conversion",
+        "description": "Hướng lưu lượng truy cập đến trang web của bạn và tăng chuyển đổi",
+        "feature1": "Yêu cầu URL trang web",
+        "feature2": "Theo dõi chuyển đổi",
+        "feature3": "Tối ưu hóa lưu lượng truy cập"
+      },
+      "leadGeneration": {
+        "label": "Thu thập khách hàng tiềm năng",
+        "description": "Thu thập khách hàng tiềm năng trực tiếp thông qua biểu mẫu Facebook",
+        "feature1": "Câu hỏi biểu mẫu tùy chỉnh",
+        "feature2": "Thu thập khách hàng tiềm năng",
+        "feature3": "Thông tin liên hệ"
+      },
+      "pagePost": {
+        "label": "Bài đăng trang",
+        "description": "Quảng bá các bài đăng trên trang của bạn để tăng tương tác",
+        "feature1": "Quảng bá bài đăng",
+        "feature2": "Tăng cường tương tác",
+        "feature3": "Tương tác xã hội"
+      }
+    },
+    "adStyles": {
+      "professional": {
+        "label": "Chuyên nghiệp",
+        "description": "Ngôn ngữ trang trọng, đáng tin cậy, tập trung vào uy tín và chuyên môn"
+      },
+      "casual": {
+        "label": "Thân thiện",
+        "description": "Ngôn ngữ thân thiện, trò chuyện tự nhiên như nói chuyện với bạn bè"
+      },
+      "humorous": {
+        "label": "Hài hước",
+        "description": "Kết hợp yếu tố hài hước, dí dỏm để tạo ấn tượng và dễ nhớ"
+      },
+      "urgent": {
+        "label": "Khẩn cấp",
+        "description": "Tạo cảm giác cấp bách với ưu đãi có thời hạn, số lượng giới hạn hoặc lợi ích tức thì"
+      },
+      "luxury": {
+        "label": "Cao cấp",
+        "description": "Nhấn mạnh chất lượng cao cấp, tính độc quyền và sự tinh tế"
+      },
+      "educational": {
+        "label": "Giáo dục",
+        "description": "Tập trung cung cấp giá trị qua thông tin, mẹo hay insights hữu ích"
+      },
+      "inspirational": {
+        "label": "Truyền cảm hứng",
+        "description": "Sử dụng ngôn ngữ động viên, trao quyền và nâng cao tinh thần"
+      },
+      "minimalist": {
+        "label": "Tối giản",
+        "description": "Giữ thông điệp đơn giản, trực tiếp và gọn gàng"
+      }
+    },
+    "step2": {
+      "sectionTitle": "Chọn siêu năng lực AI của bạn! 🤖",
+      "sectionSubtitle": "Chọn nhà cung cấp AI tốt nhất cho nhu cầu sáng tạo của bạn",
+      "textGeneration": {
+        "title": "Tạo văn bản",
+        "subtitle": "Chọn trợ lý copywriting của bạn"
+      },
+      "imageGeneration": {
+        "title": "Tạo hình ảnh",
+        "subtitle": "Chọn nghệ sĩ thị giác của bạn"
+      },
+      "powerLevel": {
+        "title": "Mức độ AI",
+        "ultraPowerful": "🔥 Siêu mạnh! Quảng cáo của bạn sẽ tuyệt vời!",
+        "greatCombo": "⚡ Kết hợp tuyệt vời! Sẵn sàng cho kết quả chất lượng cao!",
+        "solidChoice": "✨ Lựa chọn vững chắc! Quảng cáo của bạn sẽ trông chuyên nghiệp!",
+        "goodStart": "🌱 Khởi đầu tốt! Quảng cáo của bạn sẽ ổn!"
+      },
+      "imageUpload": {
+        "message": "Đã tải lên hình ảnh",
+        "description": "Bạn đã tải lên một hình ảnh, vì vậy tạo hình ảnh AI bị tắt. Xóa hình ảnh đã tải lên để bật nhà cung cấp hình ảnh AI."
+      },
+      "uploadMedia": {
+        "label": "Tải lên Media (Tùy chọn)",
+        "button": "Tải lên"
+      },
+      "enhancement": {
+        "label": "Tùy chọn cải thiện hình ảnh",
+        "upscale": "Nâng cấp hình ảnh",
+        "removeBackground": "Xóa nền",
+        "styleTransfer": "Chuyển đổi phong cách",
+        "applyButton": "Áp dụng cải thiện & Xem trước",
+        "previewLabel": "Xem trước hình ảnh đã cải thiện",
+        "originalLabel": "Gốc: {name}"
+      },
+      "navigation": {
+        "generateAd": "Tạo quảng cáo"
+      }
+    },
+    "providers": {
+      "text": {
+        "openai": {
+          "name": "OpenAI GPT",
+          "description": "Mô hình ngôn ngữ tiên tiến cho bản sao quảng cáo chất lượng cao",
+          "feature1": "Viết sáng tạo",
+          "feature2": "Nhiều ngôn ngữ",
+          "feature3": "Nhận thức ngữ cảnh"
+        },
+        "claude": {
+          "name": "Anthropic Claude",
+          "description": "AI đáng tin cậy và an toàn cho nội dung quảng cáo chuyên nghiệp",
+          "feature1": "Giọng điệu chuyên nghiệp",
+          "feature2": "Tập trung vào an toàn",
+          "feature3": "Phản hồi chi tiết"
+        },
+        "gemini": {
+          "name": "Google Gemini",
+          "description": "AI đa phương thức mạnh mẽ của Google",
+          "feature1": "Hiểu biết sâu",
+          "feature2": "Đa phương thức",
+          "feature3": "Nhanh và hiệu quả"
+        }
+      },
+      "image": {
+        "openai": {
+          "name": "OpenAI DALL-E",
+          "description": "Tạo hình ảnh tuyệt đẹp, độc đáo cho quảng cáo của bạn",
+          "feature1": "Chất lượng cao",
+          "feature2": "Phong cách sáng tạo",
+          "feature3": "Prompt tùy chỉnh"
+        },
+        "gemini": {
+          "name": "Google Gemini Imagen",
+          "description": "Tạo hình ảnh AI tiên tiến của Google",
+          "feature1": "Độ phân giải cao",
+          "feature2": "Tạo nhanh",
+          "feature3": "Nhiều mô hình"
+        },
+        "falai": {
+          "name": "FAL AI",
+          "description": "Tạo hình ảnh AI tiên tiến",
+          "feature1": "Độ phân giải cao",
+          "feature2": "Tạo nhanh",
+          "feature3": "Nhiều mô hình"
+        },
+        "stableDiffusion": {
+          "name": "Stable Diffusion",
+          "description": "Tạo hình ảnh mã nguồn mở",
+          "feature1": "Mã nguồn mở",
+          "feature2": "Có thể tùy chỉnh",
+          "feature3": "Tạo nhanh"
+        }
+      },
+      "ratings": {
+        "mostPopular": "Phổ biến nhất",
+        "reliable": "Đáng tin cậy",
+        "fast": "Nhanh",
+        "highQuality": "Chất lượng cao",
+        "experimental": "Thử nghiệm",
+        "openSource": "Mã nguồn mở",
+        "goodChoice": "Lựa chọn tốt"
+      }
+    },
+    "step3": {
+      "cardTitle": "Xem trước & Lưu",
+      "instruction": "Chọn biến thể quảng cáo ưa thích của bạn. Điểm chất lượng giúp bạn chọn cái tốt nhất!",
+      "qualityScore": {
+        "bestLabel": "Điểm chất lượng tốt nhất",
+        "analyzing": "Đang phân tích chất lượng...",
+        "bestBadge": "🏆 Chất lượng tốt nhất",
+        "loading": "Đang tải điểm chất lượng..."
+      },
+      "actions": {
+        "edit": "Chỉnh sửa"
+      },
+      "emptyState": "Chưa tạo biến thể quảng cáo nào",
+      "navigation": {
+        "saveAd": "Lưu quảng cáo"
+      }
+    },
+    "modals": {
+      "edit": {
+        "title": "Chỉnh sửa biến thể quảng cáo",
+        "headline": {
+          "label": "Tiêu đề"
+        },
+        "primaryText": {
+          "label": "Văn bản chính"
+        },
+        "description": {
+          "label": "Mô tả"
+        },
+        "callToAction": {
+          "label": "Call to Action",
+          "placeholder": "Chọn call to action"
+        }
+      },
+      "confirmSave": {
+        "title": "Xác nhận lưu",
+        "message": "Bạn có chắc chắn muốn lưu biến thể quảng cáo này?"
+      },
+      "extractionFailed": {
+        "title": "Trích xuất nội dung thất bại",
+        "continueButton": "Tiếp tục",
+        "goBackButton": "Quay lại",
+        "message": "Chúng tôi không thể trích xuất nội dung từ các link quảng cáo được cung cấp. Bạn có muốn tiếp tục tạo quảng cáo chỉ với prompt của bạn, hay quay lại để sửa các link?"
+      },
+      "mediaPreview": {
+        "title": "Xem trước Media",
+        "altText": "Xem trước media"
+      },
+      "adTypesGuide": {
+        "title": "Hướng dẫn các loại quảng cáo"
+      },
+      "helpDialog": {
+        "title": "Cách viết Prompt hiệu quả",
+        "whatIsPrompt": {
+          "title": "Prompt là gì?",
+          "description": "Prompt là một mô tả hoặc hướng dẫn cho AI biết bạn muốn tạo loại nội dung quảng cáo nào. Prompt của bạn càng cụ thể và chi tiết, AI càng hiểu rõ nhu cầu của bạn."
+        },
+        "tips": {
+          "title": "Mẹo viết Prompt tuyệt vời",
+          "tip1": {
+            "title": "Mô tả sản phẩm/dịch vụ của bạn",
+            "description": "Giải thích rõ ràng những gì bạn đang bán, lợi ích chính và đối tượng mục tiêu."
+          },
+          "tip2": {
+            "title": "Chỉ định giọng điệu",
+            "description": "Đề cập nếu bạn muốn quảng cáo chuyên nghiệp, thân mật, thú vị, đáng tin cậy, v.v."
+          },
+          "tip3": {
+            "title": "Bao gồm các tính năng chính",
+            "description": "Liệt kê các tính năng hoặc lợi ích quan trọng nhất mà bạn muốn làm nổi bật."
+          },
+          "tip4": {
+            "title": "Đề cập đến đối tượng của bạn",
+            "description": "Mô tả khách hàng lý tưởng của bạn (tuổi, sở thích, vấn đề họ gặp phải)."
+          }
+        }
+      }
+    },
+    "messages": {
+      "success": {
+        "personaSelected": "Nhắm mục tiêu persona: {name}",
+        "imagesEnhanced": "Hình ảnh đã được cải thiện thành công với xem trước thời gian thực",
+        "fileUploaded": "Tải file lên thành công",
+        "adCreated": "Quảng cáo đã được tạo thành công! Vui lòng xem trước và lưu.",
+        "adSaved": "Quảng cáo đã được lưu thành công!",
+        "contentExtracted": "Đã trích xuất nội dung thành công!",
+        "promptUpdated": "Prompt đã được cập nhật với phiên bản cải thiện!",
+        "contentAddedToPrompt": "Đã thêm nội dung từ {count} quảng cáo vào prompt"
+      },
+      "error": {
+        "selectEnhancement": "Vui lòng chọn ít nhất một tùy chọn cải thiện",
+        "uploadImagesFirst": "Vui lòng tải lên hình ảnh trước",
+        "enhancementFailed": "Không thể cải thiện hình ảnh",
+        "campaignsLoadFailed": "Không thể tải chiến dịch",
+        "ctaLoadFailed": "Không thể tải call to actions",
+        "fileUploadFailed": "Không thể tải file lên",
+        "promptOrLinksRequired": "Vui lòng nhập nội dung prompt hoặc cung cấp link quảng cáo",
+        "adCreationFailed": "Không thể tạo quảng cáo. Vui lòng thử lại.",
+        "adSaveFailed": "Không thể lưu quảng cáo. Vui lòng thử lại.",
+        "extractionFailed": "Không thể trích xuất nội dung",
+        "extractionError": "Lỗi khi trích xuất nội dung: {message}"
+      },
+      "warning": {
+        "providersLoadFailed": "Không thể tải nhà cung cấp AI, sử dụng tùy chọn mặc định",
+        "noContentFound": "Không tìm thấy nội dung quảng cáo",
+        "imagesLoadFailed": "Một số hình ảnh không tải được. Sử dụng hình ảnh placeholder.",
+        "selectAdToSave": "Vui lòng chọn một quảng cáo để lưu",
+        "enterAtLeastOneLink": "Vui lòng nhập ít nhất một link quảng cáo",
+        "cannotExtract": "Không thể trích xuất nội dung",
+        "qualityScoresLoadFailed": "Không thể tải điểm chất lượng"
+      },
+      "info": {
+        "personaCleared": "Đã xóa lựa chọn persona",
+        "extractionCancelled": "Đã hủy trích xuất nội dung",
+        "extractionSkipped": "Đã bỏ qua trích xuất nội dung"
+      }
+    },
+    "navigation": {
+      "previous": "Trước"
+    },
+    "imageError": {
+      "cannotLoadImage": "Không tải được ảnh",
+      "unavailable": "Hình ảnh không khả dụng"
+    },
+    "promptEnhancement": {
+      "ctaInstruction": "Lưu ý: Chỉ sử dụng một trong các Call to Action sau cho quảng cáo: {ctaList}. Không tạo CTA khác."
+    }
+  },
+  "adTable": {
+    "filters": {
+      "searchPlaceholder": "Tìm kiếm quảng cáo...",
+      "searchLabel": "Tìm kiếm quảng cáo",
+      "statusPlaceholder": "Trạng thái",
+      "statusLabel": "Lọc theo trạng thái",
+      "adTypePlaceholder": "Loại quảng cáo",
+      "adTypeLabel": "Lọc theo loại quảng cáo",
+      "campaignPlaceholder": "Chiến dịch",
+      "campaignLabel": "Lọc theo chiến dịch",
+      "resetButton": "Đặt lại",
+      "resetLabel": "Đặt lại tất cả bộ lọc",
+      "viewToggleTable": "Chuyển sang chế độ thẻ",
+      "viewToggleCards": "Chuyển sang chế độ bảng",
+      "cardsButton": "Thẻ",
+      "tableButton": "Bảng"
+    },
+    "filterOptions": {
+      "allStatus": "Tất cả trạng thái",
+      "active": "Đang hoạt động",
+      "paused": "Tạm dừng",
+      "draft": "Bản nháp",
+      "archived": "Đã lưu trữ",
+      "allTypes": "Tất cả loại",
+      "image": "Hình ảnh",
+      "video": "Video",
+      "carousel": "Băng chuyền",
+      "collection": "Bộ sưu tập",
+      "allCampaigns": "Tất cả chiến dịch"
+    },
+    "results": {
+      "showing": "Hiển thị {count} trong tổng số {total} quảng cáo",
+      "filtered": "(đã lọc)"
+    },
+    "bulkActions": {
+      "selected": "Đã chọn {count} quảng cáo",
+      "clearSelection": "Xóa lựa chọn",
+      "exportSelected": "Xuất các mục đã chọn"
+    },
+    "table": {
+      "columns": {
+        "adName": "Tên quảng cáo",
+        "campaign": "Chiến dịch",
+        "status": "Trạng thái",
+        "type": "Loại",
+        "content": "Nội dung",
+        "media": "Phương tiện",
+        "createdDate": "Ngày tạo",
+        "actions": "Thao tác"
+      },
+      "statusFilters": {
+        "active": "Đang hoạt động",
+        "paused": "Tạm dừng",
+        "draft": "Bản nháp",
+        "archived": "Đã lưu trữ"
+      },
+      "ariaLabel": "Bảng quảng cáo"
+    },
+    "cells": {
+      "untitledAd": "Quảng cáo chưa đặt tên",
+      "adId": "ID: {id}",
+      "campaignId": "ID chiến dịch: {id}",
+      "unknown": "Không rõ",
+      "noCampaign": "Không có chiến dịch",
+      "loading": "Đang tải...",
+      "campaignNumber": "Chiến dịch #{id}",
+      "headline": "Tiêu đề:",
+      "text": "Văn bản:",
+      "noMedia": "Không có phương tiện"
+    },
+    "actions": {
+      "viewDetails": "Xem chi tiết",
+      "viewDetailsLabel": "Xem chi tiết cho {name}",
+      "edit": "Sửa",
+      "editAd": "Sửa quảng cáo",
+      "editLabel": "Sửa {name}",
+      "duplicate": "Sao chép",
+      "duplicateAd": "Sao chép quảng cáo",
+      "duplicateLabel": "Sao chép {name}",
+      "exportToFacebook": "Xuất lên Facebook",
+      "exportLabel": "Xuất {name} lên Facebook",
+      "delete": "Xóa",
+      "deleteAd": "Xóa quảng cáo",
+      "deleteLabel": "Xóa {name}",
+      "deleteConfirm": "Bạn có chắc chắn muốn xóa quảng cáo này không?",
+      "deleteYes": "Có",
+      "deleteNo": "Không"
+    },
+    "card": {
+      "untitledAd": "Quảng cáo chưa đặt tên",
+      "unknown": "Không rõ",
+      "campaign": "Chiến dịch: {name}",
+      "headline": "Tiêu đề:",
+      "text": "Văn bản:",
+      "noMedia": "Không có phương tiện",
+      "edit": "Sửa",
+      "delete": "Xóa",
+      "viewDetails": "Xem chi tiết",
+      "deleteConfirm": "Bạn có chắc chắn muốn xóa quảng cáo này không?",
+      "deleteYes": "Có",
+      "deleteNo": "Không"
+    },
+    "pagination": {
+      "perPage": "{value} / trang"
+    }
+  },
+  "adDetail": {
+    "header": {
+      "publishButton": "Xuất lên Facebook"
+    },
+    "loading": {
+      "message": "Đang tải chi tiết quảng cáo..."
+    },
+    "error": {
+      "retryButton": "Thử lại"
+    },
+    "preview": {
+      "pageName": "Tên trang của bạn",
+      "postTime": "Vừa xong"
+    },
+    "details": {
+      "title": "Chi tiết quảng cáo",
+      "type": "Loại:",
+      "status": "Trạng thái:",
+      "callToAction": "Nút kêu gọi hành động:",
+      "created": "Ngày tạo:",
+      "facebookAdId": "ID quảng cáo Facebook:"
+    },
+    "content": {
+      "title": "Nội dung đã tạo",
+      "emptyState": "Chưa có nội dung AI được tạo",
+      "promptPlaceholder": "Mô tả điều bạn muốn quảng cáo...",
+      "generateButton": "Tạo",
+      "useThisButton": "Sử dụng"
+    },
+    "messages": {
+      "selectSuccess": {
+        "title": "Thành công",
+        "message": "Đã chọn nội dung thành công"
+      },
+      "selectError": {
+        "title": "Lỗi",
+        "message": "Không thể chọn nội dung: {error}"
+      },
+      "publishSuccess": {
+        "title": "Thành công",
+        "message": "Đã xuất quảng cáo lên Facebook thành công"
+      },
+      "publishError": {
+        "title": "Lỗi",
+        "message": "Không thể xuất quảng cáo: {error}"
+      },
+      "generateError": {
+        "title": "Lỗi",
+        "message": "Không thể tạo nội dung: {error}"
+      }
+    }
+  },
+  "confirmModal": {
+    "defaultCancel": "Hủy",
+    "defaultConfirm": "Xác nhận"
+  },
+  "modal": {
+    "closeLabel": "Đóng modal"
+  },
+  "qualityScore": {
+    "title": "Điểm Chất Lượng",
+    "totalMax": "/100",
+    "gradeNA": "Chưa có",
+    "breakdown": {
+      "compliance": "Tuân thủ",
+      "complianceMax": "/30",
+      "linguisticQuality": "Chất lượng ngôn ngữ",
+      "linguisticMax": "/30",
+      "persuasiveness": "Tính thuyết phục",
+      "persuasivenessMax": "/20",
+      "completeness": "Tính đầy đủ",
+      "completenessMax": "/20"
+    },
+    "suggestions": {
+      "title": "💡 Gợi ý cải thiện"
+    }
   }
 }

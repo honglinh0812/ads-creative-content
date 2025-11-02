@@ -6,10 +6,10 @@
         <a-col :xs="24" :sm="12" :md="6">
           <a-input
             v-model:value="searchQuery"
-            placeholder="Search ads..."
+            :placeholder="$t('adTable.filters.searchPlaceholder')"
             size="large"
             allow-clear
-            aria-label="Search ads"
+            :aria-label="$t('adTable.filters.searchLabel')"
             role="searchbox"
             @input="handleSearch"
             @keydown.enter="handleSearch"
@@ -23,50 +23,50 @@
         <a-col :xs="24" :sm="12" :md="4">
           <a-select
             v-model:value="statusFilter"
-            placeholder="Status"
+            :placeholder="$t('adTable.filters.statusPlaceholder')"
             size="large"
             allow-clear
             style="width: 100%"
-            aria-label="Filter by status"
+            :aria-label="$t('adTable.filters.statusLabel')"
             @change="handleFilterChange"
           >
-            <a-select-option value="">All Status</a-select-option>
-            <a-select-option value="ACTIVE">Active</a-select-option>
-            <a-select-option value="PAUSED">Paused</a-select-option>
-            <a-select-option value="DRAFT">Draft</a-select-option>
-            <a-select-option value="ARCHIVED">Archived</a-select-option>
+            <a-select-option value="">{{ $t('adTable.filterOptions.allStatus') }}</a-select-option>
+            <a-select-option value="ACTIVE">{{ $t('adTable.filterOptions.active') }}</a-select-option>
+            <a-select-option value="PAUSED">{{ $t('adTable.filterOptions.paused') }}</a-select-option>
+            <a-select-option value="DRAFT">{{ $t('adTable.filterOptions.draft') }}</a-select-option>
+            <a-select-option value="ARCHIVED">{{ $t('adTable.filterOptions.archived') }}</a-select-option>
           </a-select>
         </a-col>
         
         <a-col :xs="24" :sm="12" :md="4">
           <a-select
             v-model:value="adTypeFilter"
-            placeholder="Ad Type"
+            :placeholder="$t('adTable.filters.adTypePlaceholder')"
             size="large"
             allow-clear
             style="width: 100%"
-            aria-label="Filter by ad type"
+            :aria-label="$t('adTable.filters.adTypeLabel')"
             @change="handleFilterChange"
           >
-            <a-select-option value="">All Types</a-select-option>
-            <a-select-option value="IMAGE">Image</a-select-option>
-            <a-select-option value="VIDEO">Video</a-select-option>
-            <a-select-option value="CAROUSEL">Carousel</a-select-option>
-            <a-select-option value="COLLECTION">Collection</a-select-option>
+            <a-select-option value="">{{ $t('adTable.filterOptions.allTypes') }}</a-select-option>
+            <a-select-option value="IMAGE">{{ $t('adTable.filterOptions.image') }}</a-select-option>
+            <a-select-option value="VIDEO">{{ $t('adTable.filterOptions.video') }}</a-select-option>
+            <a-select-option value="CAROUSEL">{{ $t('adTable.filterOptions.carousel') }}</a-select-option>
+            <a-select-option value="COLLECTION">{{ $t('adTable.filterOptions.collection') }}</a-select-option>
           </a-select>
         </a-col>
         
         <a-col :xs="24" :sm="12" :md="4">
           <a-select
             v-model:value="campaignFilter"
-            placeholder="Campaign"
+            :placeholder="$t('adTable.filters.campaignPlaceholder')"
             size="large"
             allow-clear
             style="width: 100%"
-            aria-label="Filter by campaign"
+            :aria-label="$t('adTable.filters.campaignLabel')"
             @change="handleFilterChange"
           >
-            <a-select-option value="">All Campaigns</a-select-option>
+            <a-select-option value="">{{ $t('adTable.filterOptions.allCampaigns') }}</a-select-option>
             <a-select-option v-for="campaign in campaigns" :key="campaign.id" :value="campaign.id">
               {{ campaign.name }}
             </a-select-option>
@@ -77,28 +77,28 @@
           <a-button
             size="large"
             style="width: 100%"
-            aria-label="Reset all filters"
+            :aria-label="$t('adTable.filters.resetLabel')"
             @click="resetFilters"
           >
             <template #icon>
               <ClearOutlined aria-hidden="true" />
             </template>
-            Reset
+            {{ $t('adTable.filters.resetButton') }}
           </a-button>
         </a-col>
-        
+
         <a-col :xs="24" :sm="12" :md="3">
           <a-button
             type="primary"
             size="large"
             style="width: 100%"
-            :aria-label="viewMode === 'table' ? 'Switch to cards view' : 'Switch to table view'"
+            :aria-label="viewMode === 'table' ? $t('adTable.filters.viewToggleTable') : $t('adTable.filters.viewToggleCards')"
             @click="toggleView"
           >
             <template #icon>
               <component :is="viewMode === 'table' ? 'AppstoreOutlined' : 'TableOutlined'" aria-hidden="true" />
             </template>
-            {{ viewMode === 'table' ? 'Cards' : 'Table' }}
+            {{ viewMode === 'table' ? $t('adTable.filters.cardsButton') : $t('adTable.filters.tableButton') }}
           </a-button>
         </a-col>
       </a-row>
@@ -108,8 +108,8 @@
     <div class="results-actions-bar">
       <div id="results-summary" class="results-summary" role="status" aria-live="polite">
         <a-typography-text type="secondary">
-          Showing {{ filteredAds.length }} of {{ totalAds }} ads
-          <span v-if="hasActiveFilters"> (filtered)</span>
+          {{ $t('adTable.results.showing', { count: filteredAds.length, total: totalAds }) }}
+          <span v-if="hasActiveFilters"> {{ $t('adTable.results.filtered') }}</span>
         </a-typography-text>
       </div>
 
@@ -117,10 +117,10 @@
       <div v-if="selectedRowKeys.length > 0" class="bulk-actions">
         <a-space>
           <a-typography-text strong>
-            {{ selectedRowKeys.length }} ad(s) selected
+            {{ $t('adTable.bulkActions.selected', { count: selectedRowKeys.length }) }}
           </a-typography-text>
           <a-button size="small" @click="clearSelection">
-            Clear Selection
+            {{ $t('adTable.bulkActions.clearSelection') }}
           </a-button>
           <a-button
             type="primary"
@@ -130,7 +130,7 @@
             <template #icon>
               <ExportOutlined />
             </template>
-            Export Selected
+            {{ $t('adTable.bulkActions.exportSelected') }}
           </a-button>
         </a-space>
       </div>
@@ -139,7 +139,7 @@
     <!-- Table View -->
     <div v-if="viewMode === 'table'" class="table-section">
       <a-table
-        :columns="columns"
+        :columns="translatedColumns"
         :data-source="paginatedAds"
         :loading="loading"
         :pagination="false"
@@ -148,7 +148,7 @@
         row-key="id"
         size="middle"
         role="table"
-        aria-label="Ads table"
+        :aria-label="$t('adTable.table.ariaLabel')"
         aria-describedby="results-summary"
         @change="handleTableChange"
       >
@@ -157,27 +157,27 @@
           <template v-if="column.key === 'name'">
             <div class="ad-name-cell">
               <a-typography-title :level="5" style="margin: 0; cursor: pointer" @click="$emit('view-details', record)">
-                {{ record.name || 'Untitled Ad' }}
+                {{ record.name || $t('adTable.cells.untitledAd') }}
               </a-typography-title>
               <a-typography-text type="secondary" style="font-size: 12px">
-                ID: {{ record.id }}
+                {{ $t('adTable.cells.adId', { id: record.id }) }}
               </a-typography-text>
             </div>
           </template>
-          
+
           <template v-else-if="column.key === 'campaign'">
             <div class="campaign-cell">
               <a-typography-text strong>{{ getCampaignName(record.campaignId) }}</a-typography-text>
               <br>
               <a-typography-text type="secondary" style="font-size: 11px">
-                Campaign ID: {{ record.campaignId }}
+                {{ $t('adTable.cells.campaignId', { id: record.campaignId }) }}
               </a-typography-text>
             </div>
           </template>
-          
+
           <template v-else-if="column.key === 'status'">
             <a-tag :color="getStatusColor(record.status)">
-              {{ record.status || 'Unknown' }}
+              {{ record.status || $t('adTable.cells.unknown') }}
             </a-tag>
           </template>
           
@@ -191,10 +191,10 @@
           <template v-else-if="column.key === 'content'">
             <div class="content-cell">
               <div v-if="record.headline" class="content-item">
-                <strong>Headline:</strong> {{ truncateText(record.headline, 30) }}
+                <strong>{{ $t('adTable.cells.headline') }}</strong> {{ truncateText(record.headline, 30) }}
               </div>
               <div v-if="record.primaryText" class="content-item">
-                <strong>Text:</strong> {{ truncateText(record.primaryText, 40) }}
+                <strong>{{ $t('adTable.cells.text') }}</strong> {{ truncateText(record.primaryText, 40) }}
               </div>
               <div v-if="record.callToAction" class="content-item">
                 <a-tag size="small" color="green">{{ record.callToAction }}</a-tag>
@@ -227,10 +227,10 @@
           
           <template v-else-if="column.key === 'actions'">
             <a-space size="small">
-              <a-tooltip title="View Details">
-                <a-button 
-                  size="small" 
-                  aria-label="View details for {{ record.name || 'Untitled Ad' }}"
+              <a-tooltip :title="$t('adTable.actions.viewDetails')">
+                <a-button
+                  size="small"
+                  :aria-label="$t('adTable.actions.viewDetailsLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
                   @click="$emit('view-details', record)"
                 >
                   <template #icon>
@@ -238,11 +238,11 @@
                   </template>
                 </a-button>
               </a-tooltip>
-              
-              <a-tooltip title="Edit Ad">
-                <a-button 
-                  size="small" 
-                  aria-label="Edit {{ record.name || 'Untitled Ad' }}"
+
+              <a-tooltip :title="$t('adTable.actions.editAd')">
+                <a-button
+                  size="small"
+                  :aria-label="$t('adTable.actions.editLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
                   @click="$emit('edit-ad', record)"
                 >
                   <template #icon>
@@ -250,11 +250,11 @@
                   </template>
                 </a-button>
               </a-tooltip>
-              
-              <a-tooltip title="Duplicate Ad">
-                <a-button 
-                  size="small" 
-                  aria-label="Duplicate {{ record.name || 'Untitled Ad' }}"
+
+              <a-tooltip :title="$t('adTable.actions.duplicateAd')">
+                <a-button
+                  size="small"
+                  :aria-label="$t('adTable.actions.duplicateLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
                   @click="$emit('duplicate-ad', record)"
                 >
                   <template #icon>
@@ -262,12 +262,12 @@
                   </template>
                 </a-button>
               </a-tooltip>
-              
-              <a-tooltip title="Export to Facebook">
-                <a-button 
-                  size="small" 
-                  type="primary" 
-                  aria-label="Export {{ record.name || 'Untitled Ad' }} to Facebook"
+
+              <a-tooltip :title="$t('adTable.actions.exportToFacebook')">
+                <a-button
+                  size="small"
+                  type="primary"
+                  :aria-label="$t('adTable.actions.exportLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
                   @click="$emit('export-ad', record)"
                 >
                   <template #icon>
@@ -275,18 +275,18 @@
                   </template>
                 </a-button>
               </a-tooltip>
-              
+
               <a-popconfirm
-                title="Are you sure you want to delete this ad?"
-                ok-text="Yes"
-                cancel-text="No"
+                :title="$t('adTable.actions.deleteConfirm')"
+                :ok-text="$t('adTable.actions.deleteYes')"
+                :cancel-text="$t('adTable.actions.deleteNo')"
                 @confirm="$emit('delete-ad', record.id)"
               >
-                <a-tooltip title="Delete Ad">
-                  <a-button 
-                    size="small" 
+                <a-tooltip :title="$t('adTable.actions.deleteAd')">
+                  <a-button
+                    size="small"
                     danger
-                    aria-label="Delete {{ record.name || 'Untitled Ad' }}"
+                    :aria-label="$t('adTable.actions.deleteLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
                   >
                     <template #icon>
                       <DeleteOutlined aria-hidden="true" />
@@ -319,37 +319,37 @@
               </div>
               <div v-else class="no-media-placeholder">
                 <FileImageOutlined style="font-size: 48px; color: #d9d9d9;" />
-                <p>No Media</p>
+                <p>{{ $t('adTable.card.noMedia') }}</p>
               </div>
             </div>
             
             <!-- Ad Info -->
             <div class="ad-info">
               <a-typography-title :level="5" :ellipsis="{ rows: 2 }" style="margin-bottom: 8px;">
-                {{ ad.name || 'Untitled Ad' }}
+                {{ ad.name || $t('adTable.card.untitledAd') }}
               </a-typography-title>
-              
+
               <div class="ad-meta">
                 <a-tag :color="getStatusColor(ad.status)" size="small">
-                  {{ ad.status || 'Unknown' }}
+                  {{ ad.status || $t('adTable.card.unknown') }}
                 </a-tag>
                 <a-tag color="blue" size="small" v-if="ad.adType">
                   {{ formatAdType(ad.adType) }}
                 </a-tag>
               </div>
-              
+
               <div class="campaign-info">
                 <a-typography-text type="secondary" style="font-size: 12px;">
-                  Campaign: {{ getCampaignName(ad.campaignId) }}
+                  {{ $t('adTable.card.campaign', { name: getCampaignName(ad.campaignId) }) }}
                 </a-typography-text>
               </div>
-              
+
               <div class="ad-content" v-if="ad.headline || ad.primaryText">
                 <div v-if="ad.headline" class="content-line">
-                  <strong>Headline:</strong> {{ truncateText(ad.headline, 40) }}
+                  <strong>{{ $t('adTable.card.headline') }}</strong> {{ truncateText(ad.headline, 40) }}
                 </div>
                 <div v-if="ad.primaryText" class="content-line">
-                  <strong>Text:</strong> {{ truncateText(ad.primaryText, 60) }}
+                  <strong>{{ $t('adTable.card.text') }}</strong> {{ truncateText(ad.primaryText, 60) }}
                 </div>
               </div>
             </div>
@@ -364,26 +364,26 @@
                     <template #icon>
                       <EditOutlined />
                     </template>
-                    Edit
+                    {{ $t('adTable.card.edit') }}
                   </a-button>
                   <a-popconfirm
-                    title="Are you sure you want to delete this ad?"
-                    ok-text="Yes"
-                    cancel-text="No"
+                    :title="$t('adTable.card.deleteConfirm')"
+                    :ok-text="$t('adTable.card.deleteYes')"
+                    :cancel-text="$t('adTable.card.deleteNo')"
                     @confirm="$emit('delete-ad', ad.id)"
                   >
                     <a-button size="small" danger>
                       <template #icon>
                         <DeleteOutlined />
                       </template>
-                      Delete
+                      {{ $t('adTable.card.delete') }}
                     </a-button>
                   </a-popconfirm>
                 </a-space>
               </a-col>
               <a-col>
                 <a-button type="primary" size="small" @click="$emit('view-details', ad)">
-                  View Details
+                  {{ $t('adTable.card.viewDetails') }}
                 </a-button>
               </a-col>
             </a-row>
@@ -406,7 +406,7 @@
         @showSizeChange="handlePageSizeChange"
       >
         <template #buildOptionText="props">
-          <span>{{ props.value }} / page</span>
+          <span>{{ $t('adTable.pagination.perPage', { value: props.value }) }}</span>
         </template>
       </a-pagination>
     </div>
@@ -415,6 +415,7 @@
 
 <script>
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   SearchOutlined,
   ClearOutlined,
@@ -429,6 +430,8 @@ import {
 } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/vi'
+import 'dayjs/locale/en'
 
 dayjs.extend(relativeTime)
 
@@ -463,6 +466,8 @@ export default {
   emits: ['view-details', 'edit-ad', 'delete-ad', 'duplicate-ad', 'export-ad'],
 
   setup(props, { emit }) {
+    const { t, locale } = useI18n()
+
     // Reactive data
     const searchQuery = ref('')
     const statusFilter = ref('')
@@ -474,11 +479,11 @@ export default {
     const sortField = ref('createdDate')
     const sortOrder = ref('desc')
     const selectedRowKeys = ref([])
-    
-    // Table columns configuration
-    const columns = ref([
+
+    // Table columns configuration with i18n
+    const translatedColumns = computed(() => [
       {
-        title: 'Ad Name',
+        title: t('adTable.table.columns.adName'),
         key: 'name',
         dataIndex: 'name',
         sorter: true,
@@ -486,51 +491,51 @@ export default {
         fixed: 'left'
       },
       {
-        title: 'Campaign',
+        title: t('adTable.table.columns.campaign'),
         key: 'campaign',
         sorter: true,
         width: 180
       },
       {
-        title: 'Status',
+        title: t('adTable.table.columns.status'),
         key: 'status',
         dataIndex: 'status',
         sorter: true,
         width: 100,
         filters: [
-          { text: 'Active', value: 'ACTIVE' },
-          { text: 'Paused', value: 'PAUSED' },
-          { text: 'Draft', value: 'DRAFT' },
-          { text: 'Archived', value: 'ARCHIVED' }
+          { text: t('adTable.table.statusFilters.active'), value: 'ACTIVE' },
+          { text: t('adTable.table.statusFilters.paused'), value: 'PAUSED' },
+          { text: t('adTable.table.statusFilters.draft'), value: 'DRAFT' },
+          { text: t('adTable.table.statusFilters.archived'), value: 'ARCHIVED' }
         ]
       },
       {
-        title: 'Type',
+        title: t('adTable.table.columns.type'),
         key: 'adType',
         dataIndex: 'adType',
         sorter: true,
         width: 100
       },
       {
-        title: 'Content',
+        title: t('adTable.table.columns.content'),
         key: 'content',
         width: 300
       },
       {
-        title: 'Media',
+        title: t('adTable.table.columns.media'),
         key: 'media',
         width: 100,
         align: 'center'
       },
       {
-        title: 'Created Date',
+        title: t('adTable.table.columns.createdDate'),
         key: 'createdDate',
         dataIndex: 'createdDate',
         sorter: true,
         width: 150
       },
       {
-        title: 'Actions',
+        title: t('adTable.table.columns.actions'),
         key: 'actions',
         width: 250,
         fixed: 'right'
@@ -656,29 +661,33 @@ export default {
     }
     
     const getCampaignName = (campaignId) => {
-      if (!campaignId) return 'No Campaign'
+      if (!campaignId) return t('adTable.cells.noCampaign')
 
       // Check if campaigns are loaded
       if (!props.campaigns || props.campaigns.length === 0) {
-        return 'Loading...'
+        return t('adTable.cells.loading')
       }
 
       // Convert to string for comparison (handle type mismatch)
       const campaign = props.campaigns.find(c => c.id?.toString() === campaignId?.toString())
-      return campaign?.name || `Campaign #${campaignId}`
+      return campaign?.name || t('adTable.cells.campaignNumber', { id: campaignId })
     }
-    
+
     const truncateText = (text, maxLength) => {
       if (!text) return ''
       return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
     }
-    
+
     const formatDate = (date) => {
-      return dayjs(date).format('MMM DD, YYYY')
+      // Set dayjs locale based on i18n locale
+      const dayjsLocale = locale.value === 'vi' ? 'vi' : 'en'
+      return dayjs(date).locale(dayjsLocale).format('MMM DD, YYYY')
     }
-    
+
     const formatRelativeTime = (date) => {
-      return dayjs(date).fromNow()
+      // Set dayjs locale based on i18n locale
+      const dayjsLocale = locale.value === 'vi' ? 'vi' : 'en'
+      return dayjs(date).locale(dayjsLocale).fromNow()
     }
 
     // Bulk selection handlers
@@ -721,7 +730,7 @@ export default {
       sortOrder,
       selectedRowKeys,
       rowSelection,
-      columns,
+      translatedColumns,
       totalAds,
       filteredAds,
       totalPages,

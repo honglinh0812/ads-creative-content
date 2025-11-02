@@ -633,6 +633,24 @@
     },
     "state": {
       "loading": "Loading..."
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "delete": "Delete",
+      "edit": "Edit",
+      "create": "Create",
+      "close": "Close",
+      "ok": "OK",
+      "yes": "Yes",
+      "no": "No",
+      "confirm": "Confirm",
+      "retry": "Retry",
+      "export": "Export",
+      "search": "Search",
+      "start": "Getting Started",
+      "tryAgain": "Try Again",
+      "createFirstAd": "Create Your First Ad"
     }
   },
   "sidebar": {
@@ -755,5 +773,686 @@
     "selectForAd": "Select a persona to automatically tailor your ad content",
     "promptEnhancement": "Your ad prompt will be automatically enriched with this persona's profile",
     "targeting": "Targeting persona:"
+  },
+  "adCreate": {
+    "pageHeader": {
+      "title": "Create New Ad",
+      "subtitle": "Generate compelling ads with AI assistance",
+      "backToDashboard": "Back to Dashboard"
+    },
+    "progress": {
+      "headerTitle": "Let's create your ad",
+      "stepOf": "Step {step} of {total}",
+      "step1Message": "Tell us about your ad",
+      "step2Message": "Pick your AI superpowers",
+      "step3Message": "Almost there!"
+    },
+    "progressSteps": {
+      "step1": {
+        "title": "Basic Info",
+        "description": "Tell us about your ad",
+        "emoji": "📝"
+      },
+      "step2": {
+        "title": "AI Magic",
+        "description": "Choose your AI tools",
+        "emoji": "🤖"
+      },
+      "step3": {
+        "title": "Preview",
+        "description": "See your creation",
+        "emoji": "✨"
+      }
+    },
+    "steps": {
+      "step1": {
+        "title": "Basic Information",
+        "description": "Campaign details and ad type"
+      },
+      "step2": {
+        "title": "AI Configuration",
+        "description": "Choose AI providers and settings"
+      },
+      "step3": {
+        "title": "Preview & Save",
+        "description": "Review and save your ad"
+      }
+    },
+    "step1": {
+      "cardTitle": "Basic Information",
+      "campaign": {
+        "label": "Campaign",
+        "placeholder": "Select a campaign"
+      },
+      "targetAudience": {
+        "title": "Target Audience (Campaign Level)",
+        "info": "All ads in this campaign target this audience. To change, edit the campaign settings."
+      },
+      "adType": {
+        "label": "Ad Type"
+      },
+      "adName": {
+        "label": "Ad Name",
+        "placeholder": "Enter ad name"
+      },
+      "variations": {
+        "label": "Number of Variations"
+      },
+      "language": {
+        "label": "Language",
+        "placeholder": "Select language",
+        "vietnamese": "Vietnamese",
+        "english": "English"
+      },
+      "creativeStyle": {
+        "label": "Creative Style",
+        "tooltip": "Choose the writing style for your ad. This style will combine with Ad Persona to create appropriate content.",
+        "placeholder": "Select style (optional)",
+        "previewTitle": "Selected Style"
+      },
+      "callToAction": {
+        "label": "Call to Action",
+        "placeholder": "Select call to action"
+      },
+      "websiteUrl": {
+        "label": "Website URL",
+        "placeholder": "https://example.com"
+      },
+      "leadFormQuestions": {
+        "label": "Lead Form Questions",
+        "placeholder": "Enter question",
+        "addButton": "Add Question"
+      },
+      "prompt": {
+        "label": "Prompt",
+        "placeholder": "Describe your product/service or enter specific instructions for the AI..."
+      },
+      "adLinks": {
+        "label": "Ad Links (Optional)",
+        "placeholder": "https://example.com/ad",
+        "addButton": "Add Link",
+        "autoExtract": {
+          "message": "Auto extract",
+          "description": "Content will be automatically extracted when you move to the next step"
+        }
+      },
+      "navigation": {
+        "next": "Next: AI Configuration"
+      }
+    },
+    "adTypes": {
+      "websiteConversion": {
+        "label": "Website Conversion",
+        "description": "Drive traffic to your website and increase conversions",
+        "feature1": "Website URL required",
+        "feature2": "Conversion tracking",
+        "feature3": "Traffic optimization"
+      },
+      "leadGeneration": {
+        "label": "Lead Generation",
+        "description": "Collect leads directly through Facebook forms",
+        "feature1": "Custom form questions",
+        "feature2": "Lead collection",
+        "feature3": "Contact information"
+      },
+      "pagePost": {
+        "label": "Page Post",
+        "description": "Promote your page posts to increase engagement",
+        "feature1": "Post promotion",
+        "feature2": "Engagement boost",
+        "feature3": "Social interaction"
+      }
+    },
+    "adStyles": {
+      "professional": {
+        "label": "Professional",
+        "description": "Formal, credible language focusing on expertise and trust"
+      },
+      "casual": {
+        "label": "Casual",
+        "description": "Friendly, conversational language like talking to a friend"
+      },
+      "humorous": {
+        "label": "Humorous",
+        "description": "Incorporate humor and wit to be memorable and entertaining"
+      },
+      "urgent": {
+        "label": "Urgent",
+        "description": "Create urgency with time-limited offers, limited availability, or immediate benefits"
+      },
+      "luxury": {
+        "label": "Luxury",
+        "description": "Emphasize premium quality, exclusivity, and sophistication"
+      },
+      "educational": {
+        "label": "Educational",
+        "description": "Focus on providing value through information, tips, or insights"
+      },
+      "inspirational": {
+        "label": "Inspirational",
+        "description": "Use motivational language that empowers and uplifts"
+      },
+      "minimalist": {
+        "label": "Minimalist",
+        "description": "Keep messaging simple, direct, and uncluttered"
+      }
+    },
+    "step2": {
+      "sectionTitle": "Choose your AI superpowers! 🤖",
+      "sectionSubtitle": "Select the best AI providers for your creative needs",
+      "textGeneration": {
+        "title": "Text Generation",
+        "subtitle": "Pick your copywriting assistant"
+      },
+      "imageGeneration": {
+        "title": "Image Generation",
+        "subtitle": "Choose your visual artist"
+      },
+      "powerLevel": {
+        "title": "AI Power Level",
+        "ultraPowerful": "🔥 Ultra powerful combo! Your ads will be amazing!",
+        "greatCombo": "⚡ Great combination! Ready for high-quality results!",
+        "solidChoice": "✨ Solid choice! Your ads will look professional!",
+        "goodStart": "🌱 Good start! Your ads will be decent!"
+      },
+      "imageUpload": {
+        "message": "Image already uploaded",
+        "description": "You've uploaded an image, so AI image generation is disabled. Remove the uploaded image to enable AI image providers."
+      },
+      "uploadMedia": {
+        "label": "Upload Media (Optional)",
+        "button": "Upload"
+      },
+      "enhancement": {
+        "label": "Image Enhancement Options",
+        "upscale": "Upscale Image",
+        "removeBackground": "Remove Background",
+        "styleTransfer": "Style Transfer",
+        "applyButton": "Apply Enhancements & Preview",
+        "previewLabel": "Enhanced Images Preview",
+        "originalLabel": "Original: {name}"
+      },
+      "navigation": {
+        "generateAd": "Generate Ad"
+      }
+    },
+    "providers": {
+      "text": {
+        "openai": {
+          "name": "OpenAI GPT",
+          "description": "Advanced language model for high-quality ad copy",
+          "feature1": "Creative writing",
+          "feature2": "Multiple languages",
+          "feature3": "Context awareness"
+        },
+        "claude": {
+          "name": "Anthropic Claude",
+          "description": "Reliable and safe AI for professional ad content",
+          "feature1": "Professional tone",
+          "feature2": "Safety focused",
+          "feature3": "Detailed responses"
+        },
+        "gemini": {
+          "name": "Google Gemini",
+          "description": "Google's powerful multimodal AI",
+          "feature1": "Deep understanding",
+          "feature2": "Multimodal",
+          "feature3": "Fast and efficient"
+        }
+      },
+      "image": {
+        "openai": {
+          "name": "OpenAI DALL-E",
+          "description": "Create stunning, original images for your ads",
+          "feature1": "High quality",
+          "feature2": "Creative styles",
+          "feature3": "Custom prompts"
+        },
+        "gemini": {
+          "name": "Google Gemini Imagen",
+          "description": "Google's advanced AI image generation",
+          "feature1": "High resolution",
+          "feature2": "Fast generation",
+          "feature3": "Multiple models"
+        },
+        "falai": {
+          "name": "FAL AI",
+          "description": "Advanced AI image generation",
+          "feature1": "High resolution",
+          "feature2": "Fast generation",
+          "feature3": "Multiple models"
+        },
+        "stableDiffusion": {
+          "name": "Stable Diffusion",
+          "description": "Open-source image generation",
+          "feature1": "Open source",
+          "feature2": "Customizable",
+          "feature3": "Fast generation"
+        }
+      },
+      "ratings": {
+        "mostPopular": "Most Popular",
+        "reliable": "Reliable",
+        "fast": "Fast",
+        "highQuality": "High Quality",
+        "experimental": "Experimental",
+        "openSource": "Open Source",
+        "goodChoice": "Good Choice"
+      }
+    },
+    "step3": {
+      "cardTitle": "Preview & Save",
+      "instruction": "Select your preferred ad variation. Quality scores help you choose the best one!",
+      "qualityScore": {
+        "bestLabel": "Best Quality Score",
+        "analyzing": "Analyzing quality...",
+        "bestBadge": "🏆 Best Quality",
+        "loading": "Loading quality score..."
+      },
+      "actions": {
+        "edit": "Edit"
+      },
+      "emptyState": "No ad variations generated yet",
+      "navigation": {
+        "saveAd": "Save Ad"
+      }
+    },
+    "modals": {
+      "edit": {
+        "title": "Edit Ad Variation",
+        "headline": {
+          "label": "Headline"
+        },
+        "primaryText": {
+          "label": "Primary Text"
+        },
+        "description": {
+          "label": "Description"
+        },
+        "callToAction": {
+          "label": "Call to Action",
+          "placeholder": "Select call to action"
+        }
+      },
+      "confirmSave": {
+        "title": "Confirm Save",
+        "message": "Are you sure you want to save this ad variation?"
+      },
+      "extractionFailed": {
+        "title": "Content Extraction Failed",
+        "continueButton": "Continue Anyway",
+        "goBackButton": "Go Back",
+        "message": "We couldn't extract content from the provided ad links. Would you like to continue generating the ad with just your prompt, or go back to fix the links?"
+      },
+      "mediaPreview": {
+        "title": "Media Preview",
+        "altText": "Media preview"
+      },
+      "adTypesGuide": {
+        "title": "Ad Types Guide"
+      },
+      "helpDialog": {
+        "title": "How to Write Effective Prompts",
+        "whatIsPrompt": {
+          "title": "What is a Prompt?",
+          "description": "A prompt is a description or instruction that tells the AI what kind of ad content you want to create. The more specific and detailed your prompt, the better the AI can understand your needs."
+        },
+        "tips": {
+          "title": "Tips for Writing Great Prompts",
+          "tip1": {
+            "title": "Describe Your Product/Service",
+            "description": "Clearly explain what you're selling, its main benefits, and target audience."
+          },
+          "tip2": {
+            "title": "Specify the Tone",
+            "description": "Mention if you want the ad to be professional, casual, exciting, trustworthy, etc."
+          },
+          "tip3": {
+            "title": "Include Key Features",
+            "description": "List the most important features or benefits you want to highlight."
+          },
+          "tip4": {
+            "title": "Mention Your Audience",
+            "description": "Describe who your ideal customers are (age, interests, problems they face)."
+          }
+        }
+      }
+    },
+    "messages": {
+      "success": {
+        "personaSelected": "Targeting persona: {name}",
+        "imagesEnhanced": "Images enhanced successfully with real-time preview",
+        "fileUploaded": "File uploaded successfully",
+        "adCreated": "Ad created successfully! Please preview and save.",
+        "adSaved": "Ad saved successfully!",
+        "contentExtracted": "Content extracted successfully!",
+        "promptUpdated": "Prompt updated with improved version!",
+        "contentAddedToPrompt": "Added content from {count} ad(s) to prompt"
+      },
+      "error": {
+        "selectEnhancement": "Please select at least one enhancement option",
+        "uploadImagesFirst": "Please upload images first",
+        "enhancementFailed": "Failed to enhance images",
+        "campaignsLoadFailed": "Failed to load campaigns",
+        "ctaLoadFailed": "Failed to load call to actions",
+        "fileUploadFailed": "Failed to upload file",
+        "promptOrLinksRequired": "Please enter prompt content or provide ad links",
+        "adCreationFailed": "Could not create ad. Please try again.",
+        "adSaveFailed": "Could not save ad. Please try again.",
+        "extractionFailed": "Could not extract content",
+        "extractionError": "Error extracting content: {message}"
+      },
+      "warning": {
+        "providersLoadFailed": "Failed to load AI providers, using default options",
+        "noContentFound": "No ad content found",
+        "imagesLoadFailed": "Some images failed to load. Using placeholder images.",
+        "selectAdToSave": "Please select an ad to save",
+        "enterAtLeastOneLink": "Please enter at least one ad link",
+        "cannotExtract": "Cannot extract content",
+        "qualityScoresLoadFailed": "Could not load quality scores"
+      },
+      "info": {
+        "personaCleared": "Persona selection cleared",
+        "extractionCancelled": "Content extraction cancelled",
+        "extractionSkipped": "Content extraction skipped"
+      }
+    },
+    "navigation": {
+      "previous": "Previous"
+    },
+    "imageError": {
+      "cannotLoadImage": "Cannot load image",
+      "unavailable": "Image unavailable"
+    },
+    "promptEnhancement": {
+      "ctaInstruction": "Note: Only use one of the following Call to Actions for the ad: {ctaList}. Do not create other CTAs."
+    }
+  },
+  "ads": {
+    "pageHeader": {
+      "title": "Ads",
+      "subtitle": "Manage your advertising content",
+      "newAdButton": "New Ad"
+    },
+    "table": {
+      "columns": {
+        "name": "Name",
+        "campaign": "Campaign",
+        "status": "Status",
+        "adType": "Ad Type",
+        "createdDate": "Created Date",
+        "actions": "Actions"
+      }
+    },
+    "detailModal": {
+      "title": "Ad Details",
+      "fields": {
+        "name": "Name",
+        "campaign": "Campaign",
+        "adType": "Ad Type",
+        "status": "Status",
+        "headline": "Headline",
+        "description": "Description",
+        "primaryText": "Primary Text",
+        "callToAction": "Call to Action",
+        "media": "Media",
+        "imageUrl": "Image URL",
+        "videoUrl": "Video URL"
+      },
+      "noMedia": "No image/video for this ad",
+      "notAvailable": "N/A"
+    },
+    "editModal": {
+      "title": "Edit Ad",
+      "fields": {
+        "name": "Name",
+        "headline": "Headline",
+        "description": "Description",
+        "primaryText": "Primary Text",
+        "callToAction": "Call to Action",
+        "status": "Status"
+      },
+      "statusOptions": {
+        "draft": "DRAFT",
+        "active": "ACTIVE",
+        "paused": "PAUSED",
+        "completed": "COMPLETED",
+        "failed": "FAILED"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "save": "Save"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "headlineRequired": "Headline is required",
+        "callToActionRequired": "Call to Action is required",
+        "statusRequired": "Status is required",
+        "fillAllFields": "Please fill in all required fields."
+      },
+      "cancelConfirm": {
+        "title": "Confirmation",
+        "message": "Are you sure you want to cancel? Your unsaved changes will be lost.",
+        "okText": "Yes, Cancel",
+        "cancelText": "No, Stay"
+      }
+    },
+    "deleteConfirm": {
+      "title": "Delete Confirmation",
+      "message": "Do you really want to delete this ad? This action cannot be undone.",
+      "okText": "Delete",
+      "cancelText": "Cancel"
+    },
+    "messages": {
+      "success": {
+        "adUpdated": "Ad updated successfully",
+        "adDeleted": "Ad deleted successfully",
+        "adDuplicated": "Ad duplicated successfully!",
+        "changesDiscarded": "Changes discarded",
+        "deleteCancelled": "Delete operation cancelled",
+        "exportSuccess": "Successfully exported {count} ad(s)!"
+      },
+      "error": {
+        "loadAdsFailed": "Failed to load ads",
+        "loadCtaFailed": "Failed to load call to actions",
+        "updateAdFailed": "Failed to update ad",
+        "deleteAdFailed": "Failed to delete ad",
+        "adNotFound": "Ad not found",
+        "campaignMissing": "Cannot duplicate ad: campaign information missing",
+        "duplicateError": "Error duplicating ad: {error}",
+        "invalidExportData": "Invalid export data",
+        "invalidAdData": "Invalid ad data for export",
+        "exportError": "Failed to export ads: {error}"
+      },
+      "warning": {
+        "selectAdToExport": "Please select at least one ad to export"
+      }
+    },
+    "imageError": {
+      "cannotLoad": "Cannot load image"
+    }
+  },
+  "adTable": {
+    "filters": {
+      "searchPlaceholder": "Search ads...",
+      "searchLabel": "Search ads",
+      "statusPlaceholder": "Status",
+      "statusLabel": "Filter by status",
+      "adTypePlaceholder": "Ad Type",
+      "adTypeLabel": "Filter by ad type",
+      "campaignPlaceholder": "Campaign",
+      "campaignLabel": "Filter by campaign",
+      "resetButton": "Reset",
+      "resetLabel": "Reset all filters",
+      "viewToggleTable": "Switch to cards view",
+      "viewToggleCards": "Switch to table view",
+      "cardsButton": "Cards",
+      "tableButton": "Table"
+    },
+    "filterOptions": {
+      "allStatus": "All Status",
+      "active": "Active",
+      "paused": "Paused",
+      "draft": "Draft",
+      "archived": "Archived",
+      "allTypes": "All Types",
+      "image": "Image",
+      "video": "Video",
+      "carousel": "Carousel",
+      "collection": "Collection",
+      "allCampaigns": "All Campaigns"
+    },
+    "results": {
+      "showing": "Showing {count} of {total} ads",
+      "filtered": "(filtered)"
+    },
+    "bulkActions": {
+      "selected": "{count} ad(s) selected",
+      "clearSelection": "Clear Selection",
+      "exportSelected": "Export Selected"
+    },
+    "table": {
+      "columns": {
+        "adName": "Ad Name",
+        "campaign": "Campaign",
+        "status": "Status",
+        "type": "Type",
+        "content": "Content",
+        "media": "Media",
+        "createdDate": "Created Date",
+        "actions": "Actions"
+      },
+      "statusFilters": {
+        "active": "Active",
+        "paused": "Paused",
+        "draft": "Draft",
+        "archived": "Archived"
+      },
+      "ariaLabel": "Ads table"
+    },
+    "cells": {
+      "untitledAd": "Untitled Ad",
+      "adId": "ID: {id}",
+      "campaignId": "Campaign ID: {id}",
+      "unknown": "Unknown",
+      "noCampaign": "No Campaign",
+      "loading": "Loading...",
+      "campaignNumber": "Campaign #{id}",
+      "headline": "Headline:",
+      "text": "Text:",
+      "noMedia": "No Media"
+    },
+    "actions": {
+      "viewDetails": "View Details",
+      "viewDetailsLabel": "View details for {name}",
+      "edit": "Edit",
+      "editAd": "Edit Ad",
+      "editLabel": "Edit {name}",
+      "duplicate": "Duplicate",
+      "duplicateAd": "Duplicate Ad",
+      "duplicateLabel": "Duplicate {name}",
+      "exportToFacebook": "Export to Facebook",
+      "exportLabel": "Export {name} to Facebook",
+      "delete": "Delete",
+      "deleteAd": "Delete Ad",
+      "deleteLabel": "Delete {name}",
+      "deleteConfirm": "Are you sure you want to delete this ad?",
+      "deleteYes": "Yes",
+      "deleteNo": "No"
+    },
+    "card": {
+      "untitledAd": "Untitled Ad",
+      "unknown": "Unknown",
+      "campaign": "Campaign: {name}",
+      "headline": "Headline:",
+      "text": "Text:",
+      "noMedia": "No Media",
+      "edit": "Edit",
+      "delete": "Delete",
+      "viewDetails": "View Details",
+      "deleteConfirm": "Are you sure you want to delete this ad?",
+      "deleteYes": "Yes",
+      "deleteNo": "No"
+    },
+    "pagination": {
+      "perPage": "{value} / page"
+    }
+  },
+  "adDetail": {
+    "header": {
+      "publishButton": "Publish to Facebook"
+    },
+    "loading": {
+      "message": "Loading ad details..."
+    },
+    "error": {
+      "retryButton": "Retry"
+    },
+    "preview": {
+      "pageName": "Your Page Name",
+      "postTime": "Just now"
+    },
+    "details": {
+      "title": "Ad Details",
+      "type": "Type:",
+      "status": "Status:",
+      "callToAction": "Call to Action:",
+      "created": "Created:",
+      "facebookAdId": "Facebook Ad ID:"
+    },
+    "content": {
+      "title": "Generated Content",
+      "emptyState": "No AI-generated content yet",
+      "promptPlaceholder": "Describe what you want to advertise...",
+      "generateButton": "Generate",
+      "useThisButton": "Use This"
+    },
+    "messages": {
+      "selectSuccess": {
+        "title": "Success",
+        "message": "Content selected successfully"
+      },
+      "selectError": {
+        "title": "Error",
+        "message": "Failed to select content: {error}"
+      },
+      "publishSuccess": {
+        "title": "Success",
+        "message": "Ad published successfully to Facebook"
+      },
+      "publishError": {
+        "title": "Error",
+        "message": "Failed to publish ad: {error}"
+      },
+      "generateError": {
+        "title": "Error",
+        "message": "Failed to generate content: {error}"
+      }
+    }
+  },
+  "confirmModal": {
+    "defaultCancel": "Cancel",
+    "defaultConfirm": "Confirm"
+  },
+  "modal": {
+    "closeLabel": "Close modal"
+  },
+  "qualityScore": {
+    "title": "Quality Score",
+    "totalMax": "/100",
+    "gradeNA": "N/A",
+    "breakdown": {
+      "compliance": "Compliance",
+      "complianceMax": "/30",
+      "linguisticQuality": "Linguistic Quality",
+      "linguisticMax": "/30",
+      "persuasiveness": "Persuasiveness",
+      "persuasivenessMax": "/20",
+      "completeness": "Completeness",
+      "completenessMax": "/20"
+    },
+    "suggestions": {
+      "title": "💡 Suggestions for Improvement"
+    }
   }
 }

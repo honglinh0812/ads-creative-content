@@ -18,12 +18,12 @@
               </slot>
             </div>
             
-            <button 
+            <button
               v-if="closable"
               type="button"
               class="modal-close-btn"
               @click="closeModal"
-              aria-label="Đóng modal"
+              :aria-label="$t('modal.closeLabel')"
             >
               <i class="pi pi-times"></i>
             </button>
