@@ -70,9 +70,8 @@ services:
 
   # Backend Application
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: linhx021/fbads-backend:latest
+    pull_policy: always
     container_name: fbads-backend
     restart: unless-stopped
     depends_on:
@@ -153,13 +152,8 @@ services:
 
   # Frontend Application
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VUE_APP_API_BASE_URL: ${VUE_APP_API_BASE_URL:-/api}
-        VUE_APP_SENTRY_DSN: ${VUE_APP_SENTRY_DSN}
-        VUE_APP_ENVIRONMENT: ${VUE_APP_ENVIRONMENT:-production}
+    image: linhx021/fbads-frontend:latest
+    pull_policy: always
     container_name: fbads-frontend
     restart: unless-stopped
     depends_on:

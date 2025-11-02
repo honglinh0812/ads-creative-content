@@ -15,12 +15,15 @@ public class AdResponse {
     private String primaryText;
     private String callToAction;
     private LocalDateTime createdDate;
+    private Long selectedContentId;
+    private Long campaignId;
 
     public AdResponse() {}
 
-    public AdResponse(Long id, String name, String adType, String status, String campaignName, 
-                     String imageUrl, String videoUrl, String headline, String description, 
-                     String primaryText, String callToAction, LocalDateTime createdDate) {
+    public AdResponse(Long id, String name, String adType, String status, String campaignName,
+                     String imageUrl, String videoUrl, String headline, String description,
+                     String primaryText, String callToAction, LocalDateTime createdDate,
+                     Long selectedContentId, Long campaignId) {
         this.id = id;
         this.name = name;
         this.adType = adType;
@@ -33,6 +36,8 @@ public class AdResponse {
         this.primaryText = primaryText;
         this.callToAction = callToAction;
         this.createdDate = createdDate;
+        this.selectedContentId = selectedContentId;
+        this.campaignId = campaignId;
     }
 
     public static AdResponseBuilder builder() {
@@ -52,6 +57,8 @@ public class AdResponse {
     public String getPrimaryText() { return primaryText; }
     public String getCallToAction() { return callToAction; }
     public LocalDateTime getCreatedDate() { return createdDate; }
+    public Long getSelectedContentId() { return selectedContentId; }
+    public Long getCampaignId() { return campaignId; }
 
     // Setters
     public void setId(Long id) { this.id = id; }
@@ -66,6 +73,8 @@ public class AdResponse {
     public void setPrimaryText(String primaryText) { this.primaryText = primaryText; }
     public void setCallToAction(String callToAction) { this.callToAction = callToAction; }
     public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
+    public void setSelectedContentId(Long selectedContentId) { this.selectedContentId = selectedContentId; }
+    public void setCampaignId(Long campaignId) { this.campaignId = campaignId; }
 
     public static class AdResponseBuilder {
         private Long id;
@@ -80,6 +89,8 @@ public class AdResponse {
         private String primaryText;
         private String callToAction;
         private LocalDateTime createdDate;
+        private Long selectedContentId;
+        private Long campaignId;
 
         public AdResponseBuilder id(Long id) { this.id = id; return this; }
         public AdResponseBuilder name(String name) { this.name = name; return this; }
@@ -93,10 +104,13 @@ public class AdResponse {
         public AdResponseBuilder primaryText(String primaryText) { this.primaryText = primaryText; return this; }
         public AdResponseBuilder callToAction(String callToAction) { this.callToAction = callToAction; return this; }
         public AdResponseBuilder createdDate(LocalDateTime createdDate) { this.createdDate = createdDate; return this; }
+        public AdResponseBuilder selectedContentId(Long selectedContentId) { this.selectedContentId = selectedContentId; return this; }
+        public AdResponseBuilder campaignId(Long campaignId) { this.campaignId = campaignId; return this; }
 
         public AdResponse build() {
-            return new AdResponse(id, name, adType, status, campaignName, imageUrl, videoUrl, 
-                                headline, description, primaryText, callToAction, createdDate);
+            return new AdResponse(id, name, adType, status, campaignName, imageUrl, videoUrl,
+                                headline, description, primaryText, callToAction, createdDate,
+                                selectedContentId, campaignId);
         }
     }
 }

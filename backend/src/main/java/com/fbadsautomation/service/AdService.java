@@ -422,6 +422,7 @@ public class AdService {
                         .name(ad.getName())
                         .adType(ad.getAdType() != null ? ad.getAdType().toString() : null)
                         .status(ad.getStatus())
+                        .campaignId(ad.getCampaign() != null ? ad.getCampaign().getId() : null)
                         .campaignName(campaignName)
                         .imageUrl(ad.getImageUrl())
                         .videoUrl(ad.getVideoUrl())
@@ -429,6 +430,7 @@ public class AdService {
                         .description(ad.getDescription())
                         .primaryText(ad.getPrimaryText())
                         .callToAction(ad.getCallToAction() != null ? ad.getCallToAction().name() : null)
+                        .selectedContentId(ad.getSelectedContentId())
                         .createdDate(ad.getCreatedDate())
                         .build();
             } catch (Exception e) {

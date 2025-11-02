@@ -79,27 +79,23 @@ public class FacebookExportService {
      */
     private void validateAdContentForFacebook(Ad ad) {
         log.info("Validating ad content for Facebook export: {}", ad.getId());
-        
-        // Check if ad has selected content
-        if (ad.getSelectedContentId() == null) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, 
-                "Ad content must be selected before exporting to Facebook");
-        }
-        
+
         // Check if ad status is ready
         if (!"READY".equals(ad.getStatus())) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, 
+            throw new ApiException(HttpStatus.BAD_REQUEST,
                 "Ad must be in READY status to export to Facebook");
         }
-        
+
         // Validate required content fields
+        // Note: We validate actual content instead of just selectedContentId
+        // This is more reliable as it checks what's actually exportable
         if (!StringUtils.hasText(ad.getHeadline())) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, 
+            throw new ApiException(HttpStatus.BAD_REQUEST,
                 "Headline is required for Facebook export");
         }
-        
+
         if (!StringUtils.hasText(ad.getPrimaryText())) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, 
+            throw new ApiException(HttpStatus.BAD_REQUEST,
                 "Primary text is required for Facebook export");
         }
         

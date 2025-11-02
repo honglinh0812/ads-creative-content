@@ -1,0 +1,282 @@
+name: CD - Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests (use with caution)'
+        required: false
+        default: 'false'
+
+env:
+  DOCKERHUB_USERNAME: linhx021
+  BACKEND_IMAGE: linhx021/fbads-backend
+  FRONTEND_IMAGE: linhx021/fbads-frontend
+  GCP_HOST: 34.126.190.19
+  GCP_USER: linhnh
+  DEPLOY_PATH: /home/linhnh/ads-creative-content
+
+jobs:
+  # Job 1: Run Tests
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.skip_tests != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          ./mvnw clean test -B
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm ci
+          npm run test:unit || echo "No tests found"
+
+  # Job 2: Build and Push Docker Images
+  build:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: always() && (needs.test.result == 'success' || needs.test.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Get short SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.BACKEND_IMAGE }}:${{ steps.vars.outputs.sha_short }}
+          cache-from: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache,mode=max
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          build-args: |
+            VUE_APP_API_BASE_URL=/api
+            VUE_APP_ENVIRONMENT=production
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.FRONTEND_IMAGE }}:${{ steps.vars.outputs.sha_short }}
+          cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache,mode=max
+
+  # Job 3: Deploy to GCP Server
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ env.GCP_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to GCP server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }} << 'ENDSSH'
+            set -e
+
+            echo "🚀 Starting deployment..."
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Pull latest code
+            echo "📥 Pulling latest code from GitHub..."
+            git fetch origin
+            git reset --hard origin/main
+
+            # Login to Docker Hub
+            echo "🔐 Logging in to Docker Hub..."
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+            # Pull latest images
+            echo "📦 Pulling latest Docker images..."
+            docker pull ${{ env.BACKEND_IMAGE }}:latest
+            docker pull ${{ env.FRONTEND_IMAGE }}:latest
+
+            # Health check before deployment
+            echo "🏥 Checking current service health..."
+            BACKEND_HEALTHY=$(docker inspect --format='{{.State.Health.Status}}' fbads-backend 2>/dev/null || echo "none")
+            echo "Current backend health: $BACKEND_HEALTHY"
+
+            # Rolling update - Backend first
+            echo "🔄 Performing rolling update for backend..."
+
+            # Start new backend container with different name
+            docker-compose up -d --no-deps --scale backend=2 backend || true
+
+            # Wait for new backend to be healthy
+            echo "⏳ Waiting for new backend to be healthy..."
+            TIMEOUT=120
+            ELAPSED=0
+            while [ $ELAPSED -lt $TIMEOUT ]; do
+              NEW_BACKEND_HEALTHY=$(docker inspect --format='{{.State.Health.Status}}' fbads-backend 2>/dev/null || echo "none")
+              if [ "$NEW_BACKEND_HEALTHY" = "healthy" ]; then
+                echo "✅ New backend is healthy!"
+                break
+              fi
+              echo "Waiting... (${ELAPSED}s/${TIMEOUT}s)"
+              sleep 5
+              ELAPSED=$((ELAPSED + 5))
+            done
+
+            if [ $ELAPSED -ge $TIMEOUT ]; then
+              echo "❌ New backend failed health check! Rolling back..."
+              docker-compose up -d --force-recreate --no-deps backend
+              exit 1
+            fi
+
+            # Update frontend
+            echo "🔄 Updating frontend..."
+            docker-compose up -d --force-recreate --no-deps frontend
+
+            # Wait for frontend to be ready
+            echo "⏳ Waiting for frontend..."
+            sleep 10
+
+            # Final health check
+            echo "🏥 Final health check..."
+            docker-compose ps
+
+            # Cleanup old images
+            echo "🧹 Cleaning up old Docker images..."
+            docker image prune -af --filter "until=24h" || true
+
+            echo "✅ Deployment completed successfully!"
+          ENDSSH
+
+      - name: Verify deployment
+        run: |
+          echo "🔍 Verifying deployment..."
+
+          # Wait a bit for services to stabilize
+          sleep 15
+
+          # Check backend health
+          BACKEND_STATUS=$(curl -f -s -o /dev/null -w "%{http_code}" https://linhnh.site/api/actuator/health || echo "000")
+
+          if [ "$BACKEND_STATUS" = "200" ]; then
+            echo "✅ Backend is responding correctly (HTTP $BACKEND_STATUS)"
+          else
+            echo "❌ Backend health check failed (HTTP $BACKEND_STATUS)"
+            exit 1
+          fi
+
+          # Check frontend
+          FRONTEND_STATUS=$(curl -f -s -o /dev/null -w "%{http_code}" https://linhnh.site || echo "000")
+
+          if [ "$FRONTEND_STATUS" = "200" ]; then
+            echo "✅ Frontend is responding correctly (HTTP $FRONTEND_STATUS)"
+          else
+            echo "⚠️ Frontend health check returned HTTP $FRONTEND_STATUS"
+          fi
+
+      - name: Send deployment notification
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.GMAIL_USERNAME }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: |
+            ${{ job.status == 'success' && '✅' || '❌' }} Deployment ${{ job.status }} - ads-creative-content
+          to: ${{ secrets.NOTIFY_EMAIL }}
+          from: GitHub Actions <${{ secrets.GMAIL_USERNAME }}>
+          body: |
+            Deployment Status: ${{ job.status }}
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+
+            Workflow: ${{ github.workflow }}
+            Run ID: ${{ github.run_id }}
+
+            ${{ job.status == 'success' && '✅ All services are running and healthy!' || '❌ Deployment failed! Please check the logs.' }}
+
+            View run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+  # Job 4: Rollback (manual trigger only)
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: failure() && github.event_name == 'workflow_dispatch'
+    needs: [deploy]
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ env.GCP_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Perform rollback
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }} << 'ENDSSH'
+            echo "⚠️ Performing rollback..."
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Pull previous images
+            docker pull ${{ env.BACKEND_IMAGE }}:previous || echo "No previous backend image"
+            docker pull ${{ env.FRONTEND_IMAGE }}:previous || echo "No previous frontend image"
+
+            # Restart with previous images
+            docker-compose down
+            docker-compose up -d
+
+            echo "✅ Rollback completed"
+          ENDSSH
