@@ -12,6 +12,7 @@
 .env.*
 !.env.production.template
 application.properties
+!backend/src/main/resources/application.properties
 application.yml
 application-*.yml
 application-*.properties
