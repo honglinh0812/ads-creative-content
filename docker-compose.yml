@@ -83,7 +83,7 @@ services:
         condition: service_healthy
     environment:
       # Spring Profile
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
 
       # Database Configuration
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/fbadsautomation
