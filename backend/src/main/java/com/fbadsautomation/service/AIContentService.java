@@ -36,7 +36,7 @@ import org.springframework.stereotype.Service;
     * @param mediaFileUrl The uploaded media file URL from frontend (optional)
     * @return List of generated ad contents
     */
-   public List<AdContent> generateAdContent(Ad ad, String prompt, org.springframework.web.multipart.MultipartFile mediaFile, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
+   public List<AdContent> generateAdContent(Ad ad, String prompt, org.springframework.web.multipart.MultipartFile mediaFile, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
        log.info("[Issue #9] Generating content for ad: {}, campaign: {}, mediaFileUrl: {}",
                 ad.getId(),
                 ad.getCampaign() != null ? ad.getCampaign().getId() : "none",
@@ -62,7 +62,7 @@ import org.springframework.stereotype.Service;
        List<AdContent> generatedContents = aiIntegrationService.generateContentWithCampaign(
                prompt, contentType, textProvider, imageProvider,
                numberOfVariations != null ? numberOfVariations : DEFAULT_VARIATIONS,
-               language, adLinks, promptStyle, customPrompt, extractedContent,
+               language, adLinks, extractedContent,
                mediaFileUrl, cta, campaign, ad.getAdStyle());
        
        // Set ad reference and preview order for each content

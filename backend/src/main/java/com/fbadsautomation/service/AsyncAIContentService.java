@@ -33,8 +33,6 @@ public class AsyncAIContentService {
             int numberOfVariations,
             String language,
             List<String> adLinks,
-            String promptStyle,
-            String customPrompt,
             String extractedContent,
             FacebookCTA callToAction) {
 
@@ -50,7 +48,7 @@ public class AsyncAIContentService {
 
             asyncJobService.updateJobProgress(jobId, 10, "Preparing content generation");
 
-            String finalPrompt = buildFinalPrompt(prompt, adLinks, promptStyle, customPrompt, extractedContent);
+            String finalPrompt = buildFinalPrompt(prompt, adLinks, extractedContent);
             String enhancedPrompt = enhancePromptForAdType(finalPrompt, convertContentTypeToAdType(contentType));
 
             asyncJobService.updateJobProgress(jobId, 30, "Generating text content");
@@ -109,12 +107,8 @@ public class AsyncAIContentService {
         return CompletableFuture.completedFuture(null);
     }
 
-    private String buildFinalPrompt(String prompt, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent) {
+    private String buildFinalPrompt(String prompt, List<String> adLinks, String extractedContent) {
         StringBuilder finalPrompt = new StringBuilder();
-
-        if (customPrompt != null && !customPrompt.trim().isEmpty()) {
-            finalPrompt.append(customPrompt).append("\n\n");
-        }
 
         if (extractedContent != null && !extractedContent.trim().isEmpty()) {
             finalPrompt.append("Reference content: ").append(extractedContent).append("\n\n");
@@ -127,10 +121,6 @@ public class AsyncAIContentService {
             for (String link : adLinks) {
                 finalPrompt.append(link).append(" ");
             }
-        }
-
-        if (promptStyle != null && !promptStyle.trim().isEmpty()) {
-            finalPrompt.append("\n\nStyle: ").append(promptStyle);
         }
 
         return finalPrompt.toString();

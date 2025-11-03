@@ -15,7 +15,6 @@ export default {
       generateVideo: false,
       videoDuration: 10,
       adLinks: [], // Add support for ad links
-      promptStyle: '', // Add support for prompt style
       language: 'vi', // Add support for language
       // These might not be needed if we store files directly in uploadedMedia
       // uploadedImageFile: null, 

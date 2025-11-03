@@ -26,8 +26,6 @@ export default {
     selectedVariation: null,
     editingVariation: null,
     adId: null,
-    selectedPromptTemplate: '',
-    customPromptAddition: '',
     savedPrompts: [],
     validation: {
       step1Valid: false,
@@ -120,14 +118,6 @@ export default {
       state.adId = adId
     },
 
-    SET_PROMPT_TEMPLATE(state, template) {
-      state.selectedPromptTemplate = template
-    },
-
-    SET_CUSTOM_PROMPT(state, prompt) {
-      state.customPromptAddition = prompt
-    },
-
     SET_SAVED_PROMPTS(state, prompts) {
       state.savedPrompts = prompts
     },
@@ -173,8 +163,6 @@ export default {
       state.selectedVariation = null
       state.editingVariation = null
       state.adId = null
-      state.selectedPromptTemplate = ''
-      state.customPromptAddition = ''
       state.savedPrompts = []
       state.validation = {
         step1Valid: false,

@@ -52,12 +52,6 @@ public class AdGenerationRequest {
     @Size(max = 10, message = "Cannot exceed 10 ad links")
     private List<@Pattern(regexp = "^https?://.*", message = "Invalid URL format") String> adLinks;
 
-    @Size(max = 100, message = "Prompt style cannot exceed 100 characters")
-    private String promptStyle;
-
-    @Size(max = 2000, message = "Custom prompt cannot exceed 2000 characters")
-    private String customPrompt;
-
     private FacebookCTA callToAction;
 
     @Size(max = 10000, message = "Extracted content cannot exceed 10000 characters")
@@ -119,6 +113,22 @@ public class AdGenerationRequest {
         return hasPrompt || hasAdLinks || hasExtractedContent;
     }
 
+    @AssertTrue(message = "Website URL is required for WEBSITE_CONVERSION_AD type")
+    public boolean isWebsiteUrlValidForAdType() {
+        if (adType != null && (adType.equalsIgnoreCase("WEBSITE_CONVERSION_AD") || adType.toLowerCase().contains("website_conversion"))) {
+            return websiteUrl != null && !websiteUrl.trim().isEmpty();
+        }
+        return true;
+    }
+
+    @AssertTrue(message = "Lead form questions are required for LEAD_FORM_AD type")
+    public boolean isLeadFormQuestionsValidForAdType() {
+        if (adType != null && (adType.equalsIgnoreCase("LEAD_FORM_AD") || adType.toLowerCase().contains("lead_generation"))) {
+            return leadFormQuestions != null && !leadFormQuestions.isEmpty();
+        }
+        return true;
+    }
+
     // Getter and Setter methods
     public Long getCampaignId() { return campaignId; }
     public void setCampaignId(Long campaignId) { this.campaignId = campaignId; }
@@ -149,13 +159,7 @@ public class AdGenerationRequest {
     
     public List<String> getAdLinks() { return adLinks; }
     public void setAdLinks(List<String> adLinks) { this.adLinks = adLinks; }
-    
-    public String getPromptStyle() { return promptStyle; }
-    public void setPromptStyle(String promptStyle) { this.promptStyle = promptStyle; }
-    
-    public String getCustomPrompt() { return customPrompt; }
-    public void setCustomPrompt(String customPrompt) { this.customPrompt = customPrompt; }
-    
+
     public FacebookCTA getCallToAction() { return this.callToAction; }
     public void setCallToAction(FacebookCTA callToAction) { this.callToAction = callToAction; }
     

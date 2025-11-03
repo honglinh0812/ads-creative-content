@@ -97,8 +97,6 @@ public class AIContentServiceImpl {
                                                         int numberOfVariations,
                                                         String language,
                                                         List<String> adLinks,
-                                                        String promptStyle,
-                                                        String customPrompt,
                                                         String extractedContent,
                                                         String mediaFileUrl,
                                                         com.fbadsautomation.model.FacebookCTA callToAction,
@@ -119,7 +117,7 @@ public class AIContentServiceImpl {
         }
 
         // Build final prompt
-        String finalPrompt = buildFinalPrompt(prompt, adLinks, promptStyle, customPrompt, extractedContent);
+        String finalPrompt = buildFinalPrompt(prompt, adLinks, extractedContent);
 
         try {
             AdType adType = convertContentTypeToAdType(contentType);
@@ -292,7 +290,7 @@ public class AIContentServiceImpl {
         }
 
         // Build final prompt based on available inputs
-        String finalPrompt = buildFinalPrompt(prompt, adLinks, promptStyle, customPrompt, extractedContent);
+        String finalPrompt = buildFinalPrompt(prompt, adLinks, extractedContent);
 
         try {
             AdType adType = convertContentTypeToAdType(contentType);
@@ -463,7 +461,7 @@ public class AIContentServiceImpl {
     /**
      * Build final prompt by combining original prompt and ad link content
      */
-    private String buildFinalPrompt(String originalPrompt, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent) {
+    private String buildFinalPrompt(String originalPrompt, List<String> adLinks, String extractedContent) {
         StringBuilder finalPrompt = new StringBuilder(); // Check if we have extracted content from Meta Ad Library
         boolean hasExtractedContent = (extractedContent != null && !extractedContent.trim().isEmpty());
         boolean hasAdLinks = (adLinks != null && !adLinks.isEmpty());

@@ -122,7 +122,7 @@ public class AdService {
      */
     @Transactional
     public Map<String, Object> createAdWithAIContent(Long campaignId, String adType, String prompt,
-                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String promptStyle, String customPrompt, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, String adStyle) {
+                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, String adStyle) {
         log.info("Creating ad with AI content for user ID: {}", userId);
         
         User user = userRepository.findById(userId)
@@ -188,7 +188,7 @@ public class AdService {
         log.info("Retrieved managed ad with ID: {}", ad.getId());
         
         // Generate AI content - pass mediaFileUrl so it's used during generation
-        List<AdContent> contents = aiContentService.generateAdContent(ad, prompt, mediaFile, textProvider, imageProvider, numberOfVariations, language, adLinks, promptStyle, customPrompt, extractedContent, mediaFileUrl, callToAction, audienceSegment);
+        List<AdContent> contents = aiContentService.generateAdContent(ad, prompt, mediaFile, textProvider, imageProvider, numberOfVariations, language, adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment);
         // Nếu có contents được tạo, copy nội dung đầu tiên vào ad
         if (!contents.isEmpty()) {
             AdContent firstContent = contents.get(0);
@@ -372,7 +372,19 @@ public class AdService {
             if (updatedAd.getStatus() != null) {
                 ad.setStatus(updatedAd.getStatus());
             }
-            
+            if (updatedAd.getWebsiteUrl() != null) {
+                ad.setWebsiteUrl(updatedAd.getWebsiteUrl());
+            }
+            if (updatedAd.getLeadFormQuestions() != null) {
+                ad.setLeadFormQuestions(updatedAd.getLeadFormQuestions());
+            }
+            if (updatedAd.getAdStyle() != null) {
+                ad.setAdStyle(updatedAd.getAdStyle());
+            }
+            if (updatedAd.getPrompt() != null) {
+                ad.setPrompt(updatedAd.getPrompt());
+            }
+
             ad.setUpdatedBy(user.getId().toString());
             ad.setUpdatedAt(LocalDateTime.now());
 
@@ -432,6 +444,10 @@ public class AdService {
                         .callToAction(ad.getCallToAction() != null ? ad.getCallToAction().name() : null)
                         .selectedContentId(ad.getSelectedContentId())
                         .createdDate(ad.getCreatedDate())
+                        .websiteUrl(ad.getWebsiteUrl())
+                        .leadFormQuestions(ad.getLeadFormQuestions())
+                        .adStyle(ad.getAdStyle() != null ? ad.getAdStyle().toString() : null)
+                        .prompt(ad.getPrompt())
                         .build();
             } catch (Exception e) {
                 log.error("Error mapping ad {}: {}", ad.getId(), e.getMessage(), e);
@@ -457,15 +473,15 @@ public class AdService {
      */
     public List<AdContent> generatePreviewContent(Ad tempAd, String prompt, MultipartFile mediaFile,
                                                  String textProvider, String imageProvider, Integer numberOfVariations,
-                                                 String language, List<String> adLinks, String promptStyle,
-                                                 String customPrompt, String extractedContent, String mediaFileUrl,
+                                                 String language, List<String> adLinks,
+                                                 String extractedContent, String mediaFileUrl,
                                                  com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
         log.info("Generating preview content for ad: {}", tempAd.getName());
 
         // Generate AI content without saving to database
         List<AdContent> contents = aiContentService.generateAdContent(tempAd, prompt, mediaFile, textProvider,
                                                                      imageProvider, numberOfVariations, language,
-                                                                     adLinks, promptStyle, customPrompt, extractedContent, mediaFileUrl, callToAction, audienceSegment);
+                                                                     adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment);
         // Set temporary IDs for preview
         for (int i = 0; i < contents.size(); i++) {
             AdContent content = contents.get(i);
@@ -507,15 +523,14 @@ public class AdService {
      * @param userId The user ID
      * @param selectedVariation The selected variation content
      * @param adLinks List of ad links
-     * @param promptStyle The prompt style
-     * @param customPrompt Custom prompt addition
      * @return Map containing ad and contents
      */
     @Transactional
-    public Map<String, Object> createAdWithExistingContent(Long campaignId, String adType, String prompt, 
+    public Map<String, Object> createAdWithExistingContent(Long campaignId, String adType, String prompt,
                                                           String name, MultipartFile mediaFile, Long userId,
                                                           com.fbadsautomation.dto.AdVariation selectedVariation,
-                                                          List<String> adLinks, String promptStyle, String customPrompt, String mediaFileUrl) {
+                                                          List<String> adLinks, String mediaFileUrl,
+                                                          String websiteUrl, List<com.fbadsautomation.dto.AdGenerationRequest.LeadFormQuestion> leadFormQuestions, String adStyle) {
         log.info("Creating ad with existing content for user ID: {}", userId);
         
         User user = userRepository.findById(userId)
@@ -533,7 +548,30 @@ public class AdService {
         ad.setStatus("READY");
         ad.setCreatedBy(user.getId().toString());
         ad.setCreatedDate(LocalDateTime.now());
-        
+
+        // Set ad type specific fields
+        if (websiteUrl != null && !websiteUrl.trim().isEmpty()) {
+            ad.setWebsiteUrl(websiteUrl);
+        }
+
+        if (leadFormQuestions != null && !leadFormQuestions.isEmpty()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                String leadFormQuestionsJson = objectMapper.writeValueAsString(leadFormQuestions);
+                ad.setLeadFormQuestions(leadFormQuestionsJson);
+            } catch (Exception e) {
+                log.warn("Failed to serialize lead form questions: {}", e.getMessage());
+            }
+        }
+
+        if (adStyle != null && !adStyle.trim().isEmpty()) {
+            try {
+                ad.setAdStyle(com.fbadsautomation.model.AdStyle.valueOf(adStyle.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid ad style: {}, using null", adStyle);
+            }
+        }
+
         // Save media file if provided
         if (mediaFile != null && !mediaFile.isEmpty()) {
             String mediaPath = saveMediaFile(mediaFile);
@@ -624,6 +662,30 @@ public class AdService {
         ad.setAdType(mapFrontendAdTypeToEnum(request.getAdType()));
         ad.setCallToAction(request.getCallToAction()); // Gán CTA từ request
         ad.setMediaFilePath(request.getMediaFileUrl());
+
+        // Set ad type specific fields
+        if (request.getWebsiteUrl() != null && !request.getWebsiteUrl().trim().isEmpty()) {
+            ad.setWebsiteUrl(request.getWebsiteUrl());
+        }
+
+        if (request.getLeadFormQuestions() != null && !request.getLeadFormQuestions().isEmpty()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                String leadFormQuestionsJson = objectMapper.writeValueAsString(request.getLeadFormQuestions());
+                ad.setLeadFormQuestions(leadFormQuestionsJson);
+            } catch (Exception e) {
+                log.warn("Failed to serialize lead form questions: {}", e.getMessage());
+            }
+        }
+
+        if (request.getAdStyle() != null && !request.getAdStyle().trim().isEmpty()) {
+            try {
+                ad.setAdStyle(com.fbadsautomation.model.AdStyle.valueOf(request.getAdStyle().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid ad style: {}, using null", request.getAdStyle());
+            }
+        }
+
         ad.setCreatedDate(LocalDateTime.now());
         ad.setUpdatedAt(LocalDateTime.now());
         ad.setCreatedBy(user.getId().toString());

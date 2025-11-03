@@ -176,8 +176,6 @@ public class AdController {
                     request.getNumberOfVariations(),
                     request.getLanguage(),
                     request.getAdLinks(),
-                    request.getPromptStyle(),
-                    request.getCustomPrompt(),
                     request.getExtractedContent(),
                     request.getMediaFileUrl(), // truyền mediaFileUrl vào
                     request.getCallToAction(), // truyền call to action vào
@@ -217,8 +215,6 @@ public class AdController {
                     request.getNumberOfVariations(),
                     request.getLanguage(),
                     request.getAdLinks(),
-                    request.getPromptStyle(),
-                    request.getCustomPrompt(),
                     request.getExtractedContent(),
                     request.getMediaFileUrl(), // truyền mediaFileUrl vào
                     request.getCallToAction(), // truyền call to action vào
@@ -303,9 +299,10 @@ public class AdController {
                 userId,
                 request.getSelectedVariation(), // Sử dụng nội dung đã chọn
                 request.getAdLinks(),
-                request.getPromptStyle(),
-                request.getCustomPrompt(),
-                request.getMediaFileUrl() // truyền mediaFileUrl vào
+                request.getMediaFileUrl(), // truyền mediaFileUrl vào
+                request.getWebsiteUrl(), // truyền websiteUrl vào
+                request.getLeadFormQuestions(), // truyền leadFormQuestions vào
+                request.getAdStyle() // truyền adStyle vào
             );
 
             List<AdContent> contents = (List<AdContent>) adResult.get("contents");

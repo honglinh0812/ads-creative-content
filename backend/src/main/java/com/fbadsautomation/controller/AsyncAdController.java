@@ -93,8 +93,6 @@ public class AsyncAdController {
                 request.getNumberOfVariations() != null ? request.getNumberOfVariations() : 3,
                 request.getLanguage(),
                 request.getAdLinks(),
-                request.getPromptStyle(),
-                request.getCustomPrompt(),
                 request.getExtractedContent(),
                 callToAction
             );

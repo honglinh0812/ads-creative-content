@@ -17,13 +17,18 @@ public class AdResponse {
     private LocalDateTime createdDate;
     private Long selectedContentId;
     private Long campaignId;
+    private String websiteUrl;
+    private String leadFormQuestions;
+    private String adStyle;
+    private String prompt;
 
     public AdResponse() {}
 
     public AdResponse(Long id, String name, String adType, String status, String campaignName,
                      String imageUrl, String videoUrl, String headline, String description,
                      String primaryText, String callToAction, LocalDateTime createdDate,
-                     Long selectedContentId, Long campaignId) {
+                     Long selectedContentId, Long campaignId, String websiteUrl, String leadFormQuestions,
+                     String adStyle, String prompt) {
         this.id = id;
         this.name = name;
         this.adType = adType;
@@ -38,6 +43,10 @@ public class AdResponse {
         this.createdDate = createdDate;
         this.selectedContentId = selectedContentId;
         this.campaignId = campaignId;
+        this.websiteUrl = websiteUrl;
+        this.leadFormQuestions = leadFormQuestions;
+        this.adStyle = adStyle;
+        this.prompt = prompt;
     }
 
     public static AdResponseBuilder builder() {
@@ -75,6 +84,14 @@ public class AdResponse {
     public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
     public void setSelectedContentId(Long selectedContentId) { this.selectedContentId = selectedContentId; }
     public void setCampaignId(Long campaignId) { this.campaignId = campaignId; }
+    public String getWebsiteUrl() { return websiteUrl; }
+    public void setWebsiteUrl(String websiteUrl) { this.websiteUrl = websiteUrl; }
+    public String getLeadFormQuestions() { return leadFormQuestions; }
+    public void setLeadFormQuestions(String leadFormQuestions) { this.leadFormQuestions = leadFormQuestions; }
+    public String getAdStyle() { return adStyle; }
+    public void setAdStyle(String adStyle) { this.adStyle = adStyle; }
+    public String getPrompt() { return prompt; }
+    public void setPrompt(String prompt) { this.prompt = prompt; }
 
     public static class AdResponseBuilder {
         private Long id;
@@ -91,6 +108,10 @@ public class AdResponse {
         private LocalDateTime createdDate;
         private Long selectedContentId;
         private Long campaignId;
+        private String websiteUrl;
+        private String leadFormQuestions;
+        private String adStyle;
+        private String prompt;
 
         public AdResponseBuilder id(Long id) { this.id = id; return this; }
         public AdResponseBuilder name(String name) { this.name = name; return this; }
@@ -106,11 +127,15 @@ public class AdResponse {
         public AdResponseBuilder createdDate(LocalDateTime createdDate) { this.createdDate = createdDate; return this; }
         public AdResponseBuilder selectedContentId(Long selectedContentId) { this.selectedContentId = selectedContentId; return this; }
         public AdResponseBuilder campaignId(Long campaignId) { this.campaignId = campaignId; return this; }
+        public AdResponseBuilder websiteUrl(String websiteUrl) { this.websiteUrl = websiteUrl; return this; }
+        public AdResponseBuilder leadFormQuestions(String leadFormQuestions) { this.leadFormQuestions = leadFormQuestions; return this; }
+        public AdResponseBuilder adStyle(String adStyle) { this.adStyle = adStyle; return this; }
+        public AdResponseBuilder prompt(String prompt) { this.prompt = prompt; return this; }
 
         public AdResponse build() {
             return new AdResponse(id, name, adType, status, campaignName, imageUrl, videoUrl,
                                 headline, description, primaryText, callToAction, createdDate,
-                                selectedContentId, campaignId);
+                                selectedContentId, campaignId, websiteUrl, leadFormQuestions, adStyle, prompt);
         }
     }
 }

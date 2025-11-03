@@ -1038,8 +1038,6 @@ export default {
       // Other states
       showValidation: false,
       adId: null,
-      selectedPromptTemplate: '',
-      customPromptAddition: '',
       savedPrompts: [],
       enhancedImages: [],
       isEnhancing: false,
@@ -1587,8 +1585,6 @@ export default {
           prompt: promptWithCTA,
           language: this.formData.language,
           adLinks: validLinks,
-          promptStyle: this.selectedPromptTemplate || 'Dynamic',
-          customPrompt: this.customPromptAddition,
           textProvider: this.formData.textProvider,
           imageProvider: this.formData.imageProvider,
           numberOfVariations: this.formData.numberOfVariations,
@@ -1693,15 +1689,17 @@ export default {
           prompt: this.formData.prompt,
           language: this.formData.language,
           adLinks: this.adLinks.filter(link => link.trim()),
-          promptStyle: this.selectedPromptTemplate || 'Dynamic',
-          customPrompt: this.customPromptAddition,
           textProvider: this.formData.textProvider,
           imageProvider: this.formData.imageProvider,
           numberOfVariations: this.formData.numberOfVariations,
           mediaFileUrl: this.uploadedFileUrl,
           selectedVariation: this.selectedVariation,
           isPreview: false,
-          saveExistingContent: true
+          saveExistingContent: true,
+          adStyle: this.formData.adStyle || null,
+          websiteUrl: this.formData.websiteUrl || null,
+          leadFormQuestions: this.formData.leadFormQuestions || null,
+          callToAction: this.formData.callToAction || null
         }
         
         const response = await api.ads.saveExisting(requestData)
@@ -1736,9 +1734,7 @@ export default {
       try {
         const validLinks = this.adLinks.filter(link => link.trim())
         const response = await api.ads.extractFromLibrary({
-          adLinks: validLinks,
-          promptStyle: this.selectedPromptTemplate || 'Dynamic',
-          customPrompt: this.customPromptAddition
+          adLinks: validLinks
         })
 
         let success = false
@@ -1798,8 +1794,6 @@ export default {
           prompt: this.formData.prompt,
           language: this.formData.language,
           adLinks: validLinks,
-          promptStyle: this.selectedPromptTemplate || 'Dynamic',
-          customPrompt: this.customPromptAddition,
           textProvider: this.formData.textProvider,
           imageProvider: this.formData.imageProvider,
           numberOfVariations: this.formData.numberOfVariations,
