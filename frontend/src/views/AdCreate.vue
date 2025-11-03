@@ -1593,6 +1593,8 @@ export default {
           extractedContent: extractedContent,
           personaId: this.formData.personaId || null,
           adStyle: this.formData.adStyle || null, // Issue #8: Creative style/tone
+          websiteUrl: this.formData.websiteUrl || null,
+          leadFormQuestions: this.formData.leadFormQuestions || null,
           isPreview: true
         }
         
@@ -1801,6 +1803,9 @@ export default {
           extractedContent: null,
           personaId: this.formData.personaId || null,
           adStyle: this.formData.adStyle || null, // Issue #8: Creative style/tone
+          websiteUrl: this.formData.websiteUrl || null,
+          leadFormQuestions: this.formData.leadFormQuestions || null,
+          callToAction: this.formData.callToAction || null,
           isPreview: true
         }
         
