@@ -906,7 +906,7 @@ export default {
         adStyle: null, // Issue #8: Creative style/tone for ad content
         callToAction: '',
         websiteUrl: '',
-        leadFormQuestions: [''],
+        leadFormQuestions: [],
         prompt: '',
         textProvider: 'openai',
         imageProvider: 'gemini', // Default to Gemini Imagen 3 for image generation
@@ -1472,7 +1472,7 @@ export default {
     onAdTypeChange() {
       // Reset type-specific fields when ad type changes
       this.formData.websiteUrl = ''
-      this.formData.leadFormQuestions = ['']
+      this.formData.leadFormQuestions = []
     },
     
     addLeadFormQuestion() {
@@ -1594,7 +1594,9 @@ export default {
           personaId: this.formData.personaId || null,
           adStyle: this.formData.adStyle || null, // Issue #8: Creative style/tone
           websiteUrl: this.formData.websiteUrl || null,
-          leadFormQuestions: this.formData.leadFormQuestions || null,
+          ...(this.formData.adType === 'lead_generation' && {
+            leadFormQuestions: this.formData.leadFormQuestions.filter(q => q.trim())
+          }),
           isPreview: true
         }
         
@@ -1700,7 +1702,9 @@ export default {
           saveExistingContent: true,
           adStyle: this.formData.adStyle || null,
           websiteUrl: this.formData.websiteUrl || null,
-          leadFormQuestions: this.formData.leadFormQuestions || null,
+          ...(this.formData.adType === 'lead_generation' && {
+            leadFormQuestions: this.formData.leadFormQuestions.filter(q => q.trim())
+          }),
           callToAction: this.formData.callToAction || null
         }
         
@@ -1804,7 +1808,9 @@ export default {
           personaId: this.formData.personaId || null,
           adStyle: this.formData.adStyle || null, // Issue #8: Creative style/tone
           websiteUrl: this.formData.websiteUrl || null,
-          leadFormQuestions: this.formData.leadFormQuestions || null,
+          ...(this.formData.adType === 'lead_generation' && {
+            leadFormQuestions: this.formData.leadFormQuestions.filter(q => q.trim())
+          }),
           callToAction: this.formData.callToAction || null,
           isPreview: true
         }
