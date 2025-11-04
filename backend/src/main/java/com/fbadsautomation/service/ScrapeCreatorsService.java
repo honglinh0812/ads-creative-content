@@ -1,5 +1,6 @@
 package com.fbadsautomation.service;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -138,7 +139,164 @@ public class ScrapeCreatorsService {
                 break;
             }
         }
-        
+
         return results;
+    }
+
+    /**
+     * Search for ads by company name (Direct approach)
+     *
+     * @param companyName Brand/company name to search
+     * @param country ISO country code (US, UK, VN, etc.)
+     * @param limit Maximum number of ads to return
+     * @return Map containing ads and pagination info
+     */
+    public Map<String, Object> searchAdsByCompanyName(String companyName, String country, int limit) {
+        log.info("Searching ads for company: {}, country: {}, limit: {}", companyName, country, limit);
+
+        // API key validation
+        if (apiKey == null || apiKey.isEmpty() || "your-api-key-here".equals(apiKey)) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "API_KEY_NOT_CONFIGURED");
+            error.put("message", "ScrapeCreators API key not configured");
+            return error;
+        }
+
+        try {
+            // Build URL
+            String url = String.format(
+                "%s/facebook/adLibrary/company/ads?companyName=%s&country=%s&trim=true",
+                baseUrl,
+                URLEncoder.encode(companyName, "UTF-8"),
+                country
+            );
+
+            // Set headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("x-api-key", apiKey);
+            headers.set("Accept", "application/json");
+
+            // Make request
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> body = response.getBody();
+
+                // Extract ads array and limit results
+                if (body.containsKey("ads")) {
+                    List<Object> ads = (List<Object>) body.get("ads");
+                    if (ads.size() > limit) {
+                        body.put("ads", ads.subList(0, limit));
+                    }
+                }
+
+                log.info("Successfully fetched ads for company: {}", companyName);
+                return body;
+            } else {
+                log.error("API returned error status: {}", response.getStatusCode());
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "API_ERROR_STATUS");
+                error.put("statusCode", response.getStatusCode().value());
+                return error;
+            }
+
+        } catch (Exception e) {
+            log.error("Error searching company ads: {}", e.getMessage(), e);
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "NETWORK_ERROR");
+            error.put("message", e.getMessage());
+            return error;
+        }
+    }
+
+    /**
+     * Two-step search: Find companies then get their ads
+     * More accurate for exact brand matching
+     *
+     * @param brandName Brand name to search
+     * @param country Country code
+     * @param limit Max ads to return
+     * @return Map containing ads data
+     */
+    public Map<String, Object> searchAdsByBrandTwoStep(String brandName, String country, int limit) {
+        log.info("Two-step search for brand: {}", brandName);
+
+        // API key validation
+        if (apiKey == null || apiKey.isEmpty() || "your-api-key-here".equals(apiKey)) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "API_KEY_NOT_CONFIGURED");
+            error.put("message", "ScrapeCreators API key not configured");
+            return error;
+        }
+
+        try {
+            // Step 1: Search for company/page
+            String searchUrl = String.format(
+                "%s/facebook/adLibrary/search/companies?query=%s",
+                baseUrl,
+                URLEncoder.encode(brandName, "UTF-8")
+            );
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("x-api-key", apiKey);
+            headers.set("Accept", "application/json");
+
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<Map> searchResponse = restTemplate.exchange(searchUrl, HttpMethod.GET, entity, Map.class);
+
+            if (!searchResponse.getStatusCode().is2xxSuccessful() || searchResponse.getBody() == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "COMPANY_SEARCH_FAILED");
+                return error;
+            }
+
+            Map<String, Object> searchBody = searchResponse.getBody();
+
+            // Extract first matching page ID
+            List<Map<String, Object>> companies = (List<Map<String, Object>>) searchBody.get("companies");
+
+            if (companies == null || companies.isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "NO_COMPANY_FOUND");
+                error.put("message", "No company found with name: " + brandName);
+                return error;
+            }
+
+            String pageId = String.valueOf(companies.get(0).get("pageId"));
+
+            // Step 2: Get ads for this page
+            String adsUrl = String.format(
+                "%s/facebook/adLibrary/company/ads?pageId=%s&country=%s&trim=true",
+                baseUrl, pageId, country
+            );
+
+            ResponseEntity<Map> adsResponse = restTemplate.exchange(adsUrl, HttpMethod.GET, entity, Map.class);
+
+            if (adsResponse.getStatusCode().is2xxSuccessful() && adsResponse.getBody() != null) {
+                Map<String, Object> adsBody = adsResponse.getBody();
+
+                // Limit results
+                if (adsBody.containsKey("ads")) {
+                    List<Object> ads = (List<Object>) adsBody.get("ads");
+                    if (ads.size() > limit) {
+                        adsBody.put("ads", ads.subList(0, limit));
+                    }
+                }
+
+                return adsBody;
+            }
+
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "ADS_FETCH_FAILED");
+            return error;
+
+        } catch (Exception e) {
+            log.error("Error in two-step search: {}", e.getMessage(), e);
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "SEARCH_ERROR");
+            error.put("message", e.getMessage());
+            return error;
+        }
     }
 }

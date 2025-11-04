@@ -19,6 +19,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -80,17 +81,53 @@ public class CompetitorService {
         saveSearchHistory(sanitizedBrandName, region, user);
 
         try {
-            // For now, we'll use the ScrapeCreators approach
-            // In production, you might want to implement actual brand search via Facebook Ad Library
-            log.warn("Brand search not yet implemented. Returning empty list for brand: {}", sanitizedBrandName);
+            // Use ScrapeCreators API to search for competitor ads
+            log.info("Calling ScrapeCreators API to search for brand: {}", sanitizedBrandName);
 
-            // TODO: Implement actual Facebook Ad Library brand search
-            // This would require either:
-            // 1. Facebook Ad Library API with search capability
-            // 2. Web scraping with proper rate limiting
-            // 3. Third-party service integration
+            // Try direct company name search first
+            Map<String, Object> apiResponse = scrapeCreatorsService.searchAdsByCompanyName(
+                    sanitizedBrandName,
+                    region != null ? region : "ALL",
+                    safeLimit
+            );
 
-            return Collections.emptyList();
+            // Check for errors - if direct search fails, try two-step approach
+            if (apiResponse.containsKey("error")) {
+                log.warn("Direct search failed, trying two-step approach for brand: {}", sanitizedBrandName);
+                apiResponse = scrapeCreatorsService.searchAdsByBrandTwoStep(
+                        sanitizedBrandName,
+                        region != null ? region : "ALL",
+                        safeLimit
+                );
+            }
+
+            // Check again for errors
+            if (apiResponse.containsKey("error")) {
+                String errorType = String.valueOf(apiResponse.get("error"));
+                String errorMessage = String.valueOf(apiResponse.get("message"));
+                log.error("ScrapeCreators API error for brand {}: {} - {}",
+                         sanitizedBrandName, errorType, errorMessage);
+                return Collections.emptyList();
+            }
+
+            // Extract ads array from response
+            Object adsObj = apiResponse.get("ads");
+            if (!(adsObj instanceof List)) {
+                log.warn("No ads array in response for brand: {}", sanitizedBrandName);
+                return Collections.emptyList();
+            }
+
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> adsData = (List<Map<String, Object>>) adsObj;
+
+            // Convert to DTOs
+            List<CompetitorAdDTO> results = adsData.stream()
+                    .map(this::convertScrapeCreatorsAdToDTO)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            log.info("Successfully fetched {} competitor ads for brand: {}", results.size(), sanitizedBrandName);
+            return results;
 
         } catch (Exception e) {
             log.error("Error searching competitor ads for brand {}: {}", sanitizedBrandName, e.getMessage(), e);
@@ -241,6 +278,165 @@ public class CompetitorService {
         } catch (Exception e) {
             log.error("Error converting ad data to DTO: {}", e.getMessage(), e);
             return null;
+        }
+    }
+
+    /**
+     * Convert ScrapeCreators API response to CompetitorAdDTO
+     *
+     * Maps ScrapeCreators data structure to internal DTO format
+     * Handles various date formats and missing fields gracefully
+     *
+     * @param apiResponse Raw response from ScrapeCreators API
+     * @return CompetitorAdDTO or null if conversion fails
+     */
+    private CompetitorAdDTO convertScrapeCreatorsAdToDTO(Map<String, Object> apiResponse) {
+        try {
+            CompetitorAdDTO dto = CompetitorAdDTO.builder()
+                    .dataSource("SCRAPE_CREATORS_API")
+                    .isActive(true)
+                    .build();
+
+            // Extract ad ID (try both formats)
+            String adId = extractString(apiResponse, "adId", "ad_id", "id");
+            dto.setAdId(adId);
+
+            // Build Ad Library URL if we have ad ID
+            if (adId != null) {
+                dto.setAdLibraryUrl("https://www.facebook.com/ads/library/?id=" + adId);
+            }
+
+            // Extract snapshot data (main ad content)
+            Map<String, Object> snapshot = extractMap(apiResponse, "snapshot");
+            if (snapshot != null) {
+                // Extract text content
+                dto.setHeadline(extractString(snapshot, "title", "headline"));
+                dto.setPrimaryText(extractString(snapshot, "body", "text", "body_text"));
+                dto.setDescription(extractString(snapshot, "link_description", "description"));
+
+                // Extract images
+                List<String> imageUrls = extractStringList(snapshot, "images", "image_url", "image_urls");
+                dto.setImageUrls(imageUrls);
+
+                // Extract video - DTO has single videoUrl field
+                List<String> videoUrls = extractStringList(snapshot, "videos", "video_url", "video_urls");
+                if (!videoUrls.isEmpty()) {
+                    dto.setVideoUrl(videoUrls.get(0)); // Use first video
+                }
+
+                // Extract CTA
+                dto.setCallToAction(extractString(snapshot, "cta_text", "call_to_action"));
+
+                // Extract landing page
+                dto.setLandingPageUrl(extractString(snapshot, "link_url", "landing_page_url", "website_url"));
+            }
+
+            // Extract advertiser info
+            dto.setAdvertiserName(extractString(apiResponse, "page_name", "advertiser_name", "pageName"));
+
+            // Extract dates
+            dto.setStartDate(parseDate(extractString(apiResponse, "start_date", "startDate")));
+            dto.setEndDate(parseDate(extractString(apiResponse, "end_date", "endDate")));
+
+            // Extract platforms
+            List<String> platforms = extractStringList(apiResponse, "platforms", "publisher_platforms");
+            dto.setPlatforms(platforms);
+
+            // Extract regions - DTO uses targetRegions field
+            List<String> regions = extractStringList(apiResponse, "regions", "target_countries");
+            dto.setTargetRegions(regions);
+
+            // Extract impressions - DTO uses estimatedImpressions field
+            dto.setEstimatedImpressions(extractString(apiResponse, "impressions", "spend", "delivery"));
+
+            // Store full metadata
+            dto.setMetadata(apiResponse);
+
+            // Sanitize for XSS
+            dto.sanitize();
+
+            return dto;
+
+        } catch (Exception e) {
+            log.error("Error converting ScrapeCreators data to DTO: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Extract string from map with fallback keys
+     */
+    private String extractString(Map<String, Object> map, String... keys) {
+        if (map == null) return null;
+        for (String key : keys) {
+            Object value = map.get(key);
+            if (value != null) {
+                return String.valueOf(value);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Extract map from parent map
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> extractMap(Map<String, Object> map, String key) {
+        if (map == null || key == null) return null;
+        Object value = map.get(key);
+        if (value instanceof Map) {
+            return (Map<String, Object>) value;
+        }
+        return null;
+    }
+
+    /**
+     * Extract list of strings with fallback keys
+     */
+    @SuppressWarnings("unchecked")
+    private List<String> extractStringList(Map<String, Object> map, String... keys) {
+        if (map == null) return new ArrayList<>();
+
+        for (String key : keys) {
+            Object value = map.get(key);
+            if (value instanceof List) {
+                List<?> list = (List<?>) value;
+                return list.stream()
+                        .filter(Objects::nonNull)
+                        .map(String::valueOf)
+                        .collect(Collectors.toList());
+            } else if (value instanceof String) {
+                return Collections.singletonList((String) value);
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * Parse date string to LocalDate
+     * Supports multiple formats: yyyy-MM-dd, dd/MM/yyyy, MM/dd/yyyy
+     */
+    private LocalDate parseDate(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            // Try ISO format first (yyyy-MM-dd)
+            return LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (Exception e1) {
+            try {
+                // Try dd/MM/yyyy
+                return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            } catch (Exception e2) {
+                try {
+                    // Try MM/dd/yyyy
+                    return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("MM/dd/yyyy"));
+                } catch (Exception e3) {
+                    log.warn("Could not parse date: {}", dateStr);
+                    return null;
+                }
+            }
         }
     }
 

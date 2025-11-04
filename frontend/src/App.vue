@@ -65,6 +65,11 @@
               <template #icon><a-icon type="rocket" /></template>
               <span>{{ $t('navigation.optimization') }}</span>
             </a-menu-item>
+
+            <a-menu-item key="competitors">
+              <template #icon><a-icon type="fund" /></template>
+              <span>{{ $t('navigation.competitors') }}</span>
+            </a-menu-item>
           </a-menu>
         </a-layout-sider>
         

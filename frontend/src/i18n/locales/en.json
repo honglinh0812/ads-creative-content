@@ -77,6 +77,7 @@
     "personas": "Personas",
     "analytics": "Analytics",
     "optimization": "Optimization",
+    "competitors": "Competitor Analysis",
     "profile": "Profile",
     "settings": "Settings",
     "backToDashboard": "Back to Dashboard"
@@ -773,6 +774,32 @@
     "selectForAd": "Select a persona to automatically tailor your ad content",
     "promptEnhancement": "Your ad prompt will be automatically enriched with this persona's profile",
     "targeting": "Targeting persona:"
+  },
+  "competitors": {
+    "title": "Competitor Insights",
+    "subtitle": "Analyze competitor ads and get AI-powered suggestions",
+    "searchPlaceholder": "Enter competitor brand name...",
+    "selectRegion": "Select region",
+    "maxResults": "Max results",
+    "searchButton": "Search Competitor Ads",
+    "noResults": "No competitor ads found",
+    "selectedAds": "{count} ad(s) selected",
+    "compareSelected": "Compare Selected",
+    "clearSelection": "Clear Selection",
+    "viewDetails": "View Details",
+    "analyze": "Analyze",
+    "aiSuggestion": "AI Suggestion",
+    "patterns": "Identify Patterns",
+    "abTest": "A/B Test Variations",
+    "region": {
+      "US": "United States",
+      "GB": "United Kingdom",
+      "CA": "Canada",
+      "AU": "Australia",
+      "DE": "Germany",
+      "FR": "France",
+      "JP": "Japan"
+    }
   },
   "adCreate": {
     "pageHeader": {

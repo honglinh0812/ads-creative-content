@@ -77,6 +77,7 @@
     "personas": "Persona",
     "analytics": "Phân tích",
     "optimization": "Tối ưu hóa",
+    "competitors": "Phân tích đối thủ",
     "profile": "Hồ sơ",
     "settings": "Cài đặt",
     "backToDashboard": "Quay lại Bảng điều khiển"
@@ -953,6 +954,32 @@
     "selectForAd": "Chọn persona để tự động điều chỉnh nội dung quảng cáo",
     "promptEnhancement": "Nội dung quảng cáo của bạn sẽ được tự động làm phong phú với hồ sơ persona này",
     "targeting": "Nhắm mục tiêu persona:"
+  },
+  "competitors": {
+    "title": "Phân tích đối thủ",
+    "subtitle": "Phân tích quảng cáo đối thủ và nhận gợi ý từ AI",
+    "searchPlaceholder": "Nhập tên thương hiệu đối thủ...",
+    "selectRegion": "Chọn khu vực",
+    "maxResults": "Số kết quả tối đa",
+    "searchButton": "Tìm quảng cáo đối thủ",
+    "noResults": "Không tìm thấy quảng cáo đối thủ",
+    "selectedAds": "{count} quảng cáo đã chọn",
+    "compareSelected": "So sánh đã chọn",
+    "clearSelection": "Xóa lựa chọn",
+    "viewDetails": "Xem chi tiết",
+    "analyze": "Phân tích",
+    "aiSuggestion": "Gợi ý AI",
+    "patterns": "Xác định mẫu",
+    "abTest": "Biến thể A/B Test",
+    "region": {
+      "US": "Hoa Kỳ",
+      "GB": "Vương quốc Anh",
+      "CA": "Canada",
+      "AU": "Úc",
+      "DE": "Đức",
+      "FR": "Pháp",
+      "JP": "Nhật Bản"
+    }
   },
   "adCreate": {
     "pageHeader": {
