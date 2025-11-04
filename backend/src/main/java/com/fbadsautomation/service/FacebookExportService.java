@@ -106,15 +106,15 @@ public class FacebookExportService {
         }
         
         // Validate primary text length (Facebook limit: 125 characters)
-        if (ad.getPrimaryText().length() > 12500) {
+        if (ad.getPrimaryText().length() > 1000) {
             throw new ApiException(HttpStatus.BAD_REQUEST, 
-                "Primary text must be 12500 characters or less for Facebook");
+                "Primary text must be 1000 characters or less for Facebook");
         }
         
-        // Validate description length if present (Facebook limit: 30 characters)
-        if (StringUtils.hasText(ad.getDescription()) && ad.getDescription().length() > 30) {
+        // Validate description length if present (Facebook limit: 125 characters)
+        if (StringUtils.hasText(ad.getDescription()) && ad.getDescription().length() > 125) {
             throw new ApiException(HttpStatus.BAD_REQUEST, 
-                "Description must be 30 characters or less for Facebook");
+                "Description must be 125 characters or less for Facebook");
         }
         
         // Validate ad type specific requirements
