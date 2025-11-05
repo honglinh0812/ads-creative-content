@@ -128,9 +128,9 @@ public class AsyncAIContentService {
 
     private String enhancePromptForAdType(String prompt, com.fbadsautomation.model.AdType adType) {
         String enhancement = switch (adType) {
-            case PAGE_POST_AD -> "Create engaging social media content that encourages likes, comments, and shares. ";
-            case WEBSITE_CONVERSION_AD -> "Create compelling content that drives visitors to take action on a website. ";
-            case LEAD_FORM_AD -> "Create persuasive content that encourages users to fill out a form and provide their contact information. ";
+            case PAGE_POST_AD -> " ";
+            case WEBSITE_CONVERSION_AD -> " ";
+            case LEAD_FORM_AD -> " ";
         };
         return enhancement + prompt;
     }

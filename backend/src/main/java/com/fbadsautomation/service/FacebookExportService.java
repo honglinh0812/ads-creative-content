@@ -47,8 +47,28 @@ public class FacebookExportService {
     private final AdRepository adRepository;
     private final CampaignService campaignService;
     
+    // Enhanced URL pattern supporting:
+    // - HTTP/HTTPS protocols (case-insensitive)
+    // - Subdomains and complex domains
+    // - IP addresses (IPv4)
+    // - Port numbers
+    // - Query parameters and fragments
+    // - Storage URLs (MinIO, S3, CDN)
     private static final Pattern URL_PATTERN = Pattern.compile(
-        "^(https?://)?(www\\.)?[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.[a-zA-Z]{2,}(/.*)?$"
+        "^(?i)(https?://)" +                                    // Protocol (case-insensitive, required for remote URLs)
+        "(" +                                                    // Domain or IP
+            "([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)*" + // Subdomains (optional)
+            "[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?" +       // Domain name
+            "\\.[a-zA-Z]{2,}" +                                    // TLD (.com, .org, etc.)
+            "|" +                                                  // OR
+            "((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}" +    // IPv4 address
+            "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" +            // Last octet
+            "|" +                                                  // OR
+            "localhost" +                                          // localhost
+        ")" +
+        "(:[0-9]{1,5})?" +                                       // Port (optional)
+        "(/.*)?" +                                                // Path, query, fragment (optional)
+        "$"
     );
     
     private static final String[] CSV_HEADERS = {
@@ -183,16 +203,29 @@ public class FacebookExportService {
      * Validate image requirements for Facebook
      */
     private void validateImageRequirements(String imageUrl) {
-        if (!isValidUrl(imageUrl)) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, 
-                "Invalid image URL format");
+        // Validate input is not null or empty
+        if (!StringUtils.hasText(imageUrl)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                "Image URL is required");
         }
-        
-        // Check if it's a local file path or URL
-        if (imageUrl.startsWith("/") || imageUrl.startsWith("uploads/")) {
+
+        // Trim whitespace
+        imageUrl = imageUrl.trim();
+
+        // Check if it's a local file path FIRST (before URL validation)
+        // Local paths: /uploads/..., uploads/..., ./uploads/..., ../uploads/...
+        if (imageUrl.startsWith("/") ||
+            imageUrl.startsWith("uploads/") ||
+            imageUrl.startsWith("./") ||
+            imageUrl.startsWith("../")) {
             validateLocalImageFile(imageUrl);
-        } else {
+        } else if (isValidUrl(imageUrl)) {
+            // If it's a valid URL, validate remote URL requirements
             validateRemoteImageUrl(imageUrl);
+        } else {
+            // If it's neither a local path nor a valid URL, throw error
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                "Invalid image URL format. Must be a valid URL or local file path");
         }
     }
     
@@ -200,16 +233,29 @@ public class FacebookExportService {
      * Validate video requirements for Facebook
      */
     private void validateVideoRequirements(String videoUrl) {
-        if (!isValidUrl(videoUrl)) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, 
-                "Invalid video URL format");
+        // Validate input is not null or empty
+        if (!StringUtils.hasText(videoUrl)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                "Video URL is required");
         }
-        
-        // Check if it's a local file path or URL
-        if (videoUrl.startsWith("/") || videoUrl.startsWith("uploads/")) {
+
+        // Trim whitespace
+        videoUrl = videoUrl.trim();
+
+        // Check if it's a local file path FIRST (before URL validation)
+        // Local paths: /uploads/..., uploads/..., ./uploads/..., ../uploads/...
+        if (videoUrl.startsWith("/") ||
+            videoUrl.startsWith("uploads/") ||
+            videoUrl.startsWith("./") ||
+            videoUrl.startsWith("../")) {
             validateLocalVideoFile(videoUrl);
-        } else {
+        } else if (isValidUrl(videoUrl)) {
+            // If it's a valid URL, validate remote URL requirements
             validateRemoteVideoUrl(videoUrl);
+        } else {
+            // If it's neither a local path nor a valid URL, throw error
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                "Invalid video URL format. Must be a valid URL or local file path");
         }
     }
     
@@ -372,13 +418,27 @@ public class FacebookExportService {
     }
     
     /**
-     * URL format
+     * Validate URL format
+     * Supports:
+     * - HTTP/HTTPS URLs with protocol
+     * - Subdomains and complex domain structures
+     * - IPv4 addresses and localhost
+     * - Port numbers
+     * - Query parameters and URL fragments
+     * - Storage service URLs (MinIO, S3, CDN)
+     *
+     * Note: This does NOT validate local file paths - use separate validation for those
      */
     private boolean isValidUrl(String url) {
         if (!StringUtils.hasText(url)) {
             return false;
         }
-        return URL_PATTERN.matcher(url.trim()).matches();
+
+        // Trim whitespace
+        url = url.trim();
+
+        // Match against pattern
+        return URL_PATTERN.matcher(url).matches();
     }
     
 
