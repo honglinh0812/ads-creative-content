@@ -46,6 +46,7 @@ public class FacebookExportService {
     private static final Logger log = LoggerFactory.getLogger(FacebookExportService.class);
     private final AdRepository adRepository;
     private final CampaignService campaignService;
+    private final MinIOStorageService minioStorageService;
     
     // Enhanced URL pattern supporting:
     // - HTTP/HTTPS protocols (case-insensitive)
@@ -212,9 +213,23 @@ public class FacebookExportService {
         // Trim whitespace
         imageUrl = imageUrl.trim();
 
-        // Check if it's a local file path FIRST (before URL validation)
+        // Handle API endpoint URLs (stored in database but served via ImageController)
+        if (imageUrl.startsWith("/api/images/")) {
+            log.debug("Validating MinIO-backed image URL: {}", imageUrl);
+            String filename = extractFilenameFromApiUrl(imageUrl, "/api/images/");
+            validateMinIOImageFile(filename);
+            return;
+        }
+
+        // Handle static placeholder images (no validation needed)
+        if (imageUrl.startsWith("/img/") || imageUrl.equals("placeholder.png")) {
+            log.debug("Skipping validation for static placeholder: {}", imageUrl);
+            return;
+        }
+
+        // Check if it's a local file path (legacy storage)
         // Local paths: /uploads/..., uploads/..., ./uploads/..., ../uploads/...
-        if (imageUrl.startsWith("/") ||
+        if (imageUrl.startsWith("/uploads/") ||
             imageUrl.startsWith("uploads/") ||
             imageUrl.startsWith("./") ||
             imageUrl.startsWith("../")) {
@@ -242,9 +257,24 @@ public class FacebookExportService {
         // Trim whitespace
         videoUrl = videoUrl.trim();
 
-        // Check if it's a local file path FIRST (before URL validation)
+        // Handle API endpoint URLs (stored in database but served via ImageController)
+        if (videoUrl.startsWith("/api/videos/") || videoUrl.startsWith("/api/images/")) {
+            log.debug("Validating MinIO-backed video URL: {}", videoUrl);
+            String prefix = videoUrl.startsWith("/api/videos/") ? "/api/videos/" : "/api/images/";
+            String filename = extractFilenameFromApiUrl(videoUrl, prefix);
+            validateMinIOVideoFile(filename);
+            return;
+        }
+
+        // Handle static placeholder videos (no validation needed)
+        if (videoUrl.startsWith("/video/") || videoUrl.startsWith("/videos/")) {
+            log.debug("Skipping validation for static video: {}", videoUrl);
+            return;
+        }
+
+        // Check if it's a local file path (legacy storage)
         // Local paths: /uploads/..., uploads/..., ./uploads/..., ../uploads/...
-        if (videoUrl.startsWith("/") ||
+        if (videoUrl.startsWith("/uploads/") ||
             videoUrl.startsWith("uploads/") ||
             videoUrl.startsWith("./") ||
             videoUrl.startsWith("../")) {
@@ -404,19 +434,125 @@ public class FacebookExportService {
             connection.setRequestMethod("HEAD");
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
-            
+
             int responseCode = connection.getResponseCode();
             if (responseCode != 200) {
-                throw new ApiException(HttpStatus.BAD_REQUEST, 
+                throw new ApiException(HttpStatus.BAD_REQUEST,
                     "Media URL is not accessible: " + url);
             }
-            
+
         } catch (IOException e) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, 
+            throw new ApiException(HttpStatus.BAD_REQUEST,
                 "Unable to verify media URL accessibility: " + url);
         }
     }
-    
+
+    /**
+     * Extract filename from API URL
+     * Example: "/api/images/abc123.png" -> "abc123.png"
+     */
+    private String extractFilenameFromApiUrl(String url, String prefix) {
+        if (url.startsWith(prefix)) {
+            return url.substring(prefix.length());
+        }
+        return url;
+    }
+
+    /**
+     * Validate image file stored in MinIO
+     */
+    private void validateMinIOImageFile(String filename) {
+        try {
+            log.debug("Validating MinIO image file: {}", filename);
+
+            // Check if file exists in MinIO
+            if (!minioStorageService.fileExists(filename)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Image file not found in storage: " + filename);
+            }
+
+            // Get file metadata from MinIO
+            io.minio.StatObjectResponse fileInfo = minioStorageService.getFileInfo(filename);
+            long fileSize = fileInfo.size();
+            String contentType = fileInfo.contentType();
+
+            log.debug("MinIO image file found: {} (size: {} bytes, type: {})",
+                filename, fileSize, contentType);
+
+            // Validate file size (Facebook limit: 30MB for images)
+            long maxSizeBytes = 30L * 1024 * 1024; // 30MB
+            if (fileSize > maxSizeBytes) {
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Image file size exceeds Facebook limit of 30MB");
+            }
+
+            // Validate file format based on extension
+            String lowerFilename = filename.toLowerCase();
+            if (!lowerFilename.endsWith(".jpg") && !lowerFilename.endsWith(".jpeg") &&
+                !lowerFilename.endsWith(".png") && !lowerFilename.endsWith(".gif")) {
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Image format not supported. Facebook accepts: JPG, JPEG, PNG, GIF");
+            }
+
+            log.debug("MinIO image validation passed: {}", filename);
+
+        } catch (ApiException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error validating MinIO image file: {}", filename, e);
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                "Error validating image file from storage: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Validate video file stored in MinIO
+     */
+    private void validateMinIOVideoFile(String filename) {
+        try {
+            log.debug("Validating MinIO video file: {}", filename);
+
+            // Check if file exists in MinIO
+            if (!minioStorageService.fileExists(filename)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Video file not found in storage: " + filename);
+            }
+
+            // Get file metadata from MinIO
+            io.minio.StatObjectResponse fileInfo = minioStorageService.getFileInfo(filename);
+            long fileSize = fileInfo.size();
+            String contentType = fileInfo.contentType();
+
+            log.debug("MinIO video file found: {} (size: {} bytes, type: {})",
+                filename, fileSize, contentType);
+
+            // Validate file size (Facebook limit: 4GB for videos)
+            long maxSizeBytes = 4L * 1024 * 1024 * 1024; // 4GB
+            if (fileSize > maxSizeBytes) {
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Video file size exceeds Facebook limit of 4GB");
+            }
+
+            // Validate file format based on extension
+            String lowerFilename = filename.toLowerCase();
+            if (!lowerFilename.endsWith(".mp4") && !lowerFilename.endsWith(".mov") &&
+                !lowerFilename.endsWith(".avi") && !lowerFilename.endsWith(".mkv") &&
+                !lowerFilename.endsWith(".webm") && !lowerFilename.endsWith(".flv")) {
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Video format not supported. Facebook accepts: MP4, MOV, AVI, MKV, WEBM, FLV");
+            }
+
+            log.debug("MinIO video validation passed: {}", filename);
+
+        } catch (ApiException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error validating MinIO video file: {}", filename, e);
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                "Error validating video file from storage: " + e.getMessage());
+        }
+    }
+
     /**
      * Validate URL format
      * Supports:
