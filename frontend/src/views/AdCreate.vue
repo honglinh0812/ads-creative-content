@@ -851,6 +851,62 @@
       @cancel="handleExtractedContentCancel"
       @skip="handleExtractedContentSkip"
     />
+
+    <!-- Async Progress Modal for Preview Generation -->
+    <a-modal
+      v-model:visible="showAsyncProgressModal"
+      title="Generating Preview Variations"
+      :closable="false"
+      :footer="null"
+      :maskClosable="false"
+      :width="500"
+    >
+      <div class="async-progress-container">
+        <!-- Progress Icon -->
+        <div class="progress-icon" style="text-align: center; margin-bottom: 20px;">
+          <a-spin size="large" />
+        </div>
+
+        <!-- Current Step -->
+        <div class="progress-info">
+          <h3 style="font-size: 16px; margin-bottom: 10px; color: #1890ff;">
+            {{ asyncJobCurrentStep || 'Initializing preview generation...' }}
+          </h3>
+
+          <!-- Progress Bar -->
+          <a-progress
+            :percent="asyncJobProgress"
+            :status="asyncJobStatus === 'FAILED' ? 'exception' : 'active'"
+            :stroke-color="{
+              '0%': '#2d5aa0',
+              '100%': '#1890ff'
+            }"
+            :show-info="true"
+          />
+
+          <!-- Details -->
+          <p class="progress-details" style="margin-top: 15px; color: #666; font-size: 14px;">
+            This may take 30 seconds to 5 minutes depending on complexity and number of variations.
+          </p>
+
+          <!-- Job ID (for debugging) -->
+          <p style="margin-top: 10px; font-size: 12px; color: #999;">
+            Job ID: {{ asyncJobId }}
+          </p>
+        </div>
+
+        <!-- Cancel Button -->
+        <div class="progress-actions" style="text-align: center; margin-top: 20px;">
+          <a-button
+            @click="cancelAsyncJob"
+            danger
+            :loading="asyncJobStatus === 'CANCELLING'"
+          >
+            Cancel Generation
+          </a-button>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -1052,7 +1108,17 @@ export default {
       // Quality scoring states
       loadingQualityScores: false,
       bestQualityScore: null,
-      bestQualityScoreValue: null
+      bestQualityScoreValue: null,
+
+      // Async preview generation states
+      useAsyncGeneration: true, // Default: use async for preview generation
+      asyncJobId: null,
+      asyncJobStatus: null,
+      asyncJobProgress: 0,
+      asyncJobCurrentStep: '',
+      showAsyncProgressModal: false,
+      pollingInterval: null,
+      asyncHealthy: true
     }
   },
   computed: {
@@ -1149,6 +1215,13 @@ export default {
   },
   async mounted() {
     await this.loadData()
+
+    // Check async service health
+    await this.checkAsyncServiceHealth()
+  },
+  beforeUnmount() {
+    // Clean up polling interval
+    this.stopJobPolling()
   },
   methods: {
     ...mapActions('cta', ['loadCTAs']),
@@ -1577,7 +1650,7 @@ export default {
           const ctaList = this.standardCTAs.map(cta => cta.label.split(' - ')[0]).join(', ')
           promptWithCTA += `\n\nLưu ý: Chỉ sử dụng một trong các Call to Action sau cho quảng cáo: ${ctaList}. Không tạo CTA khác.`
         }
-        
+
         const requestData = {
           campaignId: this.formData.campaignId,
           adType: this.formData.adType,
@@ -1599,9 +1672,74 @@ export default {
           }),
           isPreview: true
         }
-        
+
+        // ASYNC-FIRST: Try async, fallback to sync
+        const shouldUseAsync = this.useAsyncGeneration && this.asyncHealthy
+
+        if (shouldUseAsync) {
+          console.log('[ASYNC] Starting async preview generation')
+          await this.generateAdAsync(requestData)
+        } else {
+          console.log('[SYNC] Using sync fallback for preview')
+          await this.generateAdSync(requestData)
+        }
+
+      } catch (error) {
+        console.error('Error in generateAd:', error)
+
+        // Store entire error object for FieldError component
+        this.generateError = error
+
+        const errorMessage = error.message || this.$t('adCreate.messages.error.generateAdFailed')
+
+        this.$message.error(errorMessage)
+
+        if (errorMessage.includes('Please enter prompt content') || errorMessage.includes('valid ad link')) {
+          this.currentStep = 1
+          this.showValidation = true
+        }
+      } finally {
+        this.isGenerating = false
+      }
+    },
+
+    /**
+     * ASYNC preview generation (NEW)
+     */
+    async generateAdAsync(requestData) {
+      try {
+        console.log('[ASYNC] Calling async generate API for preview')
+        const response = await api.ads.generateAsync(requestData)
+
+        if (!response.data.jobId) {
+          throw new Error('No job ID returned from async API')
+        }
+
+        this.asyncJobId = response.data.jobId
+        console.log('[ASYNC] Received jobId:', this.asyncJobId)
+
+        // Show progress modal
+        this.showAsyncProgressModal = true
+
+        // Start polling
+        this.startJobPolling()
+
+      } catch (error) {
+        console.error('[ASYNC] Failed, falling back to sync:', error)
+        this.$message.warning('Async service unavailable, using standard mode')
+        await this.generateAdSync(requestData)
+      }
+    },
+
+    /**
+     * SYNC preview generation (Fallback - existing behavior)
+     */
+    async generateAdSync(requestData) {
+      try {
+        console.log('[SYNC] Using synchronous preview generation')
+
         const response = await api.post('/ads/generate', requestData)
-        
+
         if (response.data.status === 'success') {
           this.adVariations = response.data.variations.map(v => ({
             ...v,
@@ -1617,22 +1755,178 @@ export default {
         } else {
           throw new Error(response.data.message)
         }
+
       } catch (error) {
-        console.error('Error generating ad:', error)
+        console.error('[SYNC] Generation failed:', error)
+        throw error
+      }
+    },
 
-        // Store entire error object for FieldError component
-        this.generateError = error
+    /**
+     * Start polling for job status
+     */
+    startJobPolling() {
+      console.log('[ASYNC] Starting job polling for', this.asyncJobId)
 
-        const errorMessage = error.message || this.$t('adCreate.messages.error.generateAdFailed')
+      // Clear any existing interval
+      this.stopJobPolling()
 
-        this.$message.error(errorMessage)
+      // Poll every 2 seconds
+      this.pollingInterval = setInterval(async () => {
+        await this.checkJobStatus()
+      }, 2000)
 
-        if (errorMessage.includes('Please enter prompt content') || errorMessage.includes('valid ad link')) {
-          this.currentStep = 1
-          this.showValidation = true
+      // Immediate first check
+      this.checkJobStatus()
+    },
+
+    /**
+     * Check current job status
+     */
+    async checkJobStatus() {
+      if (!this.asyncJobId) {
+        console.warn('[ASYNC] No jobId to check')
+        return
+      }
+
+      try {
+        const response = await api.ads.getJobStatus(this.asyncJobId)
+        const job = response.data
+
+        console.log('[ASYNC] Job status:', job.status, `(${job.progress}%)`, job.currentStep)
+
+        // Update UI state
+        this.asyncJobStatus = job.status
+        this.asyncJobProgress = job.progress || 0
+        this.asyncJobCurrentStep = job.currentStep || 'Processing...'
+
+        // Handle terminal states
+        if (job.status === 'COMPLETED') {
+          await this.handleJobCompleted()
+        } else if (job.status === 'FAILED') {
+          this.handleJobFailed(job.errorMessage)
+        } else if (job.status === 'CANCELLED') {
+          this.handleJobCancelled()
         }
-      } finally {
-        this.isGenerating = false
+
+      } catch (error) {
+        console.error('[ASYNC] Error checking job status:', error)
+        this.stopJobPolling()
+        this.$message.error('Failed to check job status')
+      }
+    },
+
+    /**
+     * Handle job completion
+     */
+    async handleJobCompleted() {
+      console.log('[ASYNC] Job completed successfully')
+      this.stopJobPolling()
+
+      try {
+        // Fetch the result
+        const response = await api.ads.getJobResult(this.asyncJobId)
+        const result = response.data.result
+
+        console.log('[ASYNC] Result:', result)
+
+        // Extract variations
+        this.adVariations = result.map(v => ({
+          ...v,
+          imageUrl: v.imageUrl || this.uploadedFileUrl || ''
+        }))
+
+        // Close progress modal
+        this.showAsyncProgressModal = false
+        this.asyncJobId = null
+
+        // Move to variations view
+        this.currentStep = 3
+
+        // Show success
+        this.$message.success(`Generated ${this.adVariations.length} variations!`)
+
+        // Load quality scores for variations
+        await this.loadQualityScoresForVariations()
+
+      } catch (error) {
+        console.error('[ASYNC] Error fetching job result:', error)
+        this.$message.error('Failed to fetch preview result: ' + error.message)
+        this.showAsyncProgressModal = false
+      }
+    },
+
+    /**
+     * Handle job failure
+     */
+    handleJobFailed(errorMessage) {
+      console.error('[ASYNC] Job failed:', errorMessage)
+      this.stopJobPolling()
+      this.showAsyncProgressModal = false
+
+      this.$message.error({
+        content: errorMessage || 'Preview generation failed. Please try again.',
+        duration: 5
+      })
+
+      this.asyncJobId = null
+    },
+
+    /**
+     * Handle job cancellation
+     */
+    handleJobCancelled() {
+      console.log('[ASYNC] Job was cancelled')
+      this.stopJobPolling()
+      this.showAsyncProgressModal = false
+
+      this.$message.info('Preview generation cancelled')
+      this.asyncJobId = null
+    },
+
+    /**
+     * Stop polling interval
+     */
+    stopJobPolling() {
+      if (this.pollingInterval) {
+        console.log('[ASYNC] Stopping job polling')
+        clearInterval(this.pollingInterval)
+        this.pollingInterval = null
+      }
+    },
+
+    /**
+     * Cancel async job
+     */
+    async cancelAsyncJob() {
+      if (!this.asyncJobId) return
+
+      try {
+        console.log('[ASYNC] Cancelling job:', this.asyncJobId)
+        await api.ads.cancelJob(this.asyncJobId)
+        this.handleJobCancelled()
+      } catch (error) {
+        console.error('[ASYNC] Error cancelling job:', error)
+        this.$message.error('Failed to cancel job: ' + error.message)
+      }
+    },
+
+    /**
+     * Check async service health on component mount
+     */
+    async checkAsyncServiceHealth() {
+      try {
+        const response = await api.ads.checkAsyncHealth()
+        this.asyncHealthy = response.data.healthy === true
+
+        if (!this.asyncHealthy) {
+          console.warn('[ASYNC] Service is unhealthy, will use sync mode')
+        } else {
+          console.log('[ASYNC] Service is healthy')
+        }
+      } catch (error) {
+        console.error('[ASYNC] Health check failed:', error)
+        this.asyncHealthy = false
       }
     },
     

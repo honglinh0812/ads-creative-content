@@ -1,20 +1,20 @@
 <template>
-  <a-card title="🎭 Target Persona (Optional)" class="persona-selector-card">
+  <a-card :title="$t('components.personaSelector.title')" class="persona-selector-card">
     <template #extra>
       <a-button type="link" size="small" @click="navigateToPersonas">
-        <plus-outlined /> Create New
+        <plus-outlined /> {{ $t('components.personaSelector.createNew') }}
       </a-button>
     </template>
 
     <!-- Persona Selection -->
     <a-form-item
-      label="Select a persona to tailor your ad"
+      :label="$t('components.personaSelector.form.label')"
       :validate-status="validationStatus"
       :help="validationMessage"
     >
       <a-select
         v-model:value="selectedPersonaId"
-        placeholder="Choose a target persona (optional)"
+        :placeholder="$t('components.personaSelector.form.placeholder')"
         :loading="loading"
         allow-clear
         show-search
@@ -22,9 +22,9 @@
         @change="handlePersonaChange"
       >
         <template #notFoundContent>
-          <a-empty description="No personas found">
+          <a-empty :description="$t('components.personaSelector.empty.description')">
             <a-button type="primary" size="small" @click="navigateToPersonas">
-              Create Your First Persona
+              {{ $t('components.personaSelector.empty.action') }}
             </a-button>
           </a-empty>
         </template>
@@ -46,7 +46,7 @@
 
     <!-- Selected Persona Preview -->
     <div v-if="selectedPersona" class="selected-persona-preview">
-      <a-divider>Persona Preview</a-divider>
+      <a-divider>{{ $t('components.personaSelector.preview.title') }}</a-divider>
 
       <div class="persona-preview-content">
         <div class="preview-header">
@@ -57,7 +57,7 @@
           <div class="preview-info">
             <h4 class="preview-name">{{ selectedPersona.name }}</h4>
             <div class="preview-tags">
-              <a-tag color="blue">{{ selectedPersona.age }} years</a-tag>
+              <a-tag color="blue">{{ $t('components.personaSelector.preview.years', { age: selectedPersona.age }) }}</a-tag>
               <a-tag :color="getGenderColor(selectedPersona.gender)">
                 {{ formatGender(selectedPersona.gender) }}
               </a-tag>
@@ -73,13 +73,13 @@
           <a-col :span="12">
             <div class="stat-item">
               <heart-outlined class="stat-icon" />
-              <span class="stat-label">{{ selectedPersona.interests.length }} Interests</span>
+              <span class="stat-label">{{ $t('components.personaSelector.preview.interests', { count: selectedPersona.interests.length }) }}</span>
             </div>
           </a-col>
           <a-col :span="12">
             <div class="stat-item">
               <alert-outlined class="stat-icon" />
-              <span class="stat-label">{{ selectedPersona.painPoints.length }} Pain Points</span>
+              <span class="stat-label">{{ $t('components.personaSelector.preview.painPoints', { count: selectedPersona.painPoints.length }) }}</span>
             </div>
           </a-col>
         </a-row>
@@ -87,7 +87,7 @@
         <!-- Key Interests -->
         <div v-if="selectedPersona.interests.length" class="preview-section">
           <div class="section-label">
-            <heart-outlined /> Top Interests
+            <heart-outlined /> {{ $t('components.personaSelector.preview.topInterests') }}
           </div>
           <div class="tag-list">
             <a-tag
@@ -98,7 +98,7 @@
               {{ interest }}
             </a-tag>
             <a-tag v-if="selectedPersona.interests.length > 5" class="more-tag">
-              +{{ selectedPersona.interests.length - 5 }} more
+              {{ $t('components.personaSelector.preview.more', { count: selectedPersona.interests.length - 5 }) }}
             </a-tag>
           </div>
         </div>
@@ -106,14 +106,14 @@
         <!-- Key Pain Points -->
         <div v-if="selectedPersona.painPoints.length" class="preview-section">
           <div class="section-label">
-            <alert-outlined /> Main Challenges
+            <alert-outlined /> {{ $t('components.personaSelector.preview.mainChallenges') }}
           </div>
           <ul class="pain-points-preview">
             <li v-for="(painPoint, index) in selectedPersona.painPoints.slice(0, 3)" :key="index">
               {{ painPoint }}
             </li>
             <li v-if="selectedPersona.painPoints.length > 3" class="more-item">
-              +{{ selectedPersona.painPoints.length - 3 }} more...
+              {{ $t('components.personaSelector.preview.moreEllipsis', { count: selectedPersona.painPoints.length - 3 }) }}
             </li>
           </ul>
         </div>
@@ -121,7 +121,7 @@
         <!-- Desired Outcome -->
         <div v-if="selectedPersona.desiredOutcome" class="preview-section">
           <div class="section-label">
-            <rocket-outlined /> Goal
+            <rocket-outlined /> {{ $t('components.personaSelector.preview.goal') }}
           </div>
           <p class="preview-text">{{ selectedPersona.desiredOutcome }}</p>
         </div>
@@ -130,10 +130,10 @@
         <div class="preview-actions">
           <a-space>
             <a-button size="small" @click="viewFullPersona">
-              <eye-outlined /> View Full Details
+              <eye-outlined /> {{ $t('components.personaSelector.preview.viewDetails') }}
             </a-button>
             <a-button size="small" type="text" danger @click="clearSelection">
-              <close-outlined /> Clear Selection
+              <close-outlined /> {{ $t('components.personaSelector.preview.clearSelection') }}
             </a-button>
           </a-space>
         </div>
@@ -146,8 +146,8 @@
         class="enhancement-alert"
       >
         <template #message>
-          <strong>AI Prompt Enhancement:</strong>
-          Your ad prompt will be automatically enriched with this persona's profile to create more targeted content.
+          <strong>{{ $t('components.personaSelector.enhancement.title') }}:</strong>
+          {{ $t('components.personaSelector.enhancement.description') }}
         </template>
       </a-alert>
     </div>
@@ -160,8 +160,7 @@
       class="help-alert"
     >
       <template #message>
-        <strong>Tip:</strong> Select a persona to automatically tailor your ad content to specific audience characteristics.
-        This helps create more relevant and engaging ads.
+        <strong>{{ $t('components.personaSelector.help.title') }}:</strong> {{ $t('components.personaSelector.help.description') }}
       </template>
     </a-alert>
   </a-card>
@@ -234,7 +233,7 @@ export default {
           }
         }
       } catch (error) {
-        this.$message.error('Failed to load personas: ' + error.message)
+        this.$message.error(this.$t('components.personaSelector.messages.loadError', { error: error.message }))
       } finally {
         this.loading = false
       }
@@ -246,7 +245,7 @@ export default {
       this.$emit('persona-selected', persona)
 
       if (persona) {
-        this.$message.success(`Persona "${persona.name}" selected`)
+        this.$message.success(this.$t('components.personaSelector.messages.selected', { name: persona.name }))
       }
     },
     filterPersona(input, option) {
@@ -264,7 +263,7 @@ export default {
       this.selectedPersonaId = null
       this.$emit('update:modelValue', null)
       this.$emit('persona-selected', null)
-      this.$message.info('Persona selection cleared')
+      this.$message.info(this.$t('components.personaSelector.messages.cleared'))
     },
     viewFullPersona() {
       if (this.selectedPersona) {
@@ -301,12 +300,8 @@ export default {
       return colorMap[tone] || 'default'
     },
     formatGender(gender) {
-      const genderMap = {
-        MALE: 'Male',
-        FEMALE: 'Female',
-        ALL: 'All'
-      }
-      return genderMap[gender] || gender
+      const genderKey = gender.toLowerCase()
+      return this.$t(`components.personaSelector.gender.${genderKey}`, gender)
     }
   }
 }

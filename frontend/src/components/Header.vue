@@ -412,8 +412,9 @@ export default {
   padding: 0 2rem;
   position: sticky;
   top: 0;
-  z-index: 40;
+  z-index: 500;
   transition: background-color 0.2s ease;
+  backdrop-filter: blur(8px);
 }
 
 /* Header brand */
@@ -449,49 +450,70 @@ export default {
 
 /* Icon buttons */
 .icon-btn {
-  background: none;
-  border: none;
+  background: transparent;
+  border: 1px solid transparent;
   position: relative;
   cursor: pointer;
   font-size: 1.25rem;
   padding: 0.75rem;
   border-radius: 0.75rem;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: theme('colors.neutral.700');
+}
+
+.dark .icon-btn {
+  color: theme('colors.neutral.300');
 }
 
 .icon-btn:hover {
   background: theme('colors.neutral.100');
-  opacity: 0.8;
+  border-color: theme('colors.neutral.200');
+  color: theme('colors.primary.600');
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
 }
 
 .dark .icon-btn:hover {
   background: theme('colors.neutral.800');
+  border-color: theme('colors.neutral.700');
+  color: theme('colors.primary.400');
 }
 
 .icon-btn:active {
-  opacity: 1;
+  transform: scale(0.95);
 }
 
 /* Badge */
 .badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  font-size: 0.75rem;
+  top: 2px;
+  right: 2px;
+  font-size: 0.7rem;
   border-radius: 9999px;
-  padding: 0.125rem 0.375rem;
-  font-weight: 600;
+  padding: 0.2rem 0.4rem;
+  font-weight: 700;
   line-height: 1;
   min-width: 1.25rem;
   text-align: center;
   border: 2px solid theme('colors.white');
+  background: theme('colors.error.500');
+  box-shadow: 0 2px 6px rgb(239 68 68 / 50%);
+  animation: pulse-badge 2s ease-in-out infinite;
 }
 
 .dark .badge {
   border-color: theme('colors.neutral.900');
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    box-shadow: 0 2px 6px rgb(239 68 68 / 50%);
+  }
+  50% {
+    box-shadow: 0 2px 12px rgb(239 68 68 / 70%);
+  }
 }
 
 /* User menu */
@@ -599,6 +621,7 @@ export default {
 /* Notification dropdown */
 .notification-dropdown-wrapper {
   position: relative;
+  z-index: 900;
 }
 
 .notification-dropdown {
@@ -608,11 +631,12 @@ export default {
   min-width: 22rem;
   max-width: 24rem;
   border-radius: 1rem;
-  z-index: 1000;
+  z-index: 1100;
   max-height: 28rem;
   overflow: hidden;
   animation: slideDown 0.2s ease-out;
   backdrop-filter: blur(8px);
+  box-shadow: 0 10px 40px rgb(0 0 0 / 20%);
 }
 
 .notification-header {

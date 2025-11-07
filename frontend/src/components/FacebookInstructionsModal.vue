@@ -1,7 +1,7 @@
 <template>
   <a-modal
     :open="visible"
-    title="Upload to Facebook Ads Manager"
+    :title="$t('components.facebookInstructions.modal.title')"
     width="700px"
     :footer="null"
     @cancel="handleClose"
@@ -10,8 +10,8 @@
       <!-- Success Message -->
       <a-result
         status="success"
-        title="File Downloaded Successfully!"
-        sub-title="Follow these steps to upload your ads to Facebook"
+        :title="$t('components.facebookInstructions.result.title')"
+        :sub-title="$t('components.facebookInstructions.result.subtitle')"
       >
         <template #icon>
           <check-circle-outlined style="color: #52c41a" />
@@ -23,11 +23,11 @@
         <a-steps direction="vertical" :current="currentStep">
           <a-step>
             <template #title>
-              <span class="text-base font-medium">Locate Your Downloaded File</span>
+              <span class="text-base font-medium">{{ $t('components.facebookInstructions.steps.locate.title') }}</span>
             </template>
             <template #description>
               <div class="step-desc">
-                <p>Your file has been downloaded to your default downloads folder.</p>
+                <p>{{ $t('components.facebookInstructions.steps.locate.description') }}</p>
                 <div class="file-info mt-2 p-3 bg-gray-50 rounded">
                   <file-text-outlined class="mr-2" />
                   <span class="font-mono text-sm">facebook_ads_{{ timestamp }}.{{ format }}</span>
@@ -38,15 +38,15 @@
 
           <a-step>
             <template #title>
-              <span class="text-base font-medium">Navigate to Ads Manager</span>
+              <span class="text-base font-medium">{{ $t('components.facebookInstructions.steps.navigate.title') }}</span>
             </template>
             <template #description>
               <div class="step-desc">
-                <p>Facebook Ads Manager should have opened in a new tab.</p>
-                <p class="mt-2">If not, click the button below:</p>
+                <p>{{ $t('components.facebookInstructions.steps.navigate.description') }}</p>
+                <p class="mt-2">{{ $t('components.facebookInstructions.steps.navigate.ifNot') }}</p>
                 <a-button type="link" @click="openFacebookAdsManager" class="mt-2">
                   <global-outlined class="mr-1" />
-                  Open Facebook Ads Manager
+                  {{ $t('components.facebookInstructions.steps.navigate.button') }}
                 </a-button>
               </div>
             </template>
@@ -54,15 +54,15 @@
 
           <a-step>
             <template #title>
-              <span class="text-base font-medium">Upload Your Ads</span>
+              <span class="text-base font-medium">{{ $t('components.facebookInstructions.steps.upload.title') }}</span>
             </template>
             <template #description>
               <div class="step-desc">
                 <ol class="list-decimal list-inside space-y-2">
-                  <li>Click the <strong>"Create"</strong> button in Ads Manager</li>
-                  <li>Select <strong>"Bulk Create"</strong> or <strong>"Import"</strong></li>
-                  <li>Choose <strong>"Upload File"</strong></li>
-                  <li>Select your downloaded {{ format.toUpperCase() }} file</li>
+                  <li v-html="$t('components.facebookInstructions.steps.upload.step1')"></li>
+                  <li v-html="$t('components.facebookInstructions.steps.upload.step2')"></li>
+                  <li v-html="$t('components.facebookInstructions.steps.upload.step3')"></li>
+                  <li>{{ $t('components.facebookInstructions.steps.upload.step4', { format: format.toUpperCase() }) }}</li>
                 </ol>
               </div>
             </template>
@@ -70,14 +70,14 @@
 
           <a-step>
             <template #title>
-              <span class="text-base font-medium">Review and Publish</span>
+              <span class="text-base font-medium">{{ $t('components.facebookInstructions.steps.review.title') }}</span>
             </template>
             <template #description>
               <div class="step-desc">
                 <ol class="list-decimal list-inside space-y-2">
-                  <li>Review your ads in the Facebook preview</li>
-                  <li>Configure any additional targeting if needed</li>
-                  <li>Click <strong>"Publish"</strong> to launch your campaign</li>
+                  <li>{{ $t('components.facebookInstructions.steps.review.step1') }}</li>
+                  <li>{{ $t('components.facebookInstructions.steps.review.step2') }}</li>
+                  <li v-html="$t('components.facebookInstructions.steps.review.step3')"></li>
                 </ol>
               </div>
             </template>
@@ -85,15 +85,15 @@
 
           <a-step>
             <template #title>
-              <span class="text-base font-medium">Monitor Performance</span>
+              <span class="text-base font-medium">{{ $t('components.facebookInstructions.steps.monitor.title') }}</span>
             </template>
             <template #description>
               <div class="step-desc">
-                <p>After your ads are running:</p>
+                <p>{{ $t('components.facebookInstructions.steps.monitor.description') }}</p>
                 <ul class="list-disc list-inside space-y-1 mt-2">
-                  <li>Download performance reports from Facebook</li>
-                  <li>Import them back here for analytics</li>
-                  <li>Track ROI and optimize your campaigns</li>
+                  <li>{{ $t('components.facebookInstructions.steps.monitor.step1') }}</li>
+                  <li>{{ $t('components.facebookInstructions.steps.monitor.step2') }}</li>
+                  <li>{{ $t('components.facebookInstructions.steps.monitor.step3') }}</li>
                 </ul>
               </div>
             </template>
@@ -103,7 +103,7 @@
 
       <!-- Help Links -->
       <div class="help-links mt-6 p-4 bg-blue-50 rounded">
-        <h4 class="font-medium text-blue-900 mb-2">Need Help?</h4>
+        <h4 class="font-medium text-blue-900 mb-2">{{ $t('components.facebookInstructions.help.title') }}</h4>
         <div class="space-y-2 text-sm">
           <a
             href="https://www.facebook.com/business/help/152745875104997"
@@ -112,7 +112,7 @@
             class="block text-blue-600 hover:text-blue-800"
           >
             <question-circle-outlined class="mr-1" />
-            Facebook Bulk Upload Guide
+            {{ $t('components.facebookInstructions.help.bulkGuide') }}
           </a>
           <a
             href="https://www.facebook.com/business/help/268591773177064"
@@ -121,7 +121,7 @@
             class="block text-blue-600 hover:text-blue-800"
           >
             <book-outlined class="mr-1" />
-            Ads Manager Documentation
+            {{ $t('components.facebookInstructions.help.documentation') }}
           </a>
         </div>
       </div>
@@ -129,15 +129,15 @@
       <!-- Don't Show Again Option -->
       <div class="dont-show-again mt-4">
         <a-checkbox v-model:checked="dontShowAgain">
-          Don't show this again
+          {{ $t('components.facebookInstructions.dontShowAgain') }}
         </a-checkbox>
       </div>
 
       <!-- Footer Actions -->
       <div class="footer-actions mt-6 flex justify-end space-x-2">
-        <a-button @click="handleClose">Close</a-button>
+        <a-button @click="handleClose">{{ $t('common.actions.close') }}</a-button>
         <a-button type="primary" @click="handleUnderstood">
-          I Understand
+          {{ $t('components.facebookInstructions.understand') }}
         </a-button>
       </div>
     </div>

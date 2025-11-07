@@ -94,7 +94,11 @@ public class AsyncAdController {
                 request.getLanguage(),
                 request.getAdLinks(),
                 request.getExtractedContent(),
-                callToAction
+                callToAction,
+                request.getMediaFileUrl(),
+                request.getWebsiteUrl(),
+                request.getLeadFormQuestions(),
+                request.getAudienceSegment()
             );
 
             return ResponseEntity.status(HttpStatus.ACCEPTED)
@@ -239,6 +243,42 @@ public class AsyncAdController {
             log.error("Error getting user jobs", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Failed to get user jobs"));
+        }
+    }
+
+    @Operation(summary = "Health check", description = "Check if async service is healthy and available")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Service is healthy"),
+        @ApiResponse(responseCode = "503", description = "Service is unavailable")
+    })
+    @GetMapping("/health")
+    public ResponseEntity<?> checkHealth() {
+        try {
+            // Check if async services are available
+            boolean isHealthy = asyncJobService != null && asyncAIContentService != null;
+
+            if (isHealthy) {
+                return ResponseEntity.ok(Map.of(
+                    "healthy", true,
+                    "status", "UP",
+                    "message", "Async service is available"
+                ));
+            } else {
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of(
+                        "healthy", false,
+                        "status", "DOWN",
+                        "message", "Async service is unavailable"
+                    ));
+            }
+        } catch (Exception e) {
+            log.error("Error checking async service health", e);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Map.of(
+                    "healthy", false,
+                    "status", "DOWN",
+                    "message", "Service health check failed"
+                ));
         }
     }
 

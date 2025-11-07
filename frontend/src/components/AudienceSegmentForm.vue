@@ -1,34 +1,34 @@
 <template>
-  <a-card title="🎯 Audience Targeting" class="audience-segment-card">
+  <a-card :title="$t('components.audienceSegment.title')" class="audience-segment-card">
     <a-form layout="vertical" ref="audienceForm">
       <a-row :gutter="16">
         <a-col :span="12">
           <a-form-item
-            label="Gender"
+            :label="$t('components.audienceSegment.form.gender')"
             :validate-status="validationStatus.gender"
             :help="validationMessages.gender"
           >
             <a-select
               v-model:value="localSegment.gender"
-              placeholder="Select target gender"
+              :placeholder="$t('components.audienceSegment.form.genderPlaceholder')"
               @change="handleFieldChange('gender')"
             >
-              <a-select-option value="ALL">All</a-select-option>
-              <a-select-option value="MALE">Male</a-select-option>
-              <a-select-option value="FEMALE">Female</a-select-option>
+              <a-select-option value="ALL">{{ $t('components.audienceSegment.form.genderOptions.all') }}</a-select-option>
+              <a-select-option value="MALE">{{ $t('components.audienceSegment.form.genderOptions.male') }}</a-select-option>
+              <a-select-option value="FEMALE">{{ $t('components.audienceSegment.form.genderOptions.female') }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
 
         <a-col :span="12">
           <a-form-item
-            label="Location"
+            :label="$t('components.audienceSegment.form.location')"
             :validate-status="validationStatus.location"
             :help="validationMessages.location"
           >
             <a-input
               v-model:value="localSegment.location"
-              placeholder="e.g., United States, Vietnam"
+              :placeholder="$t('components.audienceSegment.form.locationPlaceholder')"
               :maxlength="500"
               show-count
               @change="handleFieldChange('location')"
@@ -41,7 +41,7 @@
       <a-row :gutter="16">
         <a-col :span="24">
           <a-form-item
-            label="Age Range"
+            :label="$t('components.audienceSegment.form.ageRange')"
             :validate-status="validationStatus.ageRange"
             :help="validationMessages.ageRange"
           >
@@ -54,7 +54,7 @@
               @change="handleAgeChange"
             />
             <div class="age-display">
-              {{ ageRange[0] }} - {{ ageRange[1] }} years old
+              {{ $t('components.audienceSegment.form.ageDisplay', { min: ageRange[0], max: ageRange[1] }) }}
             </div>
           </a-form-item>
         </a-col>
@@ -63,19 +63,19 @@
       <a-row :gutter="16">
         <a-col :span="24">
           <a-form-item
-            label="Interests (Optional)"
+            :label="$t('components.audienceSegment.form.interests')"
             :validate-status="validationStatus.interests"
             :help="validationMessages.interests"
           >
             <a-input
               v-model:value="localSegment.interests"
-              placeholder="e.g., Technology, Fashion, Sports"
+              :placeholder="$t('components.audienceSegment.form.interestsPlaceholder')"
               :maxlength="1000"
               show-count
               @change="handleFieldChange('interests')"
               @blur="validateField('interests')"
             />
-            <div class="field-hint">Separate multiple interests with commas</div>
+            <div class="field-hint">{{ $t('components.audienceSegment.form.interestsHint') }}</div>
           </a-form-item>
         </a-col>
       </a-row>
@@ -85,7 +85,7 @@
         type="error"
         show-icon
         class="validation-alert"
-        message="Please fix the validation errors above"
+        :message="$t('components.audienceSegment.validation.fixErrors')"
       />
 
       <a-alert
@@ -95,7 +95,7 @@
         class="preview-alert"
       >
         <template #message>
-          <strong>Targeting Preview:</strong>
+          <strong>{{ $t('components.audienceSegment.preview.title') }}:</strong>
           {{ getTargetingPreview() }}
         </template>
       </a-alert>
@@ -107,7 +107,7 @@
         class="reach-alert"
       >
         <template #message>
-          <strong>Estimated Reach:</strong>
+          <strong>{{ $t('components.audienceSegment.reach.title') }}:</strong>
           {{ estimatedReach }}
         </template>
       </a-alert>
@@ -196,7 +196,7 @@ export default {
         case 'gender':
           if (!this.localSegment.gender) {
             this.validationStatus.gender = 'error';
-            this.validationMessages.gender = 'Please select a gender';
+            this.validationMessages.gender = this.$t('components.audienceSegment.validation.genderRequired');
             return false;
           }
           break;
@@ -206,18 +206,18 @@ export default {
             const location = this.localSegment.location.trim();
             if (location.length < 2) {
               this.validationStatus.location = 'error';
-              this.validationMessages.location = 'Location must be at least 2 characters';
+              this.validationMessages.location = this.$t('components.audienceSegment.validation.locationMinLength');
               return false;
             }
             if (location.length > 500) {
               this.validationStatus.location = 'error';
-              this.validationMessages.location = 'Location must not exceed 500 characters';
+              this.validationMessages.location = this.$t('components.audienceSegment.validation.locationMaxLength');
               return false;
             }
             // Check for valid characters (letters, spaces, commas, hyphens)
             if (!/^[a-zA-Z\s,-]+$/.test(location)) {
               this.validationStatus.location = 'error';
-              this.validationMessages.location = 'Location can only contain letters, spaces, commas, and hyphens';
+              this.validationMessages.location = this.$t('components.audienceSegment.validation.locationInvalidChars');
               return false;
             }
           }
@@ -226,22 +226,22 @@ export default {
         case 'ageRange':
           if (this.localSegment.minAge < 13 || this.localSegment.minAge > 65) {
             this.validationStatus.ageRange = 'error';
-            this.validationMessages.ageRange = 'Minimum age must be between 13 and 65';
+            this.validationMessages.ageRange = this.$t('components.audienceSegment.validation.minAgeRange');
             return false;
           }
           if (this.localSegment.maxAge < 13 || this.localSegment.maxAge > 65) {
             this.validationStatus.ageRange = 'error';
-            this.validationMessages.ageRange = 'Maximum age must be between 13 and 65';
+            this.validationMessages.ageRange = this.$t('components.audienceSegment.validation.maxAgeRange');
             return false;
           }
           if (this.localSegment.minAge > this.localSegment.maxAge) {
             this.validationStatus.ageRange = 'error';
-            this.validationMessages.ageRange = 'Minimum age cannot be greater than maximum age';
+            this.validationMessages.ageRange = this.$t('components.audienceSegment.validation.minGreaterThanMax');
             return false;
           }
           if (this.localSegment.maxAge - this.localSegment.minAge < 1) {
             this.validationStatus.ageRange = 'warning';
-            this.validationMessages.ageRange = 'Age range is very narrow. Consider widening for better reach';
+            this.validationMessages.ageRange = this.$t('components.audienceSegment.validation.narrowAgeRange');
           }
           break;
 
@@ -250,20 +250,20 @@ export default {
             const interests = this.localSegment.interests.trim();
             if (interests.length > 1000) {
               this.validationStatus.interests = 'error';
-              this.validationMessages.interests = 'Interests must not exceed 1000 characters';
+              this.validationMessages.interests = this.$t('components.audienceSegment.validation.interestsMaxLength');
               return false;
             }
             // Check if interests are comma-separated
             const interestList = interests.split(',').map(i => i.trim()).filter(i => i);
             if (interestList.length > 25) {
               this.validationStatus.interests = 'warning';
-              this.validationMessages.interests = 'Too many interests may limit your reach. Consider focusing on top interests';
+              this.validationMessages.interests = this.$t('components.audienceSegment.validation.tooManyInterests');
             }
             // Validate each interest
             for (const interest of interestList) {
               if (interest.length < 2) {
                 this.validationStatus.interests = 'error';
-                this.validationMessages.interests = 'Each interest must be at least 2 characters';
+                this.validationMessages.interests = this.$t('components.audienceSegment.validation.interestMinLength');
                 return false;
               }
             }
@@ -299,16 +299,17 @@ export default {
     getTargetingPreview() {
       const parts = [];
       if (this.localSegment.gender && this.localSegment.gender !== 'ALL') {
-        parts.push(this.localSegment.gender.toLowerCase() + 's');
+        const genderKey = this.localSegment.gender === 'MALE' ? 'males' : 'females';
+        parts.push(this.$t(`components.audienceSegment.preview.${genderKey}`));
       }
-      parts.push(`aged ${this.ageRange[0]}-${this.ageRange[1]}`);
+      parts.push(this.$t('components.audienceSegment.preview.aged', { min: this.ageRange[0], max: this.ageRange[1] }));
       if (this.localSegment.location) {
-        parts.push(`in ${this.localSegment.location}`);
+        parts.push(this.$t('components.audienceSegment.preview.inLocation', { location: this.localSegment.location }));
       }
       if (this.localSegment.interests) {
-        parts.push(`interested in ${this.localSegment.interests}`);
+        parts.push(this.$t('components.audienceSegment.preview.interestedIn', { interests: this.localSegment.interests }));
       }
-      return 'Targeting ' + parts.join(', ');
+      return this.$t('components.audienceSegment.preview.targeting') + ' ' + parts.join(', ');
     },
     calculateEstimatedReach() {
       // Simple estimation based on age range and location
@@ -331,11 +332,11 @@ export default {
 
       // Format the number
       if (baseReach >= 1000000) {
-        this.estimatedReach = `${(baseReach / 1000000).toFixed(1)}M people`;
+        this.estimatedReach = this.$t('components.audienceSegment.reach.millionPeople', { count: (baseReach / 1000000).toFixed(1) });
       } else if (baseReach >= 1000) {
-        this.estimatedReach = `${(baseReach / 1000).toFixed(0)}K people`;
+        this.estimatedReach = this.$t('components.audienceSegment.reach.thousandPeople', { count: (baseReach / 1000).toFixed(0) });
       } else {
-        this.estimatedReach = `${Math.floor(baseReach)} people`;
+        this.estimatedReach = this.$t('components.audienceSegment.reach.people', { count: Math.floor(baseReach) });
       }
     }
   },

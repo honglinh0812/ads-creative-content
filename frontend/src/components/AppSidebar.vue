@@ -120,11 +120,13 @@ export default {
   position: fixed;
   left: 0;
   top: 0;
+  bottom: 0;
   z-index: 100;
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 8px rgb(0 0 0 / 4%);
   transition: transform 0.2s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto;
 }
 
 .app-sidebar:not(.open) {
@@ -133,38 +135,72 @@ export default {
 
 .sidebar-hamburger-fixed {
   position: fixed;
-  top: 1rem;
+  top: 0.75rem;
   left: 1rem;
   background: #fff;
-  border: 1px solid #eee;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 210;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
   transition: all 0.2s ease;
+}
+
+.sidebar-hamburger-fixed:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 18%);
+}
+
+.dark .sidebar-hamburger-fixed {
+  background: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark .sidebar-hamburger-fixed:hover {
+  background: #374151;
+  border-color: #4b5563;
 }
 
 .sidebar-hamburger {
   position: absolute;
-  top: 1rem;
+  top: 0.75rem;
   left: 1rem;
   background: #fff;
-  border: 1px solid #eee;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 110;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
   transition: all 0.2s ease;
+}
+
+.sidebar-hamburger:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 18%);
+}
+
+.dark .sidebar-hamburger {
+  background: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark .sidebar-hamburger:hover {
+  background: #374151;
+  border-color: #4b5563;
 }
 
 .sidebar-content {

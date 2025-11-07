@@ -23,13 +23,13 @@
       <!-- Loading State -->
       <div v-if="loading" class="mobile-loading">
         <a-spin size="large" />
-        <p class="mt-4 text-gray-500">Loading...</p>
+        <p class="mt-4 text-gray-500">{{ $t('common.loading') }}</p>
       </div>
 
       <!-- Empty State -->
       <a-empty
         v-else-if="!dataSource || dataSource.length === 0"
-        :description="emptyText || 'No data'"
+        :description="emptyText || $t('common.noData')"
       />
 
       <!-- Cards -->
@@ -179,7 +179,7 @@ export default {
         return item[props.cardTitleKey]
       }
       // Try common title fields
-      return item.name || item.title || item.headline || `Item ${item[props.rowKey]}`
+      return item.name || item.title || item.headline || item[props.rowKey]
     }
 
     // Get field value

@@ -8,14 +8,14 @@
         >
           <a-input-search
             v-model:value="searchQuery"
-            placeholder="Search trends (e.g., 'tech gadgets', 'fashion')"
+            :placeholder="$t('components.trendingKeywords.search.placeholder')"
             @search="handleSearch"
             @input="validateSearchQuery"
             :loading="loading"
             :maxlength="100"
           >
             <template #enterButton>
-              <a-button type="primary" :disabled="!isSearchValid">Search</a-button>
+              <a-button type="primary" :disabled="!isSearchValid">{{ $t('components.trendingKeywords.search.button') }}</a-button>
             </template>
           </a-input-search>
         </a-form-item>
@@ -23,7 +23,7 @@
       <a-col :span="8">
         <a-select
           v-model:value="selectedRegion"
-          placeholder="Region"
+          :placeholder="$t('components.trendingKeywords.region.placeholder')"
           style="width: 100%"
           @change="handleRegionChange"
         >
@@ -64,7 +64,7 @@
                 <arrow-up-outlined /> +{{ item.growth }}%
               </a-tag>
               <span class="search-volume" v-if="item.searchVolume">
-                {{ formatSearchVolume(item.searchVolume) }} searches
+                {{ $t('components.trendingKeywords.list.searches', { volume: formatSearchVolume(item.searchVolume) }) }}
               </span>
             </a-checkbox>
           </a-list-item>
@@ -73,7 +73,7 @@
 
       <a-empty
         v-else-if="!loading && hasSearched && trends.length === 0"
-        description="No trends found. Try a different search term."
+        :description="$t('components.trendingKeywords.empty.description')"
       >
         <template #image>
           <span style="font-size: 48px">🔍</span>
@@ -82,8 +82,8 @@
 
       <a-alert
         v-else-if="!loading && !hasSearched"
-        message="Enter a search term to discover trending keywords"
-        description="Find popular topics related to your product or service"
+        :message="$t('components.trendingKeywords.help.message')"
+        :description="$t('components.trendingKeywords.help.description')"
         type="info"
         show-icon
       />
@@ -91,8 +91,8 @@
 
     <a-alert
       v-if="selectedKeywords.length >= 5"
-      message="Maximum keywords selected"
-      description="You have selected the maximum of 5 keywords. Deselect some to add different ones."
+      :message="$t('components.trendingKeywords.selection.maxTitle')"
+      :description="$t('components.trendingKeywords.selection.maxDescription')"
       type="warning"
       show-icon
       class="selection-warning"
@@ -101,7 +101,7 @@
     <div v-if="selectedKeywords.length > 0" class="action-section">
       <a-divider />
       <div class="selected-keywords">
-        <strong>Selected Keywords ({{ selectedKeywords.length }}/5):</strong>
+        <strong>{{ $t('components.trendingKeywords.selection.selectedTitle', { count: selectedKeywords.length }) }}:</strong>
         <a-tag
           v-for="keyword in selectedKeywords"
           :key="keyword"
@@ -128,7 +128,7 @@
 
     <div v-if="lastSearchInfo" class="search-info">
       <a-typography-text type="secondary">
-        Last searched: "{{ lastSearchInfo.query }}" in {{ lastSearchInfo.region }} - {{ lastSearchInfo.resultCount }} results
+        {{ $t('components.trendingKeywords.lastSearch', { query: lastSearchInfo.query, region: lastSearchInfo.region, count: lastSearchInfo.resultCount }) }}
       </a-typography-text>
     </div>
   </a-card>
@@ -170,7 +170,7 @@ export default {
   },
   computed: {
     cardTitle() {
-      return this.language === 'vi' ? '📈 Từ khóa thịnh hành' : '📈 Trending Keywords'
+      return this.$t('components.trendingKeywords.title')
     },
     selectedKeywords() {
       return this.trends
@@ -182,10 +182,7 @@ export default {
       return query.length >= 2 && query.length <= 100;
     },
     addButtonText() {
-      if (this.language === 'vi') {
-        return `Thêm ${this.selectedKeywords.length} từ khóa vào Prompt`
-      }
-      return `Add ${this.selectedKeywords.length} Keyword(s) to Prompt`
+      return this.$t('components.trendingKeywords.addButton', { count: this.selectedKeywords.length })
     }
   },
   methods: {
@@ -201,20 +198,20 @@ export default {
 
       if (query.length < 2) {
         this.validationStatus.searchQuery = 'error';
-        this.validationMessages.searchQuery = 'Search query must be at least 2 characters';
+        this.validationMessages.searchQuery = this.$t('components.trendingKeywords.validation.minLength');
         return false;
       }
 
       if (query.length > 100) {
         this.validationStatus.searchQuery = 'error';
-        this.validationMessages.searchQuery = 'Search query must not exceed 100 characters';
+        this.validationMessages.searchQuery = this.$t('components.trendingKeywords.validation.maxLength');
         return false;
       }
 
       // Check for valid characters (letters, numbers, spaces, basic punctuation)
       if (!/^[a-zA-Z0-9\s,.\-']+$/.test(query)) {
         this.validationStatus.searchQuery = 'error';
-        this.validationMessages.searchQuery = 'Search query contains invalid characters';
+        this.validationMessages.searchQuery = this.$t('components.trendingKeywords.validation.invalidChars');
         return false;
       }
 
@@ -227,7 +224,7 @@ export default {
       }
 
       if (!this.isSearchValid) {
-        this.$message.warning('Please enter a valid search query (2-100 characters)');
+        this.$message.warning(this.$t('components.trendingKeywords.messages.invalidQuery'));
         return;
       }
 
@@ -241,7 +238,7 @@ export default {
     },
     async fetchTrends() {
       if (!this.searchQuery.trim()) {
-        this.$message.warning('Please enter a search query');
+        this.$message.warning(this.$t('components.trendingKeywords.messages.enterQuery'));
         return;
       }
 
@@ -275,16 +272,16 @@ export default {
           };
 
           if (this.trends.length === 0) {
-            this.$message.info('No trending keywords found for this search');
+            this.$message.info(this.$t('components.trendingKeywords.messages.noResults'));
           } else {
-            this.$message.success(`Found ${this.trends.length} trending keywords`);
+            this.$message.success(this.$t('components.trendingKeywords.messages.found', { count: this.trends.length }));
           }
         } else {
           throw new Error('Invalid response format');
         }
       } catch (error) {
         console.error('Error fetching trends:', error);
-        this.errorMessage = error.response?.data?.message || 'Failed to fetch trending keywords. Please try again.';
+        this.errorMessage = error.response?.data?.message || this.$t('components.trendingKeywords.messages.error');
         this.$message.error(this.errorMessage);
         this.trends = [];
       } finally {
@@ -294,7 +291,7 @@ export default {
     handleSelectionChange(item) {
       // If selecting and already at max, prevent it
       if (item.selected && this.selectedKeywords.length > 5) {
-        this.$message.warning('You can select up to 5 keywords maximum');
+        this.$message.warning(this.$t('components.trendingKeywords.messages.maxSelection'));
         item.selected = false;
         return;
       }
@@ -310,12 +307,12 @@ export default {
     },
     addToPrompt() {
       if (this.selectedKeywords.length === 0) {
-        this.$message.warning('Please select at least one keyword');
+        this.$message.warning(this.$t('components.trendingKeywords.messages.selectOne'));
         return;
       }
 
       this.$emit('keywords-selected', this.selectedKeywords);
-      this.$message.success(`Added ${this.selectedKeywords.length} keyword(s) to prompt`);
+      this.$message.success(this.$t('components.trendingKeywords.messages.added', { count: this.selectedKeywords.length }));
 
       // Clear selections after adding
       this.trends.forEach(trend => {

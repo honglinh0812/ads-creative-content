@@ -119,13 +119,20 @@ export default {
     saveExisting: (saveData) => apiClient.post('/ads/save-existing', saveData),
     create: (adData) => apiClient.post('/ads', adData),
     update: (adId, adData) => apiClient.put(`/ads/${adId}`, adData),
-    selectContent: (adId, contentId) => 
+    selectContent: (adId, contentId) =>
       apiClient.post(`/ads/${adId}/select-content`, null, {
         params: { contentId }
       }),
     getContents: (adId) => apiClient.get(`/ads/${adId}/contents`),
     delete: (adId) => apiClient.delete(`/ads/${adId}`),
-    extractFromLibrary: (extractionData) => apiClient.post('/ads/extract-from-library', extractionData)
+    extractFromLibrary: (extractionData) => apiClient.post('/ads/extract-from-library', extractionData),
+
+    // Async endpoints for preview generation
+    generateAsync: (generationData) => apiClient.post('/ads/async/generate', generationData),
+    getJobStatus: (jobId) => apiClient.get(`/ads/async/jobs/${jobId}`),
+    getJobResult: (jobId) => apiClient.get(`/ads/async/jobs/${jobId}/result`),
+    cancelJob: (jobId) => apiClient.post(`/ads/async/jobs/${jobId}/cancel`),
+    checkAsyncHealth: () => apiClient.get('/ads/async/health')
   },
 
   // Facebook Export endpoints

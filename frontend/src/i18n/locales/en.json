@@ -1481,5 +1481,213 @@
     "suggestions": {
       "title": "💡 Suggestions for Improvement"
     }
+  },
+  "components": {
+    "common": {
+      "loading": "Loading...",
+      "noData": "No data",
+      "actions": {
+        "close": "Close"
+      }
+    },
+    "components": {
+      "audienceSegment": {
+        "title": "🎯 Audience Targeting",
+        "form": {
+          "gender": "Gender",
+          "genderPlaceholder": "Select target gender",
+          "genderOptions": {
+            "all": "All",
+            "male": "Male",
+            "female": "Female"
+          },
+          "location": "Location",
+          "locationPlaceholder": "e.g., United States, Vietnam",
+          "ageRange": "Age Range",
+          "ageDisplay": "{min} - {max} years old",
+          "interests": "Interests (Optional)",
+          "interestsPlaceholder": "e.g., Technology, Fashion, Sports",
+          "interestsHint": "Separate multiple interests with commas"
+        },
+        "validation": {
+          "fixErrors": "Please fix the validation errors above",
+          "genderRequired": "Please select a gender",
+          "locationMinLength": "Location must be at least 2 characters",
+          "locationMaxLength": "Location must not exceed 500 characters",
+          "locationInvalidChars": "Location can only contain letters, spaces, commas, and hyphens",
+          "minAgeRange": "Minimum age must be between 13 and 65",
+          "maxAgeRange": "Maximum age must be between 13 and 65",
+          "minGreaterThanMax": "Minimum age cannot be greater than maximum age",
+          "narrowAgeRange": "Age range is very narrow. Consider widening for better reach",
+          "interestsMaxLength": "Interests must not exceed 1000 characters",
+          "tooManyInterests": "Too many interests may limit your reach. Consider focusing on top interests",
+          "interestMinLength": "Each interest must be at least 2 characters"
+        },
+        "preview": {
+          "title": "Targeting Preview",
+          "targeting": "Targeting",
+          "males": "males",
+          "females": "females",
+          "aged": "aged {min}-{max}",
+          "inLocation": "in {location}",
+          "interestedIn": "interested in {interests}"
+        },
+        "reach": {
+          "title": "Estimated Reach",
+          "millionPeople": "{count}M people",
+          "thousandPeople": "{count}K people",
+          "people": "{count} people"
+        }
+      },
+      "personaSelector": {
+        "title": "🎭 Target Persona (Optional)",
+        "createNew": "Create New",
+        "form": {
+          "label": "Select a persona to tailor your ad",
+          "placeholder": "Choose a target persona (optional)"
+        },
+        "empty": {
+          "description": "No personas found",
+          "action": "Create Your First Persona"
+        },
+        "preview": {
+          "title": "Persona Preview",
+          "years": "{age} years",
+          "interests": "{count} Interests",
+          "painPoints": "{count} Pain Points",
+          "topInterests": "Top Interests",
+          "more": "+{count} more",
+          "mainChallenges": "Main Challenges",
+          "moreEllipsis": "+{count} more...",
+          "goal": "Goal",
+          "viewDetails": "View Full Details",
+          "clearSelection": "Clear Selection"
+        },
+        "enhancement": {
+          "title": "AI Prompt Enhancement",
+          "description": "Your ad prompt will be automatically enriched with this persona's profile to create more targeted content."
+        },
+        "help": {
+          "title": "Tip",
+          "description": "Select a persona to automatically tailor your ad content to specific audience characteristics. This helps create more relevant and engaging ads."
+        },
+        "messages": {
+          "loadError": "Failed to load personas: {error}",
+          "selected": "Persona \"{name}\" selected",
+          "cleared": "Persona selection cleared"
+        },
+        "gender": {
+          "male": "Male",
+          "female": "Female",
+          "all": "All"
+        }
+      },
+      "promptValidator": {
+        "quality": {
+          "label": "Prompt Quality"
+        },
+        "suggestions": {
+          "title": "💡 Suggestions"
+        },
+        "improved": {
+          "title": "✨ Improved Version",
+          "useButton": "Use this improved prompt"
+        },
+        "loading": "Analyzing prompt quality...",
+        "error": {
+          "validation": "Unable to validate prompt. Please try again."
+        }
+      },
+      "trendingKeywords": {
+        "title": "📈 Trending Keywords",
+        "search": {
+          "placeholder": "Search trends (e.g., 'tech gadgets', 'fashion')",
+          "button": "Search"
+        },
+        "region": {
+          "placeholder": "Region"
+        },
+        "list": {
+          "searches": "{volume} searches"
+        },
+        "empty": {
+          "description": "No trends found. Try a different search term."
+        },
+        "help": {
+          "message": "Enter a search term to discover trending keywords",
+          "description": "Find popular topics related to your product or service"
+        },
+        "selection": {
+          "maxTitle": "Maximum keywords selected",
+          "maxDescription": "You have selected the maximum of 5 keywords. Deselect some to add different ones.",
+          "selectedTitle": "Selected Keywords ({count}/5)"
+        },
+        "addButton": "Add {count} Keyword(s) to Prompt",
+        "lastSearch": "Last searched: \"{query}\" in {region} - {count} results",
+        "validation": {
+          "minLength": "Search query must be at least 2 characters",
+          "maxLength": "Search query must not exceed 100 characters",
+          "invalidChars": "Search query contains invalid characters"
+        },
+        "messages": {
+          "invalidQuery": "Please enter a valid search query (2-100 characters)",
+          "enterQuery": "Please enter a search query",
+          "noResults": "No trending keywords found for this search",
+          "found": "Found {count} trending keywords",
+          "error": "Failed to fetch trending keywords. Please try again.",
+          "maxSelection": "You can select up to 5 keywords maximum",
+          "selectOne": "Please select at least one keyword",
+          "added": "Added {count} keyword(s) to prompt"
+        }
+      },
+      "facebookInstructions": {
+        "modal": {
+          "title": "Upload to Facebook Ads Manager"
+        },
+        "result": {
+          "title": "File Downloaded Successfully!",
+          "subtitle": "Follow these steps to upload your ads to Facebook"
+        },
+        "steps": {
+          "locate": {
+            "title": "Locate Your Downloaded File",
+            "description": "Your file has been downloaded to your default downloads folder."
+          },
+          "navigate": {
+            "title": "Navigate to Ads Manager",
+            "description": "Facebook Ads Manager should have opened in a new tab.",
+            "ifNot": "If not, click the button below:",
+            "button": "Open Facebook Ads Manager"
+          },
+          "upload": {
+            "title": "Upload Your Ads",
+            "step1": "Click the <strong>\"Create\"</strong> button in Ads Manager",
+            "step2": "Select <strong>\"Bulk Create\"</strong> or <strong>\"Import\"</strong>",
+            "step3": "Choose <strong>\"Upload File\"</strong>",
+            "step4": "Select your downloaded {format} file"
+          },
+          "review": {
+            "title": "Review and Publish",
+            "step1": "Review your ads in the Facebook preview",
+            "step2": "Configure any additional targeting if needed",
+            "step3": "Click <strong>\"Publish\"</strong> to launch your campaign"
+          },
+          "monitor": {
+            "title": "Monitor Performance",
+            "description": "After your ads are running:",
+            "step1": "Download performance reports from Facebook",
+            "step2": "Import them back here for analytics",
+            "step3": "Track ROI and optimize your campaigns"
+          }
+        },
+        "help": {
+          "title": "Need Help?",
+          "bulkGuide": "Facebook Bulk Upload Guide",
+          "documentation": "Ads Manager Documentation"
+        },
+        "dontShowAgain": "Don't show this again",
+        "understand": "I Understand"
+      }
+    }
   }
 }

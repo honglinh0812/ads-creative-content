@@ -1,8 +1,9 @@
 package com.fbadsautomation.service;
 
-import com.fbadsautomation.ai.AIProvider;
+import com.fbadsautomation.dto.AdGenerationRequest;
+import com.fbadsautomation.dto.AudienceSegmentRequest;
+import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.AdContent;
-import com.fbadsautomation.model.AsyncJobStatus;
 import com.fbadsautomation.model.FacebookCTA;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +19,9 @@ import java.util.concurrent.CompletableFuture;
 public class AsyncAIContentService {
 
     private final AsyncJobService asyncJobService;
-    private final AIProviderService aiProviderService;
     private final AIContentValidationService validationService;
     private final AsyncErrorHandlingService errorHandlingService;
+    private final AIContentService aiContentService;
 
     @Async("aiProcessingExecutor")
     public CompletableFuture<Void> generateContentAsync(
@@ -34,57 +35,56 @@ public class AsyncAIContentService {
             String language,
             List<String> adLinks,
             String extractedContent,
-            FacebookCTA callToAction) {
+            FacebookCTA callToAction,
+            String mediaFileUrl,
+            String websiteUrl,
+            List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions,
+            AudienceSegmentRequest audienceSegment) {
 
         try {
             errorHandlingService.validateJobExecution(jobId, "content-generation");
             asyncJobService.startJob(jobId, "Starting AI content generation");
 
-            String providerId = (textProvider == null || textProvider.isBlank()) ? "openai" : textProvider;
-            AIProvider textAI = aiProviderService.getProvider(providerId);
-            if (textAI == null) {
-                throw new RuntimeException("Unsupported AI provider: " + providerId);
-            }
-
             asyncJobService.updateJobProgress(jobId, 10, "Preparing content generation");
 
-            String finalPrompt = buildFinalPrompt(prompt, adLinks, extractedContent);
-            String enhancedPrompt = enhancePromptForAdType(finalPrompt, convertContentTypeToAdType(contentType));
+            // Create temporary Ad object for generation (not saved to DB)
+            Ad tempAd = new Ad();
+            tempAd.setAdType(convertContentTypeToAdType(contentType));
+            tempAd.setPrompt(prompt);
 
-            asyncJobService.updateJobProgress(jobId, 30, "Generating text content");
+            asyncJobService.updateJobProgress(jobId, 20, "Generating content with AI");
 
-            FacebookCTA cta = callToAction != null ? callToAction : FacebookCTA.LEARN_MORE;
-            CompletableFuture<List<AdContent>> textGeneration = textAI.generateAdContentAsync(
-                    enhancedPrompt, numberOfVariations, language, cta);
+            // Use the same sync service logic to ensure consistency
+            List<AdContent> contents = aiContentService.generateAdContent(
+                tempAd,
+                prompt,
+                null, // mediaFile - not used in preview
+                textProvider,
+                imageProvider,
+                numberOfVariations,
+                language,
+                adLinks,
+                extractedContent,
+                mediaFileUrl,
+                callToAction,
+                audienceSegment
+            );
 
-            CompletableFuture<List<AdContent>> resilientTextGeneration =
-                errorHandlingService.generateContentWithResilience(
-                    jobId, textGeneration, enhancedPrompt, numberOfVariations, cta);
+            asyncJobService.updateJobProgress(jobId, 90, "Processing generated content");
 
-            List<AdContent> contents = resilientTextGeneration.get();
+            // Set temporary IDs for preview (same as sync mode)
+            for (int i = 0; i < contents.size(); i++) {
+                AdContent content = contents.get(i);
+                content.setId((long) (i + 1));
+                content.setPreviewOrder(i + 1);
+                content.setIsSelected(false);
+            }
 
-            asyncJobService.updateJobProgress(jobId, 70, "Processing generated content");
-
-            if (imageProvider != null && !imageProvider.isBlank()) {
-                AIProvider imageAI = aiProviderService.getProvider(imageProvider);
-                if (imageAI != null) {
-                    asyncJobService.updateJobProgress(jobId, 80, "Generating images");
-
-                    for (int i = 0; i < contents.size(); i++) {
-                        errorHandlingService.validateJobExecution(jobId, "image-generation");
-                        AdContent content = contents.get(i);
-                        String imagePrompt = content.getPrimaryText();
-                        CompletableFuture<String> imageGeneration = imageAI.generateImageAsync(imagePrompt);
-
-                        CompletableFuture<String> resilientImageGeneration =
-                            errorHandlingService.generateImageWithResilience(
-                                jobId, imageGeneration, imagePrompt);
-
-                        String imageUrl = resilientImageGeneration.get();
-                        content.setImageUrl(imageUrl);
-
-                        int progress = 80 + (i + 1) * 10 / contents.size();
-                        asyncJobService.updateJobProgress(jobId, progress, "Generated image " + (i + 1) + "/" + contents.size());
+            // Ensure imageUrl is set from mediaFileUrl if needed
+            if (mediaFileUrl != null && !mediaFileUrl.isEmpty()) {
+                for (AdContent content : contents) {
+                    if (content.getImageUrl() == null || content.getImageUrl().isEmpty()) {
+                        content.setImageUrl(mediaFileUrl);
                     }
                 }
             }
@@ -105,34 +105,6 @@ public class AsyncAIContentService {
         }
 
         return CompletableFuture.completedFuture(null);
-    }
-
-    private String buildFinalPrompt(String prompt, List<String> adLinks, String extractedContent) {
-        StringBuilder finalPrompt = new StringBuilder();
-
-        if (extractedContent != null && !extractedContent.trim().isEmpty()) {
-            finalPrompt.append("Reference content: ").append(extractedContent).append("\n\n");
-        }
-
-        finalPrompt.append(prompt);
-
-        if (adLinks != null && !adLinks.isEmpty()) {
-            finalPrompt.append("\n\nReference ads: ");
-            for (String link : adLinks) {
-                finalPrompt.append(link).append(" ");
-            }
-        }
-
-        return finalPrompt.toString();
-    }
-
-    private String enhancePromptForAdType(String prompt, com.fbadsautomation.model.AdType adType) {
-        String enhancement = switch (adType) {
-            case PAGE_POST_AD -> " ";
-            case WEBSITE_CONVERSION_AD -> " ";
-            case LEAD_FORM_AD -> " ";
-        };
-        return enhancement + prompt;
     }
 
     private com.fbadsautomation.model.AdType convertContentTypeToAdType(AdContent.ContentType contentType) {

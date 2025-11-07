@@ -5,17 +5,17 @@
       <!-- Quality Score Badge -->
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center space-x-2">
-          <span class="text-sm font-medium text-gray-700">Prompt Quality:</span>
-          <div 
+          <span class="text-sm font-medium text-gray-700">{{ $t('components.promptValidator.quality.label') }}:</span>
+          <div
             :class="getQualityBadgeClass(validationResult.qualityLevel)"
             class="px-2 py-1 rounded-full text-xs font-semibold"
           >
             {{ validationResult.qualityScore }}/100 - {{ capitalizeFirst(validationResult.qualityLevel) }}
           </div>
         </div>
-        
+
         <!-- Close button -->
-        <button 
+        <button
           @click="hideValidation"
           class="text-gray-400 hover:text-gray-600 text-sm"
         >
@@ -43,7 +43,7 @@
 
       <!-- General Suggestions -->
       <div v-if="validationResult.suggestions && validationResult.suggestions.length > 0" class="mb-3">
-        <div class="text-sm font-medium text-gray-700 mb-2">💡 Suggestions:</div>
+        <div class="text-sm font-medium text-gray-700 mb-2">{{ $t('components.promptValidator.suggestions.title') }}:</div>
         <ul class="text-sm text-gray-600 space-y-1">
           <li v-for="suggestion in validationResult.suggestions" :key="suggestion" class="flex items-start">
             <span class="mr-2">•</span>
@@ -54,14 +54,14 @@
 
       <!-- Improved Prompt -->
       <div v-if="validationResult.improvedPrompt" class="border-t pt-3">
-        <div class="text-sm font-medium text-gray-700 mb-2">✨ Improved Version:</div>
+        <div class="text-sm font-medium text-gray-700 mb-2">{{ $t('components.promptValidator.improved.title') }}:</div>
         <div class="bg-blue-50 border border-blue-200 rounded p-3 text-sm">
           <div class="text-gray-700 mb-2">{{ validationResult.improvedPrompt }}</div>
-          <button 
+          <button
             @click="useImprovedPrompt"
             class="text-blue-600 hover:text-blue-800 underline text-xs font-medium"
           >
-            Use this improved prompt
+            {{ $t('components.promptValidator.improved.useButton') }}
           </button>
         </div>
       </div>
@@ -71,7 +71,7 @@
     <div v-if="isValidating" class="validation-feedback">
       <div class="flex items-center space-x-2 text-sm text-gray-600">
         <div class="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-        <span>Analyzing prompt quality...</span>
+        <span>{{ $t('components.promptValidator.loading') }}</span>
       </div>
     </div>
   </div>
@@ -195,7 +195,7 @@ export default {
             qualityScore: 0,
             qualityLevel: 'error',
             issues: [],
-            suggestions: ['Unable to validate prompt. Please try again.']
+            suggestions: [this.$t('components.promptValidator.error.validation')]
           }
         }
       } finally {
