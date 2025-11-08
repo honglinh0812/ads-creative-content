@@ -48,41 +48,16 @@ public class AnthropicProvider implements AIProvider {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-api-key", apiKey);
         headers.set("anthropic-version", "2023-06-01");
-        String fullPrompt;
-        if ("en".equalsIgnoreCase(language)) {
-            fullPrompt = "You are a professional Facebook ad copywriter specializing in policy-compliant, high-converting ads. " +
-                    "Generate " + numberOfVariations + " different ad variations for: \"" + prompt + "\". " +
-                    "\n\nSTRICT FACEBOOK REQUIREMENTS:" +
-                    "\n- Headline: MAX 40 characters (count carefully)" +
-                    "\n- Description: MAX 125 characters (count carefully)" +
-                    "\n- Primary Text: MAX 1000 characters (count carefully)" +
-                    "\n- Each field needs minimum 3 meaningful words" +
-                    "\n\nFORBIDDEN CONTENT:" +
-                    "\n- Words: hate, violence, drugs, miracle, guaranteed, cure, instant, free (with exclamation)" +
-                    "\n- Excessive punctuation: !!!, $$$, ???" +
-                    "\n- ALL CAPS text (except brand names)" +
-                    "\n- Misleading or exaggerated claims" +
-                    "\n\nReturn as JSON array of " + numberOfVariations + " objects with keys: headline, description, primaryText, callToAction.";
-        } else {
-            fullPrompt = "Bạn là chuyên gia viết quảng cáo Facebook tuân thủ chính sách và hiệu quả cao. " +
-                    "Tạo " + numberOfVariations + " mẫu quảng cáo khác nhau cho: \"" + prompt + "\". " +
-                    "\n\nYÊU CẦU FACEBOOK NGHIÊM NGẶT:" +
-                    "\n- Tiêu đề (headline): TỐI ĐA 40 ký tự (đếm cẩn thận)" +
-                    "\n- Mô tả (description): TỐI ĐA 30 ký tự (đếm cẩn thận)" +
-                    "\n- Nội dung chính (primaryText): TỐI ĐA 125 ký tự (đếm cẩn thận)" +
-                    "\n- Mỗi trường cần tối thiểu 3 từ có nghĩa" +
-                    "\n\nNỘI DUNG CẤM:" +
-                    "\n- Từ ngữ: ghét, bạo lực, ma túy, phép màu, đảm bảo, chữa khỏi, tức thì, miễn phí (với dấu chấm than)" +
-                    "\n- Dấu câu thừa: !!!, $$$, ???" +
-                    "\n- Viết hoa toàn bộ (trừ tên thương hiệu)" +
-                    "\n- Tuyên bố sai lệch hoặc phóng đại" +
-                    "\n\nTrả về dạng JSON array gồm " + numberOfVariations + " đối tượng với keys: headline, description, primaryText, callToAction.";
-        }
+
+        // Phase 4: Use pre-built CoT prompt directly (no template selection, no language wrapping)
+        // The prompt parameter already contains the complete 6-stage Chain-of-Thought prompt
+        // from ChainOfThoughtPromptBuilder with all instructions, constraints, and language requirements
+        log.debug("[Phase 4] Using unified CoT prompt (length: {} chars)", prompt.length());
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", "claude-3-sonnet-20240229");
         requestBody.put("max_tokens", 4000);
-        requestBody.put("messages", List.of(Map.of("role", "user", "content", fullPrompt)));
+        requestBody.put("messages", List.of(Map.of("role", "user", "content", prompt))); // Complete CoT prompt - no modifications
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
         try {
             Map<String, Object> response = restTemplate.postForObject(apiUrl, request, Map.class);

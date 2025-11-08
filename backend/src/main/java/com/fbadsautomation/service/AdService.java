@@ -56,12 +56,13 @@ public class AdService {
     private final RestTemplate restTemplate;
     private final AIContentService aiContentService;
     private final List<AIProvider> aiProviders;
+    private final PersonaService personaService;
 
     @Autowired
     public AdService(AdRepository adRepository, CampaignRepository campaignRepository,
                      AdContentRepository adContentRepository, UserRepository userRepository,
                      RestTemplate restTemplate, AIContentService aiContentService,
-                     List<AIProvider> aiProviders) {
+                     List<AIProvider> aiProviders, PersonaService personaService) {
         this.adRepository = adRepository;
         this.campaignRepository = campaignRepository;
         this.adContentRepository = adContentRepository;
@@ -69,6 +70,7 @@ public class AdService {
         this.restTemplate = restTemplate;
         this.aiContentService = aiContentService;
         this.aiProviders = aiProviders;
+        this.personaService = personaService;
     }
 
     @Value("${app.image.storage.location:uploads/images}")
@@ -118,17 +120,36 @@ public class AdService {
      * @param name The ad name
      * @param mediaFile The media file (optional)
      * @param userId The user ID
+     * @param personaId Optional persona ID for prompt enhancement (Phase 1)
+     * @param trendingKeywords Optional trending keywords to incorporate (Phase 2)
      * @return Map containing ad and generated contents
      */
     @Transactional
     public Map<String, Object> createAdWithAIContent(Long campaignId, String adType, String prompt,
-                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, String adStyle) {
-        log.info("Creating ad with AI content for user ID: {}", userId);
-        
+                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, String adStyle, Long personaId, List<String> trendingKeywords) {
+        log.info("Creating ad with AI content for user ID: {}, personaId: {}, trending keywords: {}", userId, personaId, trendingKeywords != null ? trendingKeywords.size() : 0);
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
         Campaign campaign = campaignRepository.findByIdAndUser(campaignId, user)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Campaign not found"));
+
+        // Phase 1: Fetch user-selected persona if provided
+        com.fbadsautomation.model.Persona userSelectedPersona = null;
+        if (personaId != null) {
+            try {
+                userSelectedPersona = personaService.findByIdAndUser(personaId, user)
+                    .orElse(null);
+                if (userSelectedPersona != null) {
+                    log.info("Using user-selected persona: {} (ID: {})", userSelectedPersona.getName(), personaId);
+                } else {
+                    log.warn("Persona ID {} not found for user {}, will use auto-selection", personaId, userId);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch persona {}, falling back to auto-selection: {}", personaId, e.getMessage());
+                // Continue with null persona - PersonaSelectorService will auto-select
+            }
+        }
         
         // Create ad
         Ad ad = new Ad();
@@ -186,9 +207,9 @@ public class AdService {
         // Đảm bảo ad được quản lý bởi Hibernate và merge với persistence context
         ad = adRepository.findById(ad.getId()).orElseThrow(() -> new RuntimeException("Ad not found after save"));
         log.info("Retrieved managed ad with ID: {}", ad.getId());
-        
-        // Generate AI content - pass mediaFileUrl so it's used during generation
-        List<AdContent> contents = aiContentService.generateAdContent(ad, prompt, mediaFile, textProvider, imageProvider, numberOfVariations, language, adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment);
+
+        // Generate AI content - pass persona and trending keywords (Phase 1 & 2)
+        List<AdContent> contents = aiContentService.generateAdContent(ad, prompt, mediaFile, textProvider, imageProvider, numberOfVariations, language, adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment, userSelectedPersona, trendingKeywords);
         // Nếu có contents được tạo, copy nội dung đầu tiên vào ad
         if (!contents.isEmpty()) {
             AdContent firstContent = contents.get(0);
@@ -475,13 +496,29 @@ public class AdService {
                                                  String textProvider, String imageProvider, Integer numberOfVariations,
                                                  String language, List<String> adLinks,
                                                  String extractedContent, String mediaFileUrl,
-                                                 com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
-        log.info("Generating preview content for ad: {}", tempAd.getName());
+                                                 com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, Long personaId, List<String> trendingKeywords) {
+        log.info("Generating preview content for ad: {}, personaId: {}, trending keywords: {}", tempAd.getName(), personaId, trendingKeywords != null ? trendingKeywords.size() : 0);
+
+        // Phase 1: Fetch user-selected persona if provided
+        com.fbadsautomation.model.Persona userSelectedPersona = null;
+        if (personaId != null && tempAd.getUser() != null) {
+            try {
+                userSelectedPersona = personaService.findByIdAndUser(personaId, tempAd.getUser())
+                    .orElse(null);
+                if (userSelectedPersona != null) {
+                    log.info("[Preview] Using user-selected persona: {} (ID: {})", userSelectedPersona.getName(), personaId);
+                } else {
+                    log.warn("[Preview] Persona ID {} not found, will use auto-selection", personaId);
+                }
+            } catch (Exception e) {
+                log.warn("[Preview] Failed to fetch persona {}, falling back to auto-selection: {}", personaId, e.getMessage());
+            }
+        }
 
         // Generate AI content without saving to database
         List<AdContent> contents = aiContentService.generateAdContent(tempAd, prompt, mediaFile, textProvider,
                                                                      imageProvider, numberOfVariations, language,
-                                                                     adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment);
+                                                                     adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment, userSelectedPersona, trendingKeywords);
         // Set temporary IDs for preview
         for (int i = 0; i < contents.size(); i++) {
             AdContent content = contents.get(i);

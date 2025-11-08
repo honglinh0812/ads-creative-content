@@ -1508,8 +1508,7 @@
         "close": "Close"
       }
     },
-    "components": {
-      "audienceSegment": {
+    "audienceSegment": {
         "title": "🎯 Audience Targeting",
         "form": {
           "gender": "Gender",
@@ -1706,6 +1705,5 @@
         "dontShowAgain": "Don't show this again",
         "understand": "I Understand"
       }
-    }
   }
 }

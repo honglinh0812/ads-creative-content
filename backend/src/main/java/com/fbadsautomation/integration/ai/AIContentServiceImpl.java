@@ -48,6 +48,9 @@ public class AIContentServiceImpl {
     @Autowired(required = false)
     private com.fbadsautomation.service.MultiStagePromptBuilder multiStagePromptBuilder;
 
+    @Autowired(required = false)
+    private com.fbadsautomation.service.ChainOfThoughtPromptBuilder chainOfThoughtPromptBuilder;
+
     @Autowired
     public AIContentServiceImpl(AIProviderService aiProviderService,
                                MetaAdLibraryService metaAdLibraryService,
@@ -88,7 +91,7 @@ public class AIContentServiceImpl {
 
     /**
      * Issue #9: Generate content with Campaign-level audience
-     * This is the NEW method that accepts Campaign and AdStyle
+     * Phase 1 & 2: Accept persona and trending keywords
      */
     public List<AdContent> generateContentWithCampaign(String prompt,
                                                         AdContent.ContentType contentType,
@@ -101,14 +104,18 @@ public class AIContentServiceImpl {
                                                         String mediaFileUrl,
                                                         com.fbadsautomation.model.FacebookCTA callToAction,
                                                         com.fbadsautomation.model.Campaign campaign,
-                                                        com.fbadsautomation.model.AdStyle adStyle) {
+                                                        com.fbadsautomation.model.AdStyle adStyle,
+                                                        com.fbadsautomation.model.Persona userSelectedPersona,
+                                                        List<String> trendingKeywords) {
 
         String providerId = (textProvider == null || textProvider.isBlank())
                 ? "openai" : textProvider;
-        log.info("🔍 [Issue #9] Using campaign-level audience. Provider: '{}', campaign: {}, style: {}",
+        log.info("🔍 [Phase 1&2] Provider: '{}', campaign: {}, style: {}, persona: {}, keywords: {}",
                  providerId,
                  campaign != null ? campaign.getId() : "none",
-                 adStyle != null ? adStyle.name() : "none");
+                 adStyle != null ? adStyle.name() : "none",
+                 userSelectedPersona != null ? userSelectedPersona.getName() : "auto-select",
+                 trendingKeywords != null ? trendingKeywords.size() : 0);
 
         AIProvider textAI = aiProviderService.getProvider(providerId);
         if (textAI == null) {
@@ -122,8 +129,9 @@ public class AIContentServiceImpl {
         try {
             AdType adType = convertContentTypeToAdType(contentType);
             // Issue #9: Use new enhancePromptWithCampaign method
-            String enhancedPrompt = enhancePromptWithCampaign(finalPrompt, adType, campaign, adStyle);
-            log.info("[Issue #9] Generating {} variations with campaign audience", numberOfVariations);
+            // Phase 1 & 2: Pass persona and trending keywords
+            String enhancedPrompt = enhancePromptWithCampaign(finalPrompt, adType, campaign, adStyle, userSelectedPersona, trendingKeywords);
+            log.info("[Phase 1&2] Generating {} variations with campaign audience, persona, and trending keywords", numberOfVariations);
 
             // Generate content
             com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
@@ -552,30 +560,81 @@ public class AIContentServiceImpl {
 
     /**
      * Issue #9: Enhance prompt with Campaign-level audience
-     * This is the NEW method for Issue #9 that uses Campaign instead of AudienceSegment
+     * Phase 1 & 2: Accept persona and trending keywords
      */
     private String enhancePromptWithCampaign(String userPrompt, AdType adType,
                                              com.fbadsautomation.model.Campaign campaign,
-                                             com.fbadsautomation.model.AdStyle adStyle) {
+                                             com.fbadsautomation.model.AdStyle adStyle,
+                                             com.fbadsautomation.model.Persona userSelectedPersona,
+                                             List<String> trendingKeywords) {
         // Detect language for bilingual support
         Language detectedLanguage = ValidationMessages.detectLanguage(userPrompt);
-        log.info("[Issue #9] Detected language: {}, campaign: {}", detectedLanguage,
-                 campaign != null ? campaign.getId() : "none");
+        log.info("[Phase 3] Detected language: {}, campaign: {}, persona: {}, keywords: {}",
+                 detectedLanguage,
+                 campaign != null ? campaign.getId() : "none",
+                 userSelectedPersona != null ? userSelectedPersona.getName() : "auto-select",
+                 trendingKeywords != null ? trendingKeywords.size() : 0);
 
-        // Try multi-stage persona-based prompting with campaign (Issue #9)
+        // Phase 3: Try unified Chain-of-Thought prompting first
+        if (chainOfThoughtPromptBuilder != null) {
+            try {
+                log.info("[Phase 3] Using unified Chain-of-Thought prompt builder");
+
+                // Get campaign target audience
+                String targetAudience = (campaign != null && campaign.getTargetAudience() != null)
+                    ? campaign.getTargetAudience()
+                    : "General audience";
+
+                // Build CoT prompt with all parameters (persona can be null - will be handled by builder)
+                String cotPrompt = chainOfThoughtPromptBuilder.buildCoTPrompt(
+                    userPrompt,
+                    userSelectedPersona,  // Pass user Persona directly (can be null)
+                    adStyle,
+                    targetAudience,
+                    trendingKeywords,
+                    detectedLanguage,
+                    com.fbadsautomation.model.FacebookCTA.LEARN_MORE,  // Default CTA for prompt
+                    adType,
+                    1  // numberOfVariations for prompt context
+                );
+
+                log.info("[Phase 3] CoT prompt built successfully with {} stages",
+                        userSelectedPersona != null ? "user persona" : "no persona");
+                return cotPrompt;
+
+            } catch (Exception e) {
+                log.warn("[Phase 3] CoT prompting failed, falling back to multi-stage: {}", e.getMessage());
+            }
+        }
+
+        // Fallback to Phase 1&2: multi-stage persona-based prompting with campaign (Issue #9)
         if (personaSelectorService != null && multiStagePromptBuilder != null) {
             try {
-                log.info("[Issue #9] Using multi-stage prompting with campaign-level audience");
+                log.info("[Phase 1&2 Fallback] Using multi-stage prompting with campaign-level audience");
 
-                // Select appropriate persona based on product/service
-                com.fbadsautomation.model.AdPersona persona = personaSelectorService.selectPersona(
-                    userPrompt,
-                    detectedLanguage
-                );
+                // Phase 1: Use user-selected persona if provided, otherwise auto-select
+                com.fbadsautomation.model.AdPersona persona;
+                if (userSelectedPersona != null) {
+                    // Convert user Persona to AdPersona (map tone to closest match)
+                    persona = mapUserPersonaToAdPersona(userSelectedPersona);
+                    log.info("[Phase 1] Using user-selected persona: {} (mapped to AdPersona: {})",
+                            userSelectedPersona.getName(), persona.name());
+                } else {
+                    // Auto-select persona based on product/service
+                    persona = personaSelectorService.selectPersona(userPrompt, detectedLanguage);
+                    log.info("[Phase 1] Auto-selected persona: {}", persona.name());
+                }
+
+                // Phase 2: Add trending keywords to prompt if provided
+                String finalUserPrompt = userPrompt;
+                if (trendingKeywords != null && !trendingKeywords.isEmpty()) {
+                    finalUserPrompt = enrichPromptWithTrendingKeywords(userPrompt, trendingKeywords, detectedLanguage);
+                    log.info("[Phase 2] Added {} trending keywords to prompt", trendingKeywords.size());
+                }
 
                 // Build enhanced prompt with persona, campaign audience, and style (Issue #8 + #9)
                 String enhancedPrompt = multiStagePromptBuilder.buildEnhancedPrompt(
-                    userPrompt,
+                    finalUserPrompt,  // Use enriched prompt with trending keywords
                     persona,
                     adType,
                     detectedLanguage,
@@ -583,15 +642,16 @@ public class AIContentServiceImpl {
                     adStyle    // Include AdStyle (Issue #8)
                 );
 
-                log.info("[Issue #9] Multi-stage prompt built with campaign audience, persona: {}", persona.name());
+                log.info("[Phase 1&2 Fallback] Multi-stage prompt built with campaign audience, persona: {}, keywords: {}",
+                        persona.name(), trendingKeywords != null ? trendingKeywords.size() : 0);
                 return enhancedPrompt;
 
             } catch (Exception e) {
-                log.warn("[Issue #9] Multi-stage prompting failed, falling back: {}", e.getMessage());
+                log.warn("[Issue #9] Multi-stage prompting failed, falling back to legacy: {}", e.getMessage());
             }
         }
 
-        // Fallback to legacy prompting
+        // Final fallback to legacy prompting
         log.info("[Issue #9] Using legacy prompt (no campaign audience integration)");
         return buildLegacyPromptForAdType(userPrompt, adType, detectedLanguage);
     }
@@ -772,5 +832,87 @@ public class AIContentServiceImpl {
             log.error("Failed to download and store external image: {}", e.getMessage(), e);
             throw new Exception("Failed to download and store image: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Phase 1: Maps user-created Persona to predefined AdPersona enum.
+     * Mapping is based on tone field matching.
+     *
+     * @param userPersona User-created persona entity
+     * @return Mapped AdPersona enum value
+     */
+    private com.fbadsautomation.model.AdPersona mapUserPersonaToAdPersona(com.fbadsautomation.model.Persona userPersona) {
+        if (userPersona == null || userPersona.getTone() == null) {
+            log.warn("[Phase 1] User persona is null or has no tone, defaulting to GENERAL_FRIENDLY");
+            return com.fbadsautomation.model.AdPersona.GENERAL_FRIENDLY;
+        }
+
+        String tone = userPersona.getTone().toLowerCase();
+
+        // Map user persona tone to closest AdPersona
+        return switch (tone) {
+            case "professional", "formal" -> {
+                log.info("[Phase 1] Mapping tone '{}' to PROFESSIONAL_TRUSTWORTHY", tone);
+                yield com.fbadsautomation.model.AdPersona.PROFESSIONAL_TRUSTWORTHY;
+            }
+            case "funny" -> {
+                log.info("[Phase 1] Mapping tone '{}' to GEN_Z_GAMER", tone);
+                yield com.fbadsautomation.model.AdPersona.GEN_Z_GAMER;
+            }
+            case "enthusiastic" -> {
+                log.info("[Phase 1] Mapping tone '{}' to HEALTH_WELLNESS", tone);
+                yield com.fbadsautomation.model.AdPersona.HEALTH_WELLNESS;
+            }
+            case "casual", "friendly" -> {
+                log.info("[Phase 1] Mapping tone '{}' to GENERAL_FRIENDLY", tone);
+                yield com.fbadsautomation.model.AdPersona.GENERAL_FRIENDLY;
+            }
+            default -> {
+                log.warn("[Phase 1] Unknown tone '{}', defaulting to GENERAL_FRIENDLY", tone);
+                yield com.fbadsautomation.model.AdPersona.GENERAL_FRIENDLY;
+            }
+        };
+    }
+
+    /**
+     * Phase 2: Enriches user prompt with trending keywords in a natural way.
+     * Supports bilingual output (Vietnamese/English).
+     *
+     * @param userPrompt Original user prompt
+     * @param trendingKeywords List of trending keywords to incorporate
+     * @param language Detected language
+     * @return Enriched prompt with trending keywords section
+     */
+    private String enrichPromptWithTrendingKeywords(String userPrompt, List<String> trendingKeywords, Language language) {
+        if (trendingKeywords == null || trendingKeywords.isEmpty()) {
+            return userPrompt;
+        }
+
+        boolean isVietnamese = (language == Language.VIETNAMESE);
+        StringBuilder enrichedPrompt = new StringBuilder(userPrompt);
+        enrichedPrompt.append("\n\n");
+
+        if (isVietnamese) {
+            enrichedPrompt.append("🔥 TỪ KHÓA TRENDING CẦN KẾT HỢP:\n");
+            enrichedPrompt.append("Vui lòng tự nhiên kết hợp các từ khóa trending sau vào nội dung quảng cáo (nếu phù hợp):\n");
+        } else {
+            enrichedPrompt.append("🔥 TRENDING KEYWORDS TO INCORPORATE:\n");
+            enrichedPrompt.append("Please naturally incorporate the following trending keywords into the ad content (where appropriate):\n");
+        }
+
+        for (int i = 0; i < trendingKeywords.size(); i++) {
+            enrichedPrompt.append((i + 1)).append(". ").append(trendingKeywords.get(i)).append("\n");
+        }
+
+        if (isVietnamese) {
+            enrichedPrompt.append("\nLưu ý: Chỉ sử dụng những từ khóa phù hợp với ngữ cảnh và giọng điệu của quảng cáo. Không nhồi nhét từ khóa một cách máy móc.");
+        } else {
+            enrichedPrompt.append("\nNote: Only use keywords that fit naturally with the context and tone of the ad. Avoid keyword stuffing.");
+        }
+
+        log.info("[Phase 2] Enriched prompt with {} trending keywords in {} language",
+                trendingKeywords.size(), language.name());
+
+        return enrichedPrompt.toString();
     }
 }

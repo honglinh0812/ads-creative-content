@@ -136,6 +136,39 @@ public class Persona {
     }
 
     /**
+     * Formats persona details for AI prompt injection (Vietnamese version).
+     * Phase 3: Added for ChainOfThoughtPromptBuilder bilingual support.
+     *
+     * @return Formatted string in Vietnamese for prompt enhancement
+     */
+    public String toPromptStringVietnamese() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n\nHồ sơ Persona mục tiêu:");
+        sb.append("\n- Tên: ").append(name);
+        sb.append("\n- Tuổi: ").append(age);
+        sb.append("\n- Giới tính: ").append(gender.getDisplayNameVietnamese());
+
+        if (interests != null && !interests.isEmpty()) {
+            sb.append("\n- Sở thích: ").append(String.join(", ", interests));
+        }
+
+        sb.append("\n- Giọng điệu ưa thích: ").append(tone);
+
+        if (painPoints != null && !painPoints.isEmpty()) {
+            sb.append("\n- Điểm đau (Pain Points): ");
+            for (int i = 0; i < painPoints.size(); i++) {
+                sb.append("\n  ").append(i + 1).append(". ").append(painPoints.get(i));
+            }
+        }
+
+        if (desiredOutcome != null && !desiredOutcome.isEmpty()) {
+            sb.append("\n- Kết quả mong muốn: ").append(desiredOutcome);
+        }
+
+        return sb.toString();
+    }
+
+    /**
      * Validates persona data integrity.
      * Called before save operations in service layer.
      *

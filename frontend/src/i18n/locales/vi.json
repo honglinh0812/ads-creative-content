@@ -1584,7 +1584,6 @@
         "close": "Đóng"
       }
     },
-    "components": {
       "audienceSegment": {
         "title": "🎯 Đối tượng mục tiêu",
         "form": {
@@ -1782,6 +1781,5 @@
         "dontShowAgain": "Không hiển thị lại",
         "understand": "Tôi hiểu"
       }
-    }
   }
 }

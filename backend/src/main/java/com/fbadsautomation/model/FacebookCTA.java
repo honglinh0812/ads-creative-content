@@ -48,4 +48,11 @@ public enum FacebookCTA {
     public String getVietnameseLabel() {
         return vietnameseLabel;
     }
+
+    /**
+     * Phase 3: Alias for ChainOfThoughtPromptBuilder compatibility
+     */
+    public String getDisplayNameVietnamese() {
+        return vietnameseLabel;
+    }
 } 

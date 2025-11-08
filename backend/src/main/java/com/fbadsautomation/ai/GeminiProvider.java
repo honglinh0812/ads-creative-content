@@ -68,39 +68,14 @@ public class GeminiProvider implements AIProvider {
         log.debug("Calling Gemini API at: {}", fullUrl);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        // Updated prompt for JSON output
-        String fullPrompt;
-        if ("en".equalsIgnoreCase(language)) {
-            fullPrompt = "You are an expert Facebook advertising copywriter with deep knowledge of Facebook's advertising policies. " +
-                    "Create " + numberOfVariations + " compliant, high-converting ad variations for: \"" + prompt + "\". " +
-                    "\n\nFACEBOOK COMPLIANCE CHECKLIST:" +
-                    "\n✓ Headline: Exactly 40 characters or less" +
-                    "\n✓ Description: Exactly 125 characters or less" +
-                    "\n✓ Primary Text: Exactly 1000 characters or less" +
-                    "\n✓ No prohibited words (hate, violence, drugs, miracle, guaranteed, cure, instant)" +
-                    "\n✓ No excessive punctuation (!!!, $$$, ???)" +
-                    "\n✓ No ALL CAPS (except brand names)" +
-                    "\n✓ Professional, clear language" +
-                    "\n✓ Minimum 3 words per field" +
-                    "\n\nBefore finalizing each ad, count characters and verify compliance. " +
-                    "Return as JSON array of " + numberOfVariations + " objects: {\"headline\": \"...\", \"description\": \"...\", \"primaryText\": \"...\", \"callToAction\": \"...\"}.";
-        } else {
-            fullPrompt = "Bạn là chuyên gia viết quảng cáo Facebook am hiểu sâu về chính sách quảng cáo Facebook. " +
-                    "Tạo " + numberOfVariations + " mẫu quảng cáo tuân thủ và hiệu quả cho: \"" + prompt + "\". " +
-                    "\n\nDANH SÁCH KIỂM TRA TUÂN THỦ FACEBOOK:" +
-                    "\n✓ Tiêu đề: Chính xác 40 ký tự hoặc ít hơn" +
-                    "\n✓ Mô tả: Chính xác 30 ký tự hoặc ít hơn" +
-                    "\n✓ Nội dung chính: Chính xác 125 ký tự hoặc ít hơn" +
-                    "\n✓ Không có từ cấm (ghét, bạo lực, ma túy, phép màu, đảm bảo, chữa khỏi, tức thì)" +
-                    "\n✓ Không dấu câu thừa (!!!, $$$, ???)" +
-                    "\n✓ Không viết hoa toàn bộ (trừ tên thương hiệu)" +
-                    "\n✓ Ngôn ngữ chuyên nghiệp, rõ ràng" +
-                    "\n✓ Tối thiểu 3 từ mỗi trường" +
-                    "\n\nTrước khi hoàn thiện mỗi quảng cáo, hãy đếm ký tự và xác minh tuân thủ. " +
-                    "Trả về dạng JSON array gồm " + numberOfVariations + " đối tượng: {\"headline\": \"...\", \"description\": \"...\", \"primaryText\": \"...\", \"callToAction\": \"...\"}.";
-        }
+
+        // Phase 4: Use pre-built CoT prompt directly (no template selection, no language wrapping)
+        // The prompt parameter already contains the complete 6-stage Chain-of-Thought prompt
+        // from ChainOfThoughtPromptBuilder with all instructions, constraints, and language requirements
+        log.debug("[Phase 4] Using unified CoT prompt (length: {} chars)", prompt.length());
+
         Map<String, Object> contentPart = new HashMap<>();
-        contentPart.put("text", fullPrompt);
+        contentPart.put("text", prompt); // Complete CoT prompt - no modifications
         Map<String, Object> content = new HashMap<>();
         content.put("role", "user");
         content.put("parts", List.of(contentPart));

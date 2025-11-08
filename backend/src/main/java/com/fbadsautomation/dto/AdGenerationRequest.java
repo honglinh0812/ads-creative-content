@@ -82,6 +82,9 @@ public class AdGenerationRequest {
              message = "Invalid ad style. Must be one of: PROFESSIONAL, CASUAL, HUMOROUS, URGENT, LUXURY, EDUCATIONAL, INSPIRATIONAL, MINIMALIST")
     private String adStyle; // Optional: creative style/tone for ad content (Issue #8)
 
+    @Size(max = 10, message = "Cannot exceed 10 trending keywords")
+    private List<@Size(max = 50, message = "Keyword must be at most 50 characters") String> trendingKeywords; // Optional: trending keywords to incorporate (Phase 2)
+
     // New field for per-variation provider selection
     @Valid
     @Size(max = 10, message = "Cannot exceed 10 variations")
@@ -218,6 +221,9 @@ public class AdGenerationRequest {
 
     public String getAdStyle() { return adStyle; }
     public void setAdStyle(String adStyle) { this.adStyle = adStyle; }
+
+    public List<String> getTrendingKeywords() { return trendingKeywords; }
+    public void setTrendingKeywords(List<String> trendingKeywords) { this.trendingKeywords = trendingKeywords; }
 
     public List<VariationProviderConfig> getVariations() { return variations; }
     public void setVariations(List<VariationProviderConfig> variations) { this.variations = variations; }

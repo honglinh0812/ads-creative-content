@@ -34,13 +34,17 @@ import org.springframework.stereotype.Service;
     * @param prompt The content prompt
     * @param mediaFile The media file (optional)
     * @param mediaFileUrl The uploaded media file URL from frontend (optional)
+    * @param userSelectedPersona User-selected persona (Phase 1, optional)
+    * @param trendingKeywords Trending keywords to incorporate (Phase 2, optional)
     * @return List of generated ad contents
     */
-   public List<AdContent> generateAdContent(Ad ad, String prompt, org.springframework.web.multipart.MultipartFile mediaFile, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
-       log.info("[Issue #9] Generating content for ad: {}, campaign: {}, mediaFileUrl: {}",
+   public List<AdContent> generateAdContent(Ad ad, String prompt, org.springframework.web.multipart.MultipartFile mediaFile, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, com.fbadsautomation.model.Persona userSelectedPersona, List<String> trendingKeywords) {
+       log.info("[Issue #9] Generating content for ad: {}, campaign: {}, mediaFileUrl: {}, persona: {}, trending keywords: {}",
                 ad.getId(),
                 ad.getCampaign() != null ? ad.getCampaign().getId() : "none",
-                mediaFileUrl);
+                mediaFileUrl,
+                userSelectedPersona != null ? userSelectedPersona.getName() : "auto-select",
+                trendingKeywords != null ? trendingKeywords.size() : 0);
 
        // Determine content type based on ad type
        AdContent.ContentType contentType = determineContentType(ad.getAdType());
@@ -58,12 +62,13 @@ import org.springframework.stereotype.Service;
        com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
 
        // Issue #9: Pass Campaign and AdStyle instead of AudienceSegment
+       // Phase 1 & 2: Pass persona and trending keywords
        // Note: We still accept audienceSegment parameter for backward compatibility but prefer Campaign
        List<AdContent> generatedContents = aiIntegrationService.generateContentWithCampaign(
                prompt, contentType, textProvider, imageProvider,
                numberOfVariations != null ? numberOfVariations : DEFAULT_VARIATIONS,
                language, adLinks, extractedContent,
-               mediaFileUrl, cta, campaign, ad.getAdStyle());
+               mediaFileUrl, cta, campaign, ad.getAdStyle(), userSelectedPersona, trendingKeywords);
        
        // Set ad reference and preview order for each content
        for (int i = 0; i < generatedContents.size(); i++) {

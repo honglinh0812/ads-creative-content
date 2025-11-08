@@ -95,45 +95,18 @@ public class OpenAIProvider implements AIProvider {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(apiKey);
-        String systemPrompt = "You are an elite Facebook advertising copywriter with 20+ years of experience creating compliant, high-converting ads. " +
-                "Your ads consistently achieve 3-5x higher CTR while maintaining 100% Facebook policy compliance. " +
-                "\n\nCRITICAL FACEBOOK REQUIREMENTS (MUST FOLLOW):" +
-                "\n1. CHARACTER LIMITS (STRICT):" +
-                "\n   - Headline: Maximum 40 characters (including spaces)" +
-                "\n   - Description: Maximum 125 characters (including spaces)" +
-                "\n   - Primary Text: Maximum 1000 characters (including spaces)" +
-                "\n\n2. CONTENT QUALITY REQUIREMENTS:" +
-                "\n   - Each field must contain at least 3 meaningful words" +
-                "\n   - Use clear, professional language" +
-                "\n   - Avoid ALL CAPS (except for brand names if necessary)" +
-                "\n   - No repetitive or meaningless text" +
-                "\n\n3. FACEBOOK POLICY COMPLIANCE (ZERO TOLERANCE):" +
-                "\n   - NO prohibited words: 'hate', 'violence', 'drugs', 'miracle', 'guaranteed results', 'cure', 'instant'" +
-                "\n   - NO excessive punctuation: 'FREE!!!', 'ACT NOW!!!', '$$$$'" +
-                "\n   - NO misleading claims or exaggerated promises" +
-                "\n   - NO personal attributes targeting (age, race, religion, etc.)" +
-                "\n   - NO adult content, gambling, or controversial topics" +
-                "\n\n4. BEST PRACTICES:" +
-                "\n   - Use 'you' and 'your' for personalization" +
-                "\n   - Include specific, verifiable benefits" +
-                "\n   - Create urgency without being pushy" +
-                "\n   - Maintain professional, conversational tone" +
-                "\n   - Focus on value proposition and benefits" +
-                "\n\n5. CALL TO ACTION: " + (callToAction != null ? "Must be exactly: " + callToAction.name() : "Not specified") +
-                "\n\nReturn ONLY valid JSON with keys: \"headline\", \"description\", \"primaryText\". " +
-                "Double-check character limits before responding. If any field exceeds limits, shorten it immediately.";
-        Map<String, Object> message1 = new HashMap<>();
-        message1.put("role", "system");
-        message1.put("content", systemPrompt);
-        Map<String, Object> message2 = new HashMap<>();
-        message2.put("role", "user");
-        String langInstruction = "vi".equalsIgnoreCase(language)
-                ? "Viết bằng tiếng Việt.\n"
-                : "Write in English.\n";
-        message2.put("content", langInstruction + "Generate professional, high-converting Facebook ad content for: " + prompt);
+
+        // Phase 4: Use pre-built CoT prompt directly (no system prompt, no language wrapping)
+        // The prompt parameter already contains the complete 6-stage Chain-of-Thought prompt
+        // from ChainOfThoughtPromptBuilder with all instructions, constraints, and language requirements
+        log.debug("[Phase 4] Using unified CoT prompt (length: {} chars)", prompt.length());
+
+        Map<String, Object> userMessage = new HashMap<>();
+        userMessage.put("role", "user");
+        userMessage.put("content", prompt); // Complete CoT prompt - no modifications needed
+
         List<Map<String, Object>> messages = new ArrayList<>();
-        messages.add(message1);
-        messages.add(message2);
+        messages.add(userMessage); // Only user message, no system message
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", "gpt-3.5-turbo"); // Consider making model configurable
         requestBody.put("messages", messages);

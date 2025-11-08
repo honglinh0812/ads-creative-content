@@ -88,22 +88,17 @@ public class HuggingFaceProvider implements AIProvider {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(apiKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
-        // Customize prompt for Hugging Face (might need different structure)
-        String hgPrompt;
-        if ("vi".equalsIgnoreCase(language)) {
-            hgPrompt = "Tạo quảng cáo Facebook tuân thủ chính sách với: Tiêu đề (tối đa 40 ký tự), Mô tả (tối đa 125 ký tự), Nội dung chính (tối đa 1000 ký tự). " +
-                    "Không dùng từ cấm: ghét, bạo lực, ma túy, phép màu, đảm bảo, chữa khỏi, tức thì. " +
-                    "Chủ đề: " + prompt;
-        } else {
-            hgPrompt = "Create Facebook policy-compliant ad with: Headline (max 40 chars), Description (max 125 chars), Primary Text (max 1000 chars). " +
-                    "Avoid prohibited words: hate, violence, drugs, miracle, guaranteed, cure, instant. " +
-                    "Topic: " + prompt;
-        }
+
+        // Phase 4: Use pre-built CoT prompt directly (no template selection, no language wrapping)
+        // The prompt parameter already contains the complete 6-stage Chain-of-Thought prompt
+        // from ChainOfThoughtPromptBuilder with all instructions, constraints, and language requirements
+        log.debug("[Phase 4] Using unified CoT prompt (length: {} chars)", prompt.length());
+
         for (int i = 0; i < numberOfVariations; i++) {
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("inputs", hgPrompt);
+            requestBody.put("inputs", prompt); // Complete CoT prompt - no modifications
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-            log.debug("Calling Hugging Face Text API at: {} with prompt: {}", textApiUrl, hgPrompt);
+            log.debug("Calling Hugging Face Text API at: {} with CoT prompt length: {}", textApiUrl, prompt.length());
             try {
                 ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(textApiUrl,
                         HttpMethod.POST,
