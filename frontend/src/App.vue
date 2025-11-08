@@ -339,7 +339,22 @@ export default {
   min-height: 100vh;
 }
 
+.main-layout > .ant-layout {
+  margin-left: 240px;
+  transition: margin-left 0.2s ease;
+}
+
+.sidebar.ant-layout-sider-collapsed + .ant-layout {
+  margin-left: 80px;
+}
+
 .sidebar {
+  position: fixed !important;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  height: 100vh;
+  overflow-y: auto;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   z-index: 100;
 }
@@ -376,7 +391,10 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  z-index: 99;
+  position: sticky;
+  top: 0;
+  z-index: 500;
+  backdrop-filter: blur(8px);
 }
 
 .header-left {
@@ -395,11 +413,25 @@ export default {
   font-size: 18px;
   line-height: 64px;
   cursor: pointer;
-  transition: color 0.3s;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 0, 0, 0.65);
 }
 
 .trigger:hover {
   color: #1890ff;
+  background: #f0f7ff;
+  border-color: #d6e4ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+}
+
+.trigger:active {
+  transform: scale(0.95);
 }
 
 .breadcrumb {
@@ -408,6 +440,111 @@ export default {
 
 .notification-badge {
   margin-right: 8px;
+  position: relative;
+  z-index: 600;
+  display: inline-block;
+}
+
+.notification-badge .ant-btn {
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+}
+
+.notification-badge .ant-btn:hover {
+  border-color: #1890ff;
+  background: #f0f7ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+}
+
+.notification-badge .ant-badge-count {
+  background: #ff4d4f;
+  box-shadow: 0 2px 6px rgba(255, 77, 79, 0.5);
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    box-shadow: 0 2px 6px rgba(255, 77, 79, 0.5);
+  }
+  50% {
+    box-shadow: 0 2px 12px rgba(255, 77, 79, 0.7);
+  }
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  min-width: 320px;
+  max-width: 400px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+.notification-header {
+  padding: 16px 20px;
+  font-weight: 600;
+  font-size: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.notification-item:hover {
+  background: #f5f5f5;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-footer {
+  padding: 12px 20px;
+  text-align: center;
+  border-top: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.notification-footer button {
+  background: none;
+  border: none;
+  color: #1890ff;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.notification-footer button:hover {
+  background: #e6f7ff;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .user-menu {
@@ -485,10 +622,20 @@ export default {
     padding: 16px;
   }
   
+  .main-layout > .ant-layout {
+    margin-left: 0 !important;
+  }
+
   .sidebar {
-    position: fixed;
+    position: fixed !important;
+    left: -240px;
     height: 100vh;
     z-index: 1000;
+    transition: left 0.3s ease;
+  }
+
+  .sidebar:not(.ant-layout-sider-collapsed) {
+    left: 0;
   }
   
   .logo-text {

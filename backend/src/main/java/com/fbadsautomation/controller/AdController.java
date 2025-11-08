@@ -167,12 +167,18 @@ public class AdController {
                 tempAd.setAdType(adService.mapFrontendAdTypeToEnum(request.getAdType()));
                 tempAd.setPrompt(request.getPrompt());
 
+                // Determine providers from variations array or fallback to legacy fields
+                String textProvider = getMostFrequentTextProvider(request);
+                String imageProvider = getMostFrequentImageProvider(request);
+
+                log.info("Using providers - Text: {}, Image: {}", textProvider, imageProvider);
+
                 // Generate AI content mà không lưu vào database
                 List<AdContent> contents = adService.generatePreviewContent(tempAd,
                     request.getPrompt(),
                     null, // mediaFile
-                    request.getTextProvider(),
-                    request.getImageProvider(),
+                    textProvider,
+                    imageProvider,
                     request.getNumberOfVariations(),
                     request.getLanguage(),
                     request.getAdLinks(),
@@ -202,7 +208,13 @@ public class AdController {
             } else {
                 // Tạo quảng cáo thực sự và lưu vào database
                 log.info("Creating actual ad for user: {}", authentication.getName());
-                
+
+                // Determine providers from variations array or fallback to legacy fields
+                String textProvider = getMostFrequentTextProvider(request);
+                String imageProvider = getMostFrequentImageProvider(request);
+
+                log.info("Using providers for save - Text: {}, Image: {}", textProvider, imageProvider);
+
                 // Create ad and generate AI content in one step
                 Map<String, Object> adResult = adService.createAdWithAIContent(request.getCampaignId(),
                     request.getAdType(),
@@ -210,8 +222,8 @@ public class AdController {
                     request.getName(),
                     null, // mediaFile will be handled by the upload endpoint
                     userId,
-                    request.getTextProvider(),
-                    request.getImageProvider(),
+                    textProvider,
+                    imageProvider,
                     request.getNumberOfVariations(),
                     request.getLanguage(),
                     request.getAdLinks(),
@@ -626,5 +638,54 @@ public class AdController {
                 .orElse(0.0);
 
         return new AdGenerationResponse.ValidationReport(total, passed, failed, withWarnings, avgScore);
+    }
+
+    /**
+     * Helper method to determine the most frequent provider from variations array.
+     * If variations array is provided, calculate the most frequently selected provider.
+     * Otherwise, use the legacy single provider field.
+     */
+    private String getMostFrequentTextProvider(AdGenerationRequest request) {
+        // If variations array exists, find most frequent
+        if (request.getVariations() != null && !request.getVariations().isEmpty()) {
+            Map<String, Long> providerCounts = request.getVariations().stream()
+                    .map(AdGenerationRequest.VariationProviderConfig::getTextProvider)
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            java.util.function.Function.identity(),
+                            java.util.stream.Collectors.counting()));
+
+            return providerCounts.entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse(request.getTextProvider() != null ? request.getTextProvider() : "openai");
+        }
+
+        // Fallback to legacy field
+        return request.getTextProvider() != null ? request.getTextProvider() : "openai";
+    }
+
+    /**
+     * Helper method to determine the most frequent image provider from variations array.
+     */
+    private String getMostFrequentImageProvider(AdGenerationRequest request) {
+        // If variations array exists, find most frequent
+        if (request.getVariations() != null && !request.getVariations().isEmpty()) {
+            Map<String, Long> providerCounts = request.getVariations().stream()
+                    .map(AdGenerationRequest.VariationProviderConfig::getImageProvider)
+                    .filter(provider -> provider != null && !provider.isEmpty())
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            java.util.function.Function.identity(),
+                            java.util.stream.Collectors.counting()));
+
+            if (!providerCounts.isEmpty()) {
+                return providerCounts.entrySet().stream()
+                        .max(Map.Entry.comparingByValue())
+                        .map(Map.Entry::getKey)
+                        .orElse(request.getImageProvider() != null ? request.getImageProvider() : "gemini");
+            }
+        }
+
+        // Fallback to legacy field
+        return request.getImageProvider() != null ? request.getImageProvider() : "gemini";
     }
 }

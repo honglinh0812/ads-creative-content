@@ -83,13 +83,19 @@ public class AsyncAdController {
             FacebookCTA callToAction = request.getCallToAction() != null ?
                 request.getCallToAction() : FacebookCTA.LEARN_MORE;
 
+            // Determine providers from variations array or fallback to legacy fields
+            String textProvider = getMostFrequentTextProvider(request);
+            String imageProvider = getMostFrequentImageProvider(request);
+
+            log.info("Async generation using providers - Text: {}, Image: {}", textProvider, imageProvider);
+
             asyncAIContentService.generateContentAsync(
                 jobId,
                 userId,
                 request.getPrompt(),
                 contentType,
-                request.getTextProvider(),
-                request.getImageProvider(),
+                textProvider,
+                imageProvider,
                 request.getNumberOfVariations() != null ? request.getNumberOfVariations() : 3,
                 request.getLanguage(),
                 request.getAdLinks(),
@@ -300,5 +306,54 @@ public class AsyncAdController {
             case "website_conversion_ad", "lead_form_ad", "combined" -> AdContent.ContentType.COMBINED;
             default -> AdContent.ContentType.COMBINED;
         };
+    }
+
+    /**
+     * Helper method to determine the most frequent provider from variations array.
+     * If variations array is provided, calculate the most frequently selected provider.
+     * Otherwise, use the legacy single provider field.
+     */
+    private String getMostFrequentTextProvider(AdGenerationRequest request) {
+        // If variations array exists, find most frequent
+        if (request.getVariations() != null && !request.getVariations().isEmpty()) {
+            Map<String, Long> providerCounts = request.getVariations().stream()
+                    .map(AdGenerationRequest.VariationProviderConfig::getTextProvider)
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            java.util.function.Function.identity(),
+                            java.util.stream.Collectors.counting()));
+
+            return providerCounts.entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse(request.getTextProvider() != null ? request.getTextProvider() : "openai");
+        }
+
+        // Fallback to legacy field
+        return request.getTextProvider() != null ? request.getTextProvider() : "openai";
+    }
+
+    /**
+     * Helper method to determine the most frequent image provider from variations array.
+     */
+    private String getMostFrequentImageProvider(AdGenerationRequest request) {
+        // If variations array exists, find most frequent
+        if (request.getVariations() != null && !request.getVariations().isEmpty()) {
+            Map<String, Long> providerCounts = request.getVariations().stream()
+                    .map(AdGenerationRequest.VariationProviderConfig::getImageProvider)
+                    .filter(provider -> provider != null && !provider.isEmpty())
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            java.util.function.Function.identity(),
+                            java.util.stream.Collectors.counting()));
+
+            if (!providerCounts.isEmpty()) {
+                return providerCounts.entrySet().stream()
+                        .max(Map.Entry.comparingByValue())
+                        .map(Map.Entry::getKey)
+                        .orElse(request.getImageProvider() != null ? request.getImageProvider() : "gemini");
+            }
+        }
+
+        // Fallback to legacy field
+        return request.getImageProvider() != null ? request.getImageProvider() : "gemini";
     }
 }

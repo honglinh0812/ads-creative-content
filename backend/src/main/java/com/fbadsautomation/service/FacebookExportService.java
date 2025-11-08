@@ -72,27 +72,47 @@ public class FacebookExportService {
         "$"
     );
     
+    // Facebook Ads Import Template Headers
+    // Includes Campaign, Ad Set, and Ad level fields matching Facebook's official template
     private static final String[] CSV_HEADERS = {
+        // Campaign Level Fields
         "Campaign Name",
-        "Campaign Objective", 
-        "Campaign Budget Type",
+        "Campaign Status",
+        "Campaign Objective",
+        "Buying Type",
         "Campaign Daily Budget",
         "Campaign Lifetime Budget",
-        "Campaign Start Date",
-        "Campaign End Date",
+        "Campaign Start Time",
+        "Campaign Stop Time",
+
+        // Ad Set Level Fields
         "Ad Set Name",
-        "Ad Set Budget",
-        "Target Audience",
+        "Ad Set Run Status",
+        "Ad Set Time Start",
+        "Ad Set Time Stop",
+        "Ad Set Daily Budget",
+        "Ad Set Lifetime Budget",
+        "Link",
+        "Countries",
+        "Gender",
+        "Age Min",
+        "Age Max",
+        "Publisher Platforms",
+        "Facebook Positions",
+        "Instagram Positions",
+        "Optimization Goal",
+        "Billing Event",
+
+        // Ad Level Fields
         "Ad Name",
-        "Ad Type",
-        "Headline",
-        "Primary Text",
-        "Description",
+        "Ad Status",
+        "Title",
+        "Body",
+        "Link Description",
+        "Display Link",
+        "Image File Name",
         "Call to Action",
-        "Website URL",
-        "Image URL",
-        "Video URL",
-        "Status"
+        "Marketing Message Primary Text"
     };
     
     /**
@@ -597,11 +617,7 @@ public class FacebookExportService {
     private String formatBudget(Double budget) {
         return budget != null ? String.valueOf(budget) : "";
     }
-    
-    private String formatDate(java.time.LocalDate date) {
-        return date != null ? date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : "";
-    }
-    
+
     private String mapCampaignObjective(Campaign.CampaignObjective objective) {
         if (objective == null) return "TRAFFIC";
         
@@ -685,8 +701,8 @@ public class FacebookExportService {
         campaignInfo.put("budgetType", mapBudgetType(campaign.getBudgetType()));
         campaignInfo.put("dailyBudget", formatBudget(campaign.getDailyBudget()));
         campaignInfo.put("lifetimeBudget", formatBudget(campaign.getTotalBudget()));
-        campaignInfo.put("startDate", formatDate(campaign.getStartDate()));
-        campaignInfo.put("endDate", formatDate(campaign.getEndDate()));
+        campaignInfo.put("startDate", formatDateTime(campaign.getStartDate()));
+        campaignInfo.put("endDate", formatDateTime(campaign.getEndDate()));
         campaignInfo.put("targetAudience", campaign.getTargetAudience());
         preview.put("campaign", campaignInfo);
         
@@ -725,26 +741,44 @@ public class FacebookExportService {
         
         // Facebook format preview (as it would appear in CSV)
         List<String> csvRow = Arrays.asList(
+            // Campaign Level
             campaign.getName(),
+            "ACTIVE",
             mapCampaignObjective(campaign.getObjective()),
-            mapBudgetType(campaign.getBudgetType()),
+            "AUCTION",
             formatBudget(campaign.getDailyBudget()),
             formatBudget(campaign.getTotalBudget()),
-            formatDate(campaign.getStartDate()),
-            formatDate(campaign.getEndDate()),
+            formatDateTime(campaign.getStartDate()),
+            formatDateTime(campaign.getEndDate()),
+
+            // Ad Set Level
             campaign.getName() + " - Ad Set",
+            "ACTIVE",
+            formatDateTime(campaign.getStartDate()),
+            formatDateTime(campaign.getEndDate()),
             formatBudget(campaign.getDailyBudget()),
-            campaign.getTargetAudience(),
+            formatBudget(campaign.getTotalBudget()),
+            ad.getWebsiteUrl(),
+            extractCountriesFromAudience(campaign.getTargetAudience()),
+            extractGenderFromAudience(campaign.getTargetAudience()),
+            extractAgeMinFromAudience(campaign.getTargetAudience()),
+            extractAgeMaxFromAudience(campaign.getTargetAudience()),
+            "facebook,instagram",
+            "feed",
+            "stream",
+            mapOptimizationGoal(campaign.getObjective()),
+            "IMPRESSIONS",
+
+            // Ad Level
             ad.getName(),
-            mapAdType(ad.getAdType()),
+            "ACTIVE",
             ad.getHeadline(),
             ad.getPrimaryText(),
             ad.getDescription(),
-            mapCallToAction(ad.getCallToAction()),
             ad.getWebsiteUrl(),
-            ad.getImageUrl(),
-            ad.getVideoUrl(),
-            "Active"
+            extractImageFileName(ad.getImageUrl()),
+            mapCallToAction(ad.getCallToAction()),
+            ad.getPrimaryText()
         );
         preview.put("csvPreview", csvRow);
         preview.put("csvHeaders", Arrays.asList(CSV_HEADERS));
@@ -788,26 +822,44 @@ public class FacebookExportService {
             
             // Create CSV row
             List<String> csvRow = Arrays.asList(
+                // Campaign Level
                 campaign.getName(),
+                "ACTIVE",
                 mapCampaignObjective(campaign.getObjective()),
-                mapBudgetType(campaign.getBudgetType()),
+                "AUCTION",
                 formatBudget(campaign.getDailyBudget()),
                 formatBudget(campaign.getTotalBudget()),
-                formatDate(campaign.getStartDate()),
-                formatDate(campaign.getEndDate()),
+                formatDateTime(campaign.getStartDate()),
+                formatDateTime(campaign.getEndDate()),
+
+                // Ad Set Level
                 campaign.getName() + " - Ad Set",
+                "ACTIVE",
+                formatDateTime(campaign.getStartDate()),
+                formatDateTime(campaign.getEndDate()),
                 formatBudget(campaign.getDailyBudget()),
-                campaign.getTargetAudience(),
+                formatBudget(campaign.getTotalBudget()),
+                ad.getWebsiteUrl(),
+                extractCountriesFromAudience(campaign.getTargetAudience()),
+                extractGenderFromAudience(campaign.getTargetAudience()),
+                extractAgeMinFromAudience(campaign.getTargetAudience()),
+                extractAgeMaxFromAudience(campaign.getTargetAudience()),
+                "facebook,instagram",
+                "feed",
+                "stream",
+                mapOptimizationGoal(campaign.getObjective()),
+                "IMPRESSIONS",
+
+                // Ad Level
                 ad.getName(),
-                mapAdType(ad.getAdType()),
+                "ACTIVE",
                 ad.getHeadline(),
                 ad.getPrimaryText(),
                 ad.getDescription(),
-                mapCallToAction(ad.getCallToAction()),
                 ad.getWebsiteUrl(),
-                ad.getImageUrl(),
-                ad.getVideoUrl(),
-                "Active"
+                extractImageFileName(ad.getImageUrl()),
+                mapCallToAction(ad.getCallToAction()),
+                ad.getPrimaryText()
             );
             csvRows.add(csvRow);
         }
@@ -905,6 +957,7 @@ public class FacebookExportService {
     
     /**
      * Generate Facebook CSV content from ads
+     * Maps ad data to Facebook's official import template format
      */
     private String generateFacebookCsvContent(List<Ad> ads) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -918,26 +971,44 @@ public class FacebookExportService {
                 Campaign campaign = ad.getCampaign();
 
                 List<String> csvRow = Arrays.asList(
+                    // Campaign Level Fields
                     escapeCsvValue(campaign.getName()),
+                    escapeCsvValue("ACTIVE"),
                     escapeCsvValue(mapCampaignObjective(campaign.getObjective())),
-                    escapeCsvValue(mapBudgetType(campaign.getBudgetType())),
+                    escapeCsvValue("AUCTION"),
                     escapeCsvValue(formatBudget(campaign.getDailyBudget())),
                     escapeCsvValue(formatBudget(campaign.getTotalBudget())),
-                    escapeCsvValue(formatDate(campaign.getStartDate())),
-                    escapeCsvValue(formatDate(campaign.getEndDate())),
+                    escapeCsvValue(formatDateTime(campaign.getStartDate())),
+                    escapeCsvValue(formatDateTime(campaign.getEndDate())),
+
+                    // Ad Set Level Fields
                     escapeCsvValue(campaign.getName() + " - Ad Set"),
+                    escapeCsvValue("ACTIVE"),
+                    escapeCsvValue(formatDateTime(campaign.getStartDate())),
+                    escapeCsvValue(formatDateTime(campaign.getEndDate())),
                     escapeCsvValue(formatBudget(campaign.getDailyBudget())),
-                    escapeCsvValue(campaign.getTargetAudience()),
+                    escapeCsvValue(formatBudget(campaign.getTotalBudget())),
+                    escapeCsvValue(ad.getWebsiteUrl()),
+                    escapeCsvValue(extractCountriesFromAudience(campaign.getTargetAudience())),
+                    escapeCsvValue(extractGenderFromAudience(campaign.getTargetAudience())),
+                    escapeCsvValue(extractAgeMinFromAudience(campaign.getTargetAudience())),
+                    escapeCsvValue(extractAgeMaxFromAudience(campaign.getTargetAudience())),
+                    escapeCsvValue("facebook,instagram"),
+                    escapeCsvValue("feed"),
+                    escapeCsvValue("stream"),
+                    escapeCsvValue(mapOptimizationGoal(campaign.getObjective())),
+                    escapeCsvValue("IMPRESSIONS"),
+
+                    // Ad Level Fields
                     escapeCsvValue(ad.getName()),
-                    escapeCsvValue(mapAdType(ad.getAdType())),
+                    escapeCsvValue("ACTIVE"),
                     escapeCsvValue(ad.getHeadline()),
                     escapeCsvValue(ad.getPrimaryText()),
                     escapeCsvValue(ad.getDescription()),
-                    escapeCsvValue(mapCallToAction(ad.getCallToAction())),
                     escapeCsvValue(ad.getWebsiteUrl()),
-                    escapeCsvValue(ad.getImageUrl()),
-                    escapeCsvValue(ad.getVideoUrl()),
-                    escapeCsvValue("Active")
+                    escapeCsvValue(extractImageFileName(ad.getImageUrl())),
+                    escapeCsvValue(mapCallToAction(ad.getCallToAction())),
+                    escapeCsvValue(ad.getPrimaryText())
                 );
 
                 writer.write(String.join(",", csvRow) + "\n");
@@ -950,6 +1021,126 @@ public class FacebookExportService {
             log.error("Error generating CSV content: {}", e.getMessage(), e);
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi tạo file CSV: " + e.getMessage());
         }
+    }
+
+    /**
+     * Format date-time for Facebook import (format: MM/DD/YYYY HH:mm)
+     */
+    private String formatDateTime(java.time.LocalDate date) {
+        if (date == null) return "";
+        return date.format(DateTimeFormatter.ofPattern("MM/dd/yyyy")) + " 00:00";
+    }
+
+    /**
+     * Extract country codes from target audience string
+     * Example: "US,UK,VN" or defaults to "US"
+     */
+    private String extractCountriesFromAudience(String targetAudience) {
+        if (!StringUtils.hasText(targetAudience)) {
+            return "US";
+        }
+        // Simple extraction - can be enhanced based on actual audience format
+        if (targetAudience.contains("Vietnam") || targetAudience.contains("VN")) {
+            return "VN";
+        }
+        return "US";
+    }
+
+    /**
+     * Extract gender from target audience
+     * Returns: "All", "Male", or "Female"
+     */
+    private String extractGenderFromAudience(String targetAudience) {
+        if (!StringUtils.hasText(targetAudience)) {
+            return "All";
+        }
+        String lower = targetAudience.toLowerCase();
+        if (lower.contains("male") && !lower.contains("female")) {
+            return "Male";
+        } else if (lower.contains("female")) {
+            return "Female";
+        }
+        return "All";
+    }
+
+    /**
+     * Extract minimum age from target audience (default: 18)
+     */
+    private String extractAgeMinFromAudience(String targetAudience) {
+        if (!StringUtils.hasText(targetAudience)) {
+            return "18";
+        }
+        // Try to extract age range like "18-65" or "25+"
+        if (targetAudience.matches(".*\\b(\\d{2})\\s*-\\s*\\d{2}.*")) {
+            String age = targetAudience.replaceAll(".*\\b(\\d{2})\\s*-\\s*\\d{2}.*", "$1");
+            return age;
+        }
+        return "18";
+    }
+
+    /**
+     * Extract maximum age from target audience (default: 65)
+     */
+    private String extractAgeMaxFromAudience(String targetAudience) {
+        if (!StringUtils.hasText(targetAudience)) {
+            return "65";
+        }
+        // Try to extract age range like "18-65"
+        if (targetAudience.matches(".*\\b\\d{2}\\s*-\\s*(\\d{2}).*")) {
+            String age = targetAudience.replaceAll(".*\\b\\d{2}\\s*-\\s*(\\d{2}).*", "$1");
+            return age;
+        }
+        return "65";
+    }
+
+    /**
+     * Map campaign objective to Facebook optimization goal
+     */
+    private String mapOptimizationGoal(Campaign.CampaignObjective objective) {
+        if (objective == null) return "LINK_CLICKS";
+
+        switch (objective) {
+            case CONVERSIONS: return "CONVERSIONS";
+            case LEAD_GENERATION: return "LEAD_GENERATION";
+            case TRAFFIC: return "LINK_CLICKS";
+            case ENGAGEMENT: return "POST_ENGAGEMENT";
+            case VIDEO_VIEWS: return "VIDEO_VIEWS";
+            case APP_INSTALLS: return "APP_INSTALLS";
+            case REACH: return "REACH";
+            case BRAND_AWARENESS: return "BRAND_AWARENESS";
+            default: return "LINK_CLICKS";
+        }
+    }
+
+    /**
+     * Extract image file name from URL/path
+     * Examples:
+     *   "/api/images/abc123.png" -> "abc123.png"
+     *   "https://example.com/image.jpg" -> "image.jpg"
+     */
+    private String extractImageFileName(String imageUrl) {
+        if (!StringUtils.hasText(imageUrl)) {
+            return "";
+        }
+
+        // Handle API URLs
+        if (imageUrl.startsWith("/api/images/")) {
+            return imageUrl.substring("/api/images/".length());
+        }
+
+        // Extract filename from full URL or path
+        int lastSlash = imageUrl.lastIndexOf('/');
+        if (lastSlash >= 0 && lastSlash < imageUrl.length() - 1) {
+            String filename = imageUrl.substring(lastSlash + 1);
+            // Remove query parameters if present
+            int queryIndex = filename.indexOf('?');
+            if (queryIndex > 0) {
+                filename = filename.substring(0, queryIndex);
+            }
+            return filename;
+        }
+
+        return imageUrl;
     }
 
     /**
@@ -1040,31 +1231,46 @@ public class FacebookExportService {
                 Campaign campaign = ad.getCampaign();
                 Row row = sheet.createRow(rowNum++);
 
-                // Campaign information
-                createCell(row, 0, campaign.getName(), dataStyle);
-                createCell(row, 1, mapCampaignObjective(campaign.getObjective()), dataStyle);
-                createCell(row, 2, mapBudgetType(campaign.getBudgetType()), dataStyle);
-                createCell(row, 3, formatBudget(campaign.getDailyBudget()), dataStyle);
-                createCell(row, 4, formatBudget(campaign.getTotalBudget()), dataStyle);
-                createCell(row, 5, formatDate(campaign.getStartDate()), dataStyle);
-                createCell(row, 6, formatDate(campaign.getEndDate()), dataStyle);
+                int colNum = 0;
 
-                // Ad Set information
-                createCell(row, 7, campaign.getName() + " - Ad Set", dataStyle);
-                createCell(row, 8, formatBudget(campaign.getDailyBudget()), dataStyle);
-                createCell(row, 9, campaign.getTargetAudience(), dataStyle);
+                // Campaign Level Fields
+                createCell(row, colNum++, campaign.getName(), dataStyle);
+                createCell(row, colNum++, "ACTIVE", dataStyle);
+                createCell(row, colNum++, mapCampaignObjective(campaign.getObjective()), dataStyle);
+                createCell(row, colNum++, "AUCTION", dataStyle);
+                createCell(row, colNum++, formatBudget(campaign.getDailyBudget()), dataStyle);
+                createCell(row, colNum++, formatBudget(campaign.getTotalBudget()), dataStyle);
+                createCell(row, colNum++, formatDateTime(campaign.getStartDate()), dataStyle);
+                createCell(row, colNum++, formatDateTime(campaign.getEndDate()), dataStyle);
 
-                // Ad information
-                createCell(row, 10, ad.getName(), dataStyle);
-                createCell(row, 11, mapAdType(ad.getAdType()), dataStyle);
-                createCell(row, 12, ad.getHeadline(), dataStyle);
-                createCell(row, 13, ad.getPrimaryText(), dataStyle);
-                createCell(row, 14, ad.getDescription(), dataStyle);
-                createCell(row, 15, mapCallToAction(ad.getCallToAction()), dataStyle);
-                createCell(row, 16, ad.getWebsiteUrl(), urlStyle);
-                createCell(row, 17, ad.getImageUrl(), urlStyle);
-                createCell(row, 18, ad.getVideoUrl(), urlStyle);
-                createCell(row, 19, "Active", dataStyle);
+                // Ad Set Level Fields
+                createCell(row, colNum++, campaign.getName() + " - Ad Set", dataStyle);
+                createCell(row, colNum++, "ACTIVE", dataStyle);
+                createCell(row, colNum++, formatDateTime(campaign.getStartDate()), dataStyle);
+                createCell(row, colNum++, formatDateTime(campaign.getEndDate()), dataStyle);
+                createCell(row, colNum++, formatBudget(campaign.getDailyBudget()), dataStyle);
+                createCell(row, colNum++, formatBudget(campaign.getTotalBudget()), dataStyle);
+                createCell(row, colNum++, ad.getWebsiteUrl(), urlStyle);
+                createCell(row, colNum++, extractCountriesFromAudience(campaign.getTargetAudience()), dataStyle);
+                createCell(row, colNum++, extractGenderFromAudience(campaign.getTargetAudience()), dataStyle);
+                createCell(row, colNum++, extractAgeMinFromAudience(campaign.getTargetAudience()), dataStyle);
+                createCell(row, colNum++, extractAgeMaxFromAudience(campaign.getTargetAudience()), dataStyle);
+                createCell(row, colNum++, "facebook,instagram", dataStyle);
+                createCell(row, colNum++, "feed", dataStyle);
+                createCell(row, colNum++, "stream", dataStyle);
+                createCell(row, colNum++, mapOptimizationGoal(campaign.getObjective()), dataStyle);
+                createCell(row, colNum++, "IMPRESSIONS", dataStyle);
+
+                // Ad Level Fields
+                createCell(row, colNum++, ad.getName(), dataStyle);
+                createCell(row, colNum++, "ACTIVE", dataStyle);
+                createCell(row, colNum++, ad.getHeadline(), dataStyle);
+                createCell(row, colNum++, ad.getPrimaryText(), dataStyle);
+                createCell(row, colNum++, ad.getDescription(), dataStyle);
+                createCell(row, colNum++, ad.getWebsiteUrl(), urlStyle);
+                createCell(row, colNum++, extractImageFileName(ad.getImageUrl()), dataStyle);
+                createCell(row, colNum++, mapCallToAction(ad.getCallToAction()), dataStyle);
+                createCell(row, colNum++, ad.getPrimaryText(), dataStyle);
             }
 
             // Auto-size columns for better readability (with limits for performance)

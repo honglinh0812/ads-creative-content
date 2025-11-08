@@ -47,7 +47,6 @@
                 v-model:value="form.name"
                 size="large"
                 :placeholder="$t('campaign.create.form.placeholder.campaignName')"
-                @blur="validateForm()"
               />
             </a-form-item>
           </a-col>

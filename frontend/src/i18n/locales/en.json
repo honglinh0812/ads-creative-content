@@ -965,8 +965,21 @@
       }
     },
     "step2": {
-      "sectionTitle": "Choose your AI superpowers! 🤖",
-      "sectionSubtitle": "Select the best AI providers for your creative needs",
+      "cardTitle": "AI Provider Selection",
+      "sectionTitle": "Choose AI providers for each variation",
+      "sectionSubtitle": "Select the best AI tools to generate your ad content",
+      "table": {
+        "variationColumn": "Variation",
+        "textProviderColumn": "Text Provider",
+        "imageProviderColumn": "Image Provider",
+        "variation": "Variation",
+        "selectTextProvider": "Select text provider",
+        "selectImageProvider": "Select image provider"
+      },
+      "info": {
+        "textProvidersTitle": "📝 Text Provider Information",
+        "imageProvidersTitle": "🎨 Image Provider Information"
+      },
       "textGeneration": {
         "title": "Text Generation",
         "subtitle": "Pick your copywriting assistant"
@@ -974,13 +987,6 @@
       "imageGeneration": {
         "title": "Image Generation",
         "subtitle": "Choose your visual artist"
-      },
-      "powerLevel": {
-        "title": "AI Power Level",
-        "ultraPowerful": "🔥 Ultra powerful combo! Your ads will be amazing!",
-        "greatCombo": "⚡ Great combination! Ready for high-quality results!",
-        "solidChoice": "✨ Solid choice! Your ads will look professional!",
-        "goodStart": "🌱 Good start! Your ads will be decent!"
       },
       "imageUpload": {
         "message": "Image already uploaded",
@@ -990,15 +996,6 @@
         "label": "Upload Media (Optional)",
         "button": "Upload"
       },
-      "enhancement": {
-        "label": "Image Enhancement Options",
-        "upscale": "Upscale Image",
-        "removeBackground": "Remove Background",
-        "styleTransfer": "Style Transfer",
-        "applyButton": "Apply Enhancements & Preview",
-        "previewLabel": "Enhanced Images Preview",
-        "originalLabel": "Original: {name}"
-      },
       "navigation": {
         "generateAd": "Generate Ad"
       }
@@ -1006,52 +1003,73 @@
     "providers": {
       "text": {
         "openai": {
-          "name": "OpenAI GPT",
-          "description": "Advanced language model for high-quality ad copy",
+          "name": "OpenAI GPT-4",
+          "description": "Best for long-form creative copy with natural language",
           "feature1": "Creative writing",
-          "feature2": "Multiple languages",
-          "feature3": "Context awareness"
+          "feature2": "Multilingual",
+          "feature3": "Long context"
         },
         "claude": {
           "name": "Anthropic Claude",
-          "description": "Reliable and safe AI for professional ad content",
+          "description": "Logical, safe, follows brand guidelines strictly",
           "feature1": "Professional tone",
           "feature2": "Safety focused",
           "feature3": "Detailed responses"
         },
         "gemini": {
           "name": "Google Gemini",
-          "description": "Google's powerful multimodal AI",
-          "feature1": "Deep understanding",
-          "feature2": "Multimodal",
-          "feature3": "Fast and efficient"
+          "description": "Fast, free tier available, multimodal",
+          "feature1": "Fast generation",
+          "feature2": "Free tier",
+          "feature3": "Multimodal"
         }
       },
       "image": {
         "openai": {
           "name": "OpenAI DALL-E",
-          "description": "Create stunning, original images for your ads",
-          "feature1": "High quality",
+          "description": "High-quality artistic images, great for abstract concepts",
+          "feature1": "Artistic quality",
           "feature2": "Creative styles",
-          "feature3": "Custom prompts"
+          "feature3": "Abstract concepts"
         },
         "gemini": {
           "name": "Google Gemini Imagen",
-          "description": "Google's advanced AI image generation",
-          "feature1": "High resolution",
-          "feature2": "Fast generation",
+          "description": "Fast generation, good for product/lifestyle imagery",
+          "feature1": "Fast speed",
+          "feature2": "Product photos",
+          "feature3": "Lifestyle images"
+        },
+        "subnp": {
+          "name": "SubNP",
+          "description": "Free unlimited generations, multiple style options",
+          "feature1": "Completely free",
+          "feature2": "Unlimited usage",
           "feature3": "Multiple models"
+        },
+        "deapi": {
+          "name": "DeAPI",
+          "description": "High-quality realistic images, customizable parameters",
+          "feature1": "Realistic quality",
+          "feature2": "Customizable",
+          "feature3": "Advanced controls"
+        },
+        "puter": {
+          "name": "Puter AI",
+          "description": "35+ models, no limits, great for experimentation",
+          "feature1": "35+ models",
+          "feature2": "No limits",
+          "feature3": "DALL-E/Flux/SD3"
         },
         "falai": {
           "name": "FAL AI",
-          "description": "Advanced AI image generation",
+          "description": "Advanced AI image generation (currently unavailable)",
           "feature1": "High resolution",
           "feature2": "Fast generation",
           "feature3": "Multiple models"
         },
         "stableDiffusion": {
           "name": "Stable Diffusion",
-          "description": "Open-source image generation",
+          "description": "Open-source image generation (currently unavailable)",
           "feature1": "Open source",
           "feature2": "Customizable",
           "feature3": "Fast generation"

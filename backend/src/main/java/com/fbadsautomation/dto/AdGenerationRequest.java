@@ -82,6 +82,35 @@ public class AdGenerationRequest {
              message = "Invalid ad style. Must be one of: PROFESSIONAL, CASUAL, HUMOROUS, URGENT, LUXURY, EDUCATIONAL, INSPIRATIONAL, MINIMALIST")
     private String adStyle; // Optional: creative style/tone for ad content (Issue #8)
 
+    // New field for per-variation provider selection
+    @Valid
+    @Size(max = 10, message = "Cannot exceed 10 variations")
+    private List<VariationProviderConfig> variations; // Per-variation provider configuration
+
+    // Inner class for per-variation provider configuration
+    public static class VariationProviderConfig {
+        @NotBlank(message = "Text provider is required")
+        @Pattern(regexp = "^(openai|gemini|anthropic|huggingface)$",
+                 message = "Invalid text provider. Must be openai, gemini, anthropic, or huggingface")
+        private String textProvider;
+
+        @Pattern(regexp = "^(gemini|openai|huggingface|stable-diffusion|fal-ai|subnp|deapi|puter)$",
+                 message = "Invalid image provider. Must be gemini, openai, huggingface, stable-diffusion, fal-ai, subnp, deapi, or puter")
+        private String imageProvider;
+
+        public VariationProviderConfig() {}
+
+        public VariationProviderConfig(String textProvider, String imageProvider) {
+            this.textProvider = textProvider;
+            this.imageProvider = imageProvider;
+        }
+
+        public String getTextProvider() { return textProvider; }
+        public void setTextProvider(String textProvider) { this.textProvider = textProvider; }
+        public String getImageProvider() { return imageProvider; }
+        public void setImageProvider(String imageProvider) { this.imageProvider = imageProvider; }
+    }
+
     // Inner class for lead form questions
     public static class LeadFormQuestion {
         @NotBlank(message = "Question type is required")
@@ -189,4 +218,7 @@ public class AdGenerationRequest {
 
     public String getAdStyle() { return adStyle; }
     public void setAdStyle(String adStyle) { this.adStyle = adStyle; }
+
+    public List<VariationProviderConfig> getVariations() { return variations; }
+    public void setVariations(List<VariationProviderConfig> variations) { this.variations = variations; }
 }

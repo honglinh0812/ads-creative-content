@@ -1145,8 +1145,21 @@
       }
     },
     "step2": {
-      "sectionTitle": "Chọn siêu năng lực AI của bạn! 🤖",
-      "sectionSubtitle": "Chọn nhà cung cấp AI tốt nhất cho nhu cầu sáng tạo của bạn",
+      "cardTitle": "Chọn nhà cung cấp AI",
+      "sectionTitle": "Chọn nhà cung cấp AI cho từng biến thể",
+      "sectionSubtitle": "Chọn công cụ AI tốt nhất để tạo nội dung quảng cáo",
+      "table": {
+        "variationColumn": "Biến thể",
+        "textProviderColumn": "Nhà cung cấp văn bản",
+        "imageProviderColumn": "Nhà cung cấp hình ảnh",
+        "variation": "Biến thể",
+        "selectTextProvider": "Chọn nhà cung cấp văn bản",
+        "selectImageProvider": "Chọn nhà cung cấp hình ảnh"
+      },
+      "info": {
+        "textProvidersTitle": "📝 Thông tin nhà cung cấp văn bản",
+        "imageProvidersTitle": "🎨 Thông tin nhà cung cấp hình ảnh"
+      },
       "textGeneration": {
         "title": "Tạo văn bản",
         "subtitle": "Chọn trợ lý copywriting của bạn"
@@ -1154,13 +1167,6 @@
       "imageGeneration": {
         "title": "Tạo hình ảnh",
         "subtitle": "Chọn nghệ sĩ thị giác của bạn"
-      },
-      "powerLevel": {
-        "title": "Mức độ AI",
-        "ultraPowerful": "🔥 Siêu mạnh! Quảng cáo của bạn sẽ tuyệt vời!",
-        "greatCombo": "⚡ Kết hợp tuyệt vời! Sẵn sàng cho kết quả chất lượng cao!",
-        "solidChoice": "✨ Lựa chọn vững chắc! Quảng cáo của bạn sẽ trông chuyên nghiệp!",
-        "goodStart": "🌱 Khởi đầu tốt! Quảng cáo của bạn sẽ ổn!"
       },
       "imageUpload": {
         "message": "Đã tải lên hình ảnh",
@@ -1170,15 +1176,6 @@
         "label": "Tải lên Media (Tùy chọn)",
         "button": "Tải lên"
       },
-      "enhancement": {
-        "label": "Tùy chọn cải thiện hình ảnh",
-        "upscale": "Nâng cấp hình ảnh",
-        "removeBackground": "Xóa nền",
-        "styleTransfer": "Chuyển đổi phong cách",
-        "applyButton": "Áp dụng cải thiện & Xem trước",
-        "previewLabel": "Xem trước hình ảnh đã cải thiện",
-        "originalLabel": "Gốc: {name}"
-      },
       "navigation": {
         "generateAd": "Tạo quảng cáo"
       }
@@ -1186,52 +1183,73 @@
     "providers": {
       "text": {
         "openai": {
-          "name": "OpenAI GPT",
-          "description": "Mô hình ngôn ngữ tiên tiến cho bản sao quảng cáo chất lượng cao",
+          "name": "OpenAI GPT-4",
+          "description": "Tốt nhất cho nội dung sáng tạo dài với ngôn ngữ tự nhiên",
           "feature1": "Viết sáng tạo",
-          "feature2": "Nhiều ngôn ngữ",
-          "feature3": "Nhận thức ngữ cảnh"
+          "feature2": "Đa ngôn ngữ",
+          "feature3": "Ngữ cảnh dài"
         },
         "claude": {
           "name": "Anthropic Claude",
-          "description": "AI đáng tin cậy và an toàn cho nội dung quảng cáo chuyên nghiệp",
+          "description": "Logic, an toàn, tuân thủ hướng dẫn thương hiệu nghiêm ngặt",
           "feature1": "Giọng điệu chuyên nghiệp",
           "feature2": "Tập trung vào an toàn",
           "feature3": "Phản hồi chi tiết"
         },
         "gemini": {
           "name": "Google Gemini",
-          "description": "AI đa phương thức mạnh mẽ của Google",
-          "feature1": "Hiểu biết sâu",
-          "feature2": "Đa phương thức",
-          "feature3": "Nhanh và hiệu quả"
+          "description": "Nhanh, có gói miễn phí, đa phương thức",
+          "feature1": "Tạo nhanh",
+          "feature2": "Gói miễn phí",
+          "feature3": "Đa phương thức"
         }
       },
       "image": {
         "openai": {
           "name": "OpenAI DALL-E",
-          "description": "Tạo hình ảnh tuyệt đẹp, độc đáo cho quảng cáo của bạn",
-          "feature1": "Chất lượng cao",
+          "description": "Hình ảnh nghệ thuật chất lượng cao, tốt cho ý tưởng trừu tượng",
+          "feature1": "Chất lượng nghệ thuật",
           "feature2": "Phong cách sáng tạo",
-          "feature3": "Prompt tùy chỉnh"
+          "feature3": "Ý tưởng trừu tượng"
         },
         "gemini": {
           "name": "Google Gemini Imagen",
-          "description": "Tạo hình ảnh AI tiên tiến của Google",
-          "feature1": "Độ phân giải cao",
-          "feature2": "Tạo nhanh",
+          "description": "Tạo nhanh, tốt cho hình ảnh sản phẩm/phong cách sống",
+          "feature1": "Tốc độ nhanh",
+          "feature2": "Ảnh sản phẩm",
+          "feature3": "Hình phong cách sống"
+        },
+        "subnp": {
+          "name": "SubNP",
+          "description": "Tạo miễn phí không giới hạn, nhiều tùy chọn phong cách",
+          "feature1": "Hoàn toàn miễn phí",
+          "feature2": "Không giới hạn",
           "feature3": "Nhiều mô hình"
+        },
+        "deapi": {
+          "name": "DeAPI",
+          "description": "Hình ảnh chân thực chất lượng cao, tham số tùy chỉnh",
+          "feature1": "Chất lượng chân thực",
+          "feature2": "Tùy chỉnh được",
+          "feature3": "Điều khiển nâng cao"
+        },
+        "puter": {
+          "name": "Puter AI",
+          "description": "35+ mô hình, không giới hạn, tuyệt vời để thử nghiệm",
+          "feature1": "35+ mô hình",
+          "feature2": "Không giới hạn",
+          "feature3": "DALL-E/Flux/SD3"
         },
         "falai": {
           "name": "FAL AI",
-          "description": "Tạo hình ảnh AI tiên tiến",
+          "description": "Tạo hình ảnh AI tiên tiến (hiện không khả dụng)",
           "feature1": "Độ phân giải cao",
           "feature2": "Tạo nhanh",
           "feature3": "Nhiều mô hình"
         },
         "stableDiffusion": {
           "name": "Stable Diffusion",
-          "description": "Tạo hình ảnh mã nguồn mở",
+          "description": "Tạo hình ảnh mã nguồn mở (hiện không khả dụng)",
           "feature1": "Mã nguồn mở",
           "feature2": "Có thể tùy chỉnh",
           "feature3": "Tạo nhanh"

@@ -2,7 +2,7 @@
   <!-- Hamburger button outside sidebar, shown when sidebar is closed -->
   <button v-if="!sidebarOpen" class="sidebar-hamburger-fixed" @click="$emit('toggle')" :aria-label="$t('sidebar.openSidebar')">
     <MenuOutlined class="w-6 h-6" />
-  </button>
+</button>
   <aside :class="['app-sidebar', { open: sidebarOpen }]">
     <!-- Hamburger button inside sidebar, shown when sidebar is open -->
     <button v-if="sidebarOpen" class="sidebar-hamburger" @click="$emit('toggle')" :aria-label="$t('sidebar.closeSidebar')">

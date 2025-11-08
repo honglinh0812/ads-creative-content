@@ -368,84 +368,11 @@
 
       <!-- Step 2: AI Configuration -->
       <div v-if="currentStep === 2" class="step-content">
-        <div class="ai-config-container">
-          <div class="ai-section-header">
-            <h2 class="section-title-magic">{{ $t('adCreate.step2.sectionTitle') }}</h2>
-            <p class="section-subtitle-magic">{{ $t('adCreate.step2.sectionSubtitle') }}</p>
-          </div>
-
-          <!-- Text Provider Selection - Creative Layout -->
-          <div class="provider-section text-providers">
-            <div class="provider-section-header">
-              <div class="section-icon">✍️</div>
-              <div>
-                <h3 class="provider-title">{{ $t('adCreate.step2.textGeneration.title') }}</h3>
-                <p class="provider-subtitle">{{ $t('adCreate.step2.textGeneration.subtitle') }}</p>
-              </div>
-            </div>
-
-            <div class="creative-provider-grid">
-              <div
-                v-for="provider in textProviders"
-                :key="provider.value"
-                class="creative-provider-card text-provider"
-                :class="{
-                  selected: formData.textProvider === provider.value,
-                  disabled: !provider.enabled
-                }"
-                @click="formData.textProvider = provider.value"
-              >
-                <input
-                  type="radio"
-                  :value="provider.value"
-                  v-model="formData.textProvider"
-                  style="display: none"
-                />
-
-                <div class="provider-visual">
-                  <div class="provider-icon">{{ getProviderIcon(provider.value, 'text') }}</div>
-                  <div class="provider-status" v-if="!provider.enabled">⚠️</div>
-                </div>
-
-                <div class="provider-info">
-                  <h4 class="provider-name">{{ provider.name }}</h4>
-                  <p class="provider-desc">{{ provider.description }}</p>
-
-                  <div class="provider-badges">
-                    <span
-                      v-for="feature in provider.features"
-                      :key="feature"
-                      class="feature-badge"
-                    >
-                      {{ feature }}
-                    </span>
-                  </div>
-
-                  <div class="provider-rating">
-                    <div class="rating-stars">
-                      <span v-for="n in getProviderRating(provider.value)" :key="n">⭐</span>
-                    </div>
-                    <span class="rating-text">{{ getProviderRatingText(provider.value) }}</span>
-                  </div>
-                </div>
-
-                <div class="provider-selection">
-                  <div class="selection-indicator">
-                    <div class="selection-dot"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Image Provider Selection - Creative Layout -->
-          <div class="provider-section image-providers">
-            <div class="provider-section-header">
-              <div class="section-icon">🎨</div>
-              <div>
-                <h3 class="provider-title">{{ $t('adCreate.step2.imageGeneration.title') }}</h3>
-                <p class="provider-subtitle">{{ $t('adCreate.step2.imageGeneration.subtitle') }}</p>
-              </div>
+        <a-card :title="$t('adCreate.step2.cardTitle')" class="enhanced-card">
+          <div class="ai-config-container">
+            <div class="ai-section-header">
+              <h2 class="section-title-magic">{{ $t('adCreate.step2.sectionTitle') }}</h2>
+              <p class="section-subtitle-magic">{{ $t('adCreate.step2.sectionSubtitle') }}</p>
             </div>
 
             <!-- Image Upload Info Message -->
@@ -456,78 +383,148 @@
               type="info"
               show-icon
               closable
-              style="margin-bottom: 16px;"
+              style="margin-bottom: 24px;"
             />
 
-            <div class="creative-provider-grid">
-              <div
-                v-for="provider in imageProviders"
-                :key="provider.value"
-                class="creative-provider-card image-provider"
-                :class="{
-                  selected: formData.imageProvider === provider.value,
-                  disabled: !provider.enabled || hasUploadedImage
-                }"
-                @click="!hasUploadedImage && provider.enabled ? (formData.imageProvider = provider.value) : null"
+            <!-- Provider Selection Table -->
+            <div class="provider-selection-table">
+              <a-table
+                :columns="providerTableColumns"
+                :data-source="formData.variations"
+                :pagination="false"
+                bordered
+                size="middle"
               >
-                <input
-                  type="radio"
-                  :value="provider.value"
-                  v-model="formData.imageProvider"
-                  style="display: none"
-                />
-
-                <div class="provider-visual">
-                  <div class="provider-icon">{{ getProviderIcon(provider.value, 'image') }}</div>
-                  <div class="provider-status" v-if="!provider.enabled">⚠️</div>
-                </div>
-
-                <div class="provider-info">
-                  <h4 class="provider-name">{{ provider.name }}</h4>
-                  <p class="provider-desc">{{ provider.description }}</p>
-
-                  <div class="provider-badges">
-                    <span
-                      v-for="feature in provider.features"
-                      :key="feature"
-                      class="feature-badge"
-                    >
-                      {{ feature }}
-                    </span>
-                  </div>
-
-                  <div class="provider-rating">
-                    <div class="rating-stars">
-                      <span v-for="n in getProviderRating(provider.value)" :key="n">⭐</span>
+                <template #headerCell="{ column }">
+                  <template v-if="column.key === 'variation'">
+                    <span style="font-weight: 600;">{{ column.title }}</span>
+                  </template>
+                  <template v-else-if="column.key === 'textProvider'">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span>✍️</span>
+                      <span style="font-weight: 600;">{{ column.title }}</span>
                     </div>
-                    <span class="rating-text">{{ getProviderRatingText(provider.value) }}</span>
-                  </div>
-                </div>
+                  </template>
+                  <template v-else-if="column.key === 'imageProvider'">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span>🎨</span>
+                      <span style="font-weight: 600;">{{ column.title }}</span>
+                    </div>
+                  </template>
+                </template>
 
-                <div class="provider-selection">
-                  <div class="selection-indicator">
-                    <div class="selection-dot"></div>
+                <template #bodyCell="{ column, record, index }">
+                  <template v-if="column.key === 'variation'">
+                    <div class="variation-label">
+                      <span class="variation-number">{{ index + 1 }}</span>
+                      <span class="variation-text">{{ $t('adCreate.step2.table.variation') }} {{ index + 1 }}</span>
+                    </div>
+                  </template>
+
+                  <template v-else-if="column.key === 'textProvider'">
+                    <a-select
+                      v-model:value="record.textProvider"
+                      :placeholder="$t('adCreate.step2.table.selectTextProvider')"
+                      style="width: 100%;"
+                      size="large"
+                    >
+                      <a-select-option
+                        v-for="provider in enabledTextProviders"
+                        :key="provider.value"
+                        :value="provider.value"
+                      >
+                        <div class="provider-option">
+                          <span class="provider-icon-small">{{ getProviderIcon(provider.value, 'text') }}</span>
+                          <span class="provider-name-small">{{ provider.name }}</span>
+                        </div>
+                      </a-select-option>
+                    </a-select>
+                  </template>
+
+                  <template v-else-if="column.key === 'imageProvider'">
+                    <a-select
+                      v-model:value="record.imageProvider"
+                      :placeholder="$t('adCreate.step2.table.selectImageProvider')"
+                      :disabled="hasUploadedImage"
+                      style="width: 100%;"
+                      size="large"
+                    >
+                      <a-select-option
+                        v-for="provider in enabledImageProviders"
+                        :key="provider.value"
+                        :value="provider.value"
+                      >
+                        <div class="provider-option">
+                          <span class="provider-icon-small">{{ getProviderIcon(provider.value, 'image') }}</span>
+                          <span class="provider-name-small">{{ provider.name }}</span>
+                        </div>
+                      </a-select-option>
+                    </a-select>
+                  </template>
+                </template>
+              </a-table>
+            </div>
+
+            <!-- Provider Info Cards -->
+            <div class="provider-info-section">
+              <a-collapse v-model:activeKey="activeInfoPanels" ghost>
+                <a-collapse-panel key="text" :header="$t('adCreate.step2.info.textProvidersTitle')">
+                  <div class="provider-info-grid">
+                    <div
+                      v-for="provider in textProviders"
+                      :key="provider.value"
+                      class="provider-info-card"
+                      :class="{ disabled: !provider.enabled }"
+                    >
+                      <div class="info-header">
+                        <span class="info-icon">{{ getProviderIcon(provider.value, 'text') }}</span>
+                        <h4 class="info-name">{{ provider.name }}</h4>
+                      </div>
+                      <p class="info-description">{{ provider.description }}</p>
+                      <div class="info-features">
+                        <span
+                          v-for="(feature, idx) in provider.features"
+                          :key="idx"
+                          class="info-feature-badge"
+                        >
+                          {{ feature }}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </a-collapse-panel>
+
+                <a-collapse-panel key="image" :header="$t('adCreate.step2.info.imageProvidersTitle')">
+                  <div class="provider-info-grid">
+                    <div
+                      v-for="provider in imageProviders"
+                      :key="provider.value"
+                      class="provider-info-card"
+                      :class="{ disabled: !provider.enabled }"
+                    >
+                      <div class="info-header">
+                        <span class="info-icon">{{ getProviderIcon(provider.value, 'image') }}</span>
+                        <h4 class="info-name">{{ provider.name }}</h4>
+                      </div>
+                      <p class="info-description">{{ provider.description }}</p>
+                      <div class="info-features">
+                        <span
+                          v-for="(feature, idx) in provider.features"
+                          :key="idx"
+                          class="info-feature-badge"
+                        >
+                          {{ feature }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </a-collapse-panel>
+              </a-collapse>
             </div>
           </div>
-
-          <!-- AI Power Level Indicator -->
-          <div class="ai-power-indicator">
-            <div class="power-header">
-              <span class="power-icon">⚡</span>
-              <span class="power-title">{{ $t('adCreate.step2.powerLevel.title') }}</span>
-            </div>
-            <div class="power-bar">
-              <div class="power-fill" :style="{ width: calculateAIPowerLevel() + '%' }"></div>
-            </div>
-            <div class="power-message">{{ getAIPowerMessage() }}</div>
-          </div>
-        </div>
 
           <!-- Optional Media Upload -->
-          <a-form-item :label="$t('adCreate.step2.uploadMedia.label')">
+          <a-form-item :label="$t('adCreate.step2.uploadMedia.label')" style="margin-top: 24px;">
             <a-upload
               :file-list="uploadedFiles"
               :before-upload="handleFileUpload"
@@ -541,29 +538,7 @@
               </div>
             </a-upload>
           </a-form-item>
-
-          <!-- Enhancement Options -->
-          <a-form-item :label="$t('adCreate.step2.enhancement.label')" v-if="uploadedFiles.length > 0">
-            <a-checkbox-group v-model:value="formData.enhancementOptions">
-              <a-checkbox value="upscale">{{ $t('adCreate.step2.enhancement.upscale') }}</a-checkbox>
-              <a-checkbox value="remove_background">{{ $t('adCreate.step2.enhancement.removeBackground') }}</a-checkbox>
-              <a-checkbox value="style_transfer">{{ $t('adCreate.step2.enhancement.styleTransfer') }}</a-checkbox>
-            </a-checkbox-group>
-            <a-button @click="enhanceImages" :loading="isEnhancing" style="margin-top: 10px;">{{ $t('adCreate.step2.enhancement.applyButton') }}</a-button>
-          </a-form-item>
-
-          <!-- Enhancement Previews -->
-          <a-form-item :label="$t('adCreate.step2.enhancement.previewLabel')" v-if="enhancedImages.length > 0">
-            <div class="enhanced-previews">
-              <div v-for="(img, index) in enhancedImages" :key="index" class="preview-item">
-                <img :src="img.url" alt="Enhanced Preview" style="max-width: 300px;" />
-                <p>{{ $t('adCreate.step2.enhancement.originalLabel', { name: img.originalName }) }}</p>
-              </div>
-            </div>
-          </a-form-item>
-
-          <!-- Error Display -->
-          <FieldError :error="generateError" />
+        </a-card>
 
           <!-- Navigation -->
           <div class="step-navigation">
@@ -964,8 +939,15 @@ export default {
         websiteUrl: '',
         leadFormQuestions: [],
         prompt: '',
+        // Legacy fields kept for backward compatibility
         textProvider: 'openai',
-        imageProvider: 'gemini', // Default to Gemini Imagen 3 for image generation
+        imageProvider: 'gemini',
+        // New per-variation provider selection
+        variations: [
+          { textProvider: 'openai', imageProvider: 'gemini' },
+          { textProvider: 'openai', imageProvider: 'gemini' },
+          { textProvider: 'openai', imageProvider: 'gemini' }
+        ],
         enhancementOptions: []
         // Issue #9: audienceSegment removed - now at campaign level
       },
@@ -1045,6 +1027,50 @@ export default {
           enabled: true
         },
         {
+          value: 'gemini',
+          name: this.$t('adCreate.providers.image.gemini.name'),
+          description: this.$t('adCreate.providers.image.gemini.description'),
+          features: [
+            this.$t('adCreate.providers.image.gemini.features.0'),
+            this.$t('adCreate.providers.image.gemini.features.1'),
+            this.$t('adCreate.providers.image.gemini.features.2')
+          ],
+          enabled: true
+        },
+        {
+          value: 'subnp',
+          name: this.$t('adCreate.providers.image.subnp.name'),
+          description: this.$t('adCreate.providers.image.subnp.description'),
+          features: [
+            this.$t('adCreate.providers.image.subnp.features.0'),
+            this.$t('adCreate.providers.image.subnp.features.1'),
+            this.$t('adCreate.providers.image.subnp.features.2')
+          ],
+          enabled: true
+        },
+        {
+          value: 'deapi',
+          name: this.$t('adCreate.providers.image.deapi.name'),
+          description: this.$t('adCreate.providers.image.deapi.description'),
+          features: [
+            this.$t('adCreate.providers.image.deapi.features.0'),
+            this.$t('adCreate.providers.image.deapi.features.1'),
+            this.$t('adCreate.providers.image.deapi.features.2')
+          ],
+          enabled: true
+        },
+        {
+          value: 'puter',
+          name: this.$t('adCreate.providers.image.puter.name'),
+          description: this.$t('adCreate.providers.image.puter.description'),
+          features: [
+            this.$t('adCreate.providers.image.puter.features.0'),
+            this.$t('adCreate.providers.image.puter.features.1'),
+            this.$t('adCreate.providers.image.puter.features.2')
+          ],
+          enabled: true
+        },
+        {
           value: 'fal-ai',
           name: this.$t('adCreate.providers.image.falai.name'),
           description: this.$t('adCreate.providers.image.falai.description'),
@@ -1118,7 +1144,27 @@ export default {
       asyncJobCurrentStep: '',
       showAsyncProgressModal: false,
       pollingInterval: null,
-      asyncHealthy: true
+      asyncHealthy: true,
+
+      // Provider selection UI states
+      activeInfoPanels: [],
+      providerTableColumns: [
+        {
+          title: this.$t('adCreate.step2.table.variationColumn'),
+          key: 'variation',
+          width: '150px'
+        },
+        {
+          title: this.$t('adCreate.step2.table.textProviderColumn'),
+          key: 'textProvider',
+          width: '40%'
+        },
+        {
+          title: this.$t('adCreate.step2.table.imageProviderColumn'),
+          key: 'imageProvider',
+          width: '40%'
+        }
+      ]
     }
   },
   computed: {
@@ -1211,6 +1257,34 @@ export default {
       if (!this.formData.adStyle) return null
       const selectedStyle = this.adStyleOptions.find(s => s.value === this.formData.adStyle)
       return selectedStyle ? selectedStyle.description : null
+    },
+
+    // New computed properties for provider selection
+    enabledTextProviders() {
+      return this.textProviders.filter(p => p.enabled)
+    },
+
+    enabledImageProviders() {
+      return this.imageProviders.filter(p => p.enabled)
+    }
+  },
+  watch: {
+    // Sync variations array when numberOfVariations changes
+    'formData.numberOfVariations'(newCount) {
+      const currentLength = this.formData.variations.length
+
+      if (newCount > currentLength) {
+        // Add new variations with default providers
+        for (let i = currentLength; i < newCount; i++) {
+          this.formData.variations.push({
+            textProvider: 'openai',
+            imageProvider: 'gemini'
+          })
+        }
+      } else if (newCount < currentLength) {
+        // Remove excess variations
+        this.formData.variations.splice(newCount)
+      }
     }
   },
   async mounted() {
@@ -1651,6 +1725,23 @@ export default {
           promptWithCTA += `\n\nLưu ý: Chỉ sử dụng một trong các Call to Action sau cho quảng cáo: ${ctaList}. Không tạo CTA khác.`
         }
 
+        // Calculate most frequent providers from variations array
+        const textProviderCounts = {}
+        const imageProviderCounts = {}
+
+        this.formData.variations.forEach(variation => {
+          textProviderCounts[variation.textProvider] = (textProviderCounts[variation.textProvider] || 0) + 1
+          imageProviderCounts[variation.imageProvider] = (imageProviderCounts[variation.imageProvider] || 0) + 1
+        })
+
+        const mostFrequentTextProvider = Object.keys(textProviderCounts).reduce((a, b) =>
+          textProviderCounts[a] > textProviderCounts[b] ? a : b, 'openai'
+        )
+
+        const mostFrequentImageProvider = Object.keys(imageProviderCounts).reduce((a, b) =>
+          imageProviderCounts[a] > imageProviderCounts[b] ? a : b, 'gemini'
+        )
+
         const requestData = {
           campaignId: this.formData.campaignId,
           adType: this.formData.adType,
@@ -1658,8 +1749,11 @@ export default {
           prompt: promptWithCTA,
           language: this.formData.language,
           adLinks: validLinks,
-          textProvider: this.formData.textProvider,
-          imageProvider: this.formData.imageProvider,
+          // Send variations array (new format)
+          variations: this.formData.variations,
+          // Also send most-frequent providers as fallback (backward compatibility)
+          textProvider: mostFrequentTextProvider,
+          imageProvider: mostFrequentImageProvider,
           numberOfVariations: this.formData.numberOfVariations,
           mediaFileUrl: this.uploadedFileUrl,
           callToAction: this.formData.callToAction,
@@ -3570,6 +3664,147 @@ export default {
 
   .preview-desc {
     font-size: 11px;
+  }
+}
+
+/* New Provider Selection Table Styles */
+.provider-selection-table {
+  margin: 24px 0;
+}
+
+.variation-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.variation-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.variation-text {
+  color: #262626;
+  font-size: 14px;
+}
+
+.provider-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.provider-icon-small {
+  font-size: 18px;
+}
+
+.provider-name-small {
+  font-size: 14px;
+  color: #262626;
+}
+
+/* Provider Info Section */
+.provider-info-section {
+  margin-top: 32px;
+}
+
+.provider-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.provider-info-card {
+  background: white;
+  border: 1px solid #f0f2f5;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.provider-info-card:hover {
+  border-color: #1890ff;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.1);
+}
+
+.provider-info-card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.provider-info-card.disabled:hover {
+  border-color: #f0f2f5;
+  box-shadow: none;
+}
+
+.info-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.info-icon {
+  font-size: 24px;
+}
+
+.info-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0;
+}
+
+.info-description {
+  font-size: 13px;
+  color: #595959;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.info-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.info-feature-badge {
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+  color: #0958d9;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Mobile responsive for provider selection */
+@media (max-width: 768px) {
+  .provider-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .variation-label {
+    gap: 8px;
+  }
+
+  .variation-number {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+
+  .variation-text {
+    font-size: 13px;
   }
 }
 </style>
