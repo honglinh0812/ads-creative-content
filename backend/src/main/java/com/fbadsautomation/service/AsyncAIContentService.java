@@ -22,6 +22,8 @@ public class AsyncAIContentService {
     private final AIContentValidationService validationService;
     private final AsyncErrorHandlingService errorHandlingService;
     private final AIContentService aiContentService;
+    private final com.fbadsautomation.repository.UserRepository userRepository;
+    private final PersonaService personaService;
 
     @Async("aiProcessingExecutor")
     public CompletableFuture<Void> generateContentAsync(
@@ -39,7 +41,9 @@ public class AsyncAIContentService {
             String mediaFileUrl,
             String websiteUrl,
             List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions,
-            AudienceSegmentRequest audienceSegment) {
+            AudienceSegmentRequest audienceSegment,
+            Long personaId,
+            List<String> trendingKeywords) {
 
         try {
             errorHandlingService.validateJobExecution(jobId, "content-generation");
@@ -52,9 +56,33 @@ public class AsyncAIContentService {
             tempAd.setAdType(convertContentTypeToAdType(contentType));
             tempAd.setPrompt(prompt);
 
+            // Phase 1: Fetch user-selected persona if provided
+            com.fbadsautomation.model.Persona userSelectedPersona = null;
+            if (personaId != null && userId != null) {
+                try {
+                    com.fbadsautomation.model.User user = userRepository.findById(userId)
+                        .orElse(null);
+                    if (user != null) {
+                        userSelectedPersona = personaService.findByIdAndUser(personaId, user)
+                            .orElse(null);
+                        if (userSelectedPersona != null) {
+                            log.info("[Async] Using user-selected persona: {} (ID: {})",
+                                userSelectedPersona.getName(), personaId);
+                        } else {
+                            log.warn("[Async] Persona ID {} not found for user {}, will use auto-selection",
+                                personaId, userId);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("[Async] Failed to fetch persona {}, falling back to auto-selection: {}",
+                        personaId, e.getMessage());
+                }
+            }
+
             asyncJobService.updateJobProgress(jobId, 20, "Generating content with AI");
 
             // Use the same sync service logic to ensure consistency
+            // Phase 1&2: Pass persona and trending keywords
             List<AdContent> contents = aiContentService.generateAdContent(
                 tempAd,
                 prompt,
@@ -67,7 +95,9 @@ public class AsyncAIContentService {
                 extractedContent,
                 mediaFileUrl,
                 callToAction,
-                audienceSegment
+                audienceSegment,
+                userSelectedPersona, // Phase 1: User-selected persona
+                trendingKeywords     // Phase 2: Trending keywords
             );
 
             asyncJobService.updateJobProgress(jobId, 90, "Processing generated content");

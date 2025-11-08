@@ -6,7 +6,7 @@
       <div v-if="authLoading" class="auth-loading">
         <div class="loading-content">
           <div class="loading-logo">
-            <a-icon type="thunderbolt" style="font-size: 48px; color: #1890ff;" />
+            <font-awesome-icon icon="bolt" style="font-size: 48px; color: #1890ff;" />
           </div>
           <a-spin size="large" />
           <p class="loading-text">{{ $t('app.loading') }}</p>
@@ -38,36 +38,36 @@
             class="sidebar-menu"
           >
             <a-menu-item key="dashboard">
-              <template #icon><a-icon type="dashboard" /></template>
+              <template #icon><font-awesome-icon icon="gauge" /></template>
               <span>{{ $t('navigation.dashboard') }}</span>
             </a-menu-item>
 
             <a-sub-menu key="campaigns">
-              <template #icon><a-icon type="project" /></template>
+              <template #icon><font-awesome-icon icon="bullhorn" /></template>
               <template #title>{{ $t('navigation.campaigns') }}</template>
               <a-menu-item key="campaigns-list">{{ $t('navigation.allCampaigns') }}</a-menu-item>
               <a-menu-item key="campaigns-create">{{ $t('navigation.createCampaign') }}</a-menu-item>
             </a-sub-menu>
 
             <a-sub-menu key="ads">
-              <template #icon><a-icon type="picture" /></template>
+              <template #icon><font-awesome-icon icon="image" /></template>
               <template #title>{{ $t('navigation.ads') }}</template>
               <a-menu-item key="ads-list">{{ $t('navigation.allAds') }}</a-menu-item>
               <a-menu-item key="ads-create">{{ $t('navigation.createAd') }}</a-menu-item>
             </a-sub-menu>
 
             <a-menu-item key="analytics">
-              <template #icon><a-icon type="bar-chart" /></template>
+              <template #icon><font-awesome-icon icon="chart-line" /></template>
               <span>{{ $t('navigation.analytics') }}</span>
             </a-menu-item>
 
             <a-menu-item key="optimization">
-              <template #icon><a-icon type="rocket" /></template>
+              <template #icon><font-awesome-icon icon="rocket" /></template>
               <span>{{ $t('navigation.optimization') }}</span>
             </a-menu-item>
 
             <a-menu-item key="competitors">
-              <template #icon><a-icon type="fund" /></template>
+              <template #icon><font-awesome-icon icon="chart-simple" /></template>
               <span>{{ $t('navigation.competitors') }}</span>
             </a-menu-item>
           </a-menu>
@@ -78,13 +78,13 @@
           <!-- Header -->
           <a-layout-header class="header">
             <div class="header-left">
-              <a-button 
-                type="text" 
+              <a-button
+                type="text"
                 @click="collapsed = !collapsed"
                 class="trigger"
               >
                 <template #icon>
-                  <a-icon :type="collapsed ? 'menu-unfold' : 'menu-fold'" />
+                  <font-awesome-icon :icon="collapsed ? 'xmark' : 'bars'" />
                 </template>
               </a-button>
               
@@ -103,7 +103,7 @@
               <!-- Notifications -->
               <a-badge :count="notificationCountFunc" class="notification-badge">
                 <a-button type="text" shape="circle" @click="showNotifications">
-                  <template #icon><a-icon type="bell" /></template>
+                  <template #icon><font-awesome-icon icon="bell" /></template>
                 </a-button>
               </a-badge>
               <transition name="fade">
@@ -130,21 +130,21 @@
                     {{ username.charAt(0).toUpperCase() }}
                   </a-avatar>
                   <span class="username">{{ username }}</span>
-                  <a-icon type="down" />
+                  <font-awesome-icon icon="chevron-down" />
                 </a-button>
                 <template #overlay>
                   <a-menu @click="onUserMenuClick">
                     <a-menu-item key="profile">
-                      <a-icon type="user" />
+                      <font-awesome-icon icon="user" />
                       {{ $t('navigation.profile') }}
                     </a-menu-item>
                     <a-menu-item key="settings">
-                      <a-icon type="setting" />
+                      <font-awesome-icon icon="gear" />
                       {{ $t('navigation.settings') }}
                     </a-menu-item>
                     <a-menu-divider />
                     <a-menu-item key="logout">
-                      <a-icon type="logout" />
+                      <font-awesome-icon icon="arrow-right-from-bracket" />
                       {{ $t('auth.logout') }}
                     </a-menu-item>
                   </a-menu>
@@ -359,6 +359,36 @@ export default {
   z-index: 100;
 }
 
+/* Sidebar collapsed state - hiển thị icon rõ ràng */
+.sidebar.ant-layout-sider-collapsed .ant-menu-item,
+.sidebar.ant-layout-sider-collapsed .ant-menu-submenu {
+  padding: 0 !important;
+  text-align: center;
+}
+
+.sidebar.ant-layout-sider-collapsed .ant-menu-item-icon,
+.sidebar.ant-layout-sider-collapsed .ant-menu-submenu-title .ant-menu-item-icon {
+  font-size: 20px !important;
+  margin: 0 auto !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Font Awesome icon trong menu */
+.sidebar .ant-menu-item-icon svg,
+.sidebar .ant-menu-submenu-title svg {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+
+.sidebar.ant-layout-sider-collapsed .ant-menu-item-icon svg,
+.sidebar.ant-layout-sider-collapsed .ant-menu-submenu-title svg {
+  width: 20px;
+  height: 20px;
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -432,6 +462,22 @@ export default {
 
 .trigger:active {
   transform: scale(0.95);
+}
+
+/* Icon trong header */
+.trigger svg,
+.notification-badge svg {
+  vertical-align: middle;
+}
+
+.trigger svg {
+  width: 20px;
+  height: 20px;
+}
+
+.notification-badge svg {
+  width: 18px;
+  height: 18px;
 }
 
 .breadcrumb {
@@ -558,6 +604,19 @@ export default {
 .username {
   margin-left: 8px;
   margin-right: 4px;
+}
+
+/* User menu icons */
+.ant-dropdown-menu-item svg {
+  margin-right: 8px;
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+}
+
+.user-menu svg {
+  width: 12px;
+  height: 12px;
 }
 
 .content {

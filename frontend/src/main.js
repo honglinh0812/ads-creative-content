@@ -22,7 +22,48 @@ import { initSentry } from './plugins/sentry.js'
 // i18n
 import i18n from './i18n'
 
+// Font Awesome
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import {
+  faBars,
+  faXmark,
+  faBell,
+  faGauge,
+  faBullhorn,
+  faImage,
+  faChartLine,
+  faRocket,
+  faChartSimple,
+  faChevronDown,
+  faUser,
+  faGear,
+  faArrowRightFromBracket,
+  faBolt
+} from '@fortawesome/free-solid-svg-icons'
+
+// Thêm icons vào library
+library.add(
+  faBars,        // menu-fold
+  faXmark,       // menu-unfold
+  faBell,        // bell
+  faGauge,       // dashboard
+  faBullhorn,    // campaign/project
+  faImage,       // picture
+  faChartLine,   // bar-chart
+  faRocket,      // rocket
+  faChartSimple, // fund
+  faChevronDown, // down arrow
+  faUser,        // user
+  faGear,        // settings
+  faArrowRightFromBracket, // logout
+  faBolt         // thunderbolt
+)
+
 const app = createApp(App)
+
+// Đăng ký Font Awesome component globally
+app.component('font-awesome-icon', FontAwesomeIcon)
 
 // Initialize Sentry (must be done before other configurations)
 initSentry(app, router)

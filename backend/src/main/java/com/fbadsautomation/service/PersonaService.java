@@ -275,6 +275,23 @@ public class PersonaService {
     }
 
     /**
+     * Phase 1: Find persona by ID and validate user ownership.
+     * Used by AdService to fetch user-selected persona.
+     *
+     * @param personaId Persona ID
+     * @param user User entity
+     * @return Optional<Persona>
+     */
+    @Transactional(readOnly = true)
+    public java.util.Optional<Persona> findByIdAndUser(Long personaId, User user) {
+        log.debug("Finding persona ID: {} for user ID: {}", personaId, user != null ? user.getId() : null);
+        if (personaId == null || user == null) {
+            return java.util.Optional.empty();
+        }
+        return personaRepository.findByIdAndUser(personaId, user);
+    }
+
+    /**
      * Enrich prompt with persona details for AI generation.
      * Security: Validates persona ownership before use.
      * Performance: O(n) string concatenation where n is persona fields.

@@ -104,7 +104,9 @@ public class AsyncAdController {
                 request.getMediaFileUrl(),
                 request.getWebsiteUrl(),
                 request.getLeadFormQuestions(),
-                request.getAudienceSegment()
+                request.getAudienceSegment(),
+                request.getPersonaId(),        // Phase 1: Persona ID
+                request.getTrendingKeywords()  // Phase 2: Trending keywords
             );
 
             return ResponseEntity.status(HttpStatus.ACCEPTED)
