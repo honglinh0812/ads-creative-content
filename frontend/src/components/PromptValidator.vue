@@ -52,19 +52,7 @@
         </ul>
       </div>
 
-      <!-- Improved Prompt -->
-      <div v-if="validationResult.improvedPrompt" class="border-t pt-3">
-        <div class="text-sm font-medium text-gray-700 mb-2">{{ $t('components.promptValidator.improved.title') }}:</div>
-        <div class="bg-blue-50 border border-blue-200 rounded p-3 text-sm">
-          <div class="text-gray-700 mb-2">{{ validationResult.improvedPrompt }}</div>
-          <button
-            @click="useImprovedPrompt"
-            class="text-blue-600 hover:text-blue-800 underline text-xs font-medium"
-          >
-            {{ $t('components.promptValidator.improved.useButton') }}
-          </button>
-        </div>
-      </div>
+      <!-- Improved Prompt section removed - now using static suggestions only -->
     </div>
 
     <!-- Loading State -->
@@ -78,8 +66,6 @@
 </template>
 
 <script>
-import api from '@/services/api'
-
 // Simple debounce function
 function debounce(func, wait) {
   let timeout
@@ -139,6 +125,7 @@ export default {
     prompt: {
       handler() {
         if (this.autoValidate && this.shouldValidate) {
+          // Use static validation instead of API call
           this.debouncedValidate()
         } else if (!this.shouldValidate) {
           this.hideValidation()
@@ -152,10 +139,10 @@ export default {
     this.debouncedValidate = debounce(this.validatePrompt, 800)
   },
   methods: {
-    async validatePrompt() {
+    validatePrompt() {
       if (!this.shouldValidate) return
 
-      // Don't validate if prompt is too short (< 10 chars as per backend validation)
+      // Don't validate if prompt is too short (< 10 chars)
       const trimmedPrompt = this.prompt.trim()
       if (trimmedPrompt.length < 10) {
         this.hideValidation()
@@ -165,53 +152,106 @@ export default {
       this.isValidating = true
       this.showValidation = true
 
-      try {
-        const response = await api.post('/prompt/validate', {
-          prompt: trimmedPrompt,
-          adType: this.adType,
-          language: this.language,
-          targetAudience: this.targetAudience,
-          industry: this.industry
-        })
-
-        this.validationResult = response.data
-        console.log('Prompt validation result:', this.validationResult)
-
-      } catch (error) {
-        console.error('Error validating prompt:', error)
-
-        // Handle 400 validation errors specifically
-        if (error.response && error.response.status === 400) {
-          // Don't show error UI for validation failures - just hide the validation
-          this.hideValidation()
-        } else if (error.response && error.response.status === 401) {
-          // Authentication error - user not logged in
-          console.warn('Authentication required for prompt validation')
-          this.hideValidation()
-        } else {
-          // Other errors - show generic error
-          this.validationResult = {
-            valid: false,
-            qualityScore: 0,
-            qualityLevel: 'error',
-            issues: [],
-            suggestions: [this.$t('components.promptValidator.error.validation')]
-          }
-        }
-      } finally {
+      // Use static validation instead of API call
+      setTimeout(() => {
+        this.validationResult = this.getStaticValidation(trimmedPrompt)
         this.isValidating = false
+      }, 100) // Small delay to show loading state
+    },
+
+    getStaticValidation(prompt) {
+      const issues = []
+      const suggestions = []
+      let qualityScore = 70 // Base score
+
+      // Client-side validation rules
+      const wordCount = prompt.split(/\s+/).length
+      const hasCallToAction = /\b(buy|shop|order|subscribe|sign up|download|get|try|visit|learn|discover|explore|click|register|join)\b/i.test(prompt)
+      const hasNumbers = /\d+/.test(prompt)
+      const hasBenefits = /\b(free|save|discount|new|best|quality|easy|fast|now|today|limited)\b/i.test(prompt)
+
+      // Check prompt length
+      if (wordCount < 5) {
+        issues.push({
+          type: 'length',
+          severity: 'warning',
+          message: this.language === 'vi' ? 'Prompt hơi ngắn' : 'Prompt is a bit short',
+          suggestion: this.language === 'vi'
+            ? 'Thêm chi tiết về sản phẩm/dịch vụ để quảng cáo hiệu quả hơn'
+            : 'Add more details about your product/service for better ad quality'
+        })
+        qualityScore -= 15
+      } else if (wordCount > 50) {
+        issues.push({
+          type: 'length',
+          severity: 'warning',
+          message: this.language === 'vi' ? 'Prompt khá dài' : 'Prompt is quite long',
+          suggestion: this.language === 'vi'
+            ? 'Rút gọn lại để tập trung vào thông điệp chính'
+            : 'Consider making it more concise to focus on key message'
+        })
+        qualityScore -= 10
+      } else {
+        qualityScore += 10
+      }
+
+      // Check for call-to-action
+      if (!hasCallToAction) {
+        suggestions.push(
+          this.language === 'vi'
+            ? 'Thêm lời kêu gọi hành động (VD: "Mua ngay", "Đăng ký ngay", "Tìm hiểu thêm")'
+            : 'Add a clear call-to-action (e.g., "Buy now", "Sign up", "Learn more")'
+        )
+        qualityScore -= 10
+      } else {
+        qualityScore += 10
+      }
+
+      // Check for specificity (numbers, percentages)
+      if (!hasNumbers && !hasBenefits) {
+        suggestions.push(
+          this.language === 'vi'
+            ? 'Thêm con số cụ thể hoặc lợi ích rõ ràng (VD: "giảm 50%", "miễn phí", "chỉ 99k")'
+            : 'Add specific numbers or clear benefits (e.g., "50% off", "free shipping", "only $99")'
+        )
+        qualityScore -= 5
+      } else {
+        qualityScore += 5
+      }
+
+      // General best practice suggestions
+      const generalTips = this.language === 'vi' ? [
+        'Nhấn mạnh lợi ích cho khách hàng, không chỉ tính năng sản phẩm',
+        'Tạo cảm giác khẩn cấp (thời gian có hạn, số lượng giới hạn)',
+        'Sử dụng ngôn ngữ đơn giản, dễ hiểu',
+        'Làm nổi bật điểm khác biệt so với đối thủ'
+      ] : [
+        'Emphasize customer benefits, not just product features',
+        'Create urgency (limited time, limited quantity)',
+        'Use simple, easy-to-understand language',
+        'Highlight what makes you different from competitors'
+      ]
+
+      // Add 2-3 random tips to avoid repetition
+      const shuffledTips = generalTips.sort(() => 0.5 - Math.random()).slice(0, 3)
+      suggestions.push(...shuffledTips)
+
+      // Determine quality level
+      let qualityLevel
+      if (qualityScore >= 85) qualityLevel = 'excellent'
+      else if (qualityScore >= 70) qualityLevel = 'good'
+      else if (qualityScore >= 50) qualityLevel = 'fair'
+      else qualityLevel = 'poor'
+
+      return {
+        valid: true,
+        qualityScore: Math.min(100, Math.max(0, qualityScore)),
+        qualityLevel,
+        issues,
+        suggestions: suggestions.length > 0 ? suggestions : undefined
       }
     },
 
-    useImprovedPrompt() {
-      if (this.validationResult && this.validationResult.improvedPrompt) {
-        this.$emit('prompt-updated', this.validationResult.improvedPrompt)
-        // Re-validate the improved prompt
-        this.$nextTick(() => {
-          this.debouncedValidate()
-        })
-      }
-    },
 
     hideValidation() {
       this.showValidation = false

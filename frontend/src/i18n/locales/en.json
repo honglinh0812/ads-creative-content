@@ -990,7 +990,8 @@
       },
       "imageUpload": {
         "message": "Image already uploaded",
-        "description": "You've uploaded an image, so AI image generation is disabled. Remove the uploaded image to enable AI image providers."
+        "description": "You've uploaded an image, so AI image generation is disabled. Remove the uploaded image to enable AI image providers.",
+        "descriptionV2": "You've uploaded an image. This image will be prioritized for generated ads. You can still select an AI image provider as a fallback."
       },
       "uploadMedia": {
         "label": "Upload Media (Optional)",
@@ -998,6 +999,24 @@
       },
       "navigation": {
         "generateAd": "Generate Ad"
+      },
+      "uploadStatus": {
+        "uploaded": "Uploaded",
+        "ai": "AI Generated"
+      },
+      "imageProvider": {
+        "disabledHint": "Using uploaded image",
+        "removeToEnable": "Remove image to select AI provider"
+      },
+      "variationUpload": {
+        "title": "Image Source for Variation {index}",
+        "uploadOption": "Upload custom image",
+        "uploadButton": "Upload",
+        "uploadSuccess": "Uploaded successfully",
+        "aiOption": "Or use AI to generate image",
+        "removeToUseAI": "Remove uploaded image to use AI provider",
+        "willGenerate": "will generate image",
+        "selectProvider": "Select image provider in table above"
       }
     },
     "providers": {
@@ -1181,6 +1200,7 @@
         "campaignsLoadFailed": "Failed to load campaigns",
         "ctaLoadFailed": "Failed to load call to actions",
         "fileUploadFailed": "Failed to upload file",
+        "fileTooLarge": "File is too large. Maximum size is 10MB",
         "promptOrLinksRequired": "Please enter prompt content or provide ad links",
         "adCreationFailed": "Could not create ad. Please try again.",
         "adSaveFailed": "Could not save ad. Please try again.",
@@ -1192,9 +1212,15 @@
         "noContentFound": "No ad content found",
         "imagesLoadFailed": "Some images failed to load. Using placeholder images.",
         "selectAdToSave": "Please select an ad to save",
+        "selectVariation": "Please select an ad to save",
+        "selectVariations": "Please select at least one ad to save",
         "enterAtLeastOneLink": "Please enter at least one ad link",
         "cannotExtract": "Cannot extract content",
-        "qualityScoresLoadFailed": "Could not load quality scores"
+        "qualityScoresLoadFailed": "Could not load quality scores",
+        "removeUploadedVariations": {
+          "title": "Warning: Uploaded Images Will Be Lost",
+          "content": "Some variations you're removing have uploaded images. Continue?"
+        }
       },
       "info": {
         "personaCleared": "Persona selection cleared",

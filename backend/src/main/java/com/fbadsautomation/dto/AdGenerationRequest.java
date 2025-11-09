@@ -60,7 +60,11 @@ public class AdGenerationRequest {
     private Boolean isPreview; // Flag để phân biệt preview vs save thực sự
 
     @Valid
-    private AdVariation selectedVariation; // Variation được chọn khi save
+    private AdVariation selectedVariation; // Variation được chọn khi save (legacy - backward compatibility)
+
+    @Valid
+    @Size(max = 10, message = "Cannot select more than 10 variations")
+    private List<AdVariation> selectedVariations; // Multiple variations được chọn khi save
 
     private Boolean saveExistingContent; // Flag để backend biết chỉ lưu nội dung hiện tại
 
@@ -97,9 +101,14 @@ public class AdGenerationRequest {
                  message = "Invalid text provider. Must be openai, gemini, anthropic, or huggingface")
         private String textProvider;
 
+        // Image provider is now optional (nullable) - can be null if uploadedFileUrl is provided
         @Pattern(regexp = "^(gemini|openai|huggingface|stable-diffusion|fal-ai|subnp|deapi|puter)$",
                  message = "Invalid image provider. Must be gemini, openai, huggingface, stable-diffusion, fal-ai, subnp, deapi, or puter")
         private String imageProvider;
+
+        // NEW: Per-variation uploaded image URL
+        @Pattern(regexp = "^(https?://.*|/api/images/.*)$", message = "Invalid uploaded file URL format")
+        private String uploadedFileUrl;
 
         public VariationProviderConfig() {}
 
@@ -112,6 +121,8 @@ public class AdGenerationRequest {
         public void setTextProvider(String textProvider) { this.textProvider = textProvider; }
         public String getImageProvider() { return imageProvider; }
         public void setImageProvider(String imageProvider) { this.imageProvider = imageProvider; }
+        public String getUploadedFileUrl() { return uploadedFileUrl; }
+        public void setUploadedFileUrl(String uploadedFileUrl) { this.uploadedFileUrl = uploadedFileUrl; }
     }
 
     // Inner class for lead form questions
@@ -203,7 +214,10 @@ public class AdGenerationRequest {
     
     public AdVariation getSelectedVariation() { return selectedVariation; }
     public void setSelectedVariation(AdVariation selectedVariation) { this.selectedVariation = selectedVariation; }
-    
+
+    public List<AdVariation> getSelectedVariations() { return selectedVariations; }
+    public void setSelectedVariations(List<AdVariation> selectedVariations) { this.selectedVariations = selectedVariations; }
+
     public Boolean getSaveExistingContent() { return saveExistingContent; }
     public void setSaveExistingContent(Boolean saveExistingContent) { this.saveExistingContent = saveExistingContent; }
     

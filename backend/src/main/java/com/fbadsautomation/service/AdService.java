@@ -9,6 +9,7 @@ import com.fbadsautomation.model.AdContent;
 import com.fbadsautomation.model.AdResponse;
 import com.fbadsautomation.model.AdType;
 import com.fbadsautomation.model.Campaign;
+import com.fbadsautomation.model.FacebookCTA;
 import com.fbadsautomation.model.User;
 import com.fbadsautomation.repository.AdContentRepository;
 import com.fbadsautomation.repository.AdRepository;
@@ -563,12 +564,121 @@ public class AdService {
      * @return Map containing ad and contents
      */
     @Transactional
+    /**
+     * Create ad with multiple existing content variations (NEW - supports multiple selection)
+     */
+    public Map<String, Object> createAdWithExistingContent(Long campaignId, String adType, String prompt,
+                                                          String name, MultipartFile mediaFile, Long userId,
+                                                          List<com.fbadsautomation.dto.AdVariation> selectedVariations,
+                                                          List<String> adLinks, String mediaFileUrl,
+                                                          String websiteUrl, List<com.fbadsautomation.dto.AdGenerationRequest.LeadFormQuestion> leadFormQuestions, String adStyle) {
+        log.info("Creating ad with {} existing content variations for user ID: {}", selectedVariations != null ? selectedVariations.size() : 0, userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+        Campaign campaign = campaignRepository.findByIdAndUser(campaignId, user)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Campaign not found"));
+
+        // Create ad
+        Ad ad = new Ad();
+        ad.setName(name);
+        ad.setAdType(mapFrontendAdTypeToEnum(adType));
+        ad.setPrompt(prompt);
+        ad.setCampaign(campaign);
+        ad.setUser(user);
+        ad.setStatus("READY");
+        ad.setCreatedBy(user.getId().toString());
+        ad.setCreatedDate(LocalDateTime.now());
+
+        // Set ad type specific fields
+        if (websiteUrl != null && !websiteUrl.trim().isEmpty()) {
+            ad.setWebsiteUrl(websiteUrl);
+        }
+
+        if (leadFormQuestions != null && !leadFormQuestions.isEmpty()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                String leadFormQuestionsJson = objectMapper.writeValueAsString(leadFormQuestions);
+                ad.setLeadFormQuestions(leadFormQuestionsJson);
+            } catch (Exception e) {
+                log.warn("Failed to serialize lead form questions: {}", e.getMessage());
+            }
+        }
+
+        if (adStyle != null && !adStyle.trim().isEmpty()) {
+            try {
+                ad.setAdStyle(com.fbadsautomation.model.AdStyle.valueOf(adStyle.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid ad style: {}, using null", adStyle);
+            }
+        }
+
+        // Save media file if provided
+        if (mediaFile != null && !mediaFile.isEmpty()) {
+            String mediaPath = saveMediaFile(mediaFile);
+            ad.setImageUrl(mediaPath);
+        } else if (mediaFileUrl != null && !mediaFileUrl.isEmpty()) {
+            ad.setImageUrl(mediaFileUrl);
+        }
+
+        // Save ad first to get ID
+        ad = adRepository.save(ad);
+        log.info("Saved ad with ID: {}", ad.getId());
+
+        // Create AdContent for each selected variation
+        List<AdContent> contents = new java.util.ArrayList<>();
+        int order = 1;
+        for (com.fbadsautomation.dto.AdVariation selectedVariation : selectedVariations) {
+            AdContent content = new AdContent();
+            content.setAd(ad);
+            content.setUser(user);
+            content.setHeadline(selectedVariation.getHeadline());
+            content.setDescription(selectedVariation.getDescription());
+            content.setPrimaryText(selectedVariation.getPrimaryText());
+            content.setCallToAction(selectedVariation.getCallToAction() != null ? com.fbadsautomation.model.FacebookCTA.valueOf(selectedVariation.getCallToAction()) : null);
+
+            // Set imageUrl from selectedVariation or mediaFileUrl if available
+            String contentImageUrl = selectedVariation.getImageUrl();
+            if ((contentImageUrl == null || contentImageUrl.isEmpty()) && mediaFileUrl != null && !mediaFileUrl.isEmpty()) {
+                contentImageUrl = mediaFileUrl;
+            }
+            content.setImageUrl(contentImageUrl);
+            content.setPreviewOrder(order++);
+            content.setIsSelected(true);
+            content.setCreatedDate(LocalDateTime.now());
+
+            // Save content
+            content = adContentRepository.save(content);
+            contents.add(content);
+        }
+
+        // Use first variation for ad main fields (backward compatibility)
+        if (!contents.isEmpty()) {
+            AdContent firstContent = contents.get(0);
+            ad.setHeadline(firstContent.getHeadline());
+            ad.setPrimaryText(firstContent.getPrimaryText());
+            ad.setDescription(firstContent.getDescription());
+            ad.setCallToAction(firstContent.getCallToAction());
+            ad.setImageUrl(firstContent.getImageUrl());
+            ad = adRepository.save(ad);
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("ad", ad);
+        result.put("contents", contents);
+
+        return result;
+    }
+
+    /**
+     * Create ad with single existing content variation (LEGACY - backward compatibility)
+     */
     public Map<String, Object> createAdWithExistingContent(Long campaignId, String adType, String prompt,
                                                           String name, MultipartFile mediaFile, Long userId,
                                                           com.fbadsautomation.dto.AdVariation selectedVariation,
                                                           List<String> adLinks, String mediaFileUrl,
                                                           String websiteUrl, List<com.fbadsautomation.dto.AdGenerationRequest.LeadFormQuestion> leadFormQuestions, String adStyle) {
-        log.info("Creating ad with existing content for user ID: {}", userId);
+        log.info("Creating ad with existing content for user ID: {} (legacy single variation)", userId);
         
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
@@ -731,77 +841,165 @@ public class AdService {
         return ad;
     }
 
-    @Transactional
     public AdGenerationResponse generateAd(AdGenerationRequest request, Long userId) {
-        log.info("Starting ad generation with request: {}", request);
+        log.info("Starting ad generation for user {} with campaignId {}", userId, request.getCampaignId());
+
+        // PHASE 1: Validate access & permissions (lightweight DB queries)
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
         Campaign campaign = campaignRepository.findById(request.getCampaignId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Campaign not found"));
 
+        // Security check: Verify campaign ownership
+        if (!campaign.getUser().getId().equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You do not have permission to create ads for this campaign");
+        }
+
+        // PHASE 2: AI generation (OUTSIDE transaction - slow I/O operations)
         AIProvider textProvider = getProvider(request.getTextProvider());
         List<AdContent> generatedContents = textProvider.generateAdContent(request.getPrompt(),
                 request.getNumberOfVariations(),
                 request.getLanguage(),
-                request.getCallToAction() // Truyền CTA xuống provider
+                request.getCallToAction()
         );
         log.info("Generated {} ad contents from provider {}", generatedContents.size(), textProvider.getName());
 
-        List<com.fbadsautomation.dto.AdVariation> variations = new ArrayList<>();
-        String imageUrl = request.getMediaFileUrl();
+        // Check if using per-variation configuration
+        List<com.fbadsautomation.dto.AdGenerationRequest.VariationProviderConfig> variationConfigs = request.getVariations();
+        boolean usePerVariationConfig = variationConfigs != null && !variationConfigs.isEmpty();
 
-        if (imageUrl == null || imageUrl.isEmpty()) {
-            if (request.getImageProvider() != null && !request.getImageProvider().isEmpty()) {
-                AIProvider imageProvider = getProvider(request.getImageProvider());
-                imageUrl = imageProvider.generateImage(request.getPrompt());
-                log.info("Generated image URL {} from provider {}", imageUrl, imageProvider.getName());
-            }
+        // Validate: variationConfigs size must match numberOfVariations if provided
+        if (usePerVariationConfig && variationConfigs.size() != request.getNumberOfVariations()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                String.format("Variation configs size (%d) must match number of variations (%d)",
+                    variationConfigs.size(), request.getNumberOfVariations()));
         }
+
+        // OPTIMIZATION: If preview mode, skip expensive image generation
+        boolean isPreview = Boolean.TRUE.equals(request.getIsPreview());
+        if (isPreview) {
+            log.info("Preview mode - skipping image generation");
+            return buildPreviewResponse(generatedContents, request);
+        }
+
+        // PHASE 3: Image generation with per-variation error handling
+        String[] imageUrls = new String[generatedContents.size()];
 
         for (int i = 0; i < generatedContents.size(); i++) {
-            AdContent content = generatedContents.get(i);
-            com.fbadsautomation.dto.AdVariation variation = new com.fbadsautomation.dto.AdVariation();
-            variation.setId(UUID.randomUUID().toString()); // Temporary ID for frontend
-            variation.setHeadline(content.getHeadline());
-            variation.setPrimaryText(content.getPrimaryText());
-            variation.setDescription(content.getDescription());
-            variation.setCallToAction(content.getCallToAction() != null ? content.getCallToAction().name() : null);
-            variation.setImageUrl(imageUrl);
-            variations.add(variation);
-        }
-
-        // Chỉ khai báo 1 lần ở đây
-        List<AdGenerationResponse.AdVariation> responseVariations = variations.stream().map(v -> {
-            AdGenerationResponse.AdVariation rv = new AdGenerationResponse.AdVariation();
             try {
-                rv.setId(v.getId() != null ? Long.parseLong(v.getId()) : null);
-            } catch (NumberFormatException e) {
-                rv.setId(null);
-            }
-            rv.setHeadline(v.getHeadline());
-            rv.setPrimaryText(v.getPrimaryText());
-            rv.setDescription(v.getDescription());
-            rv.setCallToAction(v.getCallToAction());
-            rv.setImageUrl(v.getImageUrl());
-            rv.setOrder(null);
-            return rv;
-        }).collect(Collectors.toList());
+                if (usePerVariationConfig && i < variationConfigs.size()) {
+                    // PER-VARIATION IMAGE HANDLING
+                    com.fbadsautomation.dto.AdGenerationRequest.VariationProviderConfig config = variationConfigs.get(i);
 
-        if (request.getIsPreview() != null && request.getIsPreview()) {
-            return AdGenerationResponse.builder()
-                    .status("success")
-                    .variations(responseVariations)
-                    .build();
+                    // Priority 1: Uploaded image for this variation
+                    if (config.getUploadedFileUrl() != null && !config.getUploadedFileUrl().isEmpty()) {
+                        imageUrls[i] = config.getUploadedFileUrl();
+                        log.info("Using uploaded image for variation {}: {}", i, imageUrls[i]);
+                    }
+                    // Priority 2: AI generation for this variation
+                    else if (config.getImageProvider() != null && !config.getImageProvider().isEmpty()) {
+                        AIProvider imageProvider = getProvider(config.getImageProvider());
+                        imageUrls[i] = imageProvider.generateImage(request.getPrompt());
+                        log.info("Generated AI image for variation {} using {}: {}", i, config.getImageProvider(), imageUrls[i]);
+                    }
+                } else {
+                    // FALLBACK: Use global mediaFileUrl or imageProvider (backward compatibility)
+                    imageUrls[i] = request.getMediaFileUrl();
+                    if (imageUrls[i] == null || imageUrls[i].isEmpty()) {
+                        if (request.getImageProvider() != null && !request.getImageProvider().isEmpty()) {
+                            AIProvider imageProvider = getProvider(request.getImageProvider());
+                            imageUrls[i] = imageProvider.generateImage(request.getPrompt());
+                            log.info("Generated image URL {} from global provider {}", imageUrls[i], imageProvider.getName());
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                log.warn("Image generation failed for variation {}: {}. Using null image.", i, ex.getMessage());
+                imageUrls[i] = null;
+            }
         }
+
+        // PHASE 4: Build variations response
+        List<AdGenerationResponse.AdVariation> responseVariations = buildResponseVariations(generatedContents, imageUrls, request);
+
+        // PHASE 5: DB persistence (SHORT transaction)
+        return saveAdToDatabase(request, user, campaign, generatedContents, imageUrls, responseVariations);
+    }
+
+    /**
+     * Build preview response without image generation (for preview mode)
+     */
+    private AdGenerationResponse buildPreviewResponse(List<AdContent> contents, AdGenerationRequest request) {
+        List<AdGenerationResponse.AdVariation> variations = new ArrayList<>();
+        for (AdContent content : contents) {
+            AdGenerationResponse.AdVariation rv = new AdGenerationResponse.AdVariation();
+            rv.setId(null);
+            rv.setHeadline(content.getHeadline());
+            rv.setPrimaryText(content.getPrimaryText());
+            rv.setDescription(content.getDescription());
+
+            FacebookCTA finalCta = content.getCallToAction() != null
+                ? content.getCallToAction()
+                : request.getCallToAction();
+            rv.setCallToAction(finalCta != null ? finalCta.name() : null);
+
+            rv.setImageUrl(null); // No image in preview mode
+            rv.setOrder(null);
+            variations.add(rv);
+        }
+
+        return AdGenerationResponse.builder()
+                .status("success")
+                .variations(variations)
+                .build();
+    }
+
+    /**
+     * Build response variations from generated contents and image URLs
+     */
+    private List<AdGenerationResponse.AdVariation> buildResponseVariations(
+            List<AdContent> contents, String[] imageUrls, AdGenerationRequest request) {
+        List<AdGenerationResponse.AdVariation> variations = new ArrayList<>();
+
+        for (int i = 0; i < contents.size(); i++) {
+            AdContent content = contents.get(i);
+            AdGenerationResponse.AdVariation rv = new AdGenerationResponse.AdVariation();
+            rv.setId(null); // ID is null for preview/temporary variations
+            rv.setHeadline(content.getHeadline());
+            rv.setPrimaryText(content.getPrimaryText());
+            rv.setDescription(content.getDescription());
+
+            FacebookCTA finalCta = content.getCallToAction() != null
+                ? content.getCallToAction()
+                : request.getCallToAction();
+            rv.setCallToAction(finalCta != null ? finalCta.name() : null);
+
+            rv.setImageUrl(imageUrls[i]);
+            rv.setOrder(null);
+            variations.add(rv);
+        }
+
+        return variations;
+    }
+
+    /**
+     * Save ad and contents to database (SHORT transaction)
+     */
+    @Transactional
+    private AdGenerationResponse saveAdToDatabase(
+            AdGenerationRequest request, User user, Campaign campaign,
+            List<AdContent> generatedContents, String[] imageUrls,
+            List<AdGenerationResponse.AdVariation> responseVariations) {
 
         Ad ad = createAdFromRequest(request, user, campaign);
         ad = adRepository.save(ad);
         log.info("Saved new ad with ID: {}", ad.getId());
 
-        for (AdContent content : generatedContents) {
+        for (int i = 0; i < generatedContents.size(); i++) {
+            AdContent content = generatedContents.get(i);
             content.setAd(ad);
             content.setUser(user);
-            content.setImageUrl(imageUrl);
+            content.setImageUrl(imageUrls[i]);
             content.setIsSelected(false);
             adContentRepository.save(content);
         }

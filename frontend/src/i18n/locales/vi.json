@@ -1170,11 +1170,30 @@
       },
       "imageUpload": {
         "message": "Đã tải lên hình ảnh",
-        "description": "Bạn đã tải lên một hình ảnh, vì vậy tạo hình ảnh AI bị tắt. Xóa hình ảnh đã tải lên để bật nhà cung cấp hình ảnh AI."
+        "description": "Bạn đã tải lên một hình ảnh, vì vậy tạo hình ảnh AI bị tắt. Xóa hình ảnh đã tải lên để bật nhà cung cấp hình ảnh AI.",
+        "descriptionV2": "Bạn đã tải lên một hình ảnh. Hình ảnh này sẽ được ưu tiên sử dụng cho các quảng cáo được tạo. Bạn vẫn có thể chọn nhà cung cấp hình ảnh AI làm dự phòng."
       },
       "uploadMedia": {
         "label": "Tải lên Media (Tùy chọn)",
         "button": "Tải lên"
+      },
+      "uploadStatus": {
+        "uploaded": "Đã tải lên",
+        "ai": "AI tạo"
+      },
+      "imageProvider": {
+        "disabledHint": "Đang dùng ảnh đã tải lên",
+        "removeToEnable": "Xóa ảnh để chọn AI provider"
+      },
+      "variationUpload": {
+        "title": "Nguồn hình ảnh cho Variation {index}",
+        "uploadOption": "Tải lên hình ảnh riêng",
+        "uploadButton": "Tải lên",
+        "uploadSuccess": "Đã tải lên thành công",
+        "aiOption": "Hoặc dùng AI tạo hình",
+        "removeToUseAI": "Xóa ảnh đã tải để dùng AI provider",
+        "willGenerate": "sẽ tạo hình ảnh",
+        "selectProvider": "Chọn image provider ở bảng trên"
       },
       "navigation": {
         "generateAd": "Tạo quảng cáo"
@@ -1361,6 +1380,7 @@
         "campaignsLoadFailed": "Không thể tải chiến dịch",
         "ctaLoadFailed": "Không thể tải call to actions",
         "fileUploadFailed": "Không thể tải file lên",
+        "fileTooLarge": "File quá lớn. Kích thước tối đa là 10MB",
         "promptOrLinksRequired": "Vui lòng nhập nội dung prompt hoặc cung cấp link quảng cáo",
         "adCreationFailed": "Không thể tạo quảng cáo. Vui lòng thử lại.",
         "adSaveFailed": "Không thể lưu quảng cáo. Vui lòng thử lại.",
@@ -1372,9 +1392,15 @@
         "noContentFound": "Không tìm thấy nội dung quảng cáo",
         "imagesLoadFailed": "Một số hình ảnh không tải được. Sử dụng hình ảnh placeholder.",
         "selectAdToSave": "Vui lòng chọn một quảng cáo để lưu",
+        "selectVariation": "Vui lòng chọn một quảng cáo để lưu",
+        "selectVariations": "Vui lòng chọn ít nhất một quảng cáo để lưu",
         "enterAtLeastOneLink": "Vui lòng nhập ít nhất một link quảng cáo",
         "cannotExtract": "Không thể trích xuất nội dung",
-        "qualityScoresLoadFailed": "Không thể tải điểm chất lượng"
+        "qualityScoresLoadFailed": "Không thể tải điểm chất lượng",
+        "removeUploadedVariations": {
+          "title": "Cảnh báo: Mất ảnh đã tải lên",
+          "content": "Một số variation bạn đang xóa có ảnh đã tải lên. Tiếp tục?"
+        }
       },
       "info": {
         "personaCleared": "Đã xóa lựa chọn persona",

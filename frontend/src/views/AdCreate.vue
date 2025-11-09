@@ -379,7 +379,7 @@
             <a-alert
               v-if="hasUploadedImage"
               :message="$t('adCreate.step2.imageUpload.message')"
-              :description="$t('adCreate.step2.imageUpload.description')"
+              :description="$t('adCreate.step2.imageUpload.descriptionV2')"
               type="info"
               show-icon
               closable
@@ -392,6 +392,10 @@
                 :columns="providerTableColumns"
                 :data-source="formData.variations"
                 :pagination="false"
+                :expandable="{
+                  expandedRowRender: (record, index) => null,
+                  expandRowByClick: false
+                }"
                 bordered
                 size="middle"
               >
@@ -418,6 +422,13 @@
                     <div class="variation-label">
                       <span class="variation-number">{{ index + 1 }}</span>
                       <span class="variation-text">{{ $t('adCreate.step2.table.variation') }} {{ index + 1 }}</span>
+                      <!-- Visual indicators for upload status -->
+                      <a-tag v-if="record.uploadedFileUrl" color="green" size="small" style="margin-left: 8px;">
+                        <file-image-outlined /> {{ $t('adCreate.step2.uploadStatus.uploaded') }}
+                      </a-tag>
+                      <a-tag v-else-if="record.imageProvider" color="blue" size="small" style="margin-left: 8px;">
+                        <robot-outlined /> {{ $t('adCreate.step2.uploadStatus.ai') }}
+                      </a-tag>
                     </div>
                   </template>
 
@@ -442,25 +453,85 @@
                   </template>
 
                   <template v-else-if="column.key === 'imageProvider'">
-                    <a-select
-                      v-model:value="record.imageProvider"
-                      :placeholder="$t('adCreate.step2.table.selectImageProvider')"
-                      :disabled="hasUploadedImage"
-                      style="width: 100%;"
-                      size="large"
-                    >
-                      <a-select-option
-                        v-for="provider in enabledImageProviders"
-                        :key="provider.value"
-                        :value="provider.value"
+                    <div>
+                      <a-select
+                        v-model:value="record.imageProvider"
+                        :disabled="!!record.uploadedFileUrl"
+                        :placeholder="record.uploadedFileUrl
+                          ? $t('adCreate.step2.imageProvider.disabledHint')
+                          : $t('adCreate.step2.table.selectImageProvider')"
+                        style="width: 100%;"
+                        size="large"
                       >
-                        <div class="provider-option">
-                          <span class="provider-icon-small">{{ getProviderIcon(provider.value, 'image') }}</span>
-                          <span class="provider-name-small">{{ provider.name }}</span>
-                        </div>
-                      </a-select-option>
-                    </a-select>
+                        <a-select-option
+                          v-for="provider in enabledImageProviders"
+                          :key="provider.value"
+                          :value="provider.value"
+                        >
+                          <div class="provider-option">
+                            <span class="provider-icon-small">{{ getProviderIcon(provider.value, 'image') }}</span>
+                            <span class="provider-name-small">{{ provider.name }}</span>
+                          </div>
+                        </a-select-option>
+                      </a-select>
+                      <div v-if="record.uploadedFileUrl" class="text-xs text-gray-500 mt-1">
+                        <info-circle-outlined /> {{ $t('adCreate.step2.imageProvider.removeToEnable') }}
+                      </div>
+                    </div>
                   </template>
+                </template>
+
+                <!-- Expandable Row Content: Per-Variation Upload -->
+                <template #expandedRowRender="{ record, index }">
+                  <div class="variation-upload-section">
+                    <h4 class="font-semibold mb-3" style="font-size: 14px; color: #333;">
+                      {{ $t('adCreate.step2.variationUpload.title', { index: index + 1 }) }}
+                    </h4>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                      <!-- Upload Section -->
+                      <div class="upload-section" style="padding: 12px; background: white; border-radius: 4px; border: 1px solid #e8e8e8;">
+                        <div style="font-weight: 500; margin-bottom: 8px; font-size: 13px;">
+                          {{ $t('adCreate.step2.variationUpload.uploadOption') }}
+                        </div>
+                        <a-upload
+                          :file-list="record.uploadedFiles || []"
+                          :before-upload="(file) => handleVariationFileUpload(file, record)"
+                          @remove="() => removeVariationFile(record)"
+                          accept="image/*,video/*"
+                          list-type="picture-card"
+                          :max-count="1"
+                        >
+                          <div v-if="!record.uploadedFiles || record.uploadedFiles.length === 0">
+                            <plus-outlined />
+                            <div style="margin-top: 8px; font-size: 12px;">{{ $t('adCreate.step2.variationUpload.uploadButton') }}</div>
+                          </div>
+                        </a-upload>
+                        <div v-if="record.uploadedFileUrl" style="margin-top: 8px; color: #52c41a; font-size: 12px;">
+                          ✓ {{ $t('adCreate.step2.variationUpload.uploadSuccess') }}
+                        </div>
+                        <div v-if="record.uploadInProgress" style="margin-top: 8px; color: #1890ff; font-size: 12px;">
+                          <loading-outlined /> Uploading...
+                        </div>
+                      </div>
+
+                      <!-- AI Provider Info -->
+                      <div class="ai-info-section" :style="{ padding: '12px', background: 'white', borderRadius: '4px', border: '1px solid #e8e8e8', opacity: record.uploadedFileUrl ? 0.5 : 1 }">
+                        <div style="font-weight: 500; margin-bottom: 8px; font-size: 13px;">
+                          {{ $t('adCreate.step2.variationUpload.aiOption') }}
+                        </div>
+                        <div v-if="record.uploadedFileUrl" style="color: #8c8c8c; font-size: 12px;">
+                          {{ $t('adCreate.step2.variationUpload.removeToUseAI') }}
+                        </div>
+                        <div v-else-if="record.imageProvider" style="color: #1890ff; font-size: 12px;">
+                          <robot-outlined /> {{ getProviderName(record.imageProvider) }} {{ $t('adCreate.step2.variationUpload.willGenerate') }}
+                        </div>
+                        <div v-else style="color: #fa8c16; font-size: 12px;">
+                          <warning-outlined /> {{ $t('adCreate.step2.variationUpload.selectProvider') }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </template>
               </a-table>
             </div>
@@ -588,7 +659,7 @@
                 :key="variation.id"
                 class="ad-preview-card"
                 :class="{
-                  selected: selectedVariation?.id === variation.id,
+                  selected: selectedVariations.some(v => v.id === variation.id),
                   'best-quality': variation.qualityScore?.totalScore === bestQualityScoreValue
                 }"
                 @click="selectVariation(variation)"
@@ -657,7 +728,7 @@
             <a-button
               type="primary"
               @click="saveAd"
-              :disabled="!selectedVariation"
+              :disabled="selectedVariations.length === 0"
               :loading="isSaving"
               size="large"
             >
@@ -895,7 +966,12 @@ import {
   PlusOutlined,
   ThunderboltOutlined,
   EditOutlined,
-  SaveOutlined
+  SaveOutlined,
+  FileImageOutlined,
+  RobotOutlined,
+  InfoCircleOutlined,
+  LoadingOutlined,
+  WarningOutlined
 } from '@ant-design/icons-vue'
 import api from '@/services/api'
 import PromptValidator from '@/components/PromptValidator.vue'
@@ -918,6 +994,11 @@ export default {
     ThunderboltOutlined,
     EditOutlined,
     SaveOutlined,
+    FileImageOutlined,
+    RobotOutlined,
+    InfoCircleOutlined,
+    LoadingOutlined,
+    WarningOutlined,
     PromptValidator,
     PersonaSelector,
     TrendingKeywords,
@@ -944,9 +1025,9 @@ export default {
         imageProvider: 'gemini',
         // New per-variation provider selection
         variations: [
-          { textProvider: 'openai', imageProvider: 'gemini' },
-          { textProvider: 'openai', imageProvider: 'gemini' },
-          { textProvider: 'openai', imageProvider: 'gemini' }
+          { textProvider: 'openai', imageProvider: 'gemini', uploadedFiles: [], uploadedFileUrl: '' },
+          { textProvider: 'openai', imageProvider: 'gemini', uploadedFiles: [], uploadedFileUrl: '' },
+          { textProvider: 'openai', imageProvider: 'gemini', uploadedFiles: [], uploadedFileUrl: '' }
         ],
         enhancementOptions: []
         // Issue #9: audienceSegment removed - now at campaign level
@@ -1094,7 +1175,7 @@ export default {
         }
       ],
       adVariations: [],
-      selectedVariation: null,
+      selectedVariations: [], // Changed from selectedVariation to support multiple selection
       editingVariation: null,
       adLinks: [''],
       uploadedFiles: [],
@@ -1145,6 +1226,8 @@ export default {
       showAsyncProgressModal: false,
       pollingInterval: null,
       asyncHealthy: true,
+      pollingStartTime: null, // Track when polling started for timeout
+      pollingRetryCount: 0, // Track retry attempts
 
       // Provider selection UI states
       activeInfoPanels: [],
@@ -1270,7 +1353,7 @@ export default {
   },
   watch: {
     // Sync variations array when numberOfVariations changes
-    'formData.numberOfVariations'(newCount) {
+    'formData.numberOfVariations'(newCount, oldCount) {
       const currentLength = this.formData.variations.length
 
       if (newCount > currentLength) {
@@ -1278,12 +1361,32 @@ export default {
         for (let i = currentLength; i < newCount; i++) {
           this.formData.variations.push({
             textProvider: 'openai',
-            imageProvider: 'gemini'
+            imageProvider: 'gemini',
+            uploadedFiles: [],      // Per-variation upload
+            uploadedFileUrl: ''     // Per-variation upload URL
           })
         }
       } else if (newCount < currentLength) {
-        // Remove excess variations
-        this.formData.variations.splice(newCount)
+        // Check if removing variations with uploaded images
+        const removedVariations = this.formData.variations.slice(newCount)
+        const hasUploads = removedVariations.some(v => v.uploadedFileUrl)
+
+        if (hasUploads) {
+          this.$confirm({
+            title: this.$t('adCreate.messages.warning.removeUploadedVariations.title'),
+            content: this.$t('adCreate.messages.warning.removeUploadedVariations.content'),
+            onOk: () => {
+              this.formData.variations.splice(newCount)
+            },
+            onCancel: () => {
+              // Revert count change
+              this.formData.numberOfVariations = oldCount
+            }
+          })
+        } else {
+          // No uploads, safe to remove
+          this.formData.variations.splice(newCount)
+        }
       }
     }
   },
@@ -1638,8 +1741,11 @@ export default {
     },
     
     validateStep2() {
-      // Valid if text provider selected AND (image provider selected OR image uploaded)
-      return this.formData.textProvider && (this.formData.imageProvider || this.hasUploadedImage)
+      // Valid if all variations have text provider AND (image provider OR image uploaded)
+      const allVariationsValid = this.formData.variations.every(variation => {
+        return variation.textProvider && (variation.imageProvider || this.hasUploadedImage)
+      })
+      return allVariationsValid
     },
     
     async handleFileUpload(file) {
@@ -1664,6 +1770,54 @@ export default {
     removeFile() {
       this.uploadedFiles = []
       this.uploadedFileUrl = ''
+    },
+
+    // NEW: Per-variation file upload
+    async handleVariationFileUpload(file, variation) {
+      // Validation: check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        this.$message.error(this.$t('adCreate.messages.error.fileTooLarge'))
+        return false
+      }
+
+      // Set file list for this variation
+      this.$set(variation, 'uploadedFiles', [file])
+      this.$set(variation, 'uploadInProgress', true)
+
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await api.post('/upload/media', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 30000 // 30 seconds timeout
+        })
+
+        if (response.data.success) {
+          // Store URL in variation object
+          this.$set(variation, 'uploadedFileUrl', response.data.fileUrl)
+
+          // Clear image provider (uploaded image takes priority)
+          variation.imageProvider = null
+
+          this.$message.success(this.$t('adCreate.messages.success.fileUploaded'))
+        }
+      } catch (error) {
+        console.error('Error uploading variation file:', error)
+        this.$message.error(this.$t('adCreate.messages.error.fileUploadFailed'))
+        this.$set(variation, 'uploadedFiles', [])
+      } finally {
+        this.$set(variation, 'uploadInProgress', false)
+      }
+
+      return false // Prevent default upload behavior
+    },
+
+    // NEW: Remove uploaded file from variation
+    removeVariationFile(variation) {
+      this.$set(variation, 'uploadedFiles', [])
+      this.$set(variation, 'uploadedFileUrl', '')
+      // Don't auto-set imageProvider, let user choose manually
     },
 
     handleImageError(event, variation) {
@@ -1749,13 +1903,17 @@ export default {
           prompt: promptWithCTA,
           language: this.formData.language,
           adLinks: validLinks,
-          // Send variations array (new format)
-          variations: this.formData.variations,
+          // Send variations array with per-variation uploads (new format)
+          variations: this.formData.variations.map(v => ({
+            textProvider: v.textProvider,
+            imageProvider: v.imageProvider,
+            uploadedFileUrl: v.uploadedFileUrl || null // Per-variation upload
+          })),
           // Also send most-frequent providers as fallback (backward compatibility)
           textProvider: mostFrequentTextProvider,
           imageProvider: mostFrequentImageProvider,
           numberOfVariations: this.formData.numberOfVariations,
-          mediaFileUrl: this.uploadedFileUrl,
+          mediaFileUrl: this.uploadedFileUrl || null, // Deprecated global upload
           callToAction: this.formData.callToAction,
           extractedContent: extractedContent,
           personaId: this.formData.personaId || null,
@@ -1865,6 +2023,10 @@ export default {
       // Clear any existing interval
       this.stopJobPolling()
 
+      // Initialize polling state
+      this.pollingStartTime = Date.now()
+      this.pollingRetryCount = 0
+
       // Poll every 2 seconds
       this.pollingInterval = setInterval(async () => {
         await this.checkJobStatus()
@@ -1883,11 +2045,28 @@ export default {
         return
       }
 
+      // Check for timeout (10 minutes max polling duration)
+      const maxPollingDuration = 10 * 60 * 1000 // 10 minutes
+      const elapsedTime = Date.now() - this.pollingStartTime
+
+      if (elapsedTime > maxPollingDuration) {
+        console.warn('[ASYNC] Polling timeout after 10 minutes')
+        this.stopJobPolling()
+        this.$message.warning({
+          content: 'Job is taking longer than expected. Please check status manually or try again later.',
+          duration: 10
+        })
+        return
+      }
+
       try {
         const response = await api.ads.getJobStatus(this.asyncJobId)
         const job = response.data
 
         console.log('[ASYNC] Job status:', job.status, `(${job.progress}%)`, job.currentStep)
+
+        // Reset retry count on successful request
+        this.pollingRetryCount = 0
 
         // Update UI state
         this.asyncJobStatus = job.status
@@ -1905,8 +2084,28 @@ export default {
 
       } catch (error) {
         console.error('[ASYNC] Error checking job status:', error)
-        this.stopJobPolling()
-        this.$message.error('Failed to check job status')
+
+        // Implement retry logic with exponential backoff
+        const maxRetries = 3
+        this.pollingRetryCount++
+
+        if (this.pollingRetryCount <= maxRetries) {
+          const retryDelay = 1000 * this.pollingRetryCount // 1s, 2s, 3s
+          console.warn(`[ASYNC] Retry ${this.pollingRetryCount}/${maxRetries} after ${retryDelay}ms`)
+
+          // Schedule a retry after delay
+          setTimeout(() => {
+            this.checkJobStatus()
+          }, retryDelay)
+        } else {
+          // Exceeded max retries - stop polling and show error
+          console.error('[ASYNC] Max retries exceeded, stopping polling')
+          this.stopJobPolling()
+          this.$message.error({
+            content: 'Failed to check job status after multiple retries. The job may still be running in the background.',
+            duration: 10
+          })
+        }
       }
     },
 
@@ -2001,7 +2200,42 @@ export default {
         this.handleJobCancelled()
       } catch (error) {
         console.error('[ASYNC] Error cancelling job:', error)
-        this.$message.error('Failed to cancel job: ' + error.message)
+
+        // Extract error message from response
+        let errorMessage = 'Failed to cancel job'
+        if (error.response && error.response.data && error.response.data.error) {
+          errorMessage = error.response.data.error
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+
+        // Show appropriate message based on error
+        if (errorMessage.includes('already completed')) {
+          this.$message.success({
+            content: 'Job has already completed successfully! Fetching results...',
+            duration: 5
+          })
+          // Attempt to fetch the result
+          this.handleJobCompleted()
+        } else if (errorMessage.includes('already failed')) {
+          this.$message.warning({
+            content: 'Job has already failed. Closing dialog.',
+            duration: 5
+          })
+          this.showAsyncProgressModal = false
+          this.stopJobPolling()
+        } else if (errorMessage.includes('already been cancelled')) {
+          this.$message.info({
+            content: 'Job was already cancelled.',
+            duration: 3
+          })
+          this.handleJobCancelled()
+        } else {
+          this.$message.error({
+            content: errorMessage,
+            duration: 5
+          })
+        }
       }
     },
 
@@ -2025,7 +2259,13 @@ export default {
     },
     
     selectVariation(variation) {
-      this.selectedVariation = variation
+      // Toggle selection: add if not selected, remove if already selected
+      const index = this.selectedVariations.findIndex(v => v.id === variation.id)
+      if (index > -1) {
+        this.selectedVariations.splice(index, 1) // Deselect
+      } else {
+        this.selectedVariations.push(variation) // Select
+      }
     },
     
     editVariation(variation) {
@@ -2053,8 +2293,8 @@ export default {
     },
     
     saveAd() {
-      if (!this.selectedVariation) {
-        this.$message.warning(this.$t('adCreate.messages.warning.selectVariation'))
+      if (this.selectedVariations.length === 0) {
+        this.$message.warning(this.$t('adCreate.messages.warning.selectVariations'))
         return
       }
       this.showConfirmModal = true
@@ -2085,7 +2325,7 @@ export default {
           imageProvider: this.formData.imageProvider,
           numberOfVariations: this.formData.numberOfVariations,
           mediaFileUrl: this.uploadedFileUrl,
-          selectedVariation: this.selectedVariation,
+          selectedVariations: this.selectedVariations, // Changed from selectedVariation to array
           isPreview: false,
           saveExistingContent: true,
           adStyle: this.formData.adStyle || null,
@@ -2095,7 +2335,7 @@ export default {
           }),
           callToAction: this.formData.callToAction || null
         }
-        
+
         const response = await api.ads.saveExisting(requestData)
 
         if (response.data.status === 'success') {
@@ -2272,6 +2512,13 @@ export default {
         }
       }
       return icons[type]?.[provider] || (type === 'text' ? '✏️' : '🖼️')
+    },
+
+    // Get provider display name
+    getProviderName(providerValue) {
+      const allProviders = [...this.textProviders, ...this.imageProviders]
+      const provider = allProviders.find(p => p.value === providerValue)
+      return provider ? provider.name : providerValue
     },
 
     getProviderRating(provider) {
@@ -3787,6 +4034,71 @@ export default {
   font-weight: 600;
 }
 
+/* Per-Variation Upload Section */
+.variation-upload-section {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 12px 0;
+}
+
+.variation-upload-section h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-section {
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.upload-section h5 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-info-section {
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+  transition: opacity 0.3s ease;
+}
+
+.ai-info-section h5 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-info-section p {
+  font-size: 13px;
+  color: #595959;
+  line-height: 1.6;
+  margin: 8px 0;
+}
+
+.ai-info-section.disabled {
+  opacity: 0.5;
+}
+
 /* Mobile responsive for provider selection */
 @media (max-width: 768px) {
   .provider-info-grid {
@@ -3805,6 +4117,21 @@ export default {
 
   .variation-text {
     font-size: 13px;
+  }
+
+  /* Per-variation upload responsive */
+  .variation-upload-section {
+    padding: 16px;
+  }
+
+  .variation-upload-section > div[style*="grid"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .upload-section,
+  .ai-info-section {
+    padding: 12px;
   }
 }
 </style>

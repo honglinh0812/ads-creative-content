@@ -142,8 +142,16 @@ public class AsyncJobService {
         }
 
         AsyncJobStatus job = jobOpt.get();
-        if (job.isCompleted()) {
-            throw new IllegalStateException("Cannot cancel completed job");
+
+        // Check if job is already in a terminal state
+        if (job.getStatus() == AsyncJobStatus.Status.COMPLETED) {
+            throw new IllegalStateException("Cannot cancel job - it has already completed successfully");
+        }
+        if (job.getStatus() == AsyncJobStatus.Status.FAILED) {
+            throw new IllegalStateException("Cannot cancel job - it has already failed");
+        }
+        if (job.getStatus() == AsyncJobStatus.Status.CANCELLED) {
+            throw new IllegalStateException("Job has already been cancelled");
         }
 
         job.setStatus(AsyncJobStatus.Status.CANCELLED);

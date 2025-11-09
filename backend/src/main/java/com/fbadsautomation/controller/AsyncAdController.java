@@ -23,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -143,16 +144,19 @@ public class AsyncAdController {
             }
 
             AsyncJobStatus job = jobOpt.get();
-            return ResponseEntity.ok(Map.of(
-                "jobId", job.getJobId(),
-                "status", job.getStatus().name(),
-                "progress", job.getProgress(),
-                "currentStep", job.getCurrentStep() != null ? job.getCurrentStep() : "",
-                "createdAt", job.getCreatedAt(),
-                "updatedAt", job.getUpdatedAt(),
-                "completedAt", job.getCompletedAt(),
-                "errorMessage", job.getErrorMessage() != null ? job.getErrorMessage() : ""
-            ));
+
+            // Use HashMap instead of Map.of() to handle null values (completedAt can be null)
+            Map<String, Object> response = new HashMap<>();
+            response.put("jobId", job.getJobId());
+            response.put("status", job.getStatus().name());
+            response.put("progress", job.getProgress());
+            response.put("currentStep", job.getCurrentStep() != null ? job.getCurrentStep() : "");
+            response.put("createdAt", job.getCreatedAt());
+            response.put("updatedAt", job.getUpdatedAt());
+            response.put("completedAt", job.getCompletedAt()); // Can be null - OK in HashMap
+            response.put("errorMessage", job.getErrorMessage() != null ? job.getErrorMessage() : "");
+
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             log.error("Error getting job status", e);
@@ -234,17 +238,20 @@ public class AsyncAdController {
             Long userId = Long.parseLong(authentication.getName());
             List<AsyncJobStatus> jobs = asyncJobService.getUserJobs(userId);
 
+            // Use HashMap instead of Map.of() to handle null values (completedAt can be null)
             return ResponseEntity.ok(jobs.stream()
-                .map(job -> Map.of(
-                    "jobId", job.getJobId(),
-                    "jobType", job.getJobType().name(),
-                    "status", job.getStatus().name(),
-                    "progress", job.getProgress(),
-                    "currentStep", job.getCurrentStep() != null ? job.getCurrentStep() : "",
-                    "createdAt", job.getCreatedAt(),
-                    "updatedAt", job.getUpdatedAt(),
-                    "completedAt", job.getCompletedAt()
-                ))
+                .map(job -> {
+                    Map<String, Object> jobMap = new HashMap<>();
+                    jobMap.put("jobId", job.getJobId());
+                    jobMap.put("jobType", job.getJobType().name());
+                    jobMap.put("status", job.getStatus().name());
+                    jobMap.put("progress", job.getProgress());
+                    jobMap.put("currentStep", job.getCurrentStep() != null ? job.getCurrentStep() : "");
+                    jobMap.put("createdAt", job.getCreatedAt());
+                    jobMap.put("updatedAt", job.getUpdatedAt());
+                    jobMap.put("completedAt", job.getCompletedAt()); // Can be null - OK in HashMap
+                    return jobMap;
+                })
                 .toList());
 
         } catch (Exception e) {

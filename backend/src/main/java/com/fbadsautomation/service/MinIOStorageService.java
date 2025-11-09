@@ -2,12 +2,14 @@ package com.fbadsautomation.service;
 
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
+import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
+import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,7 @@ import java.io.InputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -164,6 +167,35 @@ public class MinIOStorageService {
         } catch (Exception e) {
             log.error("Error getting file info: {}", filename, e);
             throw new RuntimeException("Failed to get file info from MinIO", e);
+        }
+    }
+
+    /**
+     * Get a publicly accessible presigned URL for a file
+     * This URL is valid for 7 days and can be used for external access (e.g., Facebook Ads import)
+     *
+     * @param filename The filename to get the public URL for
+     * @return Presigned URL valid for 7 days
+     * @throws Exception if URL generation fails
+     */
+    public String getPublicUrl(String filename) throws Exception {
+        try {
+            // Generate presigned URL valid for 7 days (Facebook's import window)
+            String presignedUrl = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .bucket(bucketName)
+                            .object(filename)
+                            .method(Method.GET)
+                            .expiry(7, TimeUnit.DAYS)
+                            .build()
+            );
+
+            log.debug("Generated presigned URL for file: {} → {}", filename, presignedUrl);
+            return presignedUrl;
+
+        } catch (Exception e) {
+            log.error("Error generating public URL for file: {}", filename, e);
+            throw new Exception("Failed to generate public URL for file: " + filename, e);
         }
     }
 

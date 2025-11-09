@@ -2,6 +2,7 @@ package com.fbadsautomation.controller;
 
 import com.fbadsautomation.dto.AdGenerationRequest;
 import com.fbadsautomation.dto.AdGenerationResponse;
+import com.fbadsautomation.exception.ApiException;
 import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.AdContent;
 import com.fbadsautomation.model.AdResponse;
@@ -306,20 +307,44 @@ public class AdController {
             // Get language for CTA label mapping
             String languageCode = request.getLanguage() != null ? request.getLanguage() : "vi";
 
-            // Tạo ad với nội dung đã có (không generate mới)
-            Map<String, Object> adResult = adService.createAdWithExistingContent(request.getCampaignId(),
-                request.getAdType(),
-                request.getPrompt(),
-                request.getName(),
-                null, // mediaFile
-                userId,
-                request.getSelectedVariation(), // Sử dụng nội dung đã chọn
-                request.getAdLinks(),
-                request.getMediaFileUrl(), // truyền mediaFileUrl vào
-                request.getWebsiteUrl(), // truyền websiteUrl vào
-                request.getLeadFormQuestions(), // truyền leadFormQuestions vào
-                request.getAdStyle() // truyền adStyle vào
-            );
+            Map<String, Object> adResult;
+
+            // Support both single (legacy) and multiple (new) selection
+            if (request.getSelectedVariations() != null && !request.getSelectedVariations().isEmpty()) {
+                // NEW: Multiple variations selected
+                log.info("Saving {} selected variations", request.getSelectedVariations().size());
+                adResult = adService.createAdWithExistingContent(request.getCampaignId(),
+                    request.getAdType(),
+                    request.getPrompt(),
+                    request.getName(),
+                    null, // mediaFile
+                    userId,
+                    request.getSelectedVariations(), // Multiple variations
+                    request.getAdLinks(),
+                    request.getMediaFileUrl(),
+                    request.getWebsiteUrl(),
+                    request.getLeadFormQuestions(),
+                    request.getAdStyle()
+                );
+            } else if (request.getSelectedVariation() != null) {
+                // LEGACY: Single variation selected (backward compatibility)
+                log.info("Saving single selected variation (legacy mode)");
+                adResult = adService.createAdWithExistingContent(request.getCampaignId(),
+                    request.getAdType(),
+                    request.getPrompt(),
+                    request.getName(),
+                    null, // mediaFile
+                    userId,
+                    request.getSelectedVariation(), // Single variation
+                    request.getAdLinks(),
+                    request.getMediaFileUrl(),
+                    request.getWebsiteUrl(),
+                    request.getLeadFormQuestions(),
+                    request.getAdStyle()
+                );
+            } else {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "No variation selected");
+            }
 
             List<AdContent> contents = (List<AdContent>) adResult.get("contents");
             Ad ad = (Ad) adResult.get("ad");

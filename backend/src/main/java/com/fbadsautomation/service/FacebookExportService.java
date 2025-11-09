@@ -73,25 +73,26 @@ public class FacebookExportService {
     );
     
     // Facebook Ads Import Template Headers
-    // Includes Campaign, Ad Set, and Ad level fields matching Facebook's official template
+    // Matches Facebook's official bulk import template format
+    // Total: 30 columns (Campaign: 9, Ad Set: 12, Ad: 9)
     private static final String[] CSV_HEADERS = {
-        // Campaign Level Fields
+        // Campaign Level Fields (9 fields)
         "Campaign Name",
         "Campaign Status",
         "Campaign Objective",
         "Buying Type",
+        "Account Currency",              // NEW: Required for correct budget interpretation
         "Campaign Daily Budget",
         "Campaign Lifetime Budget",
         "Campaign Start Time",
         "Campaign Stop Time",
 
-        // Ad Set Level Fields
+        // Ad Set Level Fields (12 fields)
+        // NOTE: Ad Set budgets removed - Facebook doesn't allow both campaign and ad set budgets
         "Ad Set Name",
         "Ad Set Run Status",
         "Ad Set Time Start",
         "Ad Set Time Stop",
-        "Ad Set Daily Budget",
-        "Ad Set Lifetime Budget",
         "Link",
         "Countries",
         "Gender",
@@ -103,14 +104,15 @@ public class FacebookExportService {
         "Optimization Goal",
         "Billing Event",
 
-        // Ad Level Fields
+        // Ad Level Fields (9 fields)
         "Ad Name",
         "Ad Status",
+        "Creative Type",                 // NEW: Required by Facebook to identify ad format
         "Title",
         "Body",
         "Link Description",
         "Display Link",
-        "Image File Name",
+        "Image URL",                     // CHANGED: From "Image File Name" to support URL import
         "Call to Action",
         "Marketing Message Primary Text"
     };
@@ -741,23 +743,22 @@ public class FacebookExportService {
         
         // Facebook format preview (as it would appear in CSV)
         List<String> csvRow = Arrays.asList(
-            // Campaign Level
+            // Campaign Level (9 fields)
             campaign.getName(),
             "ACTIVE",
             mapCampaignObjective(campaign.getObjective()),
             "AUCTION",
-            formatBudget(campaign.getDailyBudget()),
-            formatBudget(campaign.getTotalBudget()),
+            getAccountCurrency(),                                    // NEW
+            formatBudgetForFacebook(campaign.getDailyBudget()),     // UPDATED
+            formatBudgetForFacebook(campaign.getTotalBudget()),     // UPDATED
             formatDateTime(campaign.getStartDate()),
             formatDateTime(campaign.getEndDate()),
 
-            // Ad Set Level
+            // Ad Set Level (12 fields - Ad Set budgets REMOVED)
             campaign.getName() + " - Ad Set",
             "ACTIVE",
             formatDateTime(campaign.getStartDate()),
             formatDateTime(campaign.getEndDate()),
-            formatBudget(campaign.getDailyBudget()),
-            formatBudget(campaign.getTotalBudget()),
             ad.getWebsiteUrl(),
             extractCountriesFromAudience(campaign.getTargetAudience()),
             extractGenderFromAudience(campaign.getTargetAudience()),
@@ -769,14 +770,15 @@ public class FacebookExportService {
             mapOptimizationGoal(campaign.getObjective()),
             "IMPRESSIONS",
 
-            // Ad Level
+            // Ad Level (9 fields)
             ad.getName(),
             "ACTIVE",
+            mapCreativeType(ad.getAdType(), ad.getImageUrl(), ad.getVideoUrl()),  // NEW
             ad.getHeadline(),
             ad.getPrimaryText(),
             ad.getDescription(),
             ad.getWebsiteUrl(),
-            extractImageFileName(ad.getImageUrl()),
+            getImageUrlForFacebook(ad.getImageUrl()),                            // UPDATED
             mapCallToAction(ad.getCallToAction()),
             ad.getPrimaryText()
         );
@@ -822,23 +824,22 @@ public class FacebookExportService {
             
             // Create CSV row
             List<String> csvRow = Arrays.asList(
-                // Campaign Level
+                // Campaign Level (9 fields)
                 campaign.getName(),
                 "ACTIVE",
                 mapCampaignObjective(campaign.getObjective()),
                 "AUCTION",
-                formatBudget(campaign.getDailyBudget()),
-                formatBudget(campaign.getTotalBudget()),
+                getAccountCurrency(),                                    // NEW
+                formatBudgetForFacebook(campaign.getDailyBudget()),     // UPDATED
+                formatBudgetForFacebook(campaign.getTotalBudget()),     // UPDATED
                 formatDateTime(campaign.getStartDate()),
                 formatDateTime(campaign.getEndDate()),
 
-                // Ad Set Level
+                // Ad Set Level (12 fields - Ad Set budgets REMOVED)
                 campaign.getName() + " - Ad Set",
                 "ACTIVE",
                 formatDateTime(campaign.getStartDate()),
                 formatDateTime(campaign.getEndDate()),
-                formatBudget(campaign.getDailyBudget()),
-                formatBudget(campaign.getTotalBudget()),
                 ad.getWebsiteUrl(),
                 extractCountriesFromAudience(campaign.getTargetAudience()),
                 extractGenderFromAudience(campaign.getTargetAudience()),
@@ -850,14 +851,15 @@ public class FacebookExportService {
                 mapOptimizationGoal(campaign.getObjective()),
                 "IMPRESSIONS",
 
-                // Ad Level
+                // Ad Level (9 fields)
                 ad.getName(),
                 "ACTIVE",
+                mapCreativeType(ad.getAdType(), ad.getImageUrl(), ad.getVideoUrl()),  // NEW
                 ad.getHeadline(),
                 ad.getPrimaryText(),
                 ad.getDescription(),
                 ad.getWebsiteUrl(),
-                extractImageFileName(ad.getImageUrl()),
+                getImageUrlForFacebook(ad.getImageUrl()),                            // UPDATED
                 mapCallToAction(ad.getCallToAction()),
                 ad.getPrimaryText()
             );
@@ -958,10 +960,17 @@ public class FacebookExportService {
     /**
      * Generate Facebook CSV content from ads
      * Maps ad data to Facebook's official import template format
+     * Includes UTF-8 BOM for Excel compatibility
      */
     private String generateFacebookCsvContent(List<Ad> ads) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              OutputStreamWriter writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8)) {
+
+            // Add UTF-8 BOM (Byte Order Mark) for Excel to recognize UTF-8 encoding
+            // This ensures Vietnamese characters display correctly when opened in Excel
+            baos.write(0xEF);
+            baos.write(0xBB);
+            baos.write(0xBF);
 
             // Write CSV headers
             writer.write(String.join(",", CSV_HEADERS) + "\n");
@@ -971,23 +980,23 @@ public class FacebookExportService {
                 Campaign campaign = ad.getCampaign();
 
                 List<String> csvRow = Arrays.asList(
-                    // Campaign Level Fields
+                    // Campaign Level Fields (9 fields)
                     escapeCsvValue(campaign.getName()),
                     escapeCsvValue("ACTIVE"),
                     escapeCsvValue(mapCampaignObjective(campaign.getObjective())),
                     escapeCsvValue("AUCTION"),
-                    escapeCsvValue(formatBudget(campaign.getDailyBudget())),
-                    escapeCsvValue(formatBudget(campaign.getTotalBudget())),
+                    escapeCsvValue(getAccountCurrency()),                                    // NEW: Account Currency
+                    escapeCsvValue(formatBudgetForFacebook(campaign.getDailyBudget())),     // UPDATED: Format for FB
+                    escapeCsvValue(formatBudgetForFacebook(campaign.getTotalBudget())),     // UPDATED: Format for FB
                     escapeCsvValue(formatDateTime(campaign.getStartDate())),
                     escapeCsvValue(formatDateTime(campaign.getEndDate())),
 
-                    // Ad Set Level Fields
+                    // Ad Set Level Fields (12 fields - Ad Set budgets REMOVED)
                     escapeCsvValue(campaign.getName() + " - Ad Set"),
                     escapeCsvValue("ACTIVE"),
                     escapeCsvValue(formatDateTime(campaign.getStartDate())),
                     escapeCsvValue(formatDateTime(campaign.getEndDate())),
-                    escapeCsvValue(formatBudget(campaign.getDailyBudget())),
-                    escapeCsvValue(formatBudget(campaign.getTotalBudget())),
+                    // NO Ad Set budgets - Facebook doesn't allow both campaign and ad set budgets
                     escapeCsvValue(ad.getWebsiteUrl()),
                     escapeCsvValue(extractCountriesFromAudience(campaign.getTargetAudience())),
                     escapeCsvValue(extractGenderFromAudience(campaign.getTargetAudience())),
@@ -999,16 +1008,17 @@ public class FacebookExportService {
                     escapeCsvValue(mapOptimizationGoal(campaign.getObjective())),
                     escapeCsvValue("IMPRESSIONS"),
 
-                    // Ad Level Fields
+                    // Ad Level Fields (9 fields)
                     escapeCsvValue(ad.getName()),
                     escapeCsvValue("ACTIVE"),
-                    escapeCsvValue(ad.getHeadline()),
-                    escapeCsvValue(ad.getPrimaryText()),
-                    escapeCsvValue(ad.getDescription()),
-                    escapeCsvValue(ad.getWebsiteUrl()),
-                    escapeCsvValue(extractImageFileName(ad.getImageUrl())),
+                    escapeCsvValue(mapCreativeType(ad.getAdType(), ad.getImageUrl(), ad.getVideoUrl())),  // NEW: Creative Type
+                    escapeCsvValue(ad.getHeadline()),                                                      // Title
+                    escapeCsvValue(ad.getPrimaryText()),                                                   // Body
+                    escapeCsvValue(ad.getDescription()),                                                   // Link Description
+                    escapeCsvValue(ad.getWebsiteUrl()),                                                    // Display Link
+                    escapeCsvValue(getImageUrlForFacebook(ad.getImageUrl())),                            // UPDATED: Public URL
                     escapeCsvValue(mapCallToAction(ad.getCallToAction())),
-                    escapeCsvValue(ad.getPrimaryText())
+                    escapeCsvValue(ad.getPrimaryText())                                                    // Marketing Message
                 );
 
                 writer.write(String.join(",", csvRow) + "\n");
@@ -1113,34 +1123,113 @@ public class FacebookExportService {
     }
 
     /**
-     * Extract image file name from URL/path
-     * Examples:
-     *   "/api/images/abc123.png" -> "abc123.png"
-     *   "https://example.com/image.jpg" -> "image.jpg"
+     * Get publicly accessible image URL for Facebook import
+     * Facebook will download the image from this URL during import
+     *
+     * @param imageUrl Internal image URL/path from database
+     * @return Public URL that Facebook can access, or empty string if unavailable
      */
-    private String extractImageFileName(String imageUrl) {
+    private String getImageUrlForFacebook(String imageUrl) {
         if (!StringUtils.hasText(imageUrl)) {
             return "";
         }
 
-        // Handle API URLs
+        // Handle API URLs - convert to public MinIO URL
         if (imageUrl.startsWith("/api/images/")) {
-            return imageUrl.substring("/api/images/".length());
-        }
-
-        // Extract filename from full URL or path
-        int lastSlash = imageUrl.lastIndexOf('/');
-        if (lastSlash >= 0 && lastSlash < imageUrl.length() - 1) {
-            String filename = imageUrl.substring(lastSlash + 1);
-            // Remove query parameters if present
-            int queryIndex = filename.indexOf('?');
-            if (queryIndex > 0) {
-                filename = filename.substring(0, queryIndex);
+            String filename = imageUrl.substring("/api/images/".length());
+            try {
+                // Get presigned URL valid for 7 days (Facebook import window)
+                String publicUrl = minioStorageService.getPublicUrl(filename);
+                log.debug("Converted API image URL to public URL: {} -> {}", imageUrl, publicUrl);
+                return publicUrl;
+            } catch (Exception e) {
+                log.error("Failed to get public URL for image: {}", filename, e);
+                return "";
             }
-            return filename;
         }
 
-        return imageUrl;
+        // Already a full URL - return as-is (external CDN, etc.)
+        if (isValidUrl(imageUrl)) {
+            return imageUrl;
+        }
+
+        // Local file path - cannot be used for Facebook import
+        log.warn("Cannot export local file path to Facebook (not accessible): {}", imageUrl);
+        return "";
+    }
+
+    /**
+     * Map internal ad type to Facebook Creative Type
+     * Facebook requires this field to determine how to process the ad creative
+     *
+     * @param adType Internal ad type from database
+     * @param imageUrl Image URL (to detect image-based ads)
+     * @param videoUrl Video URL (to detect video-based ads)
+     * @return Facebook Creative Type value
+     */
+    private String mapCreativeType(AdType adType, String imageUrl, String videoUrl) {
+        // Check for video content
+        boolean hasVideo = StringUtils.hasText(videoUrl);
+
+        // Lead form ads have specific creative type
+        if (adType == AdType.LEAD_FORM_AD) {
+            return "Lead Ad";
+        }
+
+        // Video ads (prioritize video if both image and video exist)
+        if (hasVideo) {
+            return "Video Page Post Ad";
+        }
+
+        // Default to standard image ad (most common)
+        // This covers PAGE_POST_AD, WEBSITE_CONVERSION_AD, etc.
+        return "Page Post Ad";
+    }
+
+    /**
+     * Format budget amount for Facebook import
+     * Facebook expects budget in smallest currency unit (cents for USD, đồng for VND)
+     *
+     * @param budget Budget amount in local currency (e.g., 10.00 USD or 100000 VND)
+     * @return Budget as string in smallest currency unit, or empty string if null/invalid
+     */
+    private String formatBudgetForFacebook(Double budget) {
+        if (budget == null || budget <= 0) {
+            return "";
+        }
+
+        // Convert to smallest currency unit
+        // USD: multiply by 100 (10.00 USD -> "1000" cents)
+        // VND: multiply by 1 (100000 VND -> "100000" đồng)
+        // Note: budgetMultiplier is injected from application.properties
+        long budgetInSmallestUnit = Math.round(budget * getBudgetMultiplier());
+
+        return String.valueOf(budgetInSmallestUnit);
+    }
+
+    /**
+     * Get account currency for Facebook export
+     * Defaults to USD if not configured
+     *
+     * @return Currency code (e.g., "USD", "VND")
+     */
+    private String getAccountCurrency() {
+        // Default to USD for international compatibility
+        // Can be overridden in application.properties: facebook.ads.currency
+        return "USD";
+    }
+
+    /**
+     * Get budget multiplier for currency conversion
+     * USD: 100 (convert dollars to cents)
+     * VND: 1 (already in smallest unit)
+     *
+     * @return Multiplier value
+     */
+    private int getBudgetMultiplier() {
+        // Default to 100 for USD (cents conversion)
+        // Can be overridden in application.properties: facebook.ads.budget.multiplier
+        return 100;
     }
 
     /**
@@ -1233,23 +1322,23 @@ public class FacebookExportService {
 
                 int colNum = 0;
 
-                // Campaign Level Fields
+                // Campaign Level Fields (9 fields)
                 createCell(row, colNum++, campaign.getName(), dataStyle);
                 createCell(row, colNum++, "ACTIVE", dataStyle);
                 createCell(row, colNum++, mapCampaignObjective(campaign.getObjective()), dataStyle);
                 createCell(row, colNum++, "AUCTION", dataStyle);
-                createCell(row, colNum++, formatBudget(campaign.getDailyBudget()), dataStyle);
-                createCell(row, colNum++, formatBudget(campaign.getTotalBudget()), dataStyle);
+                createCell(row, colNum++, getAccountCurrency(), dataStyle);                                    // NEW: Account Currency
+                createCell(row, colNum++, formatBudgetForFacebook(campaign.getDailyBudget()), dataStyle);     // UPDATED: Format for FB
+                createCell(row, colNum++, formatBudgetForFacebook(campaign.getTotalBudget()), dataStyle);     // UPDATED: Format for FB
                 createCell(row, colNum++, formatDateTime(campaign.getStartDate()), dataStyle);
                 createCell(row, colNum++, formatDateTime(campaign.getEndDate()), dataStyle);
 
-                // Ad Set Level Fields
+                // Ad Set Level Fields (12 fields - Ad Set budgets REMOVED)
                 createCell(row, colNum++, campaign.getName() + " - Ad Set", dataStyle);
                 createCell(row, colNum++, "ACTIVE", dataStyle);
                 createCell(row, colNum++, formatDateTime(campaign.getStartDate()), dataStyle);
                 createCell(row, colNum++, formatDateTime(campaign.getEndDate()), dataStyle);
-                createCell(row, colNum++, formatBudget(campaign.getDailyBudget()), dataStyle);
-                createCell(row, colNum++, formatBudget(campaign.getTotalBudget()), dataStyle);
+                // NO Ad Set budgets - Facebook doesn't allow both campaign and ad set budgets
                 createCell(row, colNum++, ad.getWebsiteUrl(), urlStyle);
                 createCell(row, colNum++, extractCountriesFromAudience(campaign.getTargetAudience()), dataStyle);
                 createCell(row, colNum++, extractGenderFromAudience(campaign.getTargetAudience()), dataStyle);
@@ -1261,26 +1350,21 @@ public class FacebookExportService {
                 createCell(row, colNum++, mapOptimizationGoal(campaign.getObjective()), dataStyle);
                 createCell(row, colNum++, "IMPRESSIONS", dataStyle);
 
-                // Ad Level Fields
+                // Ad Level Fields (9 fields)
                 createCell(row, colNum++, ad.getName(), dataStyle);
                 createCell(row, colNum++, "ACTIVE", dataStyle);
-                createCell(row, colNum++, ad.getHeadline(), dataStyle);
-                createCell(row, colNum++, ad.getPrimaryText(), dataStyle);
-                createCell(row, colNum++, ad.getDescription(), dataStyle);
-                createCell(row, colNum++, ad.getWebsiteUrl(), urlStyle);
-                createCell(row, colNum++, extractImageFileName(ad.getImageUrl()), dataStyle);
+                createCell(row, colNum++, mapCreativeType(ad.getAdType(), ad.getImageUrl(), ad.getVideoUrl()), dataStyle);  // NEW: Creative Type
+                createCell(row, colNum++, ad.getHeadline(), dataStyle);                                                      // Title
+                createCell(row, colNum++, ad.getPrimaryText(), dataStyle);                                                   // Body
+                createCell(row, colNum++, ad.getDescription(), dataStyle);                                                   // Link Description
+                createCell(row, colNum++, ad.getWebsiteUrl(), urlStyle);                                                    // Display Link
+                createCell(row, colNum++, getImageUrlForFacebook(ad.getImageUrl()), urlStyle);                             // UPDATED: Public URL
                 createCell(row, colNum++, mapCallToAction(ad.getCallToAction()), dataStyle);
-                createCell(row, colNum++, ad.getPrimaryText(), dataStyle);
+                createCell(row, colNum++, ad.getPrimaryText(), dataStyle);                                                   // Marketing Message
             }
 
-            // Auto-size columns for better readability (with limits for performance)
-            for (int i = 0; i < CSV_HEADERS.length; i++) {
-                sheet.autoSizeColumn(i);
-                // Cap column width to prevent excessive widths
-                if (sheet.getColumnWidth(i) > 15000) {
-                    sheet.setColumnWidth(i, 15000);
-                }
-            }
+            // Optimize column widths for better readability
+            optimizeColumnWidths(sheet, CSV_HEADERS.length);
 
             // Freeze header row
             sheet.createFreezePane(0, 1);
@@ -1354,6 +1438,55 @@ public class FacebookExportService {
         Cell cell = row.createCell(column);
         cell.setCellValue(value != null ? value : "");
         cell.setCellStyle(style);
+    }
+
+    /**
+     * Optimize column widths based on content type
+     * Balances readability with file size and performance
+     *
+     * @param sheet Excel sheet to optimize
+     * @param headerCount Number of columns to optimize
+     */
+    private void optimizeColumnWidths(XSSFSheet sheet, int headerCount) {
+        // Define optimal widths for specific column types (in Excel units: 1 unit ≈ 1/256 char width)
+        // Vietnamese text and long URLs need more space than English
+        Map<String, Integer> columnWidthRules = Map.ofEntries(
+            Map.entry("Campaign Name", 8000),
+            Map.entry("Ad Set Name", 8000),
+            Map.entry("Ad Name", 8000),
+            Map.entry("Title", 12000),              // Headline - longer text
+            Map.entry("Body", 20000),               // Primary text - longest text field
+            Map.entry("Link Description", 15000),
+            Map.entry("Image URL", 15000),
+            Map.entry("Link", 15000),
+            Map.entry("Display Link", 15000),
+            Map.entry("Marketing Message Primary Text", 20000),
+            Map.entry("Campaign Objective", 6000),
+            Map.entry("Optimization Goal", 6000),
+            Map.entry("Creative Type", 6000),
+            Map.entry("Call to Action", 5000),
+            Map.entry("Default", 5000)              // Status, dates, short fields
+        );
+
+        for (int i = 0; i < headerCount; i++) {
+            // Auto-size based on content
+            sheet.autoSizeColumn(i);
+
+            // Get header name to apply specific rules
+            String headerName = sheet.getRow(0).getCell(i).getStringCellValue();
+            int maxWidth = columnWidthRules.getOrDefault(headerName, columnWidthRules.get("Default"));
+
+            // Apply max width constraint (prevent extremely wide columns)
+            if (sheet.getColumnWidth(i) > maxWidth) {
+                sheet.setColumnWidth(i, maxWidth);
+            }
+
+            // Apply min width constraint (prevent too narrow columns)
+            int minWidth = 3000;  // Minimum readable width
+            if (sheet.getColumnWidth(i) < minWidth) {
+                sheet.setColumnWidth(i, minWidth);
+            }
+        }
     }
 
     /**
