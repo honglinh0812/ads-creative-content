@@ -90,6 +90,7 @@ public class AdGenerationResponse {
         private Integer qualityScore; // Quality score 0-100
         private Boolean hasWarnings; // Flag for warnings
         private List<String> warnings; // List of validation warnings
+        private Boolean needsReview; // Flag for content truncated to meet Facebook limits
 
         public AdVariation() {}
         
@@ -137,6 +138,9 @@ public class AdGenerationResponse {
 
         public List<String> getWarnings() { return warnings; }
         public void setWarnings(List<String> warnings) { this.warnings = warnings; }
+
+        public Boolean getNeedsReview() { return needsReview; }
+        public void setNeedsReview(Boolean needsReview) { this.needsReview = needsReview; }
 
         // Builder pattern for AdVariation
         public static Builder builder() {

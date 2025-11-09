@@ -61,6 +61,9 @@ public class AdContent {
     @Column(name = "has_warnings")
     private Boolean hasWarnings; // Flag for quick filtering
 
+    @Column(name = "needs_review")
+    private Boolean needsReview = false; // Flag for content truncated to meet Facebook limits
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ad_id", nullable = false)
     private Ad ad;
@@ -104,6 +107,8 @@ public class AdContent {
     public void setValidationWarnings(String validationWarnings) { this.validationWarnings = validationWarnings; }
     public Boolean getHasWarnings() { return hasWarnings; }
     public void setHasWarnings(Boolean hasWarnings) { this.hasWarnings = hasWarnings; }
+    public Boolean getNeedsReview() { return needsReview; }
+    public void setNeedsReview(Boolean needsReview) { this.needsReview = needsReview; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public ContentType getContentType() { return contentType; }

@@ -210,12 +210,17 @@ public class ChainOfThoughtPromptBuilder {
 
         if (isVietnamese) {
             return String.format("""
-                📏 YÊU CẦU FACEBOOK (NGHIÊM NGẶT)
+                📏 YÊU CẦU FACEBOOK (NGHIÊM NGẶT - BẮT BUỘC TUÂN THỦ)
 
-                Giới hạn ký tự:
-                - Tiêu đề (headline): TỐI ĐA 40 ký tự (đếm kỹ!)
-                - Mô tả (description): TỐI ĐA 125 ký tự
-                - Văn bản chính (primaryText): TỐI ĐA 1000 ký tự
+                ⚠️ GIỚI HẠN KÝ TỰ - TUYỆT ĐỐI KHÔNG ĐƯỢC VƯỢT QUÁ:
+                - Tiêu đề (headline): NGHIÊM NGẶT 40 ký tự
+                  * Đếm TỪNG ký tự kể cả dấu cách và dấu câu
+                  * Nếu vượt quá 40 ký tự sẽ BỊ TỪ CHỐI bởi Facebook
+                  * Ví dụ HỢP LỆ (39 chars): "Giảm 50%% - Mua ngay hôm nay!"
+                  * Ví dụ KHÔNG HỢP LỆ (42 chars): "Giảm giá lớn 50%% - Đừng bỏ lỡ!"
+
+                - Mô tả (description): NGHIÊM NGẶT 125 ký tự
+                - Văn bản chính (primaryText): NGHIÊM NGẶT 1000 ký tự
 
                 Tuân thủ chính sách:
                 - Không dùng từ cấm: "miễn phí", "đảm bảo", "kỳ diệu", "click vào đây", "mua ngay", "gây sốc"
@@ -229,12 +234,17 @@ public class ChainOfThoughtPromptBuilder {
                 """, ctaDisplay);
         } else {
             return String.format("""
-                📏 FACEBOOK REQUIREMENTS (STRICT)
+                📏 FACEBOOK REQUIREMENTS (STRICT - MANDATORY COMPLIANCE)
 
-                Character Limits:
-                - Headline: MAXIMUM 40 characters (count carefully!)
-                - Description: MAXIMUM 125 characters
-                - Primary Text: MAXIMUM 1000 characters
+                ⚠️ CHARACTER LIMITS - ABSOLUTELY MUST NOT EXCEED:
+                - Headline: STRICTLY 40 characters
+                  * Count EVERY character including spaces and punctuation
+                  * Exceeding 40 characters will be REJECTED by Facebook
+                  * VALID example (39 chars): "Save 50%% - Shop Today Limited Time"
+                  * INVALID example (42 chars): "Big Sale 50%% Off - Don't Miss Out Now!"
+
+                - Description: STRICTLY 125 characters
+                - Primary Text: STRICTLY 1000 characters
 
                 Policy Compliance:
                 - No prohibited words: "free", "guaranteed", "miracle", "click here", "buy now", "shocking"

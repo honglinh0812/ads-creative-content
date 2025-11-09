@@ -672,6 +672,11 @@
                   {{ $t('adCreate.step3.qualityScore.bestBadge') }}
                 </div>
 
+                <!-- Needs Review Warning -->
+                <a-tag v-if="variation.needsReview" color="orange" class="needs-review-tag">
+                  <warning-outlined /> {{ $t('adCreate.step3.needsReview') }}
+                </a-tag>
+
                 <div class="ad-preview-content">
                   <div
                     v-if="variation.imageUrl"
@@ -3788,6 +3793,18 @@ export default {
 @keyframes badge-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
+}
+
+.needs-review-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(250, 173, 20, 0.3);
 }
 
 .ad-preview-card.best-quality {

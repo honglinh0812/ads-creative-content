@@ -208,8 +208,10 @@ export default {
         return false;
       }
 
-      // Check for valid characters (letters, numbers, spaces, basic punctuation)
-      if (!/^[a-zA-Z0-9\s,.\-']+$/.test(query)) {
+      // Check for valid characters (Unicode letters, numbers, spaces, basic punctuation)
+      // \p{L} = Unicode letters (supports Vietnamese, Chinese, Japanese, etc.)
+      // \p{N} = Unicode numbers
+      if (!/^[\p{L}\p{N}\s,.\-']+$/u.test(query)) {
         this.validationStatus.searchQuery = 'error';
         this.validationMessages.searchQuery = this.$t('components.trendingKeywords.validation.invalidChars');
         return false;

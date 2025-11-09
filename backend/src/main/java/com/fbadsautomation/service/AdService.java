@@ -58,12 +58,14 @@ public class AdService {
     private final AIContentService aiContentService;
     private final List<AIProvider> aiProviders;
     private final PersonaService personaService;
+    private final com.fbadsautomation.util.AdContentValidator adContentValidator;
 
     @Autowired
     public AdService(AdRepository adRepository, CampaignRepository campaignRepository,
                      AdContentRepository adContentRepository, UserRepository userRepository,
                      RestTemplate restTemplate, AIContentService aiContentService,
-                     List<AIProvider> aiProviders, PersonaService personaService) {
+                     List<AIProvider> aiProviders, PersonaService personaService,
+                     com.fbadsautomation.util.AdContentValidator adContentValidator) {
         this.adRepository = adRepository;
         this.campaignRepository = campaignRepository;
         this.adContentRepository = adContentRepository;
@@ -72,6 +74,7 @@ public class AdService {
         this.aiContentService = aiContentService;
         this.aiProviders = aiProviders;
         this.personaService = personaService;
+        this.adContentValidator = adContentValidator;
     }
 
     @Value("${app.image.storage.location:uploads/images}")
@@ -572,100 +575,116 @@ public class AdService {
                                                           List<com.fbadsautomation.dto.AdVariation> selectedVariations,
                                                           List<String> adLinks, String mediaFileUrl,
                                                           String websiteUrl, List<com.fbadsautomation.dto.AdGenerationRequest.LeadFormQuestion> leadFormQuestions, String adStyle) {
-        log.info("Creating ad with {} existing content variations for user ID: {}", selectedVariations != null ? selectedVariations.size() : 0, userId);
+        log.info("Creating {} separate ads from selected variations for user ID: {}",
+            selectedVariations != null ? selectedVariations.size() : 0, userId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
         Campaign campaign = campaignRepository.findByIdAndUser(campaignId, user)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Campaign not found"));
 
-        // Create ad
-        Ad ad = new Ad();
-        ad.setName(name);
-        ad.setAdType(mapFrontendAdTypeToEnum(adType));
-        ad.setPrompt(prompt);
-        ad.setCampaign(campaign);
-        ad.setUser(user);
-        ad.setStatus("READY");
-        ad.setCreatedBy(user.getId().toString());
-        ad.setCreatedDate(LocalDateTime.now());
-
-        // Set ad type specific fields
-        if (websiteUrl != null && !websiteUrl.trim().isEmpty()) {
-            ad.setWebsiteUrl(websiteUrl);
+        // Save media file once if provided
+        String savedMediaPath = null;
+        if (mediaFile != null && !mediaFile.isEmpty()) {
+            savedMediaPath = saveMediaFile(mediaFile);
+        } else if (mediaFileUrl != null && !mediaFileUrl.isEmpty()) {
+            savedMediaPath = mediaFileUrl;
         }
 
+        // Serialize lead form questions once
+        String leadFormQuestionsJson = null;
         if (leadFormQuestions != null && !leadFormQuestions.isEmpty()) {
             try {
                 com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                String leadFormQuestionsJson = objectMapper.writeValueAsString(leadFormQuestions);
-                ad.setLeadFormQuestions(leadFormQuestionsJson);
+                leadFormQuestionsJson = objectMapper.writeValueAsString(leadFormQuestions);
             } catch (Exception e) {
                 log.warn("Failed to serialize lead form questions: {}", e.getMessage());
             }
         }
 
+        // Parse adStyle once
+        com.fbadsautomation.model.AdStyle parsedAdStyle = null;
         if (adStyle != null && !adStyle.trim().isEmpty()) {
             try {
-                ad.setAdStyle(com.fbadsautomation.model.AdStyle.valueOf(adStyle.toUpperCase()));
+                parsedAdStyle = com.fbadsautomation.model.AdStyle.valueOf(adStyle.toUpperCase());
             } catch (IllegalArgumentException e) {
                 log.warn("Invalid ad style: {}, using null", adStyle);
             }
         }
 
-        // Save media file if provided
-        if (mediaFile != null && !mediaFile.isEmpty()) {
-            String mediaPath = saveMediaFile(mediaFile);
-            ad.setImageUrl(mediaPath);
-        } else if (mediaFileUrl != null && !mediaFileUrl.isEmpty()) {
-            ad.setImageUrl(mediaFileUrl);
-        }
+        // Create SEPARATE Ad for EACH selected variation
+        List<Ad> createdAds = new java.util.ArrayList<>();
+        List<AdContent> createdContents = new java.util.ArrayList<>();
 
-        // Save ad first to get ID
-        ad = adRepository.save(ad);
-        log.info("Saved ad with ID: {}", ad.getId());
-
-        // Create AdContent for each selected variation
-        List<AdContent> contents = new java.util.ArrayList<>();
-        int order = 1;
         for (com.fbadsautomation.dto.AdVariation selectedVariation : selectedVariations) {
+            // Create new Ad for this variation
+            Ad ad = new Ad();
+            ad.setName(name); // Same name for all (differentiate by ID/createdDate)
+            ad.setAdType(mapFrontendAdTypeToEnum(adType));
+            ad.setPrompt(prompt);
+            ad.setCampaign(campaign);
+            ad.setUser(user);
+            ad.setStatus("READY");
+            ad.setCreatedBy(user.getId().toString());
+            ad.setCreatedDate(LocalDateTime.now());
+
+            // Set ad type specific fields
+            if (websiteUrl != null && !websiteUrl.trim().isEmpty()) {
+                ad.setWebsiteUrl(websiteUrl);
+            }
+            if (leadFormQuestionsJson != null) {
+                ad.setLeadFormQuestions(leadFormQuestionsJson);
+            }
+            if (parsedAdStyle != null) {
+                ad.setAdStyle(parsedAdStyle);
+            }
+
+            // Set variation content fields to Ad
+            ad.setHeadline(selectedVariation.getHeadline());
+            ad.setPrimaryText(selectedVariation.getPrimaryText());
+            ad.setDescription(selectedVariation.getDescription());
+            if (selectedVariation.getCallToAction() != null) {
+                ad.setCallToAction(FacebookCTA.valueOf(selectedVariation.getCallToAction()));
+            }
+
+            // Set image URL (variation-specific or global)
+            String imageUrl = selectedVariation.getImageUrl();
+            if (imageUrl == null || imageUrl.isEmpty()) {
+                imageUrl = savedMediaPath;
+            }
+            ad.setImageUrl(imageUrl);
+
+            // Save Ad
+            ad = adRepository.save(ad);
+            log.info("Saved ad {} with ID: {}", createdAds.size() + 1, ad.getId());
+            createdAds.add(ad);
+
+            // Create AdContent for this Ad
             AdContent content = new AdContent();
             content.setAd(ad);
             content.setUser(user);
             content.setHeadline(selectedVariation.getHeadline());
             content.setDescription(selectedVariation.getDescription());
             content.setPrimaryText(selectedVariation.getPrimaryText());
-            content.setCallToAction(selectedVariation.getCallToAction() != null ? com.fbadsautomation.model.FacebookCTA.valueOf(selectedVariation.getCallToAction()) : null);
-
-            // Set imageUrl from selectedVariation or mediaFileUrl if available
-            String contentImageUrl = selectedVariation.getImageUrl();
-            if ((contentImageUrl == null || contentImageUrl.isEmpty()) && mediaFileUrl != null && !mediaFileUrl.isEmpty()) {
-                contentImageUrl = mediaFileUrl;
+            if (selectedVariation.getCallToAction() != null) {
+                content.setCallToAction(FacebookCTA.valueOf(selectedVariation.getCallToAction()));
             }
-            content.setImageUrl(contentImageUrl);
-            content.setPreviewOrder(order++);
+            content.setImageUrl(imageUrl);
+            content.setPreviewOrder(1); // Each ad has only 1 content (the selected variation)
             content.setIsSelected(true);
             content.setCreatedDate(LocalDateTime.now());
 
-            // Save content
             content = adContentRepository.save(content);
-            contents.add(content);
+            createdContents.add(content);
         }
 
-        // Use first variation for ad main fields (backward compatibility)
-        if (!contents.isEmpty()) {
-            AdContent firstContent = contents.get(0);
-            ad.setHeadline(firstContent.getHeadline());
-            ad.setPrimaryText(firstContent.getPrimaryText());
-            ad.setDescription(firstContent.getDescription());
-            ad.setCallToAction(firstContent.getCallToAction());
-            ad.setImageUrl(firstContent.getImageUrl());
-            ad = adRepository.save(ad);
-        }
+        log.info("Successfully created {} ads from {} variations", createdAds.size(), selectedVariations.size());
 
+        // Return result with all created ads and contents
         Map<String, Object> result = new HashMap<>();
-        result.put("ad", ad);
-        result.put("contents", contents);
+        result.put("ads", createdAds); // Changed from "ad" to "ads" (list)
+        result.put("contents", createdContents);
+        result.put("count", createdAds.size());
 
         return result;
     }
@@ -963,6 +982,10 @@ public class AdService {
 
         for (int i = 0; i < contents.size(); i++) {
             AdContent content = contents.get(i);
+
+            // VALIDATE AND TRUNCATE content to meet Facebook limits
+            adContentValidator.validateAndTruncate(content);
+
             AdGenerationResponse.AdVariation rv = new AdGenerationResponse.AdVariation();
             rv.setId(null); // ID is null for preview/temporary variations
             rv.setHeadline(content.getHeadline());
@@ -976,6 +999,7 @@ public class AdService {
 
             rv.setImageUrl(imageUrls[i]);
             rv.setOrder(null);
+            rv.setNeedsReview(content.getNeedsReview()); // Set needsReview flag
             variations.add(rv);
         }
 

@@ -1117,6 +1117,7 @@
         "edit": "Edit"
       },
       "emptyState": "No ad variations generated yet",
+      "needsReview": "Needs Review - Content truncated to meet Facebook limits",
       "navigation": {
         "saveAd": "Save Ad"
       }

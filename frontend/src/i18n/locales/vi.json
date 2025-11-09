@@ -1297,6 +1297,7 @@
         "edit": "Chỉnh sửa"
       },
       "emptyState": "Chưa tạo biến thể quảng cáo nào",
+      "needsReview": "Cần xem xét - Đã cắt bớt nội dung để phù hợp với giới hạn của Facebook",
       "navigation": {
         "saveAd": "Lưu quảng cáo"
       }

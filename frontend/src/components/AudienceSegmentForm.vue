@@ -214,8 +214,9 @@ export default {
               this.validationMessages.location = this.$t('components.audienceSegment.validation.locationMaxLength');
               return false;
             }
-            // Check for valid characters (letters, spaces, commas, hyphens)
-            if (!/^[a-zA-Z\s,-]+$/.test(location)) {
+            // Check for valid characters (Unicode letters, spaces, commas, hyphens)
+            // \p{L} = Unicode letters (supports Vietnamese, Chinese, Japanese, etc.)
+            if (!/^[\p{L}\s,-]+$/u.test(location)) {
               this.validationStatus.location = 'error';
               this.validationMessages.location = this.$t('components.audienceSegment.validation.locationInvalidChars');
               return false;
