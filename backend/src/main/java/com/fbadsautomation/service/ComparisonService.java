@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * Service for AI-powered ad comparison and suggestion generation
@@ -112,15 +114,30 @@ public class ComparisonService {
                 throw new RuntimeException("AI provider not found: " + provider);
             }
 
-            List<com.fbadsautomation.model.AdContent> results = aiProvider.generateAdContent(analysisPrompt, 1, "en", null);
-            String analysis = results != null && !results.isEmpty() ? results.get(0).getPrimaryText() : "";
+            // Retry AI call with exponential backoff (max 3 attempts)
+            String analysis = retryWithBackoff(() -> {
+                List<com.fbadsautomation.model.AdContent> results = aiProvider.generateAdContent(analysisPrompt, 1, "en", null);
+                if (results == null || results.isEmpty()) {
+                    throw new RuntimeException("AI provider returned no results");
+                }
+                return results.get(0).getPrimaryText();
+            }, "analyzeCompetitorAd", 3);
 
-            // Parse AI response into structured insights
-            return parseAnalysisResponse(analysis);
+            // Parse AI response with safe fallback handling
+            return parseAnalysisResponseSafe(analysis, "competitor ad");
 
         } catch (Exception e) {
             log.error("Error analyzing competitor ad: {}", e.getMessage(), e);
-            throw new com.fbadsautomation.exception.AIProviderException(provider, "Failed to analyze competitor ad: " + e.getMessage(), true);
+
+            // Return graceful fallback instead of throwing exception
+            Map<String, Object> fallback = new HashMap<>();
+            fallback.put("error", true);
+            fallback.put("error_message", "AI analysis temporarily unavailable: " + e.getMessage());
+            fallback.put("strengths", List.of("Unable to analyze at this time"));
+            fallback.put("weaknesses", List.of("Please try again later"));
+            fallback.put("recommendations", List.of("Service may be experiencing high load"));
+
+            return fallback;
         }
     }
 
@@ -154,13 +171,33 @@ public class ComparisonService {
                 throw new RuntimeException("AI provider not found: " + provider);
             }
 
-            List<com.fbadsautomation.model.AdContent> results = aiProvider.generateAdContent(prompt, 1, "en", null);
-            String analysis = results != null && !results.isEmpty() ? results.get(0).getPrimaryText() : "";
-            return parsePatternAnalysis(analysis);
+            // Retry AI call with exponential backoff (max 3 attempts)
+            String analysis = retryWithBackoff(() -> {
+                List<com.fbadsautomation.model.AdContent> results = aiProvider.generateAdContent(prompt, 1, "en", null);
+                if (results == null || results.isEmpty()) {
+                    throw new RuntimeException("AI provider returned no results");
+                }
+                return results.get(0).getPrimaryText();
+            }, "identifyCommonPatterns", 3);
+
+            // Parse pattern analysis with validation
+            Map<String, Object> patterns = parsePatternAnalysis(analysis);
+            if (patterns.isEmpty()) {
+                patterns.put("summary", "No clear patterns identified");
+                patterns.put("raw_analysis", analysis);
+            }
+            return patterns;
 
         } catch (Exception e) {
             log.error("Error identifying patterns: {}", e.getMessage(), e);
-            throw new com.fbadsautomation.exception.AIProviderException(provider, "Failed to identify patterns: " + e.getMessage(), true);
+
+            // Return graceful fallback instead of throwing exception
+            Map<String, Object> fallback = new HashMap<>();
+            fallback.put("error", true);
+            fallback.put("error_message", "Pattern analysis temporarily unavailable: " + e.getMessage());
+            fallback.put("summary", "Unable to analyze patterns at this time. Please try again later.");
+
+            return fallback;
         }
     }
 
@@ -171,9 +208,9 @@ public class ComparisonService {
      * @param competitorInsights Insights from competitor analysis
      * @param numberOfVariations Number of variations to generate (1-5)
      * @param provider AI provider
-     * @return List of ad variations
+     * @return List of ad variation DTOs with structured fields
      */
-    public List<String> generateABTestVariations(
+    public List<com.fbadsautomation.dto.AdVariationDTO> generateABTestVariations(
             @NotBlank String baseAd,
             Map<String, Object> competitorInsights,
             int numberOfVariations,
@@ -192,14 +229,34 @@ public class ComparisonService {
                 throw new RuntimeException("AI provider not found: " + provider);
             }
 
+            // Generate variations using AI provider
             List<com.fbadsautomation.model.AdContent> results = aiProvider.generateAdContent(prompt, safeVariations, "en", null);
-            List<String> variations = new ArrayList<>();
-            if (results != null) {
+
+            // If we got structured results, convert them to AdVariationDTO
+            if (results != null && !results.isEmpty()) {
+                List<com.fbadsautomation.dto.AdVariationDTO> variations = new ArrayList<>();
+                int varNum = 1;
                 for (com.fbadsautomation.model.AdContent content : results) {
-                    variations.add(content.getPrimaryText());
+                    String ctaText = null;
+                    if (content.getCallToAction() != null) {
+                        ctaText = content.getCallToAction().name();
+                    }
+
+                    variations.add(com.fbadsautomation.dto.AdVariationDTO.builder()
+                        .variationNumber(varNum++)
+                        .headline(content.getHeadline() != null ? content.getHeadline() : "Variation " + varNum)
+                        .primaryText(content.getPrimaryText())
+                        .callToAction(ctaText)
+                        .testingFocus("A/B Test Variation")
+                        .build());
                 }
+                return variations;
             }
-            return variations;
+
+            // Fallback: call AI provider's text completion directly and parse
+            String systemPrompt = "You are an expert Facebook Ads copywriter. Generate A/B test variations in the exact format requested.";
+            String response = aiProvider.generateTextCompletion(prompt, systemPrompt, 2000);
+            return parseABTestVariations(response, safeVariations);
 
         } catch (Exception e) {
             log.error("Error generating A/B test variations: {}", e.getMessage(), e);
@@ -342,29 +399,160 @@ public class ComparisonService {
     }
 
     /**
-     * Parse AI analysis response into structured map
+     * Safe wrapper for parsing AI analysis responses with fallback handling
+     */
+    private Map<String, Object> parseAnalysisResponseSafe(String analysis, String context) {
+        try {
+            Map<String, Object> result = parseAnalysisResponse(analysis);
+
+            // Validate result has meaningful content
+            if (result.isEmpty() || (!result.containsKey("strengths") && !result.containsKey("weaknesses"))) {
+                log.warn("Parsed analysis is empty or incomplete, adding fallback content");
+                result.put("raw_analysis", analysis);
+                result.put("parsing_note", "Automated parsing incomplete. See raw analysis above.");
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("Error parsing {} analysis, returning fallback: {}", context, e.getMessage());
+
+            Map<String, Object> fallback = new HashMap<>();
+            fallback.put("error", true);
+            fallback.put("error_message", "Failed to parse AI response structure");
+            fallback.put("raw_analysis", analysis);
+            fallback.put("strengths", List.of("Analysis available in raw format"));
+            fallback.put("weaknesses", List.of("Unable to parse structured insights"));
+            fallback.put("recommendations", List.of("Review raw analysis for detailed insights"));
+
+            return fallback;
+        }
+    }
+
+    /**
+     * Retry AI provider call with exponential backoff
+     *
+     * @param operation The operation to retry
+     * @param operationName Name of operation for logging
+     * @param maxRetries Maximum number of retries
+     * @return Result of the operation
+     */
+    private <T> T retryWithBackoff(java.util.function.Supplier<T> operation, String operationName, int maxRetries) {
+        int attempt = 0;
+        Exception lastException = null;
+
+        while (attempt < maxRetries) {
+            try {
+                return operation.get();
+            } catch (Exception e) {
+                lastException = e;
+                attempt++;
+
+                if (attempt >= maxRetries) {
+                    break;
+                }
+
+                long backoffMs = (long) (Math.pow(2, attempt) * 1000); // 2s, 4s, 8s
+                log.warn("Attempt {}/{} failed for {}: {}. Retrying in {}ms",
+                    attempt, maxRetries, operationName, e.getMessage(), backoffMs);
+
+                try {
+                    Thread.sleep(backoffMs);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Retry interrupted", ie);
+                }
+            }
+        }
+
+        log.error("All {} attempts failed for {}", maxRetries, operationName);
+        throw new RuntimeException("Operation failed after " + maxRetries + " attempts: " + operationName,
+            lastException);
+    }
+
+    /**
+     * Parse AI analysis response into structured map with robust regex patterns
      */
     private Map<String, Object> parseAnalysisResponse(String analysis) {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            // Simple parsing logic (can be enhanced with more sophisticated NLP)
-            String[] sections = analysis.split("\n\n");
+            // Use regex patterns for more robust parsing
+            Pattern strengthsPattern = Pattern.compile(
+                "STRENGTHS?:\\s*([\\s\\S]*?)(?=WEAKNESSES?:|PATTERNS?:|RECOMMENDATIONS?:|$)",
+                Pattern.CASE_INSENSITIVE
+            );
+            Pattern weaknessesPattern = Pattern.compile(
+                "WEAKNESSES?:|AREAS?\\s+FOR\\s+IMPROVEMENT:|LIMITATIONS?:\\s*([\\s\\S]*?)(?=STRENGTHS?:|PATTERNS?:|RECOMMENDATIONS?:|$)",
+                Pattern.CASE_INSENSITIVE
+            );
+            Pattern patternsPattern = Pattern.compile(
+                "PATTERNS?:|MESSAGING\\s+PATTERNS?:\\s*([\\s\\S]*?)(?=STRENGTHS?:|WEAKNESSES?:|RECOMMENDATIONS?:|$)",
+                Pattern.CASE_INSENSITIVE
+            );
+            Pattern recommendationsPattern = Pattern.compile(
+                "RECOMMENDATIONS?:|SUGGESTIONS?:\\s*([\\s\\S]*?)(?=STRENGTHS?:|WEAKNESSES?:|PATTERNS?:|$)",
+                Pattern.CASE_INSENSITIVE
+            );
 
-            for (String section : sections) {
-                if (section.startsWith("STRENGTHS:")) {
-                    result.put("strengths", extractList(section));
-                } else if (section.startsWith("WEAKNESSES:")) {
-                    result.put("weaknesses", extractList(section));
-                } else if (section.startsWith("PATTERNS:")) {
-                    result.put("patterns", extractText(section));
-                } else if (section.startsWith("RECOMMENDATIONS:")) {
-                    result.put("recommendations", extractList(section));
+            // Extract sections
+            Matcher strengthsMatcher = strengthsPattern.matcher(analysis);
+            if (strengthsMatcher.find()) {
+                String strengthsText = strengthsMatcher.group(1).trim();
+                List<String> strengths = extractListRobust(strengthsText);
+                if (!strengths.isEmpty()) {
+                    result.put("strengths", strengths);
                 }
             }
 
+            Matcher weaknessesMatcher = weaknessesPattern.matcher(analysis);
+            if (weaknessesMatcher.find()) {
+                String weaknessesText = weaknessesMatcher.group(1).trim();
+                List<String> weaknesses = extractListRobust(weaknessesText);
+                if (!weaknesses.isEmpty()) {
+                    result.put("weaknesses", weaknesses);
+                }
+            }
+
+            Matcher patternsMatcher = patternsPattern.matcher(analysis);
+            if (patternsMatcher.find()) {
+                String patternsText = patternsMatcher.group(1).trim();
+                List<String> patterns = extractListRobust(patternsText);
+                if (!patterns.isEmpty()) {
+                    result.put("patterns", patterns);
+                } else {
+                    // If no list items, store as text
+                    result.put("patterns", patternsText);
+                }
+            }
+
+            Matcher recommendationsMatcher = recommendationsPattern.matcher(analysis);
+            if (recommendationsMatcher.find()) {
+                String recommendationsText = recommendationsMatcher.group(1).trim();
+                List<String> recommendations = extractListRobust(recommendationsText);
+                if (!recommendations.isEmpty()) {
+                    result.put("recommendations", recommendations);
+                }
+            }
+
+            // Validation - ensure required keys exist
+            if (!result.containsKey("strengths")) {
+                result.put("strengths", List.of("Analysis completed - see raw data"));
+            }
+            if (!result.containsKey("weaknesses")) {
+                result.put("weaknesses", List.of("No specific weaknesses identified"));
+            }
+            if (!result.containsKey("recommendations")) {
+                result.put("recommendations", List.of("Review full analysis for insights"));
+            }
+
         } catch (Exception e) {
-            log.error("Error parsing analysis response: {}", e.getMessage());
+            log.error("Error parsing analysis response: {}", e.getMessage(), e);
+            // Return fallback structure
+            result.put("error", true);
+            result.put("strengths", List.of("Unable to parse strengths"));
+            result.put("weaknesses", List.of("Unable to parse weaknesses"));
+            result.put("recommendations", List.of("Please try regenerating analysis"));
             result.put("raw_analysis", analysis);
         }
 
@@ -372,25 +560,123 @@ public class ComparisonService {
     }
 
     /**
-     * Parse pattern analysis response
+     * Robust list extraction supporting multiple formats
+     */
+    private List<String> extractListRobust(String text) {
+        List<String> items = new ArrayList<>();
+
+        if (text == null || text.trim().isEmpty()) {
+            return items;
+        }
+
+        // Try numbered list first (1., 2., 3. or 1) 2) 3))
+        Pattern numberedPattern = Pattern.compile("^\\s*\\d+[.)]+\\s*(.+)$", Pattern.MULTILINE);
+        Matcher numberedMatcher = numberedPattern.matcher(text);
+        while (numberedMatcher.find()) {
+            String item = numberedMatcher.group(1).trim();
+            if (!item.isEmpty()) {
+                items.add(item);
+            }
+        }
+
+        // If numbered list worked, return
+        if (!items.isEmpty()) {
+            return items;
+        }
+
+        // Try bullet points (-, *, •, ◦, ▪)
+        Pattern bulletPattern = Pattern.compile("^\\s*[-*•◦▪]+\\s*(.+)$", Pattern.MULTILINE);
+        Matcher bulletMatcher = bulletPattern.matcher(text);
+        while (bulletMatcher.find()) {
+            String item = bulletMatcher.group(1).trim();
+            if (!item.isEmpty()) {
+                items.add(item);
+            }
+        }
+
+        // If bullets worked, return
+        if (!items.isEmpty()) {
+            return items;
+        }
+
+        // Fallback: split by newlines
+        String[] lines = text.split("\\n");
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (!trimmed.isEmpty() && trimmed.length() > 3) { // Ignore very short lines
+                items.add(trimmed);
+            }
+        }
+
+        return items;
+    }
+
+    /**
+     * Parse pattern analysis response with robust regex patterns
      */
     private Map<String, Object> parsePatternAnalysis(String analysis) {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            String[] lines = analysis.split("\n");
-            for (String line : lines) {
-                if (line.contains(":")) {
-                    String[] parts = line.split(":", 2);
-                    if (parts.length == 2) {
-                        String key = parts[0].trim().toLowerCase().replace(" ", "_");
-                        String value = parts[1].trim();
-                        result.put(key, value);
+            // Define common pattern sections to extract
+            String[] sectionNames = {
+                "COMMON_THEMES", "VISUAL_PATTERNS", "MESSAGING_PATTERNS",
+                "CTA_PATTERNS", "EMOTIONAL_APPEALS", "TARGET_AUDIENCE",
+                "CONTENT_STRATEGIES", "FREQUENCY_PATTERNS", "SEASONAL_TRENDS"
+            };
+
+            for (String sectionName : sectionNames) {
+                Pattern pattern = Pattern.compile(
+                    sectionName.replace("_", "[\\s_-]*") + "\\s*:?\\s*([\\s\\S]*?)(?=" +
+                    String.join("|", Arrays.stream(sectionNames)
+                        .filter(s -> !s.equals(sectionName))
+                        .map(s -> s.replace("_", "[\\s_-]*"))
+                        .toArray(String[]::new)) + "|$)",
+                    Pattern.CASE_INSENSITIVE
+                );
+
+                Matcher matcher = pattern.matcher(analysis);
+                if (matcher.find()) {
+                    String content = matcher.group(1).trim();
+                    if (!content.isEmpty()) {
+                        // Try to parse as list first
+                        List<String> items = extractListRobust(content);
+                        if (!items.isEmpty()) {
+                            result.put(sectionName.toLowerCase(), items);
+                        } else {
+                            // Store as text if not a list
+                            result.put(sectionName.toLowerCase(), content);
+                        }
                     }
                 }
             }
+
+            // Also try to extract any key-value pairs (e.g., "Total Ads Analyzed: 15")
+            Pattern kvPattern = Pattern.compile(
+                "^\\s*([A-Za-z][A-Za-z0-9\\s]+?)\\s*:\\s*(.+?)\\s*$",
+                Pattern.MULTILINE
+            );
+            Matcher kvMatcher = kvPattern.matcher(analysis);
+
+            while (kvMatcher.find()) {
+                String key = kvMatcher.group(1).trim().toLowerCase().replaceAll("\\s+", "_");
+                String value = kvMatcher.group(2).trim();
+
+                // Only add if not already captured by section parsing
+                if (!result.containsKey(key) && value.length() < 200) {
+                    result.put(key, value);
+                }
+            }
+
+            // Validation - ensure at least some content was parsed
+            if (result.isEmpty()) {
+                result.put("summary", analysis.substring(0, Math.min(500, analysis.length())));
+                result.put("raw_analysis", analysis);
+            }
+
         } catch (Exception e) {
-            log.error("Error parsing pattern analysis: {}", e.getMessage());
+            log.error("Error parsing pattern analysis: {}", e.getMessage(), e);
+            result.put("error", true);
             result.put("raw_analysis", analysis);
         }
 
@@ -398,27 +684,107 @@ public class ComparisonService {
     }
 
     /**
-     * Parse A/B test variations from AI response
+     * Parse A/B test variations from AI response with robust regex
      */
-    private List<String> parseABTestVariations(String response, int expectedCount) {
-        List<String> variations = new ArrayList<>();
+    private List<com.fbadsautomation.dto.AdVariationDTO> parseABTestVariations(String response, int expectedCount) {
+        List<com.fbadsautomation.dto.AdVariationDTO> variations = new ArrayList<>();
 
         try {
-            String[] parts = response.split("---");
+            // Split by --- or VARIATION markers
+            String[] parts = response.split("(?=VARIATION\\s+\\d+)");
+
             for (String part : parts) {
-                if (part.trim().startsWith("VARIATION")) {
-                    variations.add(part.trim());
+                if (part.trim().isEmpty()) continue;
+
+                // Extract variation number
+                Pattern varNumPattern = Pattern.compile("VARIATION\\s+(\\d+)", Pattern.CASE_INSENSITIVE);
+                Matcher varNumMatcher = varNumPattern.matcher(part);
+
+                int varNum = variations.size() + 1;
+                if (varNumMatcher.find()) {
+                    try {
+                        varNum = Integer.parseInt(varNumMatcher.group(1));
+                    } catch (NumberFormatException e) {
+                        log.debug("Could not parse variation number, using sequence: {}", varNum);
+                    }
+                }
+
+                // Extract headline with flexible pattern
+                Pattern headlinePattern = Pattern.compile(
+                    "HEADLINE\\s*:?\\s*(.+?)(?=TEXT:|PRIMARY\\s*TEXT:|CTA:|CALL[-\\s]TO[-\\s]ACTION:|TESTING\\s*FOCUS:|VARIATION\\s+\\d+|$)",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+                );
+                Matcher headlineMatcher = headlinePattern.matcher(part);
+                String headline = null;
+                if (headlineMatcher.find()) {
+                    headline = headlineMatcher.group(1).trim();
+                }
+
+                // Extract primary text with flexible pattern
+                Pattern textPattern = Pattern.compile(
+                    "(?:PRIMARY\\s+)?TEXT\\s*:?\\s*(.+?)(?=CTA:|CALL[-\\s]TO[-\\s]ACTION:|TESTING\\s*FOCUS:|VARIATION\\s+\\d+|---+|$)",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+                );
+                Matcher textMatcher = textPattern.matcher(part);
+                String primaryText = null;
+                if (textMatcher.find()) {
+                    primaryText = textMatcher.group(1).trim();
+                }
+
+                // Extract CTA
+                Pattern ctaPattern = Pattern.compile(
+                    "(?:CALL[-\\s]TO[-\\s]ACTION|CTA)\\s*:?\\s*(.+?)(?=TESTING\\s*FOCUS:|VARIATION\\s+\\d+|---+|$)",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+                );
+                Matcher ctaMatcher = ctaPattern.matcher(part);
+                String cta = null;
+                if (ctaMatcher.find()) {
+                    cta = ctaMatcher.group(1).trim();
+                }
+
+                // Extract testing focus
+                Pattern focusPattern = Pattern.compile(
+                    "TESTING\\s*FOCUS\\s*:?\\s*(.+?)(?=VARIATION\\s+\\d+|---+|$)",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+                );
+                Matcher focusMatcher = focusPattern.matcher(part);
+                String testingFocus = null;
+                if (focusMatcher.find()) {
+                    testingFocus = focusMatcher.group(1).trim();
+                }
+
+                // Build DTO only if we have at least headline or text
+                if (headline != null || primaryText != null) {
+                    variations.add(com.fbadsautomation.dto.AdVariationDTO.builder()
+                        .variationNumber(varNum)
+                        .headline(headline != null ? headline : "Variation " + varNum)
+                        .primaryText(primaryText != null ? primaryText : "")
+                        .callToAction(cta)
+                        .testingFocus(testingFocus)
+                        .rawVariation(part.trim())
+                        .build());
                 }
             }
 
-            // If parsing failed, return raw response as single variation
+            // Fallback: if no variations parsed, create one with raw response
             if (variations.isEmpty()) {
-                variations.add(response);
+                log.warn("Failed to parse any variations, returning raw response");
+                variations.add(com.fbadsautomation.dto.AdVariationDTO.builder()
+                    .variationNumber(1)
+                    .headline("Variation 1")
+                    .primaryText("See raw variation for details")
+                    .rawVariation(response)
+                    .build());
             }
 
         } catch (Exception e) {
-            log.error("Error parsing A/B variations: {}", e.getMessage());
-            variations.add(response);
+            log.error("Error parsing A/B variations: {}", e.getMessage(), e);
+            variations.add(com.fbadsautomation.dto.AdVariationDTO.builder()
+                .variationNumber(1)
+                .headline("Parsing Error")
+                .primaryText("See raw variation for AI response")
+                .rawVariation(response)
+                .build());
         }
 
         return variations;

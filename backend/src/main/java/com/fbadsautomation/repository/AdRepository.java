@@ -20,7 +20,10 @@ public interface AdRepository extends JpaRepository<Ad, Long> {
     Optional<Ad> findByIdAndCampaign(Long id, Campaign campaign);
     Optional<Ad> findByIdAndCampaignId(Long id, Long campaignId);
     List<Ad> findByCampaignId(Long campaignId);
-    
+
+    // Count ads by campaign ID - for campaign status updates (Issue #3)
+    long countByCampaignId(Long campaignId);
+
     // Thêm các phương thức truy vấn theo user để đảm bảo cô lập dữ liệu
     List<Ad> findByUser(User user);
     List<Ad> findByUserOrderByCreatedDateDesc(User user);

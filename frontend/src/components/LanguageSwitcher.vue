@@ -2,7 +2,6 @@
   <a-dropdown placement="bottomRight">
     <a-button type="text" class="language-btn">
       <span class="language-flag">{{ currentLocaleFlag }}</span>
-      <span class="language-label">{{ currentLanguageLabel }}</span>
       <DownOutlined />
     </a-button>
     <template #overlay>

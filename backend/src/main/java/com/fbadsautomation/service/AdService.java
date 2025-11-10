@@ -236,23 +236,27 @@ public class AdService {
         result.put("ad", ad);
         result.put("contents", contents);
 
-        // Update campaign status: DRAFT -> READY when first ad is created (Issue #7)
+        // Update campaign status: DRAFT -> READY when first ad is created (Issue #3)
         try {
             Campaign refreshedCampaign = campaignRepository.findById(campaignId)
                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Campaign not found"));
-            long adCount = refreshedCampaign.getAds() != null ? refreshedCampaign.getAds().size() : 0;
+
+            // Count ads directly from database to avoid stale Hibernate collection
+            long adCount = adRepository.countByCampaignId(campaignId);
+
+            log.debug("Campaign {} has {} ads, current status: {}", campaignId, adCount, refreshedCampaign.getStatus());
 
             if (adCount >= 1 && refreshedCampaign.getStatus() == Campaign.CampaignStatus.DRAFT) {
                 refreshedCampaign.setStatus(Campaign.CampaignStatus.READY);
                 campaignRepository.save(refreshedCampaign);
-                log.info("Campaign {} status auto-updated: DRAFT -> READY (ad created)", campaignId);
+                log.info("Campaign {} status auto-updated: DRAFT -> READY (ad count: {})", campaignId, adCount);
             } else if (adCount >= 1 && refreshedCampaign.getStatus() == Campaign.CampaignStatus.EXPORTED) {
                 refreshedCampaign.setStatus(Campaign.CampaignStatus.READY);
                 campaignRepository.save(refreshedCampaign);
-                log.info("Campaign {} status auto-updated: EXPORTED -> READY (new ad added)", campaignId);
+                log.info("Campaign {} status auto-updated: EXPORTED -> READY (ad count: {})", campaignId, adCount);
             }
         } catch (Exception e) {
-            log.warn("Failed to update campaign status after ad creation: {}", e.getMessage());
+            log.error("Failed to update campaign status after ad creation: {}", e.getMessage(), e);
         }
 
         return result;
@@ -318,14 +322,17 @@ public class AdService {
     @Transactional
     public void deleteAd(Long adId, Long userId) {
         log.info("Deleting ad: {} for user ID: {}", adId, userId);
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
         Ad ad = adRepository.findByIdAndUser(adId, user)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Ad not found"));
-        
+
+        // Store campaign ID for status update after deletion
+        Long campaignId = ad.getCampaign() != null ? ad.getCampaign().getId() : null;
+
         log.info("Ad {} has selectedContentId: {}", adId, ad.getSelectedContentId());
-        
+
         // Clear selected_content_id reference first to avoid foreign key constraint violation
         if (ad.getSelectedContentId() != null) {
             ad.setSelectedContentId(null);
@@ -335,7 +342,7 @@ public class AdService {
             Ad updatedAd = adRepository.findById(adId).orElse(null);
             log.info("After clear, ad {} has selectedContentId: {}", adId, updatedAd != null ? updatedAd.getSelectedContentId() : "null");
         }
-        
+
         // Check if there are other ads referencing the same content
         List<Ad> adsWithSameContent = adRepository.findBySelectedContentId(ad.getSelectedContentId());
         if (!adsWithSameContent.isEmpty()) {
@@ -347,17 +354,38 @@ public class AdService {
                 log.info("Cleared selectedContentId for ad: {}", otherAd.getId());
             }
         }
-        
+
         // Then, delete all ad contents
         List<AdContent> adContents = adContentRepository.findByAdAndUserOrderByPreviewOrder(ad, user);
         if (!adContents.isEmpty()) {
             adContentRepository.deleteAll(adContents);
             log.info("Deleted {} ad contents for ad: {}", adContents.size(), adId);
         }
-        
+
         // Finally, delete the ad
         adRepository.delete(ad);
         log.info("Successfully deleted ad: {} for user ID: {}", adId, userId);
+
+        // Update campaign status: READY -> DRAFT if no ads left (Issue #3)
+        if (campaignId != null) {
+            try {
+                Campaign campaign = campaignRepository.findById(campaignId).orElse(null);
+                if (campaign != null) {
+                    // Count remaining ads after deletion
+                    long remainingAdCount = adRepository.countByCampaignId(campaignId);
+
+                    log.debug("Campaign {} has {} remaining ads after deletion", campaignId, remainingAdCount);
+
+                    if (remainingAdCount == 0 && campaign.getStatus() == Campaign.CampaignStatus.READY) {
+                        campaign.setStatus(Campaign.CampaignStatus.DRAFT);
+                        campaignRepository.save(campaign);
+                        log.info("Campaign {} status auto-updated: READY -> DRAFT (no ads remaining)", campaignId);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Failed to update campaign status after ad deletion: {}", e.getMessage(), e);
+            }
+        }
     }
 
     /**

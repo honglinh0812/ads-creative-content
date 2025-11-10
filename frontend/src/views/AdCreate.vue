@@ -593,22 +593,6 @@
               </a-collapse>
             </div>
           </div>
-
-          <!-- Optional Media Upload -->
-          <a-form-item :label="$t('adCreate.step2.uploadMedia.label')" style="margin-top: 24px;">
-            <a-upload
-              :file-list="uploadedFiles"
-              :before-upload="handleFileUpload"
-              @remove="removeFile"
-              accept="image/*,video/*"
-              list-type="picture-card"
-            >
-              <div v-if="uploadedFiles.length < 1">
-                <plus-outlined />
-                <div style="margin-top: 8px">{{ $t('adCreate.step2.uploadMedia.button') }}</div>
-              </div>
-            </a-upload>
-          </a-form-item>
         </a-card>
 
           <!-- Navigation -->
@@ -1785,9 +1769,9 @@ export default {
         return false
       }
 
-      // Set file list for this variation
-      this.$set(variation, 'uploadedFiles', [file])
-      this.$set(variation, 'uploadInProgress', true)
+      // Set file list for this variation (Vue 3 direct assignment)
+      variation.uploadedFiles = [file]
+      variation.uploadInProgress = true
 
       try {
         const formData = new FormData()
@@ -1799,8 +1783,8 @@ export default {
         })
 
         if (response.data.success) {
-          // Store URL in variation object
-          this.$set(variation, 'uploadedFileUrl', response.data.fileUrl)
+          // Store URL in variation object (Vue 3 direct assignment)
+          variation.uploadedFileUrl = response.data.fileUrl
 
           // Clear image provider (uploaded image takes priority)
           variation.imageProvider = null
@@ -1810,9 +1794,9 @@ export default {
       } catch (error) {
         console.error('Error uploading variation file:', error)
         this.$message.error(this.$t('adCreate.messages.error.fileUploadFailed'))
-        this.$set(variation, 'uploadedFiles', [])
+        variation.uploadedFiles = []
       } finally {
-        this.$set(variation, 'uploadInProgress', false)
+        variation.uploadInProgress = false
       }
 
       return false // Prevent default upload behavior
@@ -1820,8 +1804,8 @@ export default {
 
     // NEW: Remove uploaded file from variation
     removeVariationFile(variation) {
-      this.$set(variation, 'uploadedFiles', [])
-      this.$set(variation, 'uploadedFileUrl', '')
+      variation.uploadedFiles = []
+      variation.uploadedFileUrl = ''
       // Don't auto-set imageProvider, let user choose manually
     },
 

@@ -183,6 +183,148 @@ public class CompetitorController {
     }
 
     /**
+     * Search Google Ads using SerpAPI
+     *
+     * Endpoint: POST /api/competitors/search/google
+     *
+     * @param request Search request containing brand name and region
+     * @param authentication Spring Security authentication
+     * @return List of Google ads or iframe URL for fallback
+     */
+    @Operation(
+        summary = "Search Google Ads",
+        description = "Search Google Ads Transparency Center using SerpAPI. Falls back to iframe mode if API unavailable."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Search successful or iframe URL returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid request parameters"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/search/google")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Map<String, Object>> searchGoogleAds(
+            @Valid @RequestBody CompetitorSearchRequest request,
+            Authentication authentication) {
+
+        log.info("Google Ads search request from user {}: {}",
+                 authentication.getName(), request.getBrandName());
+
+        try {
+            Long userId = getUserIdFromAuthentication(authentication);
+
+            List<CompetitorAdDTO> ads = competitorService.searchGoogleAds(
+                request.getBrandName(),
+                request.getRegion() != null ? request.getRegion() : "US",
+                userId,
+                request.getLimit() > 0 ? request.getLimit() : 20
+            );
+
+            // If no ads returned, respond with iframe mode
+            if (ads == null || ads.isEmpty()) {
+                String iframeUrl = String.format(
+                    "https://adstransparency.google.com/?region=%s&q=%s",
+                    request.getRegion() != null ? request.getRegion() : "US",
+                    java.net.URLEncoder.encode(request.getBrandName(), java.nio.charset.StandardCharsets.UTF_8)
+                );
+
+                Map<String, Object> response = new HashMap<>();
+                response.put("mode", "iframe");
+                response.put("url", iframeUrl);
+                response.put("platform", "google");
+                response.put("message", "SerpAPI not available or no results found. Showing embedded view.");
+
+                return ResponseEntity.ok(response);
+            }
+
+            // Return structured data
+            Map<String, Object> response = new HashMap<>();
+            response.put("mode", "data");
+            response.put("ads", ads);
+            response.put("total", ads.size());
+            response.put("platform", "google");
+            response.put("message", String.format("Found %d Google ads for %s", ads.size(), request.getBrandName()));
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Error searching Google Ads", e);
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", "Failed to search Google Ads: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body(errorResponse);
+        }
+    }
+
+    /**
+     * Search TikTok Ads
+     *
+     * Endpoint: POST /api/competitors/search/tiktok
+     *
+     * @param request Search request containing brand name
+     * @param authentication Spring Security authentication
+     * @return Iframe URL for TikTok Creative Center
+     */
+    @Operation(
+        summary = "Search TikTok Ads",
+        description = "Search TikTok Creative Center. Currently returns iframe URL for embedded view."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Iframe URL returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid request parameters"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/search/tiktok")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Map<String, Object>> searchTikTokAds(
+            @Valid @RequestBody CompetitorSearchRequest request,
+            Authentication authentication) {
+
+        log.info("TikTok Ads search request from user {}: {}",
+                 authentication.getName(), request.getBrandName());
+
+        try {
+            Long userId = getUserIdFromAuthentication(authentication);
+
+            // Call service (currently returns null for iframe mode)
+            competitorService.searchTikTokAds(
+                request.getBrandName(),
+                request.getRegion() != null ? request.getRegion() : "US",
+                userId,
+                request.getLimit() > 0 ? request.getLimit() : 20
+            );
+
+            // Always return iframe mode for TikTok (for now)
+            String iframeUrl = String.format(
+                "https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en?keyword=%s",
+                java.net.URLEncoder.encode(request.getBrandName(), java.nio.charset.StandardCharsets.UTF_8)
+            );
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("mode", "iframe");
+            response.put("url", iframeUrl);
+            response.put("platform", "tiktok");
+            response.put("message", "Showing TikTok Creative Center");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Error searching TikTok Ads", e);
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", "Failed to search TikTok Ads: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body(errorResponse);
+        }
+    }
+
+    /**
      * Get search history for current user
      *
      * Endpoint: GET /api/competitors/history
@@ -429,7 +571,7 @@ public class CompetitorController {
                  request.getNumberOfVariations(), authentication.getName());
 
         try {
-            List<String> variations = comparisonService.generateABTestVariations(
+            List<com.fbadsautomation.dto.AdVariationDTO> variations = comparisonService.generateABTestVariations(
                 request.getBaseAd(),
                 request.getCompetitorInsights(),
                 request.getNumberOfVariations(),

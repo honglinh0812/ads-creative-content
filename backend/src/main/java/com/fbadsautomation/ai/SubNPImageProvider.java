@@ -36,6 +36,9 @@ import java.util.concurrent.CompletableFuture;
 public class SubNPImageProvider implements AIProvider {
 
     private static final Logger log = LoggerFactory.getLogger(SubNPImageProvider.class);
+    private static final int MAX_RETRIES = 3;
+    private static final long RETRY_DELAY_MS = 2000; // 2 seconds
+
     private final RestTemplate restTemplate;
     private final String apiUrl;
 
@@ -83,55 +86,86 @@ public class SubNPImageProvider implements AIProvider {
     public String generateImage(String prompt) {
         log.info("Generating image with SubNP for prompt: {}", prompt);
 
-        try {
-            // Step 1: Enhance prompt for better quality
-            String enhancedPrompt = enhanceImagePrompt(prompt);
-            log.debug("Enhanced prompt: {}", enhancedPrompt);
+        int attempt = 0;
+        Exception lastException = null;
 
-            // Step 2: Build SubNP API request
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+        while (attempt < MAX_RETRIES) {
+            attempt++;
+            try {
+                log.debug("SubNP API attempt {} of {}", attempt, MAX_RETRIES);
+                return generateImageInternal(prompt);
+            } catch (Exception e) {
+                lastException = e;
 
-            // Build request body according to SubNP API format
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("prompt", enhancedPrompt);
-            requestBody.put("model", "flux-schnell"); // Fast model for ads (alternatives: flux-dev, stable-diffusion-3.5)
-            requestBody.put("width", 1024);
-            requestBody.put("height", 1024);
-            requestBody.put("steps", 4); // Faster generation for flux-schnell
-
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-
-            log.debug("Calling SubNP API at: {}", apiUrl);
-
-            // Step 3: Call API
-            ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, request, Map.class);
-
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                Map<String, Object> responseBody = response.getBody();
-                log.debug("SubNP API response received: {}", responseBody);
-
-                // Step 4: Extract image URL from response
-                // SubNP returns: { "status": "success", "image_url": "https://..." }
-                if ("success".equals(responseBody.get("status")) && responseBody.containsKey("image_url")) {
-                    String imageUrl = (String) responseBody.get("image_url");
-
-                    // Step 5: Download and save image to our storage
-                    String savedImageUrl = downloadAndSaveImage(imageUrl);
-                    log.info("Image generated successfully with SubNP and saved to: {}", savedImageUrl);
-                    return savedImageUrl;
+                if (attempt < MAX_RETRIES) {
+                    log.warn("SubNP API attempt {} failed, retrying in {}ms: {}", attempt, RETRY_DELAY_MS, e.getMessage());
+                    try {
+                        Thread.sleep(RETRY_DELAY_MS);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        log.error("Retry interrupted for SubNP image generation");
+                        break;
+                    }
                 } else {
-                    log.error("SubNP API returned unsuccessful status: {}", responseBody.get("status"));
-                    throw new RuntimeException("SubNP API returned unsuccessful status");
+                    log.error("SubNP API attempt {} failed (final attempt): {}", attempt, e.getMessage());
                 }
-            } else {
-                log.error("SubNP API returned error status: {}", response.getStatusCode());
-                throw new RuntimeException("SubNP API error: " + response.getStatusCode());
             }
+        }
 
-        } catch (Exception e) {
-            log.error("Error generating image with SubNP: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to generate image with SubNP", e);
+        throw new RuntimeException(
+            "SubNP API failed after " + MAX_RETRIES + " attempts: " +
+            (lastException != null ? lastException.getMessage() : "Unknown error"),
+            lastException
+        );
+    }
+
+    /**
+     * Internal method to generate image with SubNP API (single attempt)
+     */
+    private String generateImageInternal(String prompt) {
+        // Step 1: Enhance prompt for better quality
+        String enhancedPrompt = enhanceImagePrompt(prompt);
+        log.debug("Enhanced prompt: {}", enhancedPrompt);
+
+        // Step 2: Build SubNP API request
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Build request body according to SubNP API format
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("prompt", enhancedPrompt);
+        requestBody.put("model", "flux-schnell"); // Fast model for ads (alternatives: flux-dev, stable-diffusion-3.5)
+        requestBody.put("width", 1024);
+        requestBody.put("height", 1024);
+        requestBody.put("steps", 4); // Faster generation for flux-schnell
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+
+        log.debug("Calling SubNP API at: {}", apiUrl);
+
+        // Step 3: Call API
+        ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, request, Map.class);
+
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            Map<String, Object> responseBody = response.getBody();
+            log.debug("SubNP API response received: {}", responseBody);
+
+            // Step 4: Extract image URL from response
+            // SubNP returns: { "status": "success", "image_url": "https://..." }
+            if ("success".equals(responseBody.get("status")) && responseBody.containsKey("image_url")) {
+                String imageUrl = (String) responseBody.get("image_url");
+
+                // Step 5: Download and save image to our storage
+                String savedImageUrl = downloadAndSaveImage(imageUrl);
+                log.info("Image generated successfully with SubNP and saved to: {}", savedImageUrl);
+                return savedImageUrl;
+            } else {
+                log.error("SubNP API returned unsuccessful status: {}", responseBody.get("status"));
+                throw new RuntimeException("SubNP API returned unsuccessful status");
+            }
+        } else {
+            log.error("SubNP API returned error status: {}", response.getStatusCode());
+            throw new RuntimeException("SubNP API error: " + response.getStatusCode());
         }
     }
 

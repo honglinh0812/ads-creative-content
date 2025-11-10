@@ -33,6 +33,16 @@ import java.util.concurrent.CompletableFuture;
  * - Great for experimentation
  *
  * Note: Puter provides a REST API endpoint for image generation
+ *
+ * Known Response Formats (as of 2025-01):
+ * Format 1: { "result": { "images": [{ "url": "https://..." }] } }
+ * Format 2: { "result": { "images": [{ "base64": "..." }] } }
+ * Format 3: { "result": { "image": "https://..." } }
+ * Format 4: { "result": "base64data..." }
+ * Format 5: { "data": "base64data..." }
+ *
+ * If image generation fails with "No image data in Puter response", check logs for
+ * the actual response structure and update the extractImageDataFromResponse() method.
  */
 @Service
 public class PuterImageProvider implements AIProvider {
@@ -238,9 +248,10 @@ public class PuterImageProvider implements AIProvider {
                 }
             }
 
-            log.warn("Could not find image data in Puter response structure: {}", response);
+            log.error("Could not find image data in Puter response structure. Full response: {}", response);
+            log.error("Puter API response format may have changed. Please check the API documentation at https://docs.puter.com/api/ai");
         } catch (Exception e) {
-            log.error("Error extracting image data from Puter response", e);
+            log.error("Error extracting image data from Puter response: {}", e.getMessage(), e);
         }
 
         return null;

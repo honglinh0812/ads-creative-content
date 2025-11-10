@@ -46,6 +46,7 @@ public class CompetitorService {
     private final ScrapeCreatorsService scrapeCreatorsService;
     private final CompetitorSearchRepository competitorSearchRepository;
     private final UserRepository userRepository;
+    private final SerpApiService serpApiService;
 
     /**
      * Search for competitor ads by brand name
@@ -494,7 +495,107 @@ public class CompetitorService {
     }
 
     /**
-     * Save search history entry
+     * Search Google Ads using SerpAPI
+     *
+     * @param brandName Brand name to search
+     * @param region Target region code
+     * @param userId User performing search
+     * @param limit Maximum number of ads
+     * @return List of competitor ads or null for iframe fallback
+     */
+    public List<CompetitorAdDTO> searchGoogleAds(String brandName, String region, Long userId, int limit) {
+        log.info("Searching Google Ads for brand: {}, region: {}", brandName, region);
+
+        // Validate user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> ResourceException.notFound("User", String.valueOf(userId)));
+
+        // Sanitize brand name
+        String sanitizedBrand = sanitizeBrandName(brandName);
+        int safeLimit = Math.min(Math.max(limit, 1), 50);
+
+        // Try SerpAPI if available
+        if (serpApiService != null && serpApiService.isAvailable()) {
+            try {
+                List<CompetitorAdDTO> ads = serpApiService.searchGoogleAds(sanitizedBrand, region, safeLimit);
+
+                if (ads != null && !ads.isEmpty()) {
+                    // Save search history
+                    saveSearchHistory(sanitizedBrand, region, user, "GOOGLE", ads.size(), true);
+                    return ads;
+                }
+            } catch (Exception e) {
+                log.error("SerpAPI search failed: {}", e.getMessage());
+            }
+        } else {
+            log.info("SerpAPI not available, will use iframe mode");
+        }
+
+        // Return null to trigger iframe fallback
+        saveSearchHistory(sanitizedBrand, region, user, "GOOGLE", 0, false);
+        return null;
+    }
+
+    /**
+     * Search TikTok ads (placeholder for future implementation)
+     *
+     * @param brandName Brand name to search
+     * @param region Target region code
+     * @param userId User performing search
+     * @param limit Maximum number of ads
+     * @return List of competitor ads or null for iframe fallback
+     */
+    public List<CompetitorAdDTO> searchTikTokAds(String brandName, String region, Long userId, int limit) {
+        log.info("TikTok search requested for: {}", brandName);
+
+        // Validate user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> ResourceException.notFound("User", String.valueOf(userId)));
+
+        String sanitizedBrand = sanitizeBrandName(brandName);
+
+        // Save search history
+        saveSearchHistory(sanitizedBrand, region, user, "TIKTOK", 0, true);
+
+        // For now, return null to trigger iframe mode
+        // Can implement TikTok scraping or API in future
+        return null;
+    }
+
+    /**
+     * Save search history entry with platform information
+     *
+     * @param brandName Brand name searched
+     * @param region Region code
+     * @param user User who performed search
+     * @param platform Platform (FACEBOOK, GOOGLE, TIKTOK)
+     * @param resultCount Number of results
+     * @param success Whether search was successful
+     */
+    @Transactional
+    private void saveSearchHistory(String brandName, String region, User user, String platform, int resultCount, boolean success) {
+        try {
+            CompetitorSearch search = new CompetitorSearch();
+            search.setBrandName(brandName);
+            search.setIndustry(region); // Reusing industry field for region
+            search.setUser(user);
+            search.setSearchDate(LocalDateTime.now());
+            search.setSearchType(platform); // Store platform in searchType field
+            search.setResultCount(resultCount);
+            search.setSuccess(success);
+
+            competitorSearchRepository.save(search);
+            log.debug("Saved search history: brand={}, region={}, platform={}, user={}",
+                     brandName, region, platform, user.getId());
+
+        } catch (Exception e) {
+            // Don't fail the main operation if history save fails
+            log.error("Failed to save search history: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Save search history entry (legacy method for backward compatibility)
      *
      * @param brandName Brand name searched
      * @param region Region code
@@ -502,20 +603,7 @@ public class CompetitorService {
      */
     @Transactional
     private void saveSearchHistory(String brandName, String region, User user) {
-        try {
-            CompetitorSearch search = new CompetitorSearch();
-            search.setBrandName(brandName);
-            search.setIndustry(region); // Reusing industry field for region
-            search.setUser(user);
-            search.setSearchDate(LocalDateTime.now());
-
-            competitorSearchRepository.save(search);
-            log.debug("Saved search history: brand={}, region={}, user={}", brandName, region, user.getId());
-
-        } catch (Exception e) {
-            // Don't fail the main operation if history save fails
-            log.error("Failed to save search history: {}", e.getMessage());
-        }
+        saveSearchHistory(brandName, region, user, "FACEBOOK", 0, true);
     }
 
     /**
