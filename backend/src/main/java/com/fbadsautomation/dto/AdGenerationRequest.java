@@ -36,8 +36,8 @@ public class AdGenerationRequest {
              message = "Invalid text provider. Must be openai, gemini, anthropic, or huggingface")
     private String textProvider;
 
-    @Pattern(regexp = "^(gemini|openai|huggingface|stable-diffusion|fal-ai)$",
-             message = "Invalid image provider. Must be gemini, openai, huggingface, stable-diffusion, or fal-ai")
+    @Pattern(regexp = "^(gemini|openai|huggingface|stable-diffusion|fal-ai|subnp|deapi|puter)$",
+             message = "Invalid image provider. Must be gemini, openai, huggingface, stable-diffusion, fal-ai, subnp, deapi, or puter")
     private String imageProvider;
 
     @NotNull(message = "Number of variations is required")

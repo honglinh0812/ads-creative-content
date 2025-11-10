@@ -37,21 +37,14 @@
           <a-row :gutter="16">
             <a-col :xs="24" :sm="24" :md="12">
               <a-form-item label="Brand Name">
-                <a-auto-complete
+                <a-input
                   v-model:value="searchForm.brandName"
-                  :options="brandSuggestionOptions"
                   placeholder="Enter competitor brand name (e.g., Nike, Coca-Cola)"
                   size="large"
-                  :filter-option="false"
-                  @search="handleBrandSearch"
-                  @select="handleBrandSelect"
-                >
-                  <template #option="{ value }">
-                    <div class="suggestion-item">
-                      <span>{{ value }}</span>
-                    </div>
-                  </template>
-                </a-auto-complete>
+                  :maxlength="100"
+                  show-count
+                  allow-clear
+                />
               </a-form-item>
             </a-col>
 
@@ -61,14 +54,40 @@
                   v-model:value="searchForm.region"
                   size="large"
                   placeholder="Select region"
+                  show-search
+                  option-filter-prop="label"
                 >
-                  <a-select-option value="US">United States</a-select-option>
-                  <a-select-option value="GB">United Kingdom</a-select-option>
-                  <a-select-option value="CA">Canada</a-select-option>
-                  <a-select-option value="AU">Australia</a-select-option>
-                  <a-select-option value="DE">Germany</a-select-option>
-                  <a-select-option value="FR">France</a-select-option>
-                  <a-select-option value="JP">Japan</a-select-option>
+                  <a-select-opt-group label="Asia">
+                    <a-select-option value="VN" label="Vietnam">🇻🇳 Vietnam</a-select-option>
+                    <a-select-option value="SG" label="Singapore">🇸🇬 Singapore</a-select-option>
+                    <a-select-option value="TH" label="Thailand">🇹🇭 Thailand</a-select-option>
+                    <a-select-option value="MY" label="Malaysia">🇲🇾 Malaysia</a-select-option>
+                    <a-select-option value="ID" label="Indonesia">🇮🇩 Indonesia</a-select-option>
+                    <a-select-option value="PH" label="Philippines">🇵🇭 Philippines</a-select-option>
+                    <a-select-option value="JP" label="Japan">🇯🇵 Japan</a-select-option>
+                    <a-select-option value="KR" label="South Korea">🇰🇷 South Korea</a-select-option>
+                    <a-select-option value="TW" label="Taiwan">🇹🇼 Taiwan</a-select-option>
+                    <a-select-option value="HK" label="Hong Kong">🇭🇰 Hong Kong</a-select-option>
+                    <a-select-option value="IN" label="India">🇮🇳 India</a-select-option>
+                  </a-select-opt-group>
+                  <a-select-opt-group label="Americas">
+                    <a-select-option value="US" label="United States">🇺🇸 United States</a-select-option>
+                    <a-select-option value="CA" label="Canada">🇨🇦 Canada</a-select-option>
+                    <a-select-option value="MX" label="Mexico">🇲🇽 Mexico</a-select-option>
+                    <a-select-option value="BR" label="Brazil">🇧🇷 Brazil</a-select-option>
+                  </a-select-opt-group>
+                  <a-select-opt-group label="Europe">
+                    <a-select-option value="GB" label="United Kingdom">🇬🇧 United Kingdom</a-select-option>
+                    <a-select-option value="DE" label="Germany">🇩🇪 Germany</a-select-option>
+                    <a-select-option value="FR" label="France">🇫🇷 France</a-select-option>
+                    <a-select-option value="IT" label="Italy">🇮🇹 Italy</a-select-option>
+                    <a-select-option value="ES" label="Spain">🇪🇸 Spain</a-select-option>
+                    <a-select-option value="NL" label="Netherlands">🇳🇱 Netherlands</a-select-option>
+                  </a-select-opt-group>
+                  <a-select-opt-group label="Oceania">
+                    <a-select-option value="AU" label="Australia">🇦🇺 Australia</a-select-option>
+                    <a-select-option value="NZ" label="New Zealand">🇳🇿 New Zealand</a-select-option>
+                  </a-select-opt-group>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -215,6 +234,29 @@
             style="margin-bottom: 16px"
             closable
           />
+
+          <!-- Quick Search Bar for Iframe Mode -->
+          <div class="iframe-search-bar">
+            <a-input-group compact>
+              <a-input
+                v-model:value="iframeSearchQuery"
+                placeholder="Search another brand..."
+                size="large"
+                style="width: calc(100% - 180px)"
+                allow-clear
+                @pressEnter="updateIframeSearch"
+              />
+              <a-button
+                type="primary"
+                size="large"
+                @click="updateIframeSearch"
+                :disabled="!iframeSearchQuery"
+              >
+                <template #icon><search-outlined /></template>
+                Search
+              </a-button>
+            </a-input-group>
+          </div>
 
           <iframe
             :src="iframeUrl"
@@ -482,6 +524,7 @@ import {
   DatabaseOutlined
 } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
+import apiClient from '@/services/api'
 
 export default {
   name: 'CompetitorsView',
@@ -509,11 +552,12 @@ export default {
       selectedPlatform: 'facebook',
       displayMode: 'data', // 'data' or 'iframe'
       iframeUrl: '',
+      iframeSearchQuery: '',
 
       // Search form
       searchForm: {
         brandName: '',
-        region: 'US',
+        region: 'VN',
         limit: 5
       },
 
@@ -548,7 +592,6 @@ export default {
       'abTestVariations',
       'isSearching',
       'isAnalyzing',
-      'brandSuggestions',
       'searchError',
       'analysisError'
     ]),
@@ -558,12 +601,6 @@ export default {
       'hasSelectedAds',
       'selectedCount'
     ]),
-
-    brandSuggestionOptions() {
-      return this.brandSuggestions.map(suggestion => ({
-        value: suggestion
-      }))
-    },
 
     platformName() {
       const names = {
@@ -578,7 +615,6 @@ export default {
   methods: {
     ...mapActions('competitor', [
       'searchCompetitorAds',
-      'loadBrandSuggestions',
       'toggleAdSelection',
       'clearSelection',
       'generateSuggestion',
@@ -606,17 +642,18 @@ export default {
 
         this.$store.commit('competitor/SET_SEARCHING', true)
 
-        const response = await this.$axios.post(endpoint, {
+        const response = await apiClient.post(endpoint, {
           brandName: this.searchForm.brandName,
-          region: this.searchForm.region || 'US',
+          region: this.searchForm.region || 'VN',
           limit: this.searchForm.limit || 20
         })
 
         // Check response mode
         if (response.data.mode === 'iframe') {
-          // Fallback to iframe display
+          // Display in iframe mode
           this.displayMode = 'iframe'
           this.iframeUrl = response.data.url
+          this.iframeSearchQuery = this.searchForm.brandName
           message.info(`Viewing ${this.platformName} ads in embedded mode`)
         } else if (response.data.ads) {
           // Structured data mode
@@ -641,11 +678,13 @@ export default {
       } catch (error) {
         console.error('Search error:', error)
 
-        // Fallback to iframe on error for non-Facebook platforms
+        // Fallback: display in iframe for non-Facebook platforms
         if (this.selectedPlatform !== 'facebook') {
-          this.displayMode = 'iframe'
           const brandName = encodeURIComponent(this.searchForm.brandName)
-          const region = this.searchForm.region || 'US'
+          const region = this.searchForm.region || 'VN'
+
+          this.displayMode = 'iframe'
+          this.iframeSearchQuery = this.searchForm.brandName
 
           if (this.selectedPlatform === 'google') {
             this.iframeUrl = `https://adstransparency.google.com/?region=${region}&q=${brandName}`
@@ -653,7 +692,7 @@ export default {
             this.iframeUrl = `https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en?keyword=${brandName}`
           }
 
-          message.warning(`Showing ${this.platformName} in embedded mode due to API error`)
+          message.info(`Displaying ${this.platformName} in embedded mode`)
         } else {
           message.error('Failed to search competitor ads')
         }
@@ -670,16 +709,6 @@ export default {
 
       // Save preference
       localStorage.setItem('preferredAdPlatform', this.selectedPlatform)
-    },
-
-    async handleBrandSearch(value) {
-      if (value && value.length >= 2) {
-        await this.loadBrandSuggestions(value)
-      }
-    },
-
-    handleBrandSelect(value) {
-      this.searchForm.brandName = value
     },
 
     isAdSelected(ad) {
@@ -808,6 +837,25 @@ export default {
       if (ad.imageUrl) return ad.imageUrl
       if (ad.imageUrls && ad.imageUrls.length > 0) return ad.imageUrls[0]
       return null
+    },
+
+    updateIframeSearch() {
+      if (!this.iframeSearchQuery || !this.iframeSearchQuery.trim()) {
+        message.warning('Please enter a brand name')
+        return
+      }
+
+      const brandName = encodeURIComponent(this.iframeSearchQuery.trim())
+      const region = this.searchForm.region || 'VN'
+
+      // Update iframe URL based on platform
+      if (this.selectedPlatform === 'google') {
+        this.iframeUrl = `https://adstransparency.google.com/?region=${region}&q=${brandName}`
+      } else if (this.selectedPlatform === 'tiktok') {
+        this.iframeUrl = `https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en?keyword=${brandName}`
+      }
+
+      message.success(`Updated search to: ${this.iframeSearchQuery}`)
     },
 
     openInNewTab() {
@@ -1045,8 +1093,8 @@ export default {
 }
 
 .platform-selector-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
+  background: #fff;
+  border: 1px solid #e8e8e8;
 }
 
 .platform-selector-card :deep(.ant-card-body) {
@@ -1062,23 +1110,51 @@ export default {
 .platform-radio-group :deep(.ant-radio-button-wrapper) {
   flex: 1;
   text-align: center;
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: #fafafa;
+  border-color: #d9d9d9;
   font-weight: 500;
+  transition: all 0.3s;
 }
 
 .platform-radio-group :deep(.ant-radio-button-wrapper-checked) {
-  background: #fff;
+  background: #1890ff;
   border-color: #1890ff;
-  color: #1890ff;
+  color: #fff;
 }
 
 .platform-radio-group :deep(.ant-radio-button-wrapper:hover) {
-  background: #fff;
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+.platform-radio-group :deep(.ant-radio-button-wrapper-checked:hover) {
+  background: #40a9ff;
+  border-color: #40a9ff;
+  color: #fff;
 }
 
 .iframe-container {
   position: relative;
+}
+
+.iframe-search-bar {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 4px;
+  border: 1px solid #e8e8e8;
+}
+
+.iframe-search-bar :deep(.ant-input-group) {
+  display: flex;
+}
+
+.iframe-search-bar :deep(.ant-input-group .ant-input) {
+  border-right: none;
+}
+
+.iframe-search-bar :deep(.ant-input-group .ant-btn) {
+  width: 180px;
 }
 
 .search-section {

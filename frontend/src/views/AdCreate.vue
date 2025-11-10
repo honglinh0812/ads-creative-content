@@ -1730,9 +1730,11 @@ export default {
     },
     
     validateStep2() {
-      // Valid if all variations have text provider AND (image provider OR image uploaded)
+      // Valid if all variations have text provider AND (image provider OR per-variation image uploaded)
       const allVariationsValid = this.formData.variations.every(variation => {
-        return variation.textProvider && (variation.imageProvider || this.hasUploadedImage)
+        const hasTextProvider = !!variation.textProvider
+        const hasImageSource = !!(variation.imageProvider || variation.uploadedFileUrl || this.hasUploadedImage)
+        return hasTextProvider && hasImageSource
       })
       return allVariationsValid
     },
