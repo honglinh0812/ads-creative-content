@@ -104,7 +104,7 @@ public class FalAiProvider implements AIProvider {
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("prompt", enhancedPrompt);
-        requestBody.put("image_size", "1024x1024");
+        requestBody.put("image_size", "square_hd");  // Fal.ai expects predefined values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
         requestBody.put("num_inference_steps", 50);
         requestBody.put("guidance_scale", 7.5);
 

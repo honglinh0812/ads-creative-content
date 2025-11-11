@@ -1116,7 +1116,7 @@ export default {
             this.$t('adCreate.providers.image.subnp.features.1'),
             this.$t('adCreate.providers.image.subnp.features.2')
           ],
-          enabled: true
+          enabled: false  // Hidden from UI - backend code retained
         },
         {
           value: 'deapi',
@@ -1138,7 +1138,7 @@ export default {
             this.$t('adCreate.providers.image.puter.features.1'),
             this.$t('adCreate.providers.image.puter.features.2')
           ],
-          enabled: true
+          enabled: false  // Hidden from UI - backend code retained
         },
         {
           value: 'fal-ai',

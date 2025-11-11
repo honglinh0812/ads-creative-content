@@ -237,10 +237,11 @@ public class OpenAIProvider implements AIProvider {
         String enhancedPrompt = "Professional, high-quality advertisement for: " + prompt +
             ". Clear product focus, studio lighting, crisp details, vibrant colors, commercial photography style, 8k resolution, professional marketing image";
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", "dall-e-2");
+        requestBody.put("model", "dall-e-3");  // Upgraded from dall-e-2 for better quality and prompt adherence
         requestBody.put("prompt", enhancedPrompt);
         requestBody.put("n", 1);
         requestBody.put("size", "1024x1024");
+        requestBody.put("quality", "standard");  // DALL-E 3 supports "standard" or "hd"
         requestBody.put("response_format", "url");
         log.debug("Calling OpenAI Image API at: {} with prompt: {}", imageApiUrl, enhancedPrompt);
         HttpHeaders headers = new HttpHeaders();

@@ -347,7 +347,30 @@ public class AdController {
             }
 
             List<AdContent> contents = (List<AdContent>) adResult.get("contents");
-            Ad ad = (Ad) adResult.get("ad");
+
+            // Handle both single ad (legacy) and multiple ads (new) response
+            Ad ad = null;
+            List<Ad> ads = null;
+            int totalAdsCreated = 0;
+
+            if (adResult.containsKey("ad")) {
+                // Legacy: single ad
+                ad = (Ad) adResult.get("ad");
+                totalAdsCreated = 1;
+            } else if (adResult.containsKey("ads")) {
+                // New: multiple ads from multiple variations
+                ads = (List<Ad>) adResult.get("ads");
+                if (ads != null && !ads.isEmpty()) {
+                    ad = ads.get(0); // Use first ad for response compatibility
+                    totalAdsCreated = ads.size();
+                }
+            }
+
+            // Handle null ad case
+            if (ad == null) {
+                log.error("No ad found in result map after save-existing");
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create ad from selected variations");
+            }
 
             // Convert to AdGenerationResponse with CTA label mapping
             List<AdGenerationResponse.AdVariation> variations = contents.stream()
@@ -371,11 +394,16 @@ public class AdController {
                         .build();
                 })
                 .collect(java.util.stream.Collectors.toList());
+
+            String successMessage = totalAdsCreated > 1
+                ? String.format("Successfully created %d ads from selected variations", totalAdsCreated)
+                : "Ad saved successfully";
+
             AdGenerationResponse response = AdGenerationResponse.builder()
                 .adId(ad.getId())
                 .variations(variations)
                 .status("success")
-                .message("Ad saved successfully")
+                .message(successMessage)
                 .build();
             
             return ResponseEntity.ok(response);

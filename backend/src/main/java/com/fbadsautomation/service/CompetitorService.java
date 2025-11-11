@@ -8,6 +8,7 @@ import com.fbadsautomation.repository.CompetitorSearchRepository;
 import com.fbadsautomation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -47,6 +48,9 @@ public class CompetitorService {
     private final CompetitorSearchRepository competitorSearchRepository;
     private final UserRepository userRepository;
     private final SerpApiService serpApiService;
+
+    @Autowired(required = false)
+    private ApifyService apifyService;
 
     /**
      * Search for competitor ads by brand name
@@ -537,7 +541,7 @@ public class CompetitorService {
     }
 
     /**
-     * Search TikTok ads (placeholder for future implementation)
+     * Search TikTok ads via Apify Creative Center scraper
      *
      * @param brandName Brand name to search
      * @param region Target region code
@@ -554,12 +558,37 @@ public class CompetitorService {
 
         String sanitizedBrand = sanitizeBrandName(brandName);
 
-        // Save search history
-        saveSearchHistory(sanitizedBrand, region, user, "TIKTOK", 0, true);
+        // Check if Apify is available
+        if (apifyService == null || !apifyService.isAvailable()) {
+            log.warn("Apify service not available, falling back to iframe mode for TikTok");
+            saveSearchHistory(sanitizedBrand, region, user, "TIKTOK", 0, true);
+            return null; // Trigger iframe mode on frontend
+        }
 
-        // For now, return null to trigger iframe mode
-        // Can implement TikTok scraping or API in future
-        return null;
+        try {
+            log.info("Using Apify to search TikTok ads for: {}", sanitizedBrand);
+
+            // Call Apify service
+            List<CompetitorAdDTO> ads = apifyService.searchTikTokAds(sanitizedBrand, region, limit);
+
+            if (ads != null && !ads.isEmpty()) {
+                // Save successful search history
+                saveSearchHistory(sanitizedBrand, region, user, "TIKTOK", ads.size(), true);
+                log.info("Found {} TikTok ads for brand: {}", ads.size(), sanitizedBrand);
+                return ads;
+            } else {
+                // No results found, fallback to iframe
+                log.warn("No TikTok ads found for brand: {}, falling back to iframe", sanitizedBrand);
+                saveSearchHistory(sanitizedBrand, region, user, "TIKTOK", 0, false);
+                return null;
+            }
+
+        } catch (Exception e) {
+            // Error occurred, fallback to iframe
+            log.error("Error searching TikTok ads via Apify: {}", e.getMessage(), e);
+            saveSearchHistory(sanitizedBrand, region, user, "TIKTOK", 0, false);
+            return null; // Trigger iframe mode as fallback
+        }
     }
 
     /**
