@@ -288,7 +288,6 @@ import RecommendationCard from '@/components/optimization/RecommendationCard.vue
 import MobileHeader from '@/components/MobileHeader.vue'
 import {
   ReloadOutlined,
-  DownloadOutlined,
   CheckCircleOutlined,
   RightOutlined,
   LineChartOutlined,
@@ -304,7 +303,6 @@ export default {
     RecommendationCard,
     MobileHeader,
     ReloadOutlined,
-    DownloadOutlined,
     CheckCircleOutlined,
     RightOutlined,
     LineChartOutlined,
