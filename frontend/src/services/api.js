@@ -222,7 +222,7 @@ export default {
   // Optimization endpoints
   optimizationAPI: {
     getOptimizationSummary: () => apiClient.get('/optimization/summary'),
-    getHighPriorityRecommendations: () => apiClient.get('/optimization/recommendations/high-priority'),
+    getHighPriorityRecommendations: () => apiClient.get('/optimization/recommendations/priority/high'),
     acceptRecommendation: (id) => apiClient.post(`/optimization/recommendations/${id}/accept`),
     dismissRecommendation: (id, reason) => apiClient.post(`/optimization/recommendations/${id}/dismiss`, { reason }),
     updateRecommendationSettings: (settings) => apiClient.put('/optimization/settings', settings)

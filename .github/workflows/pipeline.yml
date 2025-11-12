@@ -111,6 +111,7 @@ jobs:
           build-args: |
             VUE_APP_API_BASE_URL=/api
             VUE_APP_ENVIRONMENT=production
+            BUILD_TIMESTAMP=$(date +%s)
           tags: |
             ${{ env.FRONTEND_IMAGE }}:latest
             ${{ env.FRONTEND_IMAGE }}:${{ steps.vars.outputs.sha_short }}

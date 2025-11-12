@@ -79,6 +79,9 @@ public class AdGenerationRequest {
     @Valid
     private AudienceSegmentRequest audienceSegment; // For audience targeting
 
+    // Issue #13: Add full campaign object for better context
+    private com.fbadsautomation.model.Campaign campaign; // Full campaign object
+
     @Positive(message = "Persona ID must be positive")
     private Long personaId; // Optional: persona to use for prompt enhancement
 
@@ -229,6 +232,10 @@ public class AdGenerationRequest {
 
     public AudienceSegmentRequest getAudienceSegment() { return audienceSegment; }
     public void setAudienceSegment(AudienceSegmentRequest audienceSegment) { this.audienceSegment = audienceSegment; }
+
+    // Issue #13: Add getter and setter for full campaign object
+    public com.fbadsautomation.model.Campaign getCampaign() { return campaign; }
+    public void setCampaign(com.fbadsautomation.model.Campaign campaign) { this.campaign = campaign; }
 
     public Long getPersonaId() { return personaId; }
     public void setPersonaId(Long personaId) { this.personaId = personaId; }

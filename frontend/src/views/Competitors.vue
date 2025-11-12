@@ -57,19 +57,6 @@
                   show-search
                   option-filter-prop="label"
                 >
-                  <a-select-opt-group label="Asia">
-                    <a-select-option value="VN" label="Vietnam">🇻🇳 Vietnam</a-select-option>
-                    <a-select-option value="SG" label="Singapore">🇸🇬 Singapore</a-select-option>
-                    <a-select-option value="TH" label="Thailand">🇹🇭 Thailand</a-select-option>
-                    <a-select-option value="MY" label="Malaysia">🇲🇾 Malaysia</a-select-option>
-                    <a-select-option value="ID" label="Indonesia">🇮🇩 Indonesia</a-select-option>
-                    <a-select-option value="PH" label="Philippines">🇵🇭 Philippines</a-select-option>
-                    <a-select-option value="JP" label="Japan">🇯🇵 Japan</a-select-option>
-                    <a-select-option value="KR" label="South Korea">🇰🇷 South Korea</a-select-option>
-                    <a-select-option value="TW" label="Taiwan">🇹🇼 Taiwan</a-select-option>
-                    <a-select-option value="HK" label="Hong Kong">🇭🇰 Hong Kong</a-select-option>
-                    <a-select-option value="IN" label="India">🇮🇳 India</a-select-option>
-                  </a-select-opt-group>
                   <a-select-opt-group label="Americas">
                     <a-select-option value="US" label="United States">🇺🇸 United States</a-select-option>
                     <a-select-option value="CA" label="Canada">🇨🇦 Canada</a-select-option>

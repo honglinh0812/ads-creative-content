@@ -330,7 +330,7 @@ export default {
           this.showError({ message: this.$t('auth.loginFailed') })
           throw e
         }
-        console.log('Token set in localStorage:', localStorage.getItem('token'))
+
         this.showSuccess({ message: this.$t('auth.loginForm.success') })
 
         // Redirect to intended page or dashboard

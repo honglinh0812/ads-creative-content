@@ -269,30 +269,26 @@ import org.springframework.util.StringUtils;
    }
 
    /**
-    * Automatically update campaign status based on ads (Issue #7)
-    * DRAFT -> READY when first ad is created
-    * EXPORTED -> READY when new ad is added to exported campaign
+    * DEPRECATED: Campaign status is now automatically updated by database trigger (V24)
+    *
+    * This method is no longer needed as the campaign_status_update_trigger handles:
+    * - DRAFT -> READY when ads exist
+    * - READY -> DRAFT when no ads remain
+    * - EXPORTED -> READY when ads are added
+    *
+    * Keeping this method for backward compatibility but it's not called anywhere.
+    * Consider removing in future cleanup.
+    *
+    * @deprecated Use database trigger (V24) instead
     * @param campaignId The campaign ID
     * @param userId The user ID
     */
+   @Deprecated
    @Transactional
    public void updateCampaignStatusBasedOnAds(Long campaignId, Long userId) {
-       log.info("Checking campaign status update for campaign: {} user: {}", campaignId, userId);
-
-       Campaign campaign = getCampaignByIdAndUser(campaignId, userId);
-
-       // Count ads in this campaign
-       long adCount = campaign.getAds() != null ? campaign.getAds().size() : 0;
-
-       if (adCount > 0 && campaign.getStatus() == Campaign.CampaignStatus.DRAFT) {
-           campaign.setStatus(Campaign.CampaignStatus.READY);
-           campaignRepository.save(campaign);
-           log.info("Campaign {} status changed: DRAFT -> READY (first ad created)", campaignId);
-       } else if (adCount > 0 && campaign.getStatus() == Campaign.CampaignStatus.EXPORTED) {
-           campaign.setStatus(Campaign.CampaignStatus.READY);
-           campaignRepository.save(campaign);
-           log.info("Campaign {} status changed: EXPORTED -> READY (new ad added)", campaignId);
-       }
+       log.warn("DEPRECATED: updateCampaignStatusBasedOnAds called for campaign {}. Status is auto-updated by DB trigger (V24)", campaignId);
+       // Campaign status is automatically handled by database trigger
+       // No manual update needed
    }
 
    /**

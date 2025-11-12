@@ -39,7 +39,21 @@ module.exports = {
             chunks: 'all'
           }
         }
-      }
+      },
+      minimize: true,
+      minimizer: [
+        (compiler) => {
+          const TerserPlugin = require('terser-webpack-plugin');
+          new TerserPlugin({
+            terserOptions: {
+              compress: {
+                drop_console: true, // Remove all console.* calls
+                drop_debugger: true, // Remove debugger statements
+              },
+            },
+          }).apply(compiler);
+        },
+      ],
     },
     resolve: {
       alias: {

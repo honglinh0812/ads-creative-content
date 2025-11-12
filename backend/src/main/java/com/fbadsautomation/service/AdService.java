@@ -236,27 +236,14 @@ public class AdService {
         result.put("ad", ad);
         result.put("contents", contents);
 
-        // Update campaign status: DRAFT -> READY when first ad is created (Issue #3)
+        // Campaign status is automatically updated by database trigger (V24)
+        // Trigger: campaign_status_update_trigger - DRAFT -> READY when ads exist
+        // Log ad count for debugging purposes
         try {
-            Campaign refreshedCampaign = campaignRepository.findById(campaignId)
-                    .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Campaign not found"));
-
-            // Count ads directly from database to avoid stale Hibernate collection
             long adCount = adRepository.countByCampaignId(campaignId);
-
-            log.debug("Campaign {} has {} ads, current status: {}", campaignId, adCount, refreshedCampaign.getStatus());
-
-            if (adCount >= 1 && refreshedCampaign.getStatus() == Campaign.CampaignStatus.DRAFT) {
-                refreshedCampaign.setStatus(Campaign.CampaignStatus.READY);
-                campaignRepository.save(refreshedCampaign);
-                log.info("Campaign {} status auto-updated: DRAFT -> READY (ad count: {})", campaignId, adCount);
-            } else if (adCount >= 1 && refreshedCampaign.getStatus() == Campaign.CampaignStatus.EXPORTED) {
-                refreshedCampaign.setStatus(Campaign.CampaignStatus.READY);
-                campaignRepository.save(refreshedCampaign);
-                log.info("Campaign {} status auto-updated: EXPORTED -> READY (ad count: {})", campaignId, adCount);
-            }
+            log.debug("Campaign {} now has {} ads (status will be auto-updated by DB trigger)", campaignId, adCount);
         } catch (Exception e) {
-            log.error("Failed to update campaign status after ad creation: {}", e.getMessage(), e);
+            log.error("Failed to count ads for campaign {}: {}", campaignId, e.getMessage(), e);
         }
 
         return result;
@@ -366,24 +353,15 @@ public class AdService {
         adRepository.delete(ad);
         log.info("Successfully deleted ad: {} for user ID: {}", adId, userId);
 
-        // Update campaign status: READY -> DRAFT if no ads left (Issue #3)
+        // Campaign status is automatically updated by database trigger (V24)
+        // Trigger: campaign_status_update_trigger - READY -> DRAFT when no ads remain
+        // Log remaining ad count for debugging purposes
         if (campaignId != null) {
             try {
-                Campaign campaign = campaignRepository.findById(campaignId).orElse(null);
-                if (campaign != null) {
-                    // Count remaining ads after deletion
-                    long remainingAdCount = adRepository.countByCampaignId(campaignId);
-
-                    log.debug("Campaign {} has {} remaining ads after deletion", campaignId, remainingAdCount);
-
-                    if (remainingAdCount == 0 && campaign.getStatus() == Campaign.CampaignStatus.READY) {
-                        campaign.setStatus(Campaign.CampaignStatus.DRAFT);
-                        campaignRepository.save(campaign);
-                        log.info("Campaign {} status auto-updated: READY -> DRAFT (no ads remaining)", campaignId);
-                    }
-                }
+                long remainingAdCount = adRepository.countByCampaignId(campaignId);
+                log.debug("Campaign {} has {} remaining ads after deletion (status will be auto-updated by DB trigger)", campaignId, remainingAdCount);
             } catch (Exception e) {
-                log.error("Failed to update campaign status after ad deletion: {}", e.getMessage(), e);
+                log.error("Failed to count remaining ads for campaign {}: {}", campaignId, e.getMessage(), e);
             }
         }
     }

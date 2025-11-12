@@ -255,7 +255,7 @@ export default {
           { timeRange: selectedExportTimeRange.value },
           selectedExportFormat.value
         )
-        
+
         // Create download link
         const url = window.URL.createObjectURL(new Blob([response.data]))
         const link = document.createElement('a')
@@ -265,11 +265,18 @@ export default {
         link.click()
         link.remove()
         window.URL.revokeObjectURL(url)
-        
+
+        message.success('Analytics data exported successfully!')
         closeExportModal()
       } catch (error) {
         console.error('Export failed:', error)
-        // You could show a toast notification here
+
+        // Check if it's a 404 (endpoint not implemented)
+        if (error.response && error.response.status === 404) {
+          message.warning('Export feature is coming soon! Backend endpoint is under development.')
+        } else {
+          message.error('Failed to export analytics data. Please try again.')
+        }
       } finally {
         exporting.value = false
       }

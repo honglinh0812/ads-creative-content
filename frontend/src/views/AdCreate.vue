@@ -1856,6 +1856,8 @@ export default {
 
         const requestData = {
           campaignId: this.formData.campaignId,
+          // Issue #13: Pass full campaign object for better context
+          campaign: this.selectedCampaign,
           adType: this.formData.adType,
           name: this.formData.name,
           prompt: promptWithCTA,
@@ -2220,9 +2222,17 @@ export default {
       // Toggle selection: add if not selected, remove if already selected
       const index = this.selectedVariations.findIndex(v => v.id === variation.id)
       if (index > -1) {
-        this.selectedVariations.splice(index, 1) // Deselect
+        // Deselect: Create new array to trigger Vue reactivity
+        this.selectedVariations = this.selectedVariations.filter(v => v.id !== variation.id)
       } else {
-        this.selectedVariations.push(variation) // Select
+        // Select: Ensure variation has correct imageUrl before adding
+        // Priority: variation's own imageUrl > uploadedFileUrl (per-variation) > mediaFileUrl > global uploadedFileUrl
+        const variationWithImage = {
+          ...variation,
+          imageUrl: variation.imageUrl || variation.uploadedFileUrl || variation.mediaFileUrl || this.uploadedFileUrl || ''
+        }
+        // Create new array to trigger Vue reactivity
+        this.selectedVariations = [...this.selectedVariations, variationWithImage]
       }
     },
     

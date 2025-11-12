@@ -88,10 +88,20 @@ public class SerpApiService {
      */
     private String buildGoogleAdsUrl(String brandName, String region) {
         try {
+            // Handle unsupported regions with fallback
+            String finalRegion = region != null ? region.toUpperCase() : "US";
+
+            // Vietnam (VN) is not supported by SerpAPI Google Ads Transparency Center
+            // Use Singapore (SG) as regional fallback for better relevance
+            if ("VN".equals(finalRegion)) {
+                log.warn("Vietnam (VN) region not supported by SerpAPI Google Ads Transparency Center. Using Singapore (SG) as regional fallback.");
+                finalRegion = "SG";
+            }
+
             return UriComponentsBuilder.fromHttpUrl(baseUrl + "/search.json")
                 .queryParam("engine", "google_ads_transparency_center")  // FIXED: Correct engine name
                 .queryParam("text", brandName)  // FIXED: Use 'text' instead of 'q' for brand search
-                .queryParam("region", region != null ? region.toUpperCase() : "US")
+                .queryParam("region", finalRegion)
                 .queryParam("num", "40")  // Results per page (max 100)
                 .queryParam("api_key", apiKey)
                 .build()

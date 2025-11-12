@@ -13,20 +13,6 @@
         sub-title="AI-powered recommendations to optimize your campaigns, reduce costs, and maximize performance"
       >
         <template #extra>
-          <a-space>
-            <a-button @click="refreshData" :loading="loading">
-              <template #icon>
-                <reload-outlined />
-              </template>
-              Refresh
-            </a-button>
-            <a-button @click="exportData">
-              <template #icon>
-                <download-outlined />
-              </template>
-              Export
-            </a-button>
-          </a-space>
         </template>
       </a-page-header>
     </div>
@@ -34,9 +20,6 @@
     <!-- Mobile Page Header -->
     <div v-if="isMobile" class="mobile-header">
       <h1>Optimization Center</h1>
-      <a-button type="text" @click="refreshData" :loading="loading">
-        <template #icon><reload-outlined /></template>
-      </a-button>
     </div>
 
     <!-- Navigation Tabs -->
@@ -404,21 +387,8 @@ export default {
     ])
     
     // Methods
-    const refreshData = async () => {
-      loading.value = true
-      try {
-        await fetchOptimizationSummary()
-        await fetchHighPriorityRecommendations()
-      } catch (error) {
-        console.error('Error refreshing data:', error)
-      } finally {
-        loading.value = false
-      }
-    }
-    
-    const exportData = () => {
-      console.log('Export data functionality')
-    }
+
+
     
     const fetchOptimizationSummary = async () => {
       try {
@@ -588,8 +558,6 @@ export default {
       settings,
       savingSettings,
       recommendationTypes,
-      refreshData,
-      exportData,
       handleAcceptRecommendation,
       handleDismissRecommendation,
       handleScheduleRecommendation,
