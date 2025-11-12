@@ -63,13 +63,10 @@ public class AIProviderService {
 
         // Image generation fallback chains (includes new free providers)
         // Priority: Free providers (SubNP, Puter) → Paid providers (Gemini, OpenAI, DeAPI) → Other options
-        providerFallbacks.put("gemini", Arrays.asList("subnp", "puter", "openai", "deapi", "fal-ai", "stable-diffusion"));
-        providerFallbacks.put("openai", Arrays.asList("subnp", "puter", "gemini", "deapi", "fal-ai", "stable-diffusion"));
-        providerFallbacks.put("subnp", Arrays.asList("puter", "gemini", "openai", "deapi", "fal-ai", "stable-diffusion"));
-        providerFallbacks.put("puter", Arrays.asList("subnp", "gemini", "openai", "deapi", "fal-ai", "stable-diffusion"));
-        providerFallbacks.put("deapi", Arrays.asList("subnp", "puter", "gemini", "openai", "fal-ai", "stable-diffusion"));
-        providerFallbacks.put("fal-ai", Arrays.asList("subnp", "puter", "gemini", "openai", "deapi", "stable-diffusion"));
-        providerFallbacks.put("stable-diffusion", Arrays.asList("subnp", "puter", "gemini", "openai", "deapi", "fal-ai"));
+        providerFallbacks.put("gemini", Arrays.asList("fal-ai", "stable-diffusion", "openai"));
+        providerFallbacks.put("openai", Arrays.asList("gemini", "fal-ai", "stable-diffusion"));
+        providerFallbacks.put("fal-ai", Arrays.asList("gemini", "openai", "stable-diffusion"));
+        providerFallbacks.put("stable-diffusion", Arrays.asList("gemini", "openai", "fal-ai"));
     }
 
     public List<ProviderResponse> getTextProviders() {
