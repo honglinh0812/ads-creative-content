@@ -91,11 +91,36 @@ CREATE TRIGGER campaign_status_update_trigger
     EXECUTE FUNCTION update_campaign_status_on_ad_change();
 
 -- Step 6: Initial update for existing data
-SELECT update_campaign_status();
-
--- Log migration completion
+-- Cannot call trigger function directly, so update existing campaigns manually
 DO $$
 BEGIN
+    -- Update campaigns to READY if they have ads and are currently DRAFT
+    UPDATE campaigns
+    SET status = 'READY',
+        updated_at = NOW()
+    WHERE id IN (
+        SELECT DISTINCT c.id
+        FROM campaigns c
+        WHERE c.status = 'DRAFT'
+        AND EXISTS (
+            SELECT 1 FROM ads a WHERE a.campaign_id = c.id
+        )
+    );
+
+    -- Update campaigns to DRAFT if they have no ads and are currently READY
+    UPDATE campaigns
+    SET status = 'DRAFT',
+        updated_at = NOW()
+    WHERE id IN (
+        SELECT DISTINCT c.id
+        FROM campaigns c
+        WHERE c.status = 'READY'
+        AND NOT EXISTS (
+            SELECT 1 FROM ads a WHERE a.campaign_id = c.id
+        )
+    );
+
+    -- Log migration completion
     RAISE NOTICE 'Migration V24 completed successfully';
     RAISE NOTICE 'Added trigger to automatically update campaign status based on ads';
 END $$;
