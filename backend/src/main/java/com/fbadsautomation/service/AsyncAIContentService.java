@@ -59,8 +59,15 @@ public class AsyncAIContentService {
             tempAd.setAdType(convertContentTypeToAdType(contentType));
             tempAd.setPrompt(prompt);
             // Issue #6: Set adStyle on tempAd so it can be used in prompt generation
-            if (adStyle != null) {
-                tempAd.setAdStyle(adStyle);
+            if (adStyle != null && !adStyle.isEmpty()) {
+                try {
+                    com.fbadsautomation.model.AdStyle styleEnum =
+                        com.fbadsautomation.model.AdStyle.valueOf(adStyle.toUpperCase());
+                    tempAd.setAdStyle(styleEnum);
+                    log.info("[Async Issue #6] Set ad style: {}", styleEnum);
+                } catch (IllegalArgumentException e) {
+                    log.warn("[Async Issue #6] Invalid ad style '{}', ignoring", adStyle);
+                }
             }
 
             // Fetch user first
