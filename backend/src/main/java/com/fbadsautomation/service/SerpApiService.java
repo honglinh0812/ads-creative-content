@@ -88,20 +88,14 @@ public class SerpApiService {
      */
     private String buildGoogleAdsUrl(String brandName, String region) {
         try {
-            // Handle unsupported regions with fallback
-            String finalRegion = region != null ? region.toUpperCase() : "US";
-
-            // Vietnam (VN) is not supported by SerpAPI Google Ads Transparency Center
-            // Use Singapore (SG) as regional fallback for better relevance
-            if ("VN".equals(finalRegion)) {
-                log.warn("Vietnam (VN) region not supported by SerpAPI Google Ads Transparency Center. Using Singapore (SG) as regional fallback.");
-                finalRegion = "SG";
-            }
+            // Issue #2: Map region code to location name (SerpAPI requires location, not region)
+            String location = mapRegionToLocation(region);
+            log.info("Mapped region '{}' to location '{}'", region, location);
 
             return UriComponentsBuilder.fromHttpUrl(baseUrl + "/search.json")
                 .queryParam("engine", "google_ads_transparency_center")  // FIXED: Correct engine name
                 .queryParam("text", brandName)  // FIXED: Use 'text' instead of 'q' for brand search
-                .queryParam("region", finalRegion)
+                .queryParam("location", location)  // Issue #2: Use 'location' instead of 'region'
                 .queryParam("num", "40")  // Results per page (max 100)
                 .queryParam("api_key", apiKey)
                 .build()
@@ -110,6 +104,39 @@ public class SerpApiService {
             log.error("Error building URL: {}", e.getMessage());
             throw new RuntimeException("Failed to build SerpAPI URL", e);
         }
+    }
+
+    /**
+     * Issue #2: Map region codes to location names for SerpAPI.
+     * SerpAPI Google Ads engine requires location parameter, not region.
+     */
+    private String mapRegionToLocation(String region) {
+        if (region == null || region.isEmpty()) {
+            return "United States";
+        }
+
+        return switch (region.toUpperCase()) {
+            case "US" -> "United States";
+            case "CA" -> "Canada";
+            case "GB", "UK" -> "United Kingdom";
+            case "AU" -> "Australia";
+            case "DE" -> "Germany";
+            case "FR" -> "France";
+            case "IT" -> "Italy";
+            case "ES" -> "Spain";
+            case "JP" -> "Japan";
+            case "KR" -> "South Korea";
+            case "SG" -> "Singapore";
+            // Vietnam not directly supported, use Singapore as regional fallback
+            case "VN" -> {
+                log.warn("Vietnam (VN) not supported. Using Singapore as regional fallback.");
+                yield "Singapore";
+            }
+            default -> {
+                log.warn("Unknown region '{}', defaulting to United States", region);
+                yield "United States";
+            }
+        };
     }
 
     /**

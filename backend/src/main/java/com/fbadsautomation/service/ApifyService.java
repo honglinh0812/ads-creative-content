@@ -93,7 +93,12 @@ public class ApifyService {
      */
     private String startActorRun(String brandName, String region, int limit) {
         try {
-            String url = baseUrl + "/acts/" + tiktokActorId + "/runs?token=" + apiKey;
+            // Issue #3: Properly encode actor ID and use correct Apify API v2 format
+            // Actor ID format: username/actor-name or username~actor-name
+            // API endpoint: /v2/acts/{username~actor-name}/runs
+            String encodedActorId = tiktokActorId.replace("/", "~");
+            String url = baseUrl + "/acts/" + encodedActorId + "/runs";
+            log.info("Apify API URL: {}", url);
 
             // Build input for TikTok Creative Center scraper
             Map<String, Object> input = new HashMap<>();
@@ -105,6 +110,8 @@ public class ApifyService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("User-Agent", "Mozilla/5.0 (compatible; FBAdAutomation/1.0)");
+            // Issue #3: Send API token in Authorization header (more secure)
+            headers.set("Authorization", "Bearer " + apiKey);
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(input, headers);
 

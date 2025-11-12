@@ -32,8 +32,8 @@ public class AdGenerationRequest {
     private String mediaFileUrl;
 
     @NotBlank(message = "Text provider is required")
-    @Pattern(regexp = "^(openai|gemini|anthropic|huggingface)$",
-             message = "Invalid text provider. Must be openai, gemini, anthropic, or huggingface")
+    @Pattern(regexp = "^(openai|gemini|anthropic|huggingface|hugging-face)$",
+             message = "Invalid text provider. Must be openai, gemini, anthropic, huggingface, or hugging-face")
     private String textProvider;
 
     @Pattern(regexp = "^(gemini|openai|huggingface|stable-diffusion|fal-ai|subnp|deapi|puter)$",
@@ -100,8 +100,8 @@ public class AdGenerationRequest {
     // Inner class for per-variation provider configuration
     public static class VariationProviderConfig {
         @NotBlank(message = "Text provider is required")
-        @Pattern(regexp = "^(openai|gemini|anthropic|huggingface)$",
-                 message = "Invalid text provider. Must be openai, gemini, anthropic, or huggingface")
+        @Pattern(regexp = "^(openai|gemini|anthropic|huggingface|hugging-face)$",
+                 message = "Invalid text provider. Must be openai, gemini, anthropic, huggingface, or hugging-face")
         private String textProvider;
 
         // Image provider is now optional (nullable) - can be null if uploadedFileUrl is provided

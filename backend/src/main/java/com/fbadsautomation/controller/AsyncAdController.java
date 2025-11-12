@@ -93,6 +93,7 @@ public class AsyncAdController {
             asyncAIContentService.generateContentAsync(
                 jobId,
                 userId,
+                request.getCampaignId(),       // Issue #6: Campaign ID
                 request.getPrompt(),
                 contentType,
                 textProvider,
@@ -107,7 +108,8 @@ public class AsyncAdController {
                 request.getLeadFormQuestions(),
                 request.getAudienceSegment(),
                 request.getPersonaId(),        // Phase 1: Persona ID
-                request.getTrendingKeywords()  // Phase 2: Trending keywords
+                request.getTrendingKeywords(), // Phase 2: Trending keywords
+                request.getAdStyle()           // Issue #6: Ad style
             );
 
             return ResponseEntity.status(HttpStatus.ACCEPTED)

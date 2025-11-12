@@ -23,12 +23,14 @@ public class AsyncAIContentService {
     private final AsyncErrorHandlingService errorHandlingService;
     private final AIContentService aiContentService;
     private final com.fbadsautomation.repository.UserRepository userRepository;
+    private final com.fbadsautomation.repository.CampaignRepository campaignRepository;
     private final PersonaService personaService;
 
     @Async("aiProcessingExecutor")
     public CompletableFuture<Void> generateContentAsync(
             String jobId,
             Long userId,
+            Long campaignId,               // Issue #6: Campaign ID
             String prompt,
             AdContent.ContentType contentType,
             String textProvider,
@@ -43,7 +45,8 @@ public class AsyncAIContentService {
             List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions,
             AudienceSegmentRequest audienceSegment,
             Long personaId,
-            List<String> trendingKeywords) {
+            List<String> trendingKeywords,
+            String adStyle) {              // Issue #6: Ad style
 
         try {
             errorHandlingService.validateJobExecution(jobId, "content-generation");
@@ -55,23 +58,47 @@ public class AsyncAIContentService {
             Ad tempAd = new Ad();
             tempAd.setAdType(convertContentTypeToAdType(contentType));
             tempAd.setPrompt(prompt);
+            // Issue #6: Set adStyle on tempAd so it can be used in prompt generation
+            if (adStyle != null) {
+                tempAd.setAdStyle(adStyle);
+            }
+
+            // Fetch user first
+            com.fbadsautomation.model.User user = userRepository.findById(userId)
+                .orElse(null);
+
+            // Issue #6: Fetch campaign for context
+            com.fbadsautomation.model.Campaign campaign = null;
+            if (campaignId != null && user != null) {
+                try {
+                    campaign = campaignRepository.findByIdAndUser(campaignId, user)
+                        .orElse(null);
+                    if (campaign != null) {
+                        log.info("[Async Issue #6] Using campaign: {} with target audience: {}",
+                            campaign.getName(),
+                            campaign.getTargetAudience() != null ? campaign.getTargetAudience() : "none");
+                        // Set campaign on tempAd so AIContentService can use it
+                        tempAd.setCampaign(campaign);
+                    } else {
+                        log.warn("[Async Issue #6] Campaign ID {} not found for user {}", campaignId, userId);
+                    }
+                } catch (Exception e) {
+                    log.warn("[Async Issue #6] Failed to fetch campaign {}: {}", campaignId, e.getMessage());
+                }
+            }
 
             // Phase 1: Fetch user-selected persona if provided
             com.fbadsautomation.model.Persona userSelectedPersona = null;
-            if (personaId != null && userId != null) {
+            if (personaId != null && user != null) {
                 try {
-                    com.fbadsautomation.model.User user = userRepository.findById(userId)
+                    userSelectedPersona = personaService.findByIdAndUser(personaId, user)
                         .orElse(null);
-                    if (user != null) {
-                        userSelectedPersona = personaService.findByIdAndUser(personaId, user)
-                            .orElse(null);
-                        if (userSelectedPersona != null) {
-                            log.info("[Async] Using user-selected persona: {} (ID: {})",
-                                userSelectedPersona.getName(), personaId);
-                        } else {
-                            log.warn("[Async] Persona ID {} not found for user {}, will use auto-selection",
-                                personaId, userId);
-                        }
+                    if (userSelectedPersona != null) {
+                        log.info("[Async] Using user-selected persona: {} (ID: {})",
+                            userSelectedPersona.getName(), personaId);
+                    } else {
+                        log.warn("[Async] Persona ID {} not found for user {}, will use auto-selection",
+                            personaId, userId);
                     }
                 } catch (Exception e) {
                     log.warn("[Async] Failed to fetch persona {}, falling back to auto-selection: {}",

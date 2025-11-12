@@ -51,7 +51,7 @@
             
             <div v-else class="recommendations-grid">
               <RecommendationCard
-                v-for="recommendation in highPriorityRecommendations"
+                v-for="recommendation in highPriorityRecommendations.filter(r => r != null && r.id != null)"
                 :key="recommendation.id"
                 :recommendation="recommendation"
                 @accept="handleAcceptRecommendation"
@@ -401,9 +401,12 @@ export default {
       try {
         highPriorityLoading.value = true
         const response = await api.optimizationAPI.getHighPriorityRecommendations()
-        highPriorityRecommendations.value = response.data
+        // Issue #4: Filter out null/undefined recommendations
+        highPriorityRecommendations.value = (response.data || []).filter(r => r != null && r.id != null)
       } catch (error) {
         console.error('Error fetching high priority recommendations:', error)
+        // Issue #4: Ensure empty array on error
+        highPriorityRecommendations.value = []
       } finally {
         highPriorityLoading.value = false
       }

@@ -11,18 +11,10 @@
 
       <!-- Standardized Actions -->
       <div class="page-actions-standard">
-        <button @click="refreshData" class="btn-secondary-standard" :disabled="loading">
-          <i class="pi pi-refresh" :class="{ 'pi-spin': loading }"></i>
-          Refresh
-        </button>
         <ImportFacebookReport @import-complete="handleImportComplete" />
         <button @click="exportData" class="btn-primary-standard">
           <i class="pi pi-download"></i>
           Export
-        </button>
-        <button @click="openSettings" class="btn-secondary-standard">
-          <i class="pi pi-cog"></i>
-          Settings
         </button>
       </div>
     </div>

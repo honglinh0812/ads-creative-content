@@ -52,7 +52,7 @@ public class Persona {
     @Column(nullable = false, length = 20)
     private Gender gender;
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "persona_interests",
         joinColumns = @JoinColumn(name = "persona_id"),
@@ -71,7 +71,7 @@ public class Persona {
     @Column(nullable = false, length = 20)
     private String tone;
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "persona_pain_points",
         joinColumns = @JoinColumn(name = "persona_id"),
