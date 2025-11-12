@@ -126,10 +126,13 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://linhnh.site,https://api.linhnh.site}
 
       # SerpApi Configuration
-      SERPAPI_KEY: ${SERPAPI_API_KEY}
+      SERPAPI_KEY: ${SERPAPI_KEY}
 
       # ScrapeCreators Configuration
       SCRAPE_CREATORS_API_KEY: ${SCRAPE_CREATORS_API_KEY}
+
+      # Apify Configuration
+      APIFY_API_KEY: ${APIFY_API_KEY}
 
       # Server Configuration
       SERVER_PORT: 8080

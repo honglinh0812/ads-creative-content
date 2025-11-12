@@ -1108,39 +1108,6 @@ export default {
           enabled: true
         },
         {
-          value: 'subnp',
-          name: this.$t('adCreate.providers.image.subnp.name'),
-          description: this.$t('adCreate.providers.image.subnp.description'),
-          features: [
-            this.$t('adCreate.providers.image.subnp.features.0'),
-            this.$t('adCreate.providers.image.subnp.features.1'),
-            this.$t('adCreate.providers.image.subnp.features.2')
-          ],
-          enabled: false  // Hidden from UI - backend code retained
-        },
-        {
-          value: 'deapi',
-          name: this.$t('adCreate.providers.image.deapi.name'),
-          description: this.$t('adCreate.providers.image.deapi.description'),
-          features: [
-            this.$t('adCreate.providers.image.deapi.features.0'),
-            this.$t('adCreate.providers.image.deapi.features.1'),
-            this.$t('adCreate.providers.image.deapi.features.2')
-          ],
-          enabled: true
-        },
-        {
-          value: 'puter',
-          name: this.$t('adCreate.providers.image.puter.name'),
-          description: this.$t('adCreate.providers.image.puter.description'),
-          features: [
-            this.$t('adCreate.providers.image.puter.features.0'),
-            this.$t('adCreate.providers.image.puter.features.1'),
-            this.$t('adCreate.providers.image.puter.features.2')
-          ],
-          enabled: false  // Hidden from UI - backend code retained
-        },
-        {
           value: 'fal-ai',
           name: this.$t('adCreate.providers.image.falai.name'),
           description: this.$t('adCreate.providers.image.falai.description'),

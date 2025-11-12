@@ -1089,21 +1089,21 @@
     },
     "adTypes": {
       "websiteConversion": {
-        "label": "Website Conversion",
+        "label": "Quảng cáo trang web",
         "description": "Hướng lưu lượng truy cập đến trang web của bạn và tăng chuyển đổi",
         "feature1": "Yêu cầu URL trang web",
         "feature2": "Theo dõi chuyển đổi",
         "feature3": "Tối ưu hóa lưu lượng truy cập"
       },
       "leadGeneration": {
-        "label": "Thu thập khách hàng tiềm năng",
+        "label": "Phiếu thu thập thông tin khách hàng",
         "description": "Thu thập khách hàng tiềm năng trực tiếp thông qua biểu mẫu Facebook",
         "feature1": "Câu hỏi biểu mẫu tùy chỉnh",
         "feature2": "Thu thập khách hàng tiềm năng",
         "feature3": "Thông tin liên hệ"
       },
       "pagePost": {
-        "label": "Bài đăng trang",
+        "label": "Quảng cáo bài đăng trên trang",
         "description": "Quảng bá các bài đăng trên trang của bạn để tăng tương tác",
         "feature1": "Quảng bá bài đăng",
         "feature2": "Tăng cường tương tác",
