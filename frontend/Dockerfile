@@ -14,13 +14,11 @@ RUN npm ci
 ARG VUE_APP_API_BASE_URL=/api
 ARG VUE_APP_SENTRY_DSN
 ARG VUE_APP_ENVIRONMENT=production
-ARG BUILD_TIMESTAMP
 
 # Set environment variables for build BEFORE copying source
 ENV VUE_APP_API_BASE_URL=$VUE_APP_API_BASE_URL
 ENV VUE_APP_SENTRY_DSN=$VUE_APP_SENTRY_DSN
 ENV VUE_APP_ENVIRONMENT=$VUE_APP_ENVIRONMENT
-ENV BUILD_TIMESTAMP=$BUILD_TIMESTAMP
 
 # Copy source code (.env files are excluded by .dockerignore)
 COPY . .
@@ -33,6 +31,16 @@ RUN echo "Building with VUE_APP_API_BASE_URL=$VUE_APP_API_BASE_URL"
 
 # Build the application
 RUN npm run build
+
+# Verify the build output
+RUN echo "=== Verifying build output ===" && \
+    ls -la /app/dist/ && \
+    echo "=== JS files ===" && \
+    ls -la /app/dist/js/ | head -20 && \
+    echo "=== CSS files ===" && \
+    ls -la /app/dist/css/ | head -20 && \
+    echo "=== Total files ===" && \
+    find /app/dist -type f | wc -l
 
 # Verify the build output doesn't contain localhost:8080
 RUN if grep -r "localhost:8080" /app/dist/js/ 2>/dev/null; then \
