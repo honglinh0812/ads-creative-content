@@ -1,258 +1,197 @@
 <template>
-  <div class="page-container">
-    <!-- Standardized Page Header -->
-    <div class="page-header-standard">
-      <div class="page-header-content">
-        <h1 class="page-title-standard">Analytics Dashboard</h1>
-        <p class="page-subtitle-standard">
+  <div class="analytics-container">
+    <!-- Page Header - Following Dashboard pattern -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">Analytics Dashboard</h1>
+        <p class="page-subtitle">
           Comprehensive insights and performance metrics for your Facebook advertising campaigns
         </p>
       </div>
 
-      <!-- Standardized Actions -->
-      <div class="page-actions-standard">
+      <!-- Header Actions -->
+      <div class="header-actions">
         <ImportFacebookReport @import-complete="handleImportComplete" />
-        <button @click="exportData" class="btn-primary-standard">
-          <i class="pi pi-download"></i>
+        <a-button @click="exportData" type="primary" size="large">
+          <template #icon>
+            <download-outlined />
+          </template>
           Export
-        </button>
+        </a-button>
       </div>
     </div>
 
     <!-- Analytics Dashboard Component -->
-    <AnalyticsDashboard />
-
-    <!-- Standardized Export Modal -->
-    <div v-if="showExportModal" class="modal-overlay-standard" @click="closeExportModal">
-      <div class="modal-content-standard" @click.stop>
-        <div class="modal-header-standard">
-          <h3 class="modal-title-standard">Export Analytics Data</h3>
-          <button @click="closeExportModal" class="modal-close-standard">
-            <i class="pi pi-times"></i>
-          </button>
-        </div>
-
-        <div class="modal-body-standard">
-          <div class="export-options">
-            <div class="form-group-standard">
-              <label class="form-label-standard">Data Type</label>
-              <div class="option-buttons">
-                <button
-                  v-for="type in exportTypes"
-                  :key="type.value"
-                  @click="selectedExportType = type.value"
-                  :class="['option-btn', { active: selectedExportType === type.value }]"
-                >
-                  <i :class="type.icon"></i>
-                  {{ type.label }}
-                </button>
-              </div>
-            </div>
-
-            <div class="form-group-standard">
-              <label class="form-label-standard">Format</label>
-              <div class="option-buttons">
-                <button
-                  v-for="format in exportFormats"
-                  :key="format.value"
-                  @click="selectedExportFormat = format.value"
-                  :class="['option-btn', { active: selectedExportFormat === format.value }]"
-                >
-                  <i :class="format.icon"></i>
-                  {{ format.label }}
-                </button>
-              </div>
-            </div>
-
-            <div class="form-group-standard">
-              <label class="form-label-standard">Time Range</label>
-              <select v-model="selectedExportTimeRange" class="form-input-standard">
-                <option value="7d">Last 7 days</option>
-                <option value="30d">Last 30 days</option>
-                <option value="90d">Last 90 days</option>
-                <option value="1y">Last year</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer-standard">
-          <button @click="closeExportModal" class="btn-secondary-standard">
-            Cancel
-          </button>
-          <button @click="performExport" class="btn-primary-standard" :disabled="exporting">
-            <i v-if="exporting" class="pi pi-spin pi-spinner"></i>
-            <i v-else class="pi pi-download"></i>
-            {{ exporting ? 'Exporting...' : 'Export' }}
-          </button>
-        </div>
-      </div>
+    <div class="analytics-content">
+      <AnalyticsDashboard />
     </div>
 
-    <!-- Settings Modal -->
-    <div v-if="showSettingsModal" class="modal-overlay" @click="closeSettingsModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>Analytics Settings</h3>
-          <button @click="closeSettingsModal" class="modal-close">
-            <i class="pi pi-times"></i>
-          </button>
-        </div>
-        
-        <div class="modal-body">
-          <div class="settings-options">
-            <div class="setting-group">
-              <label class="setting-label">Default Time Range</label>
-              <select v-model="defaultTimeRange" class="setting-select">
-                <option value="7d">Last 7 days</option>
-                <option value="30d">Last 30 days</option>
-                <option value="90d">Last 90 days</option>
-                <option value="1y">Last year</option>
-              </select>
-            </div>
-            
-            <div class="setting-group">
-              <label class="setting-label">Auto Refresh</label>
-              <div class="setting-toggle">
-                <input 
-                  type="checkbox" 
-                  id="autoRefresh" 
-                  v-model="autoRefresh"
-                  class="toggle-input"
-                >
-                <label for="autoRefresh" class="toggle-label">
-                  <span class="toggle-slider"></span>
-                </label>
-                <span class="toggle-text">{{ autoRefresh ? 'Enabled' : 'Disabled' }}</span>
-              </div>
-            </div>
-            
-            <div class="setting-group" v-if="autoRefresh">
-              <label class="setting-label">Refresh Interval</label>
-              <select v-model="refreshInterval" class="setting-select">
-                <option value="30">30 seconds</option>
-                <option value="60">1 minute</option>
-                <option value="300">5 minutes</option>
-                <option value="600">10 minutes</option>
-              </select>
-            </div>
-            
-            <div class="setting-group">
-              <label class="setting-label">Email Reports</label>
-              <div class="setting-toggle">
-                <input 
-                  type="checkbox" 
-                  id="emailReports" 
-                  v-model="emailReports"
-                  class="toggle-input"
-                >
-                <label for="emailReports" class="toggle-label">
-                  <span class="toggle-slider"></span>
-                </label>
-                <span class="toggle-text">{{ emailReports ? 'Enabled' : 'Disabled' }}</span>
-              </div>
-            </div>
+    <!-- Export Modal -->
+    <a-modal
+      v-model:open="showExportModal"
+      title="Export Analytics Data"
+      :width="600"
+      :footer="null"
+    >
+      <div class="export-modal-content">
+        <div class="export-options">
+          <div class="form-group">
+            <label class="form-label">Data Type</label>
+            <a-radio-group v-model:value="selectedExportType" class="export-type-group">
+              <a-radio-button
+                v-for="type in exportTypes"
+                :key="type.value"
+                :value="type.value"
+              >
+                <template #icon>
+                  <component :is="type.icon" />
+                </template>
+                {{ type.label }}
+              </a-radio-button>
+            </a-radio-group>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Format</label>
+            <a-radio-group v-model:value="selectedExportFormat" class="export-format-group">
+              <a-radio-button value="csv">
+                <file-text-outlined /> CSV
+              </a-radio-button>
+              <a-radio-button value="xlsx">
+                <file-excel-outlined /> Excel
+              </a-radio-button>
+              <a-radio-button value="pdf">
+                <file-pdf-outlined /> PDF
+              </a-radio-button>
+            </a-radio-group>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Time Range</label>
+            <a-select v-model:value="selectedExportTimeRange" style="width: 100%;" size="large">
+              <a-select-option value="7d">Last 7 days</a-select-option>
+              <a-select-option value="30d">Last 30 days</a-select-option>
+              <a-select-option value="90d">Last 90 days</a-select-option>
+              <a-select-option value="1y">Last year</a-select-option>
+            </a-select>
           </div>
         </div>
-        
+
         <div class="modal-footer">
-          <button @click="closeSettingsModal" class="btn btn-secondary">
-            Cancel
-          </button>
-          <button @click="saveSettings" class="btn btn-primary">
-            <i class="pi pi-save"></i>
-            Save Settings
-          </button>
+          <a-space>
+            <a-button @click="closeExportModal">
+              Cancel
+            </a-button>
+            <a-button type="primary" @click="performExport" :loading="exporting">
+              <template #icon>
+                <download-outlined v-if="!exporting" />
+              </template>
+              {{ exporting ? 'Exporting...' : 'Export' }}
+            </a-button>
+          </a-space>
         </div>
       </div>
-    </div>
+    </a-modal>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { message } from 'ant-design-vue'
+import {
+  DownloadOutlined,
+  FileTextOutlined,
+  FileExcelOutlined,
+  FilePdfOutlined,
+  FolderOutlined,
+  ThunderboltOutlined,
+  FileOutlined,
+  DatabaseOutlined
+} from '@ant-design/icons-vue'
 import AnalyticsDashboard from '@/components/AnalyticsDashboard.vue'
 import ImportFacebookReport from '@/components/ImportFacebookReport.vue'
 import api from '@/services/api'
-import { message } from 'ant-design-vue'
 
 export default {
   name: 'AnalyticsView',
   components: {
     AnalyticsDashboard,
-    ImportFacebookReport
+    ImportFacebookReport,
+    DownloadOutlined,
+    FileTextOutlined,
+    FileExcelOutlined,
+    FilePdfOutlined,
+    FolderOutlined,
+    ThunderboltOutlined,
+    FileOutlined,
+    DatabaseOutlined
   },
-  
+
   setup() {
     // Reactive data
     const loading = ref(false)
     const showExportModal = ref(false)
-    const showSettingsModal = ref(false)
     const exporting = ref(false)
-    
+    const analyticsData = ref(null)
+
     // Export options
     const selectedExportType = ref('campaigns')
     const selectedExportFormat = ref('csv')
     const selectedExportTimeRange = ref('30d')
-    
-    // Settings
-    const defaultTimeRange = ref('30d')
-    const autoRefresh = ref(false)
-    const refreshInterval = ref(300) // 5 minutes
-    const emailReports = ref(false)
-    
-    let refreshTimer = null
-    
+
     // Export configuration
     const exportTypes = [
-      { value: 'campaigns', label: 'Campaigns', icon: 'pi pi-briefcase' },
-      { value: 'ads', label: 'Ads', icon: 'pi pi-megaphone' },
-      { value: 'content', label: 'Content', icon: 'pi pi-file-edit' },
-      { value: 'all', label: 'All Data', icon: 'pi pi-database' }
+      { value: 'campaigns', label: 'Campaigns', icon: FolderOutlined },
+      { value: 'ads', label: 'Ads', icon: ThunderboltOutlined },
+      { value: 'content', label: 'Content', icon: FileOutlined },
+      { value: 'all', label: 'All Data', icon: DatabaseOutlined }
     ]
-    
-    const exportFormats = [
-      { value: 'csv', label: 'CSV', icon: 'pi pi-file' },
-      { value: 'xlsx', label: 'Excel', icon: 'pi pi-file-excel' },
-      { value: 'pdf', label: 'PDF', icon: 'pi pi-file-pdf' }
-    ]
-    
+
     // Methods
     const refreshData = async () => {
       loading.value = true
       try {
-        // The AnalyticsDashboard component will handle its own refresh
-        // This is just for the loading state
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        const response = await api.analyticsAPI.getDashboard(selectedExportTimeRange.value)
+        analyticsData.value = response.data.data
       } catch (error) {
         console.error('Error refreshing data:', error)
+        message.error('Failed to refresh analytics data')
       } finally {
         loading.value = false
       }
     }
-    
+
     const exportData = () => {
       showExportModal.value = true
     }
-    
+
     const closeExportModal = () => {
       showExportModal.value = false
     }
-    
+
     const performExport = async () => {
       exporting.value = true
       try {
-        const response = await api.analyticsAPI.exportData(
+        // First, try to fetch analytics data if we don't have it
+        if (!analyticsData.value) {
+          const response = await api.analyticsAPI.getDashboard(selectedExportTimeRange.value)
+          analyticsData.value = response.data.data
+        }
+
+        // Generate the export file based on format
+        const exportResult = await generateExport(
           selectedExportType.value,
-          { timeRange: selectedExportTimeRange.value },
-          selectedExportFormat.value
+          selectedExportFormat.value,
+          selectedExportTimeRange.value,
+          analyticsData.value
         )
 
         // Create download link
-        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const blob = new Blob([exportResult.content], { type: exportResult.mimeType })
+        const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
-        link.setAttribute('download', `analytics-${selectedExportType.value}-${selectedExportTimeRange.value}.${selectedExportFormat.value}`)
+        link.setAttribute('download', exportResult.filename)
         document.body.appendChild(link)
         link.click()
         link.remove()
@@ -262,67 +201,115 @@ export default {
         closeExportModal()
       } catch (error) {
         console.error('Export failed:', error)
-
-        // Check if it's a 404 (endpoint not implemented)
-        if (error.response && error.response.status === 404) {
-          message.warning('Export feature is coming soon! Backend endpoint is under development.')
-        } else {
-          message.error('Failed to export analytics data. Please try again.')
-        }
+        message.error('Failed to export analytics data. Please try again.')
       } finally {
         exporting.value = false
       }
     }
-    
-    const openSettings = () => {
-      showSettingsModal.value = true
-    }
-    
-    const closeSettingsModal = () => {
-      showSettingsModal.value = false
-    }
-    
-    const saveSettings = () => {
-      // Save settings to localStorage or API
-      const settings = {
-        defaultTimeRange: defaultTimeRange.value,
-        autoRefresh: autoRefresh.value,
-        refreshInterval: refreshInterval.value,
-        emailReports: emailReports.value
-      }
-      
-      localStorage.setItem('analyticsSettings', JSON.stringify(settings))
-      
-      // Update auto-refresh timer
-      setupAutoRefresh()
-      
-      closeSettingsModal()
-    }
-    
-    const loadSettings = () => {
-      const saved = localStorage.getItem('analyticsSettings')
-      if (saved) {
-        const settings = JSON.parse(saved)
-        defaultTimeRange.value = settings.defaultTimeRange || '30d'
-        autoRefresh.value = settings.autoRefresh || false
-        refreshInterval.value = settings.refreshInterval || 300
-        emailReports.value = settings.emailReports || false
+
+    // Generate export file
+    const generateExport = async (type, format, timeRange, data) => {
+      const timestamp = new Date().toISOString().split('T')[0]
+      const filename = `analytics-${type}-${timeRange}-${timestamp}.${format}`
+
+      if (format === 'csv') {
+        return {
+          content: generateCSV(type, data),
+          mimeType: 'text/csv;charset=utf-8;',
+          filename
+        }
+      } else if (format === 'xlsx') {
+        // For Excel, we'll generate CSV for now (can enhance with library like xlsx)
+        return {
+          content: generateCSV(type, data),
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          filename
+        }
+      } else if (format === 'pdf') {
+        // For PDF, generate a simple text format (can enhance with library like jsPDF)
+        return {
+          content: generatePDF(type, data),
+          mimeType: 'application/pdf',
+          filename
+        }
       }
     }
-    
-    const setupAutoRefresh = () => {
-      if (refreshTimer) {
-        clearInterval(refreshTimer)
-        refreshTimer = null
+
+    const generateCSV = (type, data) => {
+      if (!data) return ''
+
+      let rows = []
+      let headers = []
+
+      switch (type) {
+        case 'campaigns':
+          headers = ['Campaign Name', 'Status', 'Budget', 'Spent', 'Impressions', 'Clicks', 'CTR', 'CPC', 'ROI']
+          if (data.campaignAnalytics) {
+            rows = data.campaignAnalytics.map(c => [
+              c.campaignName || '',
+              c.status || '',
+              c.budget || 0,
+              c.spent || 0,
+              c.impressions || 0,
+              c.clicks || 0,
+              c.ctr || 0,
+              c.cpc || 0,
+              c.roi || 0
+            ])
+          }
+          break
+
+        case 'ads':
+          headers = ['Ad Name', 'Campaign', 'Status', 'Impressions', 'Clicks', 'CTR', 'Spend']
+          // Extract ads data from analytics if available
+          rows = [[]] // Placeholder
+          break
+
+        case 'content':
+          headers = ['Content ID', 'Type', 'Performance Score', 'Impressions', 'Engagement']
+          if (data.contentAnalytics?.topPerformingContent) {
+            rows = data.contentAnalytics.topPerformingContent.map(c => [
+              c.contentId || '',
+              c.type || '',
+              c.performanceScore || 0,
+              c.impressions || 0,
+              c.engagement || 0
+            ])
+          }
+          break
+
+        case 'all':
+          // Combine all data
+          headers = ['Type', 'Name', 'Metric', 'Value']
+          if (data.campaignAnalytics) {
+            data.campaignAnalytics.forEach(c => {
+              rows.push(['Campaign', c.campaignName, 'Impressions', c.impressions])
+              rows.push(['Campaign', c.campaignName, 'Clicks', c.clicks])
+              rows.push(['Campaign', c.campaignName, 'Budget', c.budget])
+            })
+          }
+          break
       }
-      
-      if (autoRefresh.value) {
-        refreshTimer = setInterval(() => {
-          refreshData()
-        }, refreshInterval.value * 1000)
-      }
+
+      // Convert to CSV format
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n')
+
+      return csvContent
     }
-    
+
+    const generatePDF = (type, data) => {
+      // Simple text-based PDF placeholder
+      // In production, use a library like jsPDF
+      let content = `Analytics Export - ${type}\n\n`
+      content += `Time Range: ${selectedExportTimeRange.value}\n`
+      content += `Export Date: ${new Date().toISOString()}\n\n`
+      content += `Data:\n${JSON.stringify(data, null, 2)}`
+      return content
+    }
+
     // Lifecycle
     const handleImportComplete = (result) => {
       message.success(`Successfully imported ${result.imported} performance reports`)
@@ -331,37 +318,21 @@ export default {
     }
 
     onMounted(() => {
-      loadSettings()
-      setupAutoRefresh()
+      // Load initial data
+      refreshData()
     })
-    
-    onUnmounted(() => {
-      if (refreshTimer) {
-        clearInterval(refreshTimer)
-      }
-    })
-    
+
     return {
       loading,
       showExportModal,
-      showSettingsModal,
       exporting,
       selectedExportType,
       selectedExportFormat,
       selectedExportTimeRange,
-      defaultTimeRange,
-      autoRefresh,
-      refreshInterval,
-      emailReports,
       exportTypes,
-      exportFormats,
-      refreshData,
       exportData,
       closeExportModal,
       performExport,
-      openSettings,
-      closeSettingsModal,
-      saveSettings,
       handleImportComplete
     }
   }
@@ -369,358 +340,144 @@ export default {
 </script>
 
 <style scoped>
-.analytics-view {
+.analytics-container {
   padding: 24px;
-  background: #f8fafc;
+  background: #f5f5f5;
   min-height: 100vh;
 }
 
+/* Page Header - Consistent with Dashboard */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 32px;
   gap: 24px;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.header-content h1 {
+.header-content {
+  flex: 1;
+}
+
+.page-title {
   font-size: 32px;
   font-weight: 700;
   color: #1f2937;
   margin: 0 0 8px;
+  line-height: 1.2;
 }
 
-.header-content p {
+.page-subtitle {
   font-size: 16px;
   color: #6b7280;
   margin: 0;
   max-width: 600px;
+  line-height: 1.5;
 }
 
 .header-actions {
   display: flex;
   gap: 12px;
   flex-shrink: 0;
+  align-items: center;
 }
 
-.action-btn {
+/* Analytics Content */
+.analytics-content {
+  background: transparent;
+  border-radius: 12px;
+}
+
+/* Export Modal */
+.export-modal-content {
+  padding: 24px 0;
+}
+
+.export-options {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.export-type-group,
+.export-format-group {
+  width: 100%;
+}
+
+.export-type-group :deep(.ant-radio-button-wrapper),
+.export-format-group :deep(.ant-radio-button-wrapper) {
+  height: auto;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  color: #374151;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-btn:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: #eff6ff;
-  border-color: #3b82f6;
-  color: #3b82f6;
-}
-
-.export-btn:hover {
-  background: #f0fdf4;
-  border-color: #16a34a;
-  color: #16a34a;
-}
-
-.settings-btn:hover {
-  background: #fef3c7;
-  border-color: #d97706;
-  color: #d97706;
-}
-
-.pi-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgb(0 0 0 / 50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
-  max-width: 500px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.modal-header h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-}
-
-.modal-close {
-  padding: 8px;
-  border: none;
-  background: none;
-  color: #6b7280;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.modal-close:hover {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.modal-body {
-  padding: 24px;
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 24px;
+  padding-top: 24px;
   border-top: 1px solid #e5e7eb;
 }
 
-/* Export Options */
-.export-options {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.option-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.option-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.option-buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.option-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  color: #6b7280;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.option-btn:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
-}
-
-.option-btn.active {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
-}
-
-.time-range-select {
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
-}
-
-/* Settings */
-.settings-options {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.setting-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.setting-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.setting-select {
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
-}
-
-.setting-toggle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.toggle-input {
-  display: none;
-}
-
-.toggle-label {
-  position: relative;
-  width: 48px;
-  height: 24px;
-  background: #d1d5db;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.toggle-slider {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.2s ease;
-}
-
-.toggle-input:checked + .toggle-label {
-  background: #3b82f6;
-}
-
-.toggle-input:checked + .toggle-label .toggle-slider {
-  transform: translateX(24px);
-}
-
-.toggle-text {
-  font-size: 14px;
-  color: #6b7280;
-}
-
-/* Buttons */
-.btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-}
-
-.btn-secondary {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.btn-secondary:hover {
-  background: #e5e7eb;
-}
-
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #2563eb;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* Responsive Design */
-@media (width <= 768px) {
-  .analytics-view {
+@media (max-width: 768px) {
+  .analytics-container {
     padding: 16px;
   }
-  
+
   .page-header {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
-  }
-  
-  .header-actions {
-    justify-content: space-between;
-  }
-  
-  .action-btn {
-    flex: 1;
-    justify-content: center;
-    padding: 10px 16px;
-  }
-  
-  .modal-content {
-    width: 95%;
-    margin: 20px;
-  }
-  
-  .modal-header,
-  .modal-body,
-  .modal-footer {
     padding: 16px;
   }
-  
-  .option-buttons {
+
+  .header-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .header-actions :deep(.ant-btn) {
+    width: 100%;
+  }
+
+  .export-type-group,
+  .export-format-group {
+    display: flex;
     flex-direction: column;
   }
-  
-  .option-btn {
-    justify-content: center;
+
+  .export-type-group :deep(.ant-radio-button-wrapper),
+  .export-format-group :deep(.ant-radio-button-wrapper) {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 24px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
   }
 }
 </style>
