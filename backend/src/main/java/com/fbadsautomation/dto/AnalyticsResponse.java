@@ -210,7 +210,7 @@ public class AnalyticsResponse {
         private String objective;
         private double budget;
         private double spent;
-        private double budgetUtilization;
+        private Double budgetUtilization;
         private int adCount;
         private int activeAdCount;
         private long impressions;
@@ -219,7 +219,7 @@ public class AnalyticsResponse {
         private double cpc;
         private double conversions;
         private double conversionRate;
-        private double roi;
+        private Double roi;
         private LocalDateTime createdDate;
         private LocalDateTime lastActive;
 
@@ -245,8 +245,8 @@ public class AnalyticsResponse {
         public double getSpent() { return spent; }
         public void setSpent(double spent) { this.spent = spent; }
 
-        public double getBudgetUtilization() { return budgetUtilization; }
-        public void setBudgetUtilization(double budgetUtilization) { this.budgetUtilization = budgetUtilization; }
+        public Double getBudgetUtilization() { return budgetUtilization; }
+        public void setBudgetUtilization(Double budgetUtilization) { this.budgetUtilization = budgetUtilization; }
 
         public int getAdCount() { return adCount; }
         public void setAdCount(int adCount) { this.adCount = adCount; }
@@ -272,8 +272,8 @@ public class AnalyticsResponse {
         public double getConversionRate() { return conversionRate; }
         public void setConversionRate(double conversionRate) { this.conversionRate = conversionRate; }
 
-        public double getRoi() { return roi; }
-        public void setRoi(double roi) { this.roi = roi; }
+        public Double getRoi() { return roi; }
+        public void setRoi(Double roi) { this.roi = roi; }
 
         public LocalDateTime getCreatedDate() { return createdDate; }
         public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
