@@ -36,8 +36,8 @@ public class AdGenerationRequest {
              message = "Invalid text provider. Must be openai, gemini, anthropic, huggingface, or hugging-face")
     private String textProvider;
 
-    @Pattern(regexp = "^(gemini|openai|huggingface|stable-diffusion|fal-ai|subnp|deapi|puter)$",
-             message = "Invalid image provider. Must be gemini, openai, huggingface, stable-diffusion, fal-ai, subnp, deapi, or puter")
+    @Pattern(regexp = "^(gemini|openai|huggingface|hugging-face|stable-diffusion|fal-ai|subnp|deapi|puter)$",
+             message = "Invalid image provider. Must be gemini, openai, huggingface, hugging-face, stable-diffusion, fal-ai, subnp, deapi, or puter")
     private String imageProvider;
 
     @NotNull(message = "Number of variations is required")
@@ -105,8 +105,8 @@ public class AdGenerationRequest {
         private String textProvider;
 
         // Image provider is now optional (nullable) - can be null if uploadedFileUrl is provided
-        @Pattern(regexp = "^(gemini|openai|huggingface|stable-diffusion|fal-ai|subnp|deapi|puter)$",
-                 message = "Invalid image provider. Must be gemini, openai, huggingface, stable-diffusion, fal-ai, subnp, deapi, or puter")
+        @Pattern(regexp = "^(gemini|openai|huggingface|hugging-face|stable-diffusion|fal-ai|subnp|deapi|puter)$",
+                 message = "Invalid image provider. Must be gemini, openai, huggingface, hugging-face, stable-diffusion, fal-ai, subnp, deapi, or puter")
         private String imageProvider;
 
         // NEW: Per-variation uploaded image URL
