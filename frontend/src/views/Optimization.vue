@@ -400,15 +400,65 @@ export default {
     const fetchHighPriorityRecommendations = async () => {
       try {
         highPriorityLoading.value = true
+        console.log('[FRONTEND] Starting fetch high priority recommendations')
         const response = await api.optimizationAPI.getHighPriorityRecommendations()
+        
+        // Debug: Log the actual response structure
+        console.log('[FRONTEND] Raw response from API:', JSON.stringify(response, null, 2))
+        
+        // Log response structure analysis
+        if (response) {
+          console.log('[FRONTEND] Response analysis - Type:', typeof response, 'Is Array:', Array.isArray(response))
+          if (typeof response === 'object') {
+            console.log('[FRONTEND] Response keys:', Object.keys(response))
+            if (response.data !== undefined) {
+              console.log('[FRONTEND] Response.data - Type:', typeof response.data, 'Value:', response.data)
+            }
+          }
+        } else {
+          console.log('[FRONTEND] Response is null or undefined')
+        }
+        
+        // Ensure we have an array to work with
+        let dataArray = []
+        if (Array.isArray(response)) {
+          dataArray = response
+          console.log('[FRONTEND] Using response directly as array, length:', dataArray.length)
+        } else if (response && typeof response === 'object' && response.data !== undefined) {
+          if (Array.isArray(response.data)) {
+            dataArray = response.data
+            console.log('[FRONTEND] Using response.data as array, length:', dataArray.length)
+          } else {
+            console.log('[FRONTEND] response.data is not an array, type:', typeof response.data)
+          }
+        } else {
+          console.log('[FRONTEND] Response is not an array or valid object with data property')
+        }
+        
         // Issue #4: Filter out null/undefined recommendations
-        highPriorityRecommendations.value = (response.data || []).filter(r => r != null && r.id != null)
+        const filteredArray = dataArray.filter(r => {
+          const isValid = r != null && r.id != null
+          if (!isValid) {
+            console.log('[FRONTEND] Filtering out invalid recommendation:', r)
+          }
+          return isValid
+        })
+        
+        console.log('[FRONTEND] Final filtered recommendations count:', filteredArray.length)
+        highPriorityRecommendations.value = filteredArray
+        
       } catch (error) {
-        console.error('Error fetching high priority recommendations:', error)
+        console.error('[FRONTEND] Error fetching high priority recommendations:', error)
+        console.error('[FRONTEND] Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        })
         // Issue #4: Ensure empty array on error
         highPriorityRecommendations.value = []
       } finally {
         highPriorityLoading.value = false
+        console.log('[FRONTEND] Finished fetch high priority recommendations')
       }
     }
     

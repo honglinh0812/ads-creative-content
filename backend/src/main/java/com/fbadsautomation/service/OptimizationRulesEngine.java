@@ -31,19 +31,49 @@ public class OptimizationRulesEngine {
      */
     public List<Recommendation> generateBudgetRecommendations(AnalyticsResponse analytics) {
         List<Recommendation> recommendations = new ArrayList<>();
+        log.debug("[RULES_ENGINE] Starting budget recommendations generation");
+        
         try {
+            // Null safety check
+            if (analytics == null) {
+                log.warn("[RULES_ENGINE] Analytics data is null, returning empty recommendations");
+                return recommendations;
+            }
+            
             List<AnalyticsResponse.CampaignAnalytics> campaigns = analytics.getCampaignAnalytics();
-            if (campaigns == null || campaigns.isEmpty()) return recommendations; // Find high and low performing campaigns
+            if (campaigns == null || campaigns.isEmpty()) {
+                log.info("[RULES_ENGINE] No campaign analytics data available, returning empty recommendations");
+                return recommendations;
+            }
+            
+            log.debug("[RULES_ENGINE] Processing {} campaigns for budget recommendations", campaigns.size());
+            
+            // Find high and low performing campaigns
             List<AnalyticsResponse.CampaignAnalytics> highPerformers = campaigns.stream()
+                    .filter(c -> c != null && c.getRoi() != null && c.getBudgetUtilization() != null)
                     .filter(c -> c.getRoi() > HIGH_ROI_THRESHOLD && c.getBudgetUtilization() > HIGH_BUDGET_UTILIZATION_THRESHOLD)
                     .sorted((c1, c2) -> Double.compare(c2.getRoi(), c1.getRoi()))
                     .collect(Collectors.toList());
-                    List<AnalyticsResponse.CampaignAnalytics> lowPerformers = campaigns.stream()
+                    
+            List<AnalyticsResponse.CampaignAnalytics> lowPerformers = campaigns.stream()
+                    .filter(c -> c != null && c.getRoi() != null && c.getBudgetUtilization() != null)
                     .filter(c -> c.getRoi() < LOW_ROI_THRESHOLD || c.getBudgetUtilization() < LOW_BUDGET_UTILIZATION_THRESHOLD)
                     .sorted((c1, c2) -> Double.compare(c1.getRoi(), c2.getRoi()))
-                    .collect(Collectors.toList()); // Generate recommendations for high performers
+                    .collect(Collectors.toList());
+            
+            log.debug("[RULES_ENGINE] Found {} high performers and {} low performers", highPerformers.size(), lowPerformers.size());
+            
+            // Generate recommendations for high performers
             for (AnalyticsResponse.CampaignAnalytics campaign : highPerformers.stream().limit(3).collect(Collectors.toList())) {
-                double suggestedIncrease = Math.min(campaign.getBudget() * 0.5, 1000.0); // Max 50% increase or $1000Recommendation recommendation = new Recommendation();
+                if (campaign == null) {
+                    log.warn("[RULES_ENGINE] Skipping null campaign in high performers list");
+                    continue;
+                }
+                
+                log.debug("[RULES_ENGINE] Processing high performer campaign: {} (ROI: {}, Utilization: {})", 
+                         campaign.getCampaignName(), campaign.getRoi(), campaign.getBudgetUtilization());
+                
+                double suggestedIncrease = Math.min(campaign.getBudget() * 0.5, 1000.0); // Max 50% increase or $1000
                 Recommendation recommendation = new Recommendation();
                 recommendation.setId(UUID.randomUUID().toString());
                 recommendation.setType(RecommendationType.BUDGET_REALLOCATION);
@@ -61,7 +91,9 @@ public class OptimizationRulesEngine {
                 recommendation.setTargetEntity(campaign.getCampaignId().toString());
                 recommendation.setTargetEntityName(campaign.getCampaignName());
                 recommendation.setCategory("Budget Optimization");
-                recommendation.setTags(Arrays.asList("budget", "scale", "high-roi")); // Set context
+                recommendation.setTags(Arrays.asList("budget", "scale", "high-roi"));
+                
+                // Set context
                 Map<String, Object> context = new HashMap<>();
                 context.put("currentBudget", campaign.getBudget());
                 context.put("currentROI", campaign.getRoi());
@@ -88,12 +120,23 @@ public class OptimizationRulesEngine {
                 recommendation.setExpiresAt(LocalDateTime.now().plusDays(7));
 
                 recommendations.add(recommendation);
+                log.debug("[RULES_ENGINE] Added budget increase recommendation for campaign: {}", campaign.getCampaignName());
             }
 
             // Generate recommendations for low performers
             for (AnalyticsResponse.CampaignAnalytics campaign : lowPerformers.stream().limit(2).collect(Collectors.toList())) {
+                if (campaign == null) {
+                    log.warn("[RULES_ENGINE] Skipping null campaign in low performers list");
+                    continue;
+                }
+                
+                log.debug("[RULES_ENGINE] Processing low performer campaign: {} (ROI: {}, Utilization: {})", 
+                         campaign.getCampaignName(), campaign.getRoi(), campaign.getBudgetUtilization());
+                
                 if (campaign.getRoi() < 0) {
                     // Suggest pausing negative ROI campaigns
+                    log.debug("[RULES_ENGINE] Campaign {} has negative ROI, suggesting pause", campaign.getCampaignName());
+                    
                     Recommendation recommendation = new Recommendation();
                     recommendation.setId(UUID.randomUUID().toString());
                     recommendation.setType(RecommendationType.CAMPAIGN_PAUSE);
@@ -134,8 +177,11 @@ public class OptimizationRulesEngine {
                     recommendation.setExpiresAt(LocalDateTime.now().plusDays(3));
 
                     recommendations.add(recommendation);
-                } else if (campaign.getBudgetUtilization() < LOW_BUDGET_UTILIZATION_THRESHOLD) {
+                    log.debug("[RULES_ENGINE] Added pause recommendation for campaign: {}", campaign.getCampaignName());
+                } else if (campaign.getBudgetUtilization() != null && campaign.getBudgetUtilization() < LOW_BUDGET_UTILIZATION_THRESHOLD) {
                     // Suggest reducing budget for underutilized campaigns
+                    log.debug("[RULES_ENGINE] Campaign {} has low budget utilization, suggesting reduction", campaign.getCampaignName());
+                    
                     double suggestedDecrease = campaign.getBudget() * 0.3; // 30% decrease
                     
                     Recommendation recommendation = new Recommendation();
@@ -179,13 +225,20 @@ public class OptimizationRulesEngine {
                     recommendation.setExpiresAt(LocalDateTime.now().plusDays(5));
 
                     recommendations.add(recommendation);
+                    log.debug("[RULES_ENGINE] Added budget reduction recommendation for campaign: {}", campaign.getCampaignName());
                 }
             }
 
         } catch (Exception e) {
-            log.error("Error generating budget recommendations: {}", e.getMessage(), e);
+            log.error("[RULES_ENGINE] ERROR generating budget recommendations: {}, stackTrace: {}", 
+                     e.getMessage(), e.getStackTrace()[0].toString(), e);
+            
+            // Log detailed error information
+            log.error("[RULES_ENGINE] Detailed error context - Error Type: {}, Error Message: {}", 
+                     e.getClass().getSimpleName(), e.getMessage());
         }
 
+        log.info("[RULES_ENGINE] Generated {} budget recommendations", recommendations.size());
         return recommendations;
     }
 

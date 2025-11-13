@@ -37,61 +37,123 @@ public class OptimizationService {
      */
     @Transactional(readOnly = true)
     public OptimizationResponse generateRecommendations(Long userId, String timeRange) {
+        log.info("[OPTIMIZATION_SERVICE] Starting recommendations generation for user ID: {}, timeRange: {}", userId, timeRange);
+        
         try {
-            log.info("Generating optimization recommendations for user ID: {} with time range: {}", userId, timeRange);
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+                    .orElseThrow(() -> {
+                        log.error("[OPTIMIZATION_SERVICE] User not found with ID: {}", userId);
+                        return new RuntimeException("User not found with ID: " + userId);
+                    });
+
+            log.debug("[OPTIMIZATION_SERVICE] User found: ID={}, Email={}", user.getId(), user.getEmail());
 
             // Get analytics data
+            log.info("[OPTIMIZATION_SERVICE] Fetching analytics data for user ID: {}", userId);
             AnalyticsResponse analytics = analyticsService.getAnalytics(userId, timeRange);
+            
+            // Log analytics data structure for debugging
+            if (analytics == null) {
+                log.warn("[OPTIMIZATION_SERVICE] Analytics data is null for user ID: {}", userId);
+            } else {
+                log.debug("[OPTIMIZATION_SERVICE] Analytics data structure - IsDemo: {}, Campaigns: {}, Ads: {}", 
+                         analytics.isDemoData(), 
+                         analytics.getCampaignAnalytics() != null ? analytics.getCampaignAnalytics().size() : "null",
+                         analytics.getAdAnalytics() != null ? analytics.getAdAnalytics().size() : "null");
+            }
+
             // Generate recommendations using rules engine
             List<Recommendation> allRecommendations = new ArrayList<>();
             
             // Budget optimization recommendations
+            log.info("[OPTIMIZATION_SERVICE] Generating budget recommendations for user ID: {}", userId);
             List<Recommendation> budgetRecommendations = rulesEngine.generateBudgetRecommendations(analytics);
-            allRecommendations.addAll(budgetRecommendations);
+            if (budgetRecommendations != null) {
+                allRecommendations.addAll(budgetRecommendations);
+                log.debug("[OPTIMIZATION_SERVICE] Added {} budget recommendations", budgetRecommendations.size());
+            } else {
+                log.warn("[OPTIMIZATION_SERVICE] Budget recommendations is null for user ID: {}", userId);
+            }
             
             // AI provider recommendations
+            log.info("[OPTIMIZATION_SERVICE] Generating AI provider recommendations for user ID: {}", userId);
             List<Recommendation> aiProviderRecommendations = rulesEngine.generateAIProviderRecommendations(analytics);
-            allRecommendations.addAll(aiProviderRecommendations);
+            if (aiProviderRecommendations != null) {
+                allRecommendations.addAll(aiProviderRecommendations);
+                log.debug("[OPTIMIZATION_SERVICE] Added {} AI provider recommendations", aiProviderRecommendations.size());
+            } else {
+                log.warn("[OPTIMIZATION_SERVICE] AI provider recommendations is null for user ID: {}", userId);
+            }
             
             // Campaign objective recommendations
+            log.info("[OPTIMIZATION_SERVICE] Generating campaign objective recommendations for user ID: {}", userId);
             List<Recommendation> objectiveRecommendations = rulesEngine.generateCampaignObjectiveRecommendations(analytics);
-            allRecommendations.addAll(objectiveRecommendations);
+            if (objectiveRecommendations != null) {
+                allRecommendations.addAll(objectiveRecommendations);
+                log.debug("[OPTIMIZATION_SERVICE] Added {} campaign objective recommendations", objectiveRecommendations.size());
+            } else {
+                log.warn("[OPTIMIZATION_SERVICE] Campaign objective recommendations is null for user ID: {}", userId);
+            }
             
             // Content type recommendations
+            log.info("[OPTIMIZATION_SERVICE] Generating content type recommendations for user ID: {}", userId);
             List<Recommendation> contentRecommendations = rulesEngine.generateContentTypeRecommendations(analytics);
-            allRecommendations.addAll(contentRecommendations);
+            if (contentRecommendations != null) {
+                allRecommendations.addAll(contentRecommendations);
+                log.debug("[OPTIMIZATION_SERVICE] Added {} content type recommendations", contentRecommendations.size());
+            } else {
+                log.warn("[OPTIMIZATION_SERVICE] Content type recommendations is null for user ID: {}", userId);
+            }
             
             // Ad scheduling recommendations
+            log.info("[OPTIMIZATION_SERVICE] Generating ad scheduling recommendations for user ID: {}", userId);
             List<Recommendation> schedulingRecommendations = generateAdSchedulingRecommendations(analytics);
-            allRecommendations.addAll(schedulingRecommendations);
+            if (schedulingRecommendations != null) {
+                allRecommendations.addAll(schedulingRecommendations);
+                log.debug("[OPTIMIZATION_SERVICE] Added {} ad scheduling recommendations", schedulingRecommendations.size());
+            } else {
+                log.warn("[OPTIMIZATION_SERVICE] Ad scheduling recommendations is null for user ID: {}", userId);
+            }
             
             // Creative refresh recommendations
+            log.info("[OPTIMIZATION_SERVICE] Generating creative refresh recommendations for user ID: {}", userId);
             List<Recommendation> creativeRecommendations = generateCreativeRefreshRecommendations(analytics);
-            allRecommendations.addAll(creativeRecommendations);
+            if (creativeRecommendations != null) {
+                allRecommendations.addAll(creativeRecommendations);
+                log.debug("[OPTIMIZATION_SERVICE] Added {} creative refresh recommendations", creativeRecommendations.size());
+            } else {
+                log.warn("[OPTIMIZATION_SERVICE] Creative refresh recommendations is null for user ID: {}", userId);
+            }
 
             // Sort recommendations by priority and expected impact
+            log.info("[OPTIMIZATION_SERVICE] Sorting {} total recommendations for user ID: {}", allRecommendations.size(), userId);
             allRecommendations.sort((r1, r2) -> {
                 // First sort by priority
-                int priorityComparison = comparePriority(r1.getPriority(), r2.getPriority());
+                int priorityComparison = comparePriority(r1 != null ? r1.getPriority() : null, r2 != null ? r2.getPriority() : null);
                 if (priorityComparison != 0) return priorityComparison;
                 
                 // Then by expected impact
-                double impact1 = r1.getExpectedImpact() != null ? r1.getExpectedImpact().getExpectedChange() : 0.0;
-                double impact2 = r2.getExpectedImpact() != null ? r2.getExpectedImpact().getExpectedChange() : 0.0;
+                double impact1 = (r1 != null && r1.getExpectedImpact() != null) ? r1.getExpectedImpact().getExpectedChange() : 0.0;
+                double impact2 = (r2 != null && r2.getExpectedImpact() != null) ? r2.getExpectedImpact().getExpectedChange() : 0.0;
                 return Double.compare(impact2, impact1); // Descending order
             });
 
             // Generate summary
+            log.info("[OPTIMIZATION_SERVICE] Generating optimization summary for {} recommendations, user ID: {}", allRecommendations.size(), userId);
             OptimizationSummary summary = generateOptimizationSummary(allRecommendations);
             OptimizationResponse response = new OptimizationResponse(allRecommendations, summary);
             
-            log.info("Generated {} optimization recommendations for user ID: {}", allRecommendations.size(), userId);
+            log.info("[OPTIMIZATION_SERVICE] Successfully generated {} optimization recommendations for user ID: {}", allRecommendations.size(), userId);
             return response;
 
         } catch (Exception e) {
-            log.error("Error generating optimization recommendations for user ID {}: {}", userId, e.getMessage(), e);
+            log.error("[OPTIMIZATION_SERVICE] ERROR generating optimization recommendations for user ID: {}, timeRange: {}, error: {}, stackTrace: {}", 
+                     userId, timeRange, e.getMessage(), e.getStackTrace()[0].toString(), e);
+            
+            // Log detailed error information
+            log.error("[OPTIMIZATION_SERVICE] Detailed error context - User ID: {}, TimeRange: {}, Error Type: {}, Error Message: {}", 
+                     userId, timeRange, e.getClass().getSimpleName(), e.getMessage());
+            
             throw new RuntimeException("Failed to generate optimization recommendations: " + e.getMessage(), e);
         }
     }
@@ -316,13 +378,42 @@ public class OptimizationService {
      * Get high priority recommendations only
      */
     public List<Recommendation> getHighPriorityRecommendations(Long userId, String timeRange) {
+        log.info("[OPTIMIZATION_SERVICE] Starting high priority recommendations fetch for user ID: {}, timeRange: {}", userId, timeRange);
+        
         try {
             OptimizationResponse response = generateRecommendations(userId, timeRange);
-            return response.getRecommendations().stream()
-                    .filter(r -> r.getPriority() == Priority.HIGH)
+            
+            if (response == null) {
+                log.warn("[OPTIMIZATION_SERVICE] OptimizationResponse is null for user ID: {}", userId);
+                return new ArrayList<>();
+            }
+            
+            List<Recommendation> allRecommendations = response.getRecommendations();
+            if (allRecommendations == null) {
+                log.warn("[OPTIMIZATION_SERVICE] All recommendations list is null for user ID: {}", userId);
+                return new ArrayList<>();
+            }
+            
+            log.debug("[OPTIMIZATION_SERVICE] Filtering high priority recommendations from {} total recommendations for user ID: {}", 
+                     allRecommendations.size(), userId);
+            
+            List<Recommendation> highPriorityRecommendations = allRecommendations.stream()
+                    .filter(r -> r != null && r.getPriority() == Priority.HIGH)
                     .collect(Collectors.toList());
+            
+            log.info("[OPTIMIZATION_SERVICE] Successfully filtered {} high priority recommendations for user ID: {}", 
+                    highPriorityRecommendations.size(), userId);
+            
+            return highPriorityRecommendations;
+            
         } catch (Exception e) {
-            log.error("Error getting high priority recommendations for user ID {}: {}", userId, e.getMessage(), e);
+            log.error("[OPTIMIZATION_SERVICE] ERROR getting high priority recommendations for user ID: {}, timeRange: {}, error: {}, stackTrace: {}", 
+                     userId, timeRange, e.getMessage(), e.getStackTrace()[0].toString(), e);
+            
+            // Log detailed error information
+            log.error("[OPTIMIZATION_SERVICE] Detailed error context - User ID: {}, TimeRange: {}, Error Type: {}, Error Message: {}", 
+                     userId, timeRange, e.getClass().getSimpleName(), e.getMessage());
+            
             return new ArrayList<>();
         }
     }

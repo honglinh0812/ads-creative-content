@@ -9,12 +9,21 @@ import api from './api'
  * @returns {*} Unwrapped data (handles both array and object)
  */
 const unwrapApiResponse = (response) => {
+  console.log('[OPTIMIZATION_API] Unwrapping response:', response)
+  
   // If response.data has a 'data' property, it's an ApiResponse wrapper
-  if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-    return response.data.data
+  if (response && response.data && typeof response.data === 'object' && 'data' in response.data) {
+    console.log('[OPTIMIZATION_API] Found ApiResponse wrapper, extracting data')
+    const unwrappedData = response.data.data || []
+    console.log('[OPTIMIZATION_API] Unwrapped data type:', typeof unwrappedData, 'Is Array:', Array.isArray(unwrappedData))
+    return unwrappedData
   }
+  
   // Otherwise, return as-is (backward compatibility)
-  return response.data
+  console.log('[OPTIMIZATION_API] No wrapper found, returning data as-is')
+  const fallbackData = response && response.data !== undefined ? response.data : []
+  console.log('[OPTIMIZATION_API] Fallback data type:', typeof fallbackData, 'Is Array:', Array.isArray(fallbackData))
+  return fallbackData
 }
 
 /**

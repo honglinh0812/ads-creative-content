@@ -44,33 +44,72 @@ public class AnalyticsService {
      */
     @Transactional(readOnly = true)
     public AnalyticsResponse getAnalytics(Long userId, String timeRange) {
-        try {
-            log.info("Generating analytics for user ID: {} with time range: {}", userId, timeRange);
+        log.info("[ANALYTICS_SERVICE] Starting analytics generation for user ID: {}, timeRange: {}", userId, timeRange);
 
+        try {
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+                    .orElseThrow(() -> {
+                        log.error("[ANALYTICS_SERVICE] User not found with ID: {}", userId);
+                        return new RuntimeException("User not found with ID: " + userId);
+                    });
+
+            log.debug("[ANALYTICS_SERVICE] User found: ID={}, Email={}", user.getId(), user.getEmail());
 
             LocalDateTime startDate = calculateStartDate(timeRange);
             LocalDateTime endDate = LocalDateTime.now();
+            
+            log.debug("[ANALYTICS_SERVICE] Calculated date range: {} to {}", startDate, endDate);
 
             // Check if user has any real data
-            long campaignCount = campaignRepository.countByUser(user);
-            long adCount = adRepository.countByUser(user);
-
-            if (campaignCount == 0 && adCount == 0) {
-                log.info("User {} has no campaigns/ads, returning demo analytics", userId);
+            long campaignCount = 0;
+            long adCount = 0;
+            
+            try {
+                log.debug("[ANALYTICS_SERVICE] Counting campaigns and ads for user ID: {}", userId);
+                campaignCount = campaignRepository.countByUser(user);
+                adCount = adRepository.countByUser(user);
+                log.debug("[ANALYTICS_SERVICE] User data counts - Campaigns: {}, Ads: {}", campaignCount, adCount);
+            } catch (Exception e) {
+                log.warn("[ANALYTICS_SERVICE] Error counting campaigns/ads for user {}, returning demo data: {}", userId, e.getMessage());
+                log.error("[ANALYTICS_SERVICE] Database error details - Error Type: {}, Error Message: {}", 
+                         e.getClass().getSimpleName(), e.getMessage());
+                // If we can't count due to database issues, return demo data
                 AnalyticsResponse demoResponse = generateDemoAnalytics(user, timeRange, startDate, endDate);
                 demoResponse.setIsDemoData(true);
+                log.info("[ANALYTICS_SERVICE] Returning demo data due to database error for user ID: {}", userId);
+                return demoResponse;
+            }
+
+            if (campaignCount == 0 && adCount == 0) {
+                log.info("[ANALYTICS_SERVICE] User {} has no campaigns/ads, returning demo analytics", userId);
+                AnalyticsResponse demoResponse = generateDemoAnalytics(user, timeRange, startDate, endDate);
+                demoResponse.setIsDemoData(true);
+                log.debug("[ANALYTICS_SERVICE] Generated demo analytics for user ID: {}", userId);
                 return demoResponse;
             }
 
             // Generate all analytics components with real data
+            log.info("[ANALYTICS_SERVICE] Generating real analytics data for user ID: {}", userId);
+            
+            log.debug("[ANALYTICS_SERVICE] Generating KPI metrics for user ID: {}", userId);
             KPIMetrics kpiMetrics = generateKPIMetrics(user, startDate, endDate);
+            
+            log.debug("[ANALYTICS_SERVICE] Generating performance trends for user ID: {}", userId);
             List<TimeSeriesData> performanceTrends = generatePerformanceTrends(user, startDate, endDate, timeRange);
+            
+            log.debug("[ANALYTICS_SERVICE] Generating campaign analytics for user ID: {}", userId);
             List<CampaignAnalytics> campaignAnalytics = generateCampaignAnalytics(user, startDate, endDate);
+            
+            log.debug("[ANALYTICS_SERVICE] Generating ad analytics for user ID: {}", userId);
             List<AdAnalytics> adAnalytics = generateAdAnalytics(user, startDate, endDate);
+            
+            log.debug("[ANALYTICS_SERVICE] Generating AI provider analytics for user ID: {}", userId);
             AIProviderAnalytics aiProviderAnalytics = generateAIProviderAnalytics(user, startDate, endDate);
+            
+            log.debug("[ANALYTICS_SERVICE] Generating budget analytics for user ID: {}", userId);
             BudgetAnalytics budgetAnalytics = generateBudgetAnalytics(user, startDate, endDate);
+            
+            log.debug("[ANALYTICS_SERVICE] Generating content analytics for user ID: {}", userId);
             ContentAnalytics contentAnalytics = generateContentAnalytics(user, startDate, endDate);
 
             AnalyticsResponse response = new AnalyticsResponse(
@@ -79,12 +118,37 @@ public class AnalyticsService {
             );
             response.setIsDemoData(false);
 
-            log.info("Analytics generated successfully for user ID: {}", userId);
+            log.info("[ANALYTICS_SERVICE] Successfully generated analytics for user ID: {} with {} campaigns and {} ads", 
+                    userId, campaignCount, adCount);
             return response;
 
         } catch (Exception e) {
-            log.error("Error generating analytics for user ID {}: {}", userId, e.getMessage(), e);
-            throw new RuntimeException("Failed to generate analytics: " + e.getMessage(), e);
+            log.error("[ANALYTICS_SERVICE] ERROR generating analytics for user ID: {}, timeRange: {}, error: {}, stackTrace: {}", 
+                     userId, timeRange, e.getMessage(), e.getStackTrace()[0].toString(), e);
+            
+            // Log detailed error information
+            log.error("[ANALYTICS_SERVICE] Detailed error context - User ID: {}, TimeRange: {}, Error Type: {}, Error Message: {}", 
+                     userId, timeRange, e.getClass().getSimpleName(), e.getMessage());
+            
+            try {
+                // Try to return demo data as fallback
+                log.info("[ANALYTICS_SERVICE] Returning demo data as fallback for user ID: {}", userId);
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> {
+                            log.error("[ANALYTICS_SERVICE] User not found during fallback for ID: {}", userId);
+                            return new RuntimeException("User not found with ID: " + userId);
+                        });
+                LocalDateTime startDate = calculateStartDate(timeRange);
+                LocalDateTime endDate = LocalDateTime.now();
+                AnalyticsResponse demoResponse = generateDemoAnalytics(user, timeRange, startDate, endDate);
+                demoResponse.setIsDemoData(true);
+                log.info("[ANALYTICS_SERVICE] Successfully returned demo data as fallback for user ID: {}", userId);
+                return demoResponse;
+            } catch (Exception fallbackException) {
+                log.error("[ANALYTICS_SERVICE] ERROR generating fallback demo analytics for user ID: {}, error: {}, stackTrace: {}", 
+                         userId, fallbackException.getMessage(), fallbackException.getStackTrace()[0].toString(), fallbackException);
+                throw new RuntimeException("Failed to generate analytics: " + e.getMessage(), e);
+            }
         }
     }
 
