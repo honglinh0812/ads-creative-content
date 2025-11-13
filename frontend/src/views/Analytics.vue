@@ -96,7 +96,7 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import {
   DownloadOutlined,
