@@ -19,11 +19,16 @@
         :ads="ads"
         :campaigns="campaigns"
         :loading="loading"
+        :total-items="totalAds"
+        :current-page="page + 1"
+        :page-size="size"
         @view-details="showAdDetails"
         @edit-ad="showEditAdModal"
         @delete-ad="confirmDeleteAd"
         @duplicate-ad="duplicateAd"
         @export-ad="exportAdToFacebook"
+        @page-change="onPageChange"
+        @page-size-change="onPageSizeChange"
       />
 
           <!-- Error State -->

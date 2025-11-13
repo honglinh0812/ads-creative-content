@@ -332,9 +332,9 @@
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="pagination-section">
       <a-pagination
-        v-model:current="currentPage"
-        v-model:page-size="pageSize"
-        :total="filteredCampaigns.length"
+        :current="currentPage"
+        :page-size="pageSize"
+        :total="totalCampaigns"
         :page-size-options="['10', '20', '50', '100']"
         show-size-changer
         show-quick-jumper
@@ -404,11 +404,23 @@ export default {
     loading: {
       type: Boolean,
       default: false
+    },
+    totalItems: {
+      type: Number,
+      default: 0
+    },
+    currentPage: {
+      type: Number,
+      default: 1
+    },
+    pageSize: {
+      type: Number,
+      default: 20
     }
   },
-  emits: ['view-details', 'edit-campaign', 'delete-campaign', 'view-ads'],
+  emits: ['view-details', 'edit-campaign', 'delete-campaign', 'view-ads', 'page-change', 'page-size-change'],
 
-  setup(props) {
+  setup(props, { emit }) {
     const { t } = useI18n()
     // Reactive data
     const searchQuery = ref('')
@@ -416,8 +428,6 @@ export default {
     const objectiveFilter = ref('')
     const dateRange = ref([])
     const viewMode = ref('table')
-    const currentPage = ref(1)
-    const pageSize = ref(20)
     const sortField = ref('createdDate')
     const sortOrder = ref('desc')
     
@@ -481,12 +491,12 @@ export default {
     ])
     
     // Computed properties
-    const totalCampaigns = computed(() => props.campaigns.length)
-    
+    const totalCampaigns = computed(() => props.totalItems || props.campaigns.length)
+
     const filteredCampaigns = computed(() => {
       let filtered = [...props.campaigns]
-      
-      // Search filter
+
+      // Search filter (frontend only for displayed page)
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase()
         filtered = filtered.filter(campaign =>
@@ -494,18 +504,18 @@ export default {
           campaign.id?.toString().includes(query)
         )
       }
-      
-      // Status filter
+
+      // Status filter (frontend only for displayed page)
       if (statusFilter.value) {
         filtered = filtered.filter(campaign => campaign.status === statusFilter.value)
       }
-      
-      // Objective filter
+
+      // Objective filter (frontend only for displayed page)
       if (objectiveFilter.value) {
         filtered = filtered.filter(campaign => campaign.objective === objectiveFilter.value)
       }
-      
-      // Date range filter
+
+      // Date range filter (frontend only for displayed page)
       if (dateRange.value && dateRange.value.length === 2) {
         const [startDate, endDate] = dateRange.value
         filtered = filtered.filter(campaign => {
@@ -513,33 +523,32 @@ export default {
           return campaignDate.isAfter(startDate) && campaignDate.isBefore(endDate.add(1, 'day'))
         })
       }
-      
-      // Sorting
+
+      // Sorting (frontend only for displayed page)
       filtered.sort((a, b) => {
         let aValue = a[sortField.value]
         let bValue = b[sortField.value]
-        
+
         if (sortField.value === 'createdDate') {
           aValue = new Date(aValue)
           bValue = new Date(bValue)
         }
-        
+
         if (sortOrder.value === 'asc') {
           return aValue > bValue ? 1 : -1
         } else {
           return aValue < bValue ? 1 : -1
         }
       })
-      
+
       return filtered
     })
-    
-    const totalPages = computed(() => Math.ceil(filteredCampaigns.value.length / pageSize.value))
-    
+
+    const totalPages = computed(() => Math.ceil(totalCampaigns.value / props.pageSize))
+
     const paginatedCampaigns = computed(() => {
-      const start = (currentPage.value - 1) * pageSize.value
-      const end = start + pageSize.value
-      return filteredCampaigns.value.slice(start, end)
+      // When using server-side pagination, just return the filtered campaigns as they are already paginated
+      return filteredCampaigns.value
     })
     
     const hasActiveFilters = computed(() => {
@@ -580,13 +589,11 @@ export default {
     }
     
     const handlePageChange = (page, size) => {
-      currentPage.value = page
-      pageSize.value = size
+      emit('page-change', page, size)
     }
-    
-    const handlePageSizeChange = (current, size) => {
-      currentPage.value = 1
-      pageSize.value = size
+
+    const handlePageSizeChange = (_current, size) => {
+      emit('page-size-change', 1, size)
     }
     
     // Utility functions
@@ -675,19 +682,12 @@ export default {
       return dayjsDate.fromNow()
     }
     
-    // Watchers
-    watch([searchQuery, statusFilter, objectiveFilter, dateRange], () => {
-      currentPage.value = 1
-    })
-    
     return {
       searchQuery,
       statusFilter,
       objectiveFilter,
       dateRange,
       viewMode,
-      currentPage,
-      pageSize,
       sortField,
       sortOrder,
       columns,

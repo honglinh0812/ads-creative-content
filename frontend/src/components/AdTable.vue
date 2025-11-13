@@ -395,9 +395,9 @@
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="pagination-section">
       <a-pagination
-        v-model:current="currentPage"
-        v-model:page-size="pageSize"
-        :total="filteredAds.length"
+        :current="currentPage"
+        :page-size="pageSize"
+        :total="totalAds"
         :page-size-options="['12', '24', '48', '96']"
         show-size-changer
         show-quick-jumper
@@ -461,9 +461,21 @@ export default {
     loading: {
       type: Boolean,
       default: false
+    },
+    totalItems: {
+      type: Number,
+      default: 0
+    },
+    currentPage: {
+      type: Number,
+      default: 1
+    },
+    pageSize: {
+      type: Number,
+      default: 24
     }
   },
-  emits: ['view-details', 'edit-ad', 'delete-ad', 'duplicate-ad', 'export-ad'],
+  emits: ['view-details', 'edit-ad', 'delete-ad', 'duplicate-ad', 'export-ad', 'page-change', 'page-size-change'],
 
   setup(props, { emit }) {
     const { t, locale } = useI18n()
@@ -474,8 +486,6 @@ export default {
     const adTypeFilter = ref('')
     const campaignFilter = ref('')
     const viewMode = ref('table')
-    const currentPage = ref(1)
-    const pageSize = ref(24)
     const sortField = ref('createdDate')
     const sortOrder = ref('desc')
     const selectedRowKeys = ref([])
@@ -543,12 +553,12 @@ export default {
     ])
     
     // Computed properties
-    const totalAds = computed(() => props.ads.length)
-    
+    const totalAds = computed(() => props.totalItems || props.ads.length)
+
     const filteredAds = computed(() => {
       let filtered = [...props.ads]
-      
-      // Search filter
+
+      // Search filter (frontend only for displayed page)
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase()
         filtered = filtered.filter(ad =>
@@ -558,48 +568,47 @@ export default {
           ad.id?.toString().includes(query)
         )
       }
-      
-      // Status filter
+
+      // Status filter (frontend only for displayed page)
       if (statusFilter.value) {
         filtered = filtered.filter(ad => ad.status === statusFilter.value)
       }
-      
-      // Ad type filter
+
+      // Ad type filter (frontend only for displayed page)
       if (adTypeFilter.value) {
         filtered = filtered.filter(ad => ad.adType === adTypeFilter.value)
       }
-      
-      // Campaign filter
+
+      // Campaign filter (frontend only for displayed page)
       if (campaignFilter.value) {
         filtered = filtered.filter(ad => ad.campaignId?.toString() === campaignFilter.value.toString())
       }
-      
-      // Sorting
+
+      // Sorting (frontend only for displayed page)
       filtered.sort((a, b) => {
         let aValue = a[sortField.value]
         let bValue = b[sortField.value]
-        
+
         if (sortField.value === 'createdDate') {
           aValue = new Date(aValue)
           bValue = new Date(bValue)
         }
-        
+
         if (sortOrder.value === 'asc') {
           return aValue > bValue ? 1 : -1
         } else {
           return aValue < bValue ? 1 : -1
         }
       })
-      
+
       return filtered
     })
-    
-    const totalPages = computed(() => Math.ceil(filteredAds.value.length / pageSize.value))
-    
+
+    const totalPages = computed(() => Math.ceil(totalAds.value / props.pageSize))
+
     const paginatedAds = computed(() => {
-      const start = (currentPage.value - 1) * pageSize.value
-      const end = start + pageSize.value
-      return filteredAds.value.slice(start, end)
+      // When using server-side pagination, just return the filtered ads as they are already paginated
+      return filteredAds.value
     })
     
     const hasActiveFilters = computed(() => {
@@ -635,13 +644,11 @@ export default {
     }
     
     const handlePageChange = (page, size) => {
-      currentPage.value = page
-      pageSize.value = size
+      emit('page-change', page, size)
     }
-    
+
     const handlePageSizeChange = (current, size) => {
-      currentPage.value = 1
-      pageSize.value = size
+      emit('page-size-change', current, size)
     }
     
     // Utility functions
@@ -713,19 +720,12 @@ export default {
       emit('export-ad', selectedRowKeys.value)
     }
 
-    // Watchers
-    watch([searchQuery, statusFilter, adTypeFilter, campaignFilter], () => {
-      currentPage.value = 1
-    })
-
     return {
       searchQuery,
       statusFilter,
       adTypeFilter,
       campaignFilter,
       viewMode,
-      currentPage,
-      pageSize,
       sortField,
       sortOrder,
       selectedRowKeys,

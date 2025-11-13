@@ -1,6 +1,23 @@
 import api from './api'
 
 /**
+ * Helper function to unwrap ApiResponse wrapper from backend
+ * Backend returns: { success: true, data: <actual-data>, message: "..." }
+ * This extracts the actual data for frontend consumption
+ *
+ * @param {Object} response - Axios response object
+ * @returns {*} Unwrapped data (handles both array and object)
+ */
+const unwrapApiResponse = (response) => {
+  // If response.data has a 'data' property, it's an ApiResponse wrapper
+  if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+    return response.data.data
+  }
+  // Otherwise, return as-is (backward compatibility)
+  return response.data
+}
+
+/**
  * Optimization API service for automated recommendations
  */
 export const optimizationAPI = {
@@ -14,7 +31,7 @@ export const optimizationAPI = {
       const response = await api.get('/optimization/recommendations', {
         params: { timeRange }
       })
-      return response.data
+      return unwrapApiResponse(response)
     } catch (error) {
       console.error('Error fetching optimization recommendations:', error)
       throw error
@@ -32,7 +49,7 @@ export const optimizationAPI = {
       const response = await api.get(`/optimization/recommendations/type/${type}`, {
         params: { timeRange }
       })
-      return response.data
+      return unwrapApiResponse(response)
     } catch (error) {
       console.error('Error fetching recommendations by type:', error)
       throw error
@@ -42,14 +59,14 @@ export const optimizationAPI = {
   /**
    * Get high priority recommendations only
    * @param {string} timeRange - Time range for analysis
-   * @returns {Promise} High priority recommendations
+   * @returns {Promise} High priority recommendations (unwrapped array)
    */
   async getHighPriorityRecommendations(timeRange = '30d') {
     try {
       const response = await api.get('/optimization/recommendations/priority/high', {
         params: { timeRange }
       })
-      return response.data
+      return unwrapApiResponse(response)
     } catch (error) {
       console.error('Error fetching high priority recommendations:', error)
       throw error
@@ -65,7 +82,7 @@ export const optimizationAPI = {
   async acceptRecommendation(recommendationId, parameters = {}) {
     try {
       const response = await api.post(`/optimization/recommendations/${recommendationId}/accept`, parameters)
-      return response.data
+      return unwrapApiResponse(response)
     } catch (error) {
       console.error('Error accepting recommendation:', error)
       throw error
@@ -83,7 +100,7 @@ export const optimizationAPI = {
       const response = await api.post(`/optimization/recommendations/${recommendationId}/dismiss`, {
         reason: reason
       })
-      return response.data
+      return unwrapApiResponse(response)
     } catch (error) {
       console.error('Error dismissing recommendation:', error)
       throw error
@@ -99,7 +116,7 @@ export const optimizationAPI = {
   async scheduleRecommendation(recommendationId, scheduleData) {
     try {
       const response = await api.post(`/optimization/recommendations/${recommendationId}/schedule`, scheduleData)
-      return response.data
+      return unwrapApiResponse(response)
     } catch (error) {
       console.error('Error scheduling recommendation:', error)
       throw error
@@ -114,7 +131,7 @@ export const optimizationAPI = {
   async getRecommendationStatus(recommendationId) {
     try {
       const response = await api.get(`/optimization/recommendations/${recommendationId}/status`)
-      return response.data
+      return unwrapApiResponse(response)
     } catch (error) {
       console.error('Error fetching recommendation status:', error)
       throw error
@@ -131,7 +148,7 @@ export const optimizationAPI = {
       const response = await api.get('/optimization/summary', {
         params: { timeRange }
       })
-      return response.data
+      return unwrapApiResponse(response)
     } catch (error) {
       console.error('Error fetching optimization summary:', error)
       throw error
@@ -145,7 +162,7 @@ export const optimizationAPI = {
   async getRecommendationTypes() {
     try {
       const response = await api.get('/optimization/types')
-      return response.data
+      return unwrapApiResponse(response)
     } catch (error) {
       console.error('Error fetching recommendation types:', error)
       throw error

@@ -97,19 +97,15 @@ public class FalAiProvider implements AIProvider {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Key " + apiKey);
 
-        // Enhanced prompt for better commercial image quality
-        String enhancedPrompt = "Professional commercial advertisement image for: " + prompt + 
-            ". High quality, studio lighting, product photography, marketing style, clean background, " +
-            "vibrant colors, professional composition, 4k resolution, commercial photography";
-
+        // Use standardized prompt (already enhanced by ImagePromptService)
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("prompt", enhancedPrompt);
+        requestBody.put("prompt", prompt);
         requestBody.put("image_size", "square_hd");  // Fal.ai expects predefined values: square_hd, square, portrait_4_3, portrait_16_9, landscape_4_3, landscape_16_9
         requestBody.put("num_inference_steps", 50);
         requestBody.put("guidance_scale", 7.5);
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-        log.debug("Calling Fal.ai API at: {} with prompt: {}", apiUrl, enhancedPrompt);
+        log.debug("Calling Fal.ai API at: {} with standardized prompt: {}", apiUrl, prompt);
 
         try {
             Map<String, Object> response = restTemplate.postForObject(apiUrl, request, Map.class);

@@ -139,11 +139,12 @@ public class HuggingFaceProvider implements AIProvider {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.IMAGE_PNG));
         headers.set("Authorization", "Bearer " + apiKey);
+        // Use standardized prompt (already enhanced by ImagePromptService)
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("inputs", prompt);
         requestBody.put("options", Map.of("wait_for_model", true));
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-        log.debug("Calling Hugging Face Image API at: {} with prompt: {}", imageApiUrl, prompt);
+        log.debug("Calling Hugging Face Image API at: {} with standardized prompt: {}", imageApiUrl, prompt);
         try {
             ResponseEntity<byte[]> responseEntity = restTemplate.exchange(imageApiUrl, HttpMethod.POST, request, byte[].class);
             if (responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {

@@ -3,6 +3,7 @@ package com.fbadsautomation.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fbadsautomation.dto.CompetitorAdDTO;
+import com.fbadsautomation.exception.ExternalServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -146,6 +147,26 @@ public class SerpApiService {
         try {
             JsonNode root = objectMapper.readTree(responseBody);
             List<CompetitorAdDTO> ads = new ArrayList<>();
+
+            // Phase 1.1 & 4: Check for error field first and provide specific error messages
+            if (root.has("error")) {
+                String errorMsg = root.get("error").asText();
+                String errorDetails = root.has("error_message") ? root.get("error_message").asText() : errorMsg;
+
+                log.error("❌ SerpAPI returned error: {}", errorMsg);
+                log.error("Error details: {}", errorDetails);
+                log.debug("SerpAPI error response: {}", responseBody);
+
+                // Phase 4: Map specific errors to user-friendly messages and throw exception
+                String userMessage = mapSerpApiError(errorMsg, errorDetails);
+                log.warn("⚠️ User-facing error: {}", userMessage);
+
+                // Determine if error is retryable
+                boolean retryable = isRetryableError(errorMsg, errorDetails);
+
+                // Throw exception with user-friendly message for controller to handle
+                throw new ExternalServiceException("SerpAPI", userMessage, 400, retryable);
+            }
 
             // SerpAPI returns ads in 'ads_results' field for google_ads_transparency_center engine
             if (!root.has("ads_results")) {
@@ -354,5 +375,89 @@ public class SerpApiService {
         builder.metadata(metadata);
 
         return builder.build();
+    }
+
+    /**
+     * Phase 4: Determine if a SerpAPI error is retryable
+     */
+    private boolean isRetryableError(String error, String details) {
+        if (error == null) return false;
+
+        String errorLower = error.toLowerCase();
+        String detailsLower = details != null ? details.toLowerCase() : "";
+
+        // Non-retryable: API key errors, quota exceeded, invalid parameters, engine errors
+        if (errorLower.contains("api key") || errorLower.contains("invalid key") ||
+            errorLower.contains("quota") || errorLower.contains("parameter") ||
+            errorLower.contains("engine") || errorLower.contains("location")) {
+            return false;
+        }
+
+        // Retryable: Rate limiting, temporary errors, search errors
+        if (errorLower.contains("rate") || errorLower.contains("too many") ||
+            errorLower.contains("timeout") || errorLower.contains("unavailable")) {
+            return true;
+        }
+
+        // Default: assume retryable for unknown errors
+        return true;
+    }
+
+    /**
+     * Phase 4: Map SerpAPI error messages to user-friendly messages
+     *
+     * Common SerpAPI errors:
+     * - "Invalid API key"
+     * - "You have reached your monthly quota"
+     * - "Invalid parameters"
+     * - "Engine not found"
+     * - "Search error"
+     */
+    private String mapSerpApiError(String error, String details) {
+        if (error == null) {
+            return "Google Ads search failed due to an unknown error. Please try again later.";
+        }
+
+        String errorLower = error.toLowerCase();
+        String detailsLower = details != null ? details.toLowerCase() : "";
+
+        // API Key errors
+        if (errorLower.contains("api key") || errorLower.contains("invalid key") || errorLower.contains("unauthorized")) {
+            return "Google Ads search failed: Invalid or missing SerpAPI API key. Please check your API configuration.";
+        }
+
+        // Quota errors
+        if (errorLower.contains("quota") || errorLower.contains("limit") || detailsLower.contains("searches remaining")) {
+            return "Google Ads search failed: SerpAPI monthly quota exceeded. Please upgrade your plan or wait until next month.";
+        }
+
+        // Parameter errors
+        if (errorLower.contains("parameter") || errorLower.contains("invalid") && detailsLower.contains("parameter")) {
+            return "Google Ads search failed: Invalid search parameters. Please check your region and brand name.";
+        }
+
+        // Engine errors
+        if (errorLower.contains("engine") || errorLower.contains("not found")) {
+            return "Google Ads search failed: SerpAPI engine unavailable. The google_ads_transparency_center engine may not be supported in your plan.";
+        }
+
+        // Location/Region errors
+        if (errorLower.contains("location") || detailsLower.contains("location")) {
+            return "Google Ads search failed: Unsupported region. Please try a different region (US, UK, CA, AU, etc.).";
+        }
+
+        // Rate limiting
+        if (errorLower.contains("rate") || errorLower.contains("too many")) {
+            return "Google Ads search failed: Too many requests. Please wait a few minutes and try again.";
+        }
+
+        // Generic search error
+        if (errorLower.contains("search error") || errorLower.contains("failed")) {
+            return String.format("Google Ads search failed: %s. Please try again or contact support.", details);
+        }
+
+        // Default fallback
+        return String.format("Google Ads search encountered an error: %s. Please try again or contact support.",
+            details != null && !details.isEmpty() ? details : error);
     }
 }

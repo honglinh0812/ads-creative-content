@@ -51,6 +51,9 @@ public class AIContentServiceImpl {
     @Autowired(required = false)
     private com.fbadsautomation.service.ChainOfThoughtPromptBuilder chainOfThoughtPromptBuilder;
 
+    @Autowired(required = false)
+    private com.fbadsautomation.service.ImagePromptService imagePromptService;
+
     @Autowired
     public AIContentServiceImpl(AIProviderService aiProviderService,
                                MetaAdLibraryService metaAdLibraryService,
@@ -166,8 +169,8 @@ public class AIContentServiceImpl {
                         totalApiCalls++;
                         log.debug("[VARIATION {}/{}] Generating image with provider: {}", i + 1, contents.size(), workingProvider);
 
-                        // Issue #9: Extract concise image prompt instead of using full primaryText
-                        String imagePrompt = extractImagePrompt(prompt, content);
+                        // Issue #9: Use standardized image prompt with AdStyle
+                        String imagePrompt = buildStandardizedImagePrompt(prompt, adStyle, workingProvider);
                         String imageUrl = aiProviderService.generateImageWithReliability(
                             imagePrompt, workingProvider);
 
@@ -203,8 +206,8 @@ public class AIContentServiceImpl {
                                 totalApiCalls++;
                                 log.debug("[VARIATION {}/{}] Retrying with fallback provider: {}", i + 1, contents.size(), workingProvider);
 
-                                // Issue #9: Extract concise image prompt instead of using full primaryText
-                                String imagePrompt = extractImagePrompt(prompt, content);
+                                // Issue #9: Use standardized image prompt with AdStyle
+                                String imagePrompt = buildStandardizedImagePrompt(prompt, adStyle, workingProvider);
                                 String imageUrl = aiProviderService.generateImageWithReliability(
                                     imagePrompt, workingProvider);
 
@@ -345,8 +348,8 @@ public class AIContentServiceImpl {
 
                     try {
                         totalApiCalls++;
-                        // Issue #9: Extract concise image prompt instead of using full primaryText
-                        String imagePrompt = extractImagePrompt(prompt, content);
+                        // Issue #9: Use standardized image prompt (no adStyle in deprecated method)
+                        String imagePrompt = buildStandardizedImagePrompt(prompt, null, workingProvider);
                         log.debug("[VARIATION {}/{}] Generating image with provider: {}", i + 1, contents.size(), workingProvider);
 
                         String imageUrl = aiProviderService.generateImageWithReliability(
@@ -384,8 +387,8 @@ public class AIContentServiceImpl {
                         if (retryWithFallback) {
                             try {
                                 totalApiCalls++;
-                                // Issue #9: Extract concise image prompt instead of using full primaryText
-                                String imagePrompt = extractImagePrompt(prompt, content);
+                                // Issue #9: Use standardized image prompt (no adStyle in deprecated method)
+                                String imagePrompt = buildStandardizedImagePrompt(prompt, null, workingProvider);
                                 log.debug("[VARIATION {}/{}] Retrying with fallback provider: {}", i + 1, contents.size(), workingProvider);
 
                                 String imageUrl = aiProviderService.generateImageWithReliability(
@@ -923,56 +926,29 @@ public class AIContentServiceImpl {
     }
 
     /**
-     * Issue #9: Extract concise image prompt from text content or original prompt.
-     * Image generators work best with short, descriptive prompts (< 200 chars)
-     * focusing on visual elements, not full ad copy.
+     * Build standardized image prompt using ImagePromptService
+     * Implements 6-component prompt structure:
+     * - Subject: User's original prompt
+     * - Style: Visual keywords from AdStyle
+     * - Mood & Scene: Professional advertising setting
+     * - Camera: Professional photography specs
+     * - Quality: High-detail commercial photography
+     * - Safety: Provider-specific content guidelines
      *
-     * @param basePrompt Original user prompt (e.g., "Advertise iPhone 15 Pro")
-     * @param adContent Generated ad content (headline + description)
-     * @return Concise image prompt suitable for image generation
+     * @param userPrompt Original user prompt (e.g., "Advertise iPhone 15 Pro")
+     * @param adStyle AdStyle for visual keyword mapping
+     * @param provider Provider name for safety customization
+     * @return Standardized image prompt
      */
-    private String extractImagePrompt(String basePrompt, AdContent adContent) {
-        StringBuilder imagePrompt = new StringBuilder();
-
-        // Strategy 1: Use headline if available (most concise)
-        if (adContent != null && adContent.getHeadline() != null && !adContent.getHeadline().isEmpty()) {
-            String headline = adContent.getHeadline();
-            // Remove emojis and special characters, keep only descriptive text
-            headline = headline.replaceAll("[^\\p{L}\\p{N}\\s\\-,.]", "").trim();
-            // Limit to first 100 chars
-            if (headline.length() > 100) {
-                headline = headline.substring(0, 100);
-            }
-            imagePrompt.append(headline);
-        }
-        // Strategy 2: Extract first sentence from base prompt
-        else if (basePrompt != null && !basePrompt.isEmpty()) {
-            // Remove instruction words
-            String cleaned = basePrompt
-                .replaceAll("(?i)(advertise|promote|create ad for|generate content for|quảng cáo|tạo nội dung|giới thiệu)", "")
-                .trim();
-
-            // Get first sentence or first 100 chars
-            int endIndex = cleaned.indexOf('.');
-            if (endIndex > 0 && endIndex < 100) {
-                cleaned = cleaned.substring(0, endIndex);
-            } else if (cleaned.length() > 100) {
-                cleaned = cleaned.substring(0, 100);
-            }
-            imagePrompt.append(cleaned.trim());
-        }
-        // Fallback
-        else {
-            imagePrompt.append("Professional advertisement product");
+    private String buildStandardizedImagePrompt(String userPrompt, com.fbadsautomation.model.AdStyle adStyle, String provider) {
+        // Use ImagePromptService if available, otherwise fallback
+        if (imagePromptService != null) {
+            return imagePromptService.buildStandardizedPrompt(userPrompt, adStyle, provider);
         }
 
-        // Add visual style keywords
-        imagePrompt.append(", professional advertising photography, high quality, vibrant colors, eye-catching");
-
-        String result = imagePrompt.toString();
-        log.info("[Issue #9] Extracted image prompt (length: {}): {}", result.length(),
-            result.length() > 100 ? result.substring(0, 100) + "..." : result);
-
-        return result;
+        // Fallback if service not available (shouldn't happen)
+        log.warn("ImagePromptService not available, using fallback prompt");
+        return "Create a single high quality image: " + userPrompt +
+               ", professional advertising photography, high quality, vibrant colors, eye-catching";
     }
 }

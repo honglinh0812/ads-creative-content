@@ -46,12 +46,11 @@ public class GeminiProvider implements AIProvider {
     public GeminiProvider(
             RestTemplate restTemplate,
             @Value("${ai.gemini.api-key}") String apiKey,
-            @Value("${ai.gemini.api-url:https://generativelanguage.googleapis.com/v1beta/models}") String baseUrl,
-            @Value("${ai.gemini.image-api-url:https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict}") String imageApiUrl) {
+            @Value("${ai.gemini.api-url:https://generativelanguage.googleapis.com/v1/models}") String baseUrl,
+            @Value("${ai.gemini.image-api-url:https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict}") String imageApiUrl) {
         this.restTemplate = restTemplate;
         this.apiKey = apiKey;
-        // Construct the full URL with the model name and action
-        this.apiUrl = baseUrl + "/gemini-1.5-pro:generateContent";
+        this.apiUrl = baseUrl + "/gemini-1.5-flash:generateContent";
         this.imageApiUrl = imageApiUrl;
         log.info("Using Gemini Text API URL: {}", this.apiUrl);
         log.info("Using Gemini Image API URL: {}", this.imageApiUrl);
@@ -212,9 +211,8 @@ public class GeminiProvider implements AIProvider {
         }
 
         try {
-            // Step 1: Enhance prompt for better quality
-            String enhancedPrompt = enhanceImagePrompt(prompt);
-            log.debug("Enhanced prompt: {}", enhancedPrompt);
+            // Step 1: Use standardized prompt (already enhanced by ImagePromptService)
+            log.debug("Using standardized prompt: {}", prompt);
 
             // Step 2: Build Gemini Imagen API request
             String fullUrl = imageApiUrl + "?key=" + apiKey;
@@ -225,7 +223,7 @@ public class GeminiProvider implements AIProvider {
 
             // Build request body according to Gemini Imagen format
             Map<String, Object> instancePrompt = new HashMap<>();
-            instancePrompt.put("prompt", enhancedPrompt);
+            instancePrompt.put("prompt", prompt);
 
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("sampleCount", 1);
@@ -275,17 +273,6 @@ public class GeminiProvider implements AIProvider {
             log.error("Error generating image with Gemini Imagen: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to generate image with Gemini", e);
         }
-    }
-
-    /**
-     * Enhance prompt for better image generation quality
-     * Similar to OpenAI enhancement logic
-     */
-    private String enhanceImagePrompt(String prompt) {
-        return "Professional, high-quality advertisement image for: " + prompt +
-               ". Clear product focus, vibrant colors, professional lighting, " +
-               "crisp details, studio quality, advertising photography style, " +
-               "clean composition, eye-catching, suitable for Facebook ads.";
     }
 
     /**

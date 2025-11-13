@@ -266,6 +266,19 @@ public class ApifyService {
                 return ads;
             }
 
+            // Phase 1.2: Log first item structure for debugging
+            if (root.size() > 0) {
+                JsonNode firstItem = root.get(0);
+
+                // Log available fields
+                List<String> fieldNames = new ArrayList<>();
+                firstItem.fieldNames().forEachRemaining(fieldNames::add);
+                log.info("📋 TikTok ad available fields: {}", String.join(", ", fieldNames));
+
+                // Log sample data (debug level to avoid spam)
+                log.debug("First TikTok ad raw data: {}", firstItem.toPrettyString());
+            }
+
             for (JsonNode item : root) {
                 try {
                     CompetitorAdDTO ad = parseTikTokAd(item);
@@ -410,6 +423,50 @@ public class ApifyService {
         builder.dataSource("TIKTOK_CREATIVE_CENTER");
         builder.isActive(true);
 
-        return builder.build();
+        CompetitorAdDTO ad = builder.build();
+
+        // Phase 3: Validate before returning
+        if (!isAdUsable(ad)) {
+            log.warn("❌ Skipping TikTok ad with insufficient data: {}", ad.getAdId());
+            return null;
+        }
+
+        log.debug("✅ Parsed usable TikTok ad: headline={}, image={}, video={}",
+            ad.getHeadline() != null,
+            ad.getImageUrls() != null && !ad.getImageUrls().isEmpty(),
+            ad.getVideoUrl() != null);
+
+        return ad;
+    }
+
+    /**
+     * Phase 3: Validate if a TikTok ad has sufficient data to be useful
+     */
+    private boolean isAdUsable(CompetitorAdDTO ad) {
+        if (ad == null) {
+            return false;
+        }
+
+        // Require at least headline OR primary text
+        boolean hasText = (ad.getHeadline() != null && !ad.getHeadline().trim().isEmpty())
+                       || (ad.getPrimaryText() != null && !ad.getPrimaryText().trim().isEmpty());
+
+        // Require at least image OR video
+        boolean hasMedia = (ad.getImageUrls() != null && !ad.getImageUrls().isEmpty())
+                        || (ad.getVideoUrl() != null && !ad.getVideoUrl().trim().isEmpty());
+
+        // Ad is usable if it has text OR media (at least one)
+        boolean usable = hasText || hasMedia;
+
+        if (!usable) {
+            log.warn("⚠️ Ad {} has insufficient data - headline: {}, primaryText: {}, images: {}, video: {}",
+                ad.getAdId(),
+                ad.getHeadline() != null,
+                ad.getPrimaryText() != null,
+                ad.getImageUrls() != null && !ad.getImageUrls().isEmpty(),
+                ad.getVideoUrl() != null);
+        }
+
+        return usable;
     }
 }

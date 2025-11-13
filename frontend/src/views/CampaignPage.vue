@@ -41,10 +41,15 @@
       <CampaignTable
         :campaigns="campaigns"
         :loading="loading"
+        :total-items="totalItems"
+        :current-page="currentPage"
+        :page-size="size"
         @view-details="showCampaignDetails"
         @edit-campaign="showEditCampaignModal"
         @delete-campaign="confirmDeleteCampaign"
         @view-ads="viewCampaignAds"
+        @page-change="onPageChange"
+        @page-size-change="onPageSizeChange"
       />
     </div>
 

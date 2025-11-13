@@ -627,6 +627,8 @@ export default {
           endpoint = '/competitors/search/tiktok'
         }
 
+        // Phase 5: Clear previous errors before new search
+        this.$store.commit('competitor/SET_SEARCH_ERROR', null)
         this.$store.commit('competitor/SET_SEARCHING', true)
 
         const response = await apiClient.post(endpoint, {
@@ -665,7 +667,34 @@ export default {
       } catch (error) {
         console.error('Search error:', error)
 
-        // Fallback: display in iframe for non-Facebook platforms
+        // Phase 5: Check if backend returned specific error with mode='error'
+        const errorResponse = error?.response?.data
+        if (errorResponse && errorResponse.mode === 'error') {
+          // Display user-friendly error message from backend
+          const errorMsg = errorResponse.error || 'An error occurred while searching'
+          const isRetryable = errorResponse.retryable
+
+          this.$store.commit('competitor/SET_SEARCH_ERROR', errorMsg)
+
+          if (isRetryable) {
+            message.warning({
+              content: `${errorMsg} You can try again in a few moments.`,
+              duration: 6
+            })
+          } else {
+            message.error({
+              content: errorMsg,
+              duration: 8
+            })
+          }
+
+          // For critical errors (non-retryable), don't fallback to iframe
+          if (!isRetryable) {
+            return
+          }
+        }
+
+        // Fallback: display in iframe for non-Facebook platforms (retryable errors or network issues)
         if (this.selectedPlatform !== 'facebook') {
           const brandName = encodeURIComponent(this.searchForm.brandName)
           const region = this.searchForm.region || 'VN'
@@ -679,7 +708,7 @@ export default {
             this.iframeUrl = `https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en?keyword=${brandName}`
           }
 
-          message.info(`Displaying ${this.platformName} in embedded mode`)
+          message.info(`Displaying ${this.platformName} in embedded mode due to API limitations`)
         } else {
           message.error('Failed to search competitor ads')
         }

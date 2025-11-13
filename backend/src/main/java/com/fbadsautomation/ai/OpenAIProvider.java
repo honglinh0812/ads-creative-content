@@ -234,16 +234,15 @@ public class OpenAIProvider implements AIProvider {
             log.warn("OpenAI image generation not supported (likely missing API key).");
             return "/img/placeholder.png";
         }
-        String enhancedPrompt = "Professional, high-quality advertisement for: " + prompt +
-            ". Clear product focus, studio lighting, crisp details, vibrant colors, commercial photography style, 8k resolution, professional marketing image";
+        // Use standardized prompt (already enhanced by ImagePromptService)
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", "dall-e-3");  // Upgraded from dall-e-2 for better quality and prompt adherence
-        requestBody.put("prompt", enhancedPrompt);
+        requestBody.put("prompt", prompt);
         requestBody.put("n", 1);
         requestBody.put("size", "1024x1024");
         requestBody.put("quality", "standard");  // DALL-E 3 supports "standard" or "hd"
         requestBody.put("response_format", "url");
-        log.debug("Calling OpenAI Image API at: {} with prompt: {}", imageApiUrl, enhancedPrompt);
+        log.debug("Calling OpenAI Image API at: {} with standardized prompt: {}", imageApiUrl, prompt);
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(apiKey);
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);

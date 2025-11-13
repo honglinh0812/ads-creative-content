@@ -106,12 +106,9 @@ public class StableDiffusionProvider implements AIProvider {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
         headers.set("Authorization", "Bearer " + apiKey);
 
-        // Enhanced prompt for better commercial image quality
-        String enhancedPrompt = "Professional commercial advertisement image for: " + prompt +
-            ". High quality, studio lighting, product photography, marketing style, clean background, " +
-            "vibrant colors, professional composition, 4k resolution, commercial photography";
+        // Use standardized prompt (already enhanced by ImagePromptService)
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("inputs", enhancedPrompt);
+        requestBody.put("inputs", prompt);
         requestBody.put("parameters", Map.of(
             "num_inference_steps", 50,
             "guidance_scale", 7.5,
@@ -121,7 +118,7 @@ public class StableDiffusionProvider implements AIProvider {
         requestBody.put("options", Map.of("wait_for_model", true));
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-        log.debug("Calling Stable Diffusion Image API at: {} with prompt: {}", imageApiUrl, enhancedPrompt);
+        log.debug("Calling Stable Diffusion Image API at: {} with standardized prompt: {}", imageApiUrl, prompt);
 
         try {
             ResponseEntity<byte[]> responseEntity = restTemplate.exchange(imageApiUrl, HttpMethod.POST, request, byte[].class);
