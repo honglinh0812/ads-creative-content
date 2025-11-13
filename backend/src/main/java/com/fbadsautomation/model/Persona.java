@@ -53,6 +53,7 @@ public class Persona {
     private Gender gender;
 
     @ElementCollection(fetch = FetchType.EAGER)
+    @org.hibernate.annotations.Fetch(org.hibernate.annotations.FetchMode.SELECT)
     @CollectionTable(
         name = "persona_interests",
         joinColumns = @JoinColumn(name = "persona_id"),
@@ -72,6 +73,7 @@ public class Persona {
     private String tone;
 
     @ElementCollection(fetch = FetchType.EAGER)
+    @org.hibernate.annotations.Fetch(org.hibernate.annotations.FetchMode.SELECT)
     @CollectionTable(
         name = "persona_pain_points",
         joinColumns = @JoinColumn(name = "persona_id"),
