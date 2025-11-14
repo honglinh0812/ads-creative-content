@@ -153,12 +153,38 @@ jobs:
             git fetch origin >/dev/null 2>&1 || true
             git reset --hard origin/main >/dev/null 2>&1 || true
 
+            echo "Resolving PostgreSQL container..."
+            POSTGRES_CONTAINER=$(docker ps -a --filter "name=fbads-postgres" --format "{{.Names}}" | head -n 1)
+
+            if [ -z "$POSTGRES_CONTAINER" ]; then
+              echo "Postgres container not found, creating via docker-compose..."
+              docker_compose up -d postgres || true
+              sleep 5
+              POSTGRES_CONTAINER=$(docker ps -a --filter "name=fbads-postgres" --format "{{.Names}}" | head -n 1)
+            fi
+
+            if [ -n "$POSTGRES_CONTAINER" ]; then
+              if ! docker ps --filter "name=$POSTGRES_CONTAINER" --filter "status=running" --format "{{.Names}}" | grep -q "$POSTGRES_CONTAINER"; then
+                echo "Starting existing Postgres container ($POSTGRES_CONTAINER)..."
+                docker start "$POSTGRES_CONTAINER" >/dev/null 2>&1 || true
+                sleep 5
+              fi
+            fi
+
+            if [ -n "$POSTGRES_CONTAINER" ] && docker ps --filter "name=$POSTGRES_CONTAINER" --filter "status=running" --format "{{.Names}}" | grep -q "$POSTGRES_CONTAINER"; then
+              POSTGRES_CMD=(docker exec -i "$POSTGRES_CONTAINER")
+            else
+              echo "Falling back to docker compose for Postgres commands..."
+              docker_compose up -d postgres >/dev/null 2>&1 || true
+              POSTGRES_CMD=(docker_compose exec -T postgres)
+            fi
+
             echo "Ensuring PostgreSQL service is running..."
             docker_compose up -d postgres >/dev/null 2>&1 || true
 
             # Check if database is accessible
             echo "1. Checking database connectivity..."
-            if docker_compose exec -T postgres pg_isready -U postgres; then
+            if "${POSTGRES_CMD[@]}" pg_isready -U postgres; then
               echo "✅ Database is accessible"
             else
               echo "Postgres status:"
@@ -177,7 +203,7 @@ jobs:
             mkdir -p "$BACKUP_DIR"
             BACKUP_FILE="$BACKUP_DIR/backup_$(date +%Y%m%d_%H%M%S).sql"
 
-            if docker_compose exec -T postgres pg_dump -U postgres fbadsautomation > "$BACKUP_FILE" 2>/dev/null; then
+            if "${POSTGRES_CMD[@]}" pg_dump -U postgres fbadsautomation > "$BACKUP_FILE" 2>/dev/null; then
               BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
               echo "✅ Database backed up to $BACKUP_FILE ($BACKUP_SIZE)"
 
@@ -190,7 +216,7 @@ jobs:
             # Check current migration status
             echo ""
             echo "3. Checking current migration status..."
-            docker_compose exec -T postgres psql -U postgres fbadsautomation -c "SELECT version, description, installed_on, success FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;" 2>/dev/null || echo "Could not query migration history"
+            "${POSTGRES_CMD[@]}" psql -U postgres fbadsautomation -c "SELECT version, description, installed_on, success FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;" 2>/dev/null || echo "Could not query migration history"
 
             echo ""
             echo "=== Pre-deployment checks completed ==="
