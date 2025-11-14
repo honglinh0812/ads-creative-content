@@ -2,8 +2,11 @@ package com.fbadsautomation.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fbadsautomation.dto.AdPlatform;
 import com.fbadsautomation.dto.CompetitorAdDTO;
-import com.fbadsautomation.exception.ExternalServiceException;
+import com.fbadsautomation.dto.PlatformSearchErrorCode;
+import com.fbadsautomation.dto.PlatformSearchMode;
+import com.fbadsautomation.dto.PlatformSearchResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -11,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -48,17 +53,34 @@ public class SerpApiService {
     }
 
     /**
-     * Search Google Ads Transparency Center
+     * Search Google Ads Transparency Center using SerpAPI and return unified result.
      */
-    public List<CompetitorAdDTO> searchGoogleAds(String brandName, String region, int limit) {
+    public PlatformSearchResult searchGoogleAds(String brandName, String region, int limit) {
+        String sanitizedBrand = brandName != null ? brandName.trim() : "";
+        String normalizedRegion = normalizeRegion(region);
+        String location = mapRegionToLocation(normalizedRegion);
+
+        PlatformSearchResult.PlatformSearchResultBuilder builder = PlatformSearchResult.builder()
+            .platform(AdPlatform.GOOGLE)
+            .brandName(sanitizedBrand)
+            .region(normalizedRegion)
+            .mode(PlatformSearchMode.IFRAME)
+            .iframeUrl(buildTransparencyCenterUrl(normalizedRegion, sanitizedBrand))
+            .fallbackRegions(buildFallbackRegions(normalizedRegion));
+
         if (!isAvailable()) {
             log.warn("SerpAPI not configured, cannot search Google Ads");
-            return null;
+            return builder
+                .success(false)
+                .errorCode(PlatformSearchErrorCode.CONFIG_MISSING)
+                .message("Google Ads search is not configured. Please add a SerpAPI API key in settings.")
+                .friendlySuggestion("Mở Google Ads Transparency Center bằng iframe hoặc thử lại sau khi cấu hình SerpAPI.")
+                .build();
         }
 
         try {
-            String url = buildGoogleAdsUrl(brandName, region);
-            log.info("Calling SerpAPI for Google Ads: {}", brandName);
+            String url = buildGoogleAdsUrl(sanitizedBrand, location);
+            log.info("Calling SerpAPI for Google Ads: {} (region={}, location={})", sanitizedBrand, normalizedRegion, location);
 
             HttpHeaders headers = new HttpHeaders();
             headers.set("User-Agent", "Mozilla/5.0 (compatible; FBAdAutomation/1.0)");
@@ -72,32 +94,42 @@ public class SerpApiService {
             );
 
             if (response.getStatusCode() == HttpStatus.OK) {
-                return parseGoogleAdsResponse(response.getBody(), limit);
-            } else {
-                log.error("SerpAPI returned status: {}", response.getStatusCode());
-                return null;
+                return parseGoogleAdsResponse(response.getBody(), builder, sanitizedBrand, normalizedRegion, location, limit);
             }
+
+            log.error("SerpAPI returned status: {}", response.getStatusCode());
+            return builder
+                .success(false)
+                .mode(PlatformSearchMode.ERROR)
+                .errorCode(PlatformSearchErrorCode.PROVIDER_ERROR)
+                .message("SerpAPI trả về trạng thái " + response.getStatusCode() + ".")
+                .friendlySuggestion("Thử lại sau ít phút hoặc mở Transparency Center trực tiếp.")
+                .retryable(true)
+                .build();
 
         } catch (Exception e) {
             log.error("Error calling SerpAPI for Google Ads: {}", e.getMessage(), e);
-            return null;
+            return builder
+                .success(false)
+                .mode(PlatformSearchMode.ERROR)
+                .errorCode(PlatformSearchErrorCode.TEMPORARY_ERROR)
+                .message("Google Ads search gặp sự cố: " + e.getMessage())
+                .friendlySuggestion("Vui lòng thử lại sau hoặc dùng chế độ iframe.")
+                .retryable(true)
+                .build();
         }
     }
 
     /**
      * Build Google Ads Transparency search URL
      */
-    private String buildGoogleAdsUrl(String brandName, String region) {
+    private String buildGoogleAdsUrl(String brandName, String location) {
         try {
-            // Issue #2: Map region code to location name (SerpAPI requires location, not region)
-            String location = mapRegionToLocation(region);
-            log.info("Mapped region '{}' to location '{}'", region, location);
-
             return UriComponentsBuilder.fromHttpUrl(baseUrl + "/search.json")
-                .queryParam("engine", "google_ads_transparency_center")  // FIXED: Correct engine name
-                .queryParam("text", brandName)  // FIXED: Use 'text' instead of 'q' for brand search
-                .queryParam("location", location)  // Issue #2: Use 'location' instead of 'region'
-                .queryParam("num", "40")  // Results per page (max 100)
+                .queryParam("engine", "google_ads_transparency_center")
+                .queryParam("text", brandName)
+                .queryParam("location", location)
+                .queryParam("num", "40")
                 .queryParam("api_key", apiKey)
                 .build()
                 .toUriString();
@@ -107,16 +139,18 @@ public class SerpApiService {
         }
     }
 
+    private String normalizeRegion(String region) {
+        if (region == null || region.isBlank()) {
+            return "US";
+        }
+        return region.trim().toUpperCase();
+    }
+
     /**
-     * Issue #2: Map region codes to location names for SerpAPI.
-     * SerpAPI Google Ads engine requires location parameter, not region.
+     * Map region codes to location names for SerpAPI.
      */
     private String mapRegionToLocation(String region) {
-        if (region == null || region.isEmpty()) {
-            return "United States";
-        }
-
-        return switch (region.toUpperCase()) {
+        return switch (region) {
             case "US" -> "United States";
             case "CA" -> "Canada";
             case "GB", "UK" -> "United Kingdom";
@@ -128,11 +162,12 @@ public class SerpApiService {
             case "JP" -> "Japan";
             case "KR" -> "South Korea";
             case "SG" -> "Singapore";
-            // Vietnam not directly supported, use Singapore as regional fallback
             case "VN" -> {
                 log.warn("Vietnam (VN) not supported. Using Singapore as regional fallback.");
                 yield "Singapore";
             }
+            case "NZ" -> "New Zealand";
+            case "IN" -> "India";
             default -> {
                 log.warn("Unknown region '{}', defaulting to United States", region);
                 yield "United States";
@@ -140,15 +175,53 @@ public class SerpApiService {
         };
     }
 
+    private List<String> buildFallbackRegions(String region) {
+        List<String> fallbacks = new ArrayList<>();
+        if (!"US".equals(region)) {
+            fallbacks.add("US");
+        }
+        if ("VN".equals(region)) {
+            fallbacks.add("SG");
+        }
+        if (fallbacks.isEmpty()) {
+            fallbacks.add("GLOBAL");
+        }
+        return fallbacks;
+    }
+
+    private String buildTransparencyCenterUrl(String region, String brandName) {
+        String encodedBrand = URLEncoder.encode(brandName != null ? brandName : "", StandardCharsets.UTF_8);
+        String regionParam = region != null ? region : "anywhere";
+        return String.format("https://adstransparency.google.com/?region=%s&q=%s", regionParam, encodedBrand);
+    }
+
     /**
-     * Parse Google Ads API response to CompetitorAdDTO
+     * Parse Google Ads API response to PlatformSearchResult
      */
-    private List<CompetitorAdDTO> parseGoogleAdsResponse(String responseBody, int limit) {
+    private PlatformSearchResult parseGoogleAdsResponse(
+            String responseBody,
+            PlatformSearchResult.PlatformSearchResultBuilder builder,
+            String brandName,
+            String region,
+            String location,
+            int limit) {
+
         try {
             JsonNode root = objectMapper.readTree(responseBody);
-            List<CompetitorAdDTO> ads = new ArrayList<>();
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("location", location);
 
-            // Phase 1.1 & 4: Check for error field first and provide specific error messages
+            if (root.has("search_metadata")) {
+                JsonNode meta = root.get("search_metadata");
+                meta.fieldNames().forEachRemaining(key -> metadata.put("search_metadata." + key, meta.get(key).asText("")));
+            }
+            if (root.has("search_information")) {
+                JsonNode info = root.get("search_information");
+                info.fieldNames().forEachRemaining(key -> metadata.put("search_information." + key, info.get(key).asText("")));
+            }
+
+            builder.metadata(metadata);
+
             if (root.has("error")) {
                 String errorMsg = root.get("error").asText();
                 String errorDetails = root.has("error_message") ? root.get("error_message").asText() : errorMsg;
@@ -157,44 +230,67 @@ public class SerpApiService {
                 log.error("Error details: {}", errorDetails);
                 log.debug("SerpAPI error response: {}", responseBody);
 
-                // Phase 4: Map specific errors to user-friendly messages and throw exception
+                PlatformSearchErrorCode errorCode = mapSerpApiErrorCode(errorMsg, errorDetails);
                 String userMessage = mapSerpApiError(errorMsg, errorDetails);
-                log.warn("⚠️ User-facing error: {}", userMessage);
-
-                // Determine if error is retryable
                 boolean retryable = isRetryableError(errorMsg, errorDetails);
 
-                // Throw exception with user-friendly message for controller to handle
-                throw new ExternalServiceException("SerpAPI", userMessage, 400, retryable);
+                return builder
+                    .success(false)
+                    .mode(errorCode == PlatformSearchErrorCode.NO_RESULTS ? PlatformSearchMode.EMPTY : PlatformSearchMode.ERROR)
+                    .errorCode(errorCode)
+                    .message(userMessage)
+                    .friendlySuggestion("Thử lại sau hoặc sử dụng khu vực khác như " + String.join("/", buildFallbackRegions(region)))
+                    .retryable(retryable)
+                    .build();
             }
 
-            // SerpAPI returns ads in 'ads_results' field for google_ads_transparency_center engine
-            if (!root.has("ads_results")) {
-                log.warn("No 'ads_results' field in SerpAPI response, checking alternatives...");
-
-                // Fallback: check 'organic_results' or 'ads'
-                if (root.has("organic_results")) {
-                    return parseAdsFromNode(root.get("organic_results"), limit);
-                } else if (root.has("ads")) {
-                    return parseAdsFromNode(root.get("ads"), limit);
-                }
-
-                // Log available fields for debugging
-                StringBuilder keys = new StringBuilder();
-                root.fieldNames().forEachRemaining(key -> {
-                    if (keys.length() > 0) keys.append(", ");
-                    keys.append(key);
-                });
-                log.warn("No ads data found in response. Response keys: {}",
-                    keys.length() > 0 ? keys.toString() : "empty");
-                return ads;
+            JsonNode adsNode = null;
+            if (root.has("ads_results")) {
+                adsNode = root.get("ads_results");
+            } else if (root.has("organic_results")) {
+                adsNode = root.get("organic_results");
+            } else if (root.has("ads")) {
+                adsNode = root.get("ads");
             }
 
-            return parseAdsFromNode(root.get("ads_results"), limit);
+            List<CompetitorAdDTO> ads = adsNode != null
+                ? parseAdsFromNode(adsNode, limit)
+                : Collections.emptyList();
+
+            if (!ads.isEmpty()) {
+                return builder
+                    .success(true)
+                    .mode(PlatformSearchMode.DATA)
+                    .errorCode(PlatformSearchErrorCode.NONE)
+                    .totalResults(ads.size())
+                    .ads(ads)
+                    .message(String.format("Found %d Google ads for %s", ads.size(), brandName))
+                    .build();
+            }
+
+            String resultsState = metadata.getOrDefault("search_information.results_state", "").toString();
+            String suggestion = "Không tìm thấy quảng cáo cho " + brandName + " tại " + region + ".";
+
+            return builder
+                .success(false)
+                .mode(PlatformSearchMode.EMPTY)
+                .errorCode(PlatformSearchErrorCode.NO_RESULTS)
+                .message(resultsState.equalsIgnoreCase("fully empty")
+                    ? suggestion + " Google Ads Transparency Center không trả về kết quả."
+                    : suggestion)
+                .friendlySuggestion("Thử tìm với khu vực khác: " + String.join("/", buildFallbackRegions(region)))
+                .build();
 
         } catch (Exception e) {
             log.error("Error parsing SerpAPI response: {}", e.getMessage(), e);
-            return new ArrayList<>();
+            return builder
+                .success(false)
+                .mode(PlatformSearchMode.ERROR)
+                .errorCode(PlatformSearchErrorCode.PROVIDER_ERROR)
+                .message("Không thể phân tích kết quả Google Ads: " + e.getMessage())
+                .friendlySuggestion("Thử mở Google Ads Transparency Center trực tiếp.")
+                .retryable(true)
+                .build();
         }
     }
 
@@ -404,14 +500,43 @@ public class SerpApiService {
     }
 
     /**
+     * Map SerpAPI error messages to canonical error code
+     */
+    private PlatformSearchErrorCode mapSerpApiErrorCode(String error, String details) {
+        if (error == null) {
+            return PlatformSearchErrorCode.UNKNOWN;
+        }
+
+        String errorLower = error.toLowerCase();
+        String detailsLower = details != null ? details.toLowerCase() : "";
+
+        if (errorLower.contains("api key")) {
+            return PlatformSearchErrorCode.CONFIG_MISSING;
+        }
+        if (errorLower.contains("quota") || detailsLower.contains("quota")) {
+            return PlatformSearchErrorCode.QUOTA_EXCEEDED;
+        }
+        if (errorLower.contains("parameter") || errorLower.contains("invalid") && detailsLower.contains("parameter")) {
+            return PlatformSearchErrorCode.VALIDATION_ERROR;
+        }
+        if (errorLower.contains("engine")) {
+            return PlatformSearchErrorCode.PROVIDER_ERROR;
+        }
+        if (errorLower.contains("location")) {
+            return PlatformSearchErrorCode.REGION_UNSUPPORTED;
+        }
+        if (errorLower.contains("rate") || errorLower.contains("too many")) {
+            return PlatformSearchErrorCode.RATE_LIMITED;
+        }
+        if (errorLower.contains("search error") || errorLower.contains("failed")) {
+            return PlatformSearchErrorCode.PROVIDER_ERROR;
+        }
+
+        return PlatformSearchErrorCode.UNKNOWN;
+    }
+
+    /**
      * Phase 4: Map SerpAPI error messages to user-friendly messages
-     *
-     * Common SerpAPI errors:
-     * - "Invalid API key"
-     * - "You have reached your monthly quota"
-     * - "Invalid parameters"
-     * - "Engine not found"
-     * - "Search error"
      */
     private String mapSerpApiError(String error, String details) {
         if (error == null) {

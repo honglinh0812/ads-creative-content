@@ -1,6 +1,8 @@
 package com.fbadsautomation.controller;
 
 import com.fbadsautomation.dto.CompetitorAdDTO;
+import com.fbadsautomation.dto.PlatformSearchMode;
+import com.fbadsautomation.dto.PlatformSearchResult;
 import com.fbadsautomation.model.CompetitorSearch;
 import com.fbadsautomation.service.ComparisonService;
 import com.fbadsautomation.service.CompetitorService;
@@ -125,6 +127,16 @@ public class CompetitorController {
         }
     }
 
+    private HttpStatus determineStatus(PlatformSearchResult result) {
+        if (result == null) {
+            return HttpStatus.OK;
+        }
+        if (result.getMode() == PlatformSearchMode.ERROR) {
+            return HttpStatus.BAD_GATEWAY;
+        }
+        return HttpStatus.OK;
+    }
+
     /**
      * Fetch specific competitor ads by Facebook Ad Library URLs
      *
@@ -203,74 +215,41 @@ public class CompetitorController {
     })
     @PostMapping("/search/google")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> searchGoogleAds(
+    public ResponseEntity<PlatformSearchResult> searchGoogleAds(
             @Valid @RequestBody CompetitorSearchRequest request,
             Authentication authentication) {
 
         log.info("Google Ads search request from user {}: {}",
                  authentication.getName(), request.getBrandName());
 
+        PlatformSearchResult result;
         try {
             Long userId = getUserIdFromAuthentication(authentication);
 
-            List<CompetitorAdDTO> ads = competitorService.searchGoogleAds(
+            result = competitorService.searchGoogleAds(
                 request.getBrandName(),
                 request.getRegion() != null ? request.getRegion() : "US",
                 userId,
                 request.getLimit() > 0 ? request.getLimit() : 20
             );
 
-            // If no ads returned, respond with iframe mode
-            if (ads == null || ads.isEmpty()) {
-                String iframeUrl = String.format(
-                    "https://adstransparency.google.com/?region=%s&q=%s",
-                    request.getRegion() != null ? request.getRegion() : "US",
-                    java.net.URLEncoder.encode(request.getBrandName(), java.nio.charset.StandardCharsets.UTF_8)
-                );
-
-                Map<String, Object> response = new HashMap<>();
-                response.put("mode", "iframe");
-                response.put("url", iframeUrl);
-                response.put("platform", "google");
-                response.put("message", "SerpAPI not available or no results found. Showing embedded view.");
-
-                return ResponseEntity.ok(response);
-            }
-
-            // Return structured data
-            Map<String, Object> response = new HashMap<>();
-            response.put("mode", "data");
-            response.put("ads", ads);
-            response.put("total", ads.size());
-            response.put("platform", "google");
-            response.put("message", String.format("Found %d Google ads for %s", ads.size(), request.getBrandName()));
-
-            return ResponseEntity.ok(response);
-
-        } catch (com.fbadsautomation.exception.ExternalServiceException e) {
-            // Phase 4: Handle specific SerpAPI errors with user-friendly messages
-            log.error("SerpAPI error: {} (retryable: {})", e.getMessage(), e.isRetryable());
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("mode", "error");
-            errorResponse.put("error", e.getMessage());  // Already user-friendly from mapSerpApiError()
-            errorResponse.put("retryable", e.isRetryable());
-            errorResponse.put("platform", "google");
-
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(errorResponse);
-
         } catch (Exception e) {
             log.error("Error searching Google Ads", e);
 
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("mode", "error");
-            errorResponse.put("error", "Failed to search Google Ads: " + e.getMessage());
+            PlatformSearchResult fallback = PlatformSearchResult.builder()
+                .success(false)
+                .mode(PlatformSearchMode.ERROR)
+                .message("Failed to search Google Ads: " + e.getMessage())
+                .platform(com.fbadsautomation.dto.AdPlatform.GOOGLE)
+                .brandName(request.getBrandName())
+                .region(request.getRegion())
+                .build();
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                 .body(errorResponse);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fallback);
         }
+
+        HttpStatus status = determineStatus(result);
+        return ResponseEntity.status(status).body(result);
     }
 
     /**
@@ -294,62 +273,41 @@ public class CompetitorController {
     })
     @PostMapping("/search/tiktok")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> searchTikTokAds(
+    public ResponseEntity<PlatformSearchResult> searchTikTokAds(
             @Valid @RequestBody CompetitorSearchRequest request,
             Authentication authentication) {
 
         log.info("TikTok Ads search request from user {}: {}",
                  authentication.getName(), request.getBrandName());
 
+        PlatformSearchResult result;
         try {
             Long userId = getUserIdFromAuthentication(authentication);
 
-            // Phase 2: Call service and actually use the results
-            List<CompetitorAdDTO> ads = competitorService.searchTikTokAds(
+            result = competitorService.searchTikTokAds(
                 request.getBrandName(),
                 request.getRegion() != null ? request.getRegion() : "US",
                 userId,
                 request.getLimit() > 0 ? request.getLimit() : 20
             );
 
-            // Phase 2: Check if we got usable results
-            if (ads != null && !ads.isEmpty()) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("mode", "data");
-                response.put("ads", ads);
-                response.put("total", ads.size());
-                response.put("platform", "tiktok");
-                response.put("message", String.format("Found %d TikTok ads", ads.size()));
-
-                log.info("✅ Returning {} TikTok ads in structured format", ads.size());
-                return ResponseEntity.ok(response);
-            }
-
-            // Fallback to iframe only if no results
-            log.warn("⚠️ No TikTok ads found, falling back to iframe mode");
-            String iframeUrl = String.format(
-                "https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en?keyword=%s",
-                java.net.URLEncoder.encode(request.getBrandName(), java.nio.charset.StandardCharsets.UTF_8)
-            );
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("mode", "iframe");
-            response.put("url", iframeUrl);
-            response.put("platform", "tiktok");
-            response.put("message", "No structured data available, showing embedded view");
-
-            return ResponseEntity.ok(response);
-
         } catch (Exception e) {
             log.error("Error searching TikTok Ads", e);
 
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("error", "Failed to search TikTok Ads: " + e.getMessage());
+            PlatformSearchResult fallback = PlatformSearchResult.builder()
+                .success(false)
+                .mode(PlatformSearchMode.ERROR)
+                .message("Failed to search TikTok Ads: " + e.getMessage())
+                .platform(com.fbadsautomation.dto.AdPlatform.TIKTOK)
+                .brandName(request.getBrandName())
+                .region(request.getRegion())
+                .build();
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                 .body(errorResponse);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fallback);
         }
+
+        HttpStatus status = determineStatus(result);
+        return ResponseEntity.status(status).body(result);
     }
 
     /**

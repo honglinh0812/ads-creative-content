@@ -5,11 +5,108 @@
 
 import api from '../../services/api'
 
+const PLATFORM_LABELS = {
+  facebook: 'Facebook & Instagram',
+  google: 'Google Ads & YouTube',
+  tiktok: 'TikTok'
+}
+
+const PLATFORM_IFRAME_BUILDERS = {
+  google: (brand, region = 'US') => {
+    const keyword = encodeURIComponent(brand || '')
+    return `https://adstransparency.google.com/?region=${region || 'US'}&q=${keyword}`
+  },
+  tiktok: (brand) => {
+    const keyword = encodeURIComponent(brand || '')
+    return `https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en?keyword=${keyword}`
+  }
+}
+
+const createPlatformResponse = (overrides = {}) => ({
+  platform: overrides.platform || 'facebook',
+  mode: overrides.mode || 'empty',
+  success: overrides.success || false,
+  ads: overrides.ads || [],
+  totalResults: overrides.totalResults || 0,
+  iframeUrl: overrides.iframeUrl || null,
+  message: overrides.message || '',
+  friendlySuggestion: overrides.friendlySuggestion || '',
+  fallbackRegions: overrides.fallbackRegions || [],
+  errorCode: overrides.errorCode || null,
+  metadata: overrides.metadata || {},
+  brandName: overrides.brandName || null,
+  region: overrides.region || null,
+  retryable: typeof overrides.retryable === 'boolean' ? overrides.retryable : null,
+  timestamp: overrides.timestamp || null
+})
+
+const normalizeFacebookResponse = (payload = {}, params) => {
+  const ads = payload.ads || []
+  const totalResults = payload.totalResults ?? ads.length
+  const success = ads.length > 0
+  return createPlatformResponse({
+    platform: 'facebook',
+    mode: success ? 'data' : 'empty',
+    success,
+    ads,
+    totalResults,
+    message: payload.message || (success
+      ? `Found ${totalResults} Facebook ads for ${params.brandName}`
+      : `Không tìm thấy quảng cáo Facebook cho ${params.brandName}.`),
+    friendlySuggestion: success ? '' : 'Thử sử dụng từ khóa khác hoặc chọn khu vực khác để có nhiều kết quả hơn.',
+    brandName: params.brandName,
+    region: params.region,
+    timestamp: new Date().toISOString()
+  })
+}
+
+const normalizeProviderResponse = (platform, payload = {}, params) => {
+  const ads = payload.ads || []
+  const inferredMode = payload.mode || (ads.length ? 'data' : (payload.iframeUrl ? 'iframe' : 'empty'))
+  const builder = PLATFORM_IFRAME_BUILDERS[platform]
+  const iframeUrl = payload.iframeUrl || (builder ? builder(params.brandName, params.region) : null)
+
+  return createPlatformResponse({
+    platform,
+    mode: inferredMode,
+    success: payload.success ?? inferredMode === 'data',
+    ads,
+    totalResults: payload.totalResults ?? payload.total ?? ads.length,
+    iframeUrl,
+    message: payload.message || (ads.length
+      ? `Found ${ads.length} ${PLATFORM_LABELS[platform] || platform} ads`
+      : `Không tìm thấy quảng cáo ${PLATFORM_LABELS[platform] || platform} cho ${params.brandName}.`),
+    friendlySuggestion: payload.friendlySuggestion || (
+      inferredMode !== 'data'
+        ? 'Bạn có thể xem trực tiếp bằng iframe hoặc thử vùng/khoá khác.'
+        : ''
+    ),
+    fallbackRegions: payload.fallbackRegions || [],
+    errorCode: payload.errorCode || null,
+    metadata: payload.metadata || {},
+    brandName: payload.brandName || params.brandName,
+    region: payload.region || params.region,
+    retryable: typeof payload.retryable === 'boolean' ? payload.retryable : null,
+    timestamp: new Date().toISOString()
+  })
+}
+
+const buildDefaultIframeUrl = (platform, brandName, region) => {
+  const builder = PLATFORM_IFRAME_BUILDERS[platform]
+  return builder ? builder(brandName, region) : null
+}
+
 const state = {
   // Search results
   searchResults: [],
   selectedCompetitorAds: [],
   searchHistory: [],
+  platformResponses: {
+    facebook: createPlatformResponse({ platform: 'facebook', mode: 'empty' }),
+    google: createPlatformResponse({ platform: 'google', mode: 'empty' }),
+    tiktok: createPlatformResponse({ platform: 'tiktok', mode: 'empty' })
+  },
+  recentPlatformStatuses: [],
 
   // AI Analysis results
   aiSuggestion: null,
@@ -47,6 +144,8 @@ const getters = {
   patterns: state => state.patterns,
   abTestVariations: state => state.abTestVariations,
   brandSuggestions: state => state.brandSuggestions,
+  platformResponses: state => state.platformResponses,
+  recentPlatformStatuses: state => state.recentPlatformStatuses,
 
   hasSearchResults: state => state.searchResults.length > 0,
   hasSelectedAds: state => state.selectedCompetitorAds.length > 0,
@@ -67,6 +166,36 @@ const mutations = {
 
   CLEAR_SEARCH_RESULTS(state) {
     state.searchResults = []
+  },
+
+  SET_PLATFORM_RESPONSE(state, { platform, response }) {
+    if (!platform) return
+    state.platformResponses = {
+      ...state.platformResponses,
+      [platform]: createPlatformResponse({ platform, ...response })
+    }
+  },
+
+  UPDATE_PLATFORM_IFRAME_URL(state, { platform, iframeUrl }) {
+    if (!platform || !state.platformResponses[platform]) return
+    const current = state.platformResponses[platform]
+    state.platformResponses = {
+      ...state.platformResponses,
+      [platform]: {
+        ...current,
+        iframeUrl,
+        mode: current.mode === 'data' ? current.mode : 'iframe'
+      }
+    }
+  },
+
+  PUSH_PLATFORM_STATUS(state, status) {
+    if (!status) return
+    const nextFeed = [
+      { ...status, id: `${status.platform}-${status.timestamp}` },
+      ...state.recentPlatformStatuses
+    ]
+    state.recentPlatformStatuses = nextFeed.slice(0, 5)
   },
 
   // Selected ads
@@ -182,29 +311,126 @@ const mutations = {
 }
 
 const actions = {
-  /**
-   * Search for competitor ads by brand name
-   */
-  async searchCompetitorAds({ commit }, { brandName, region = 'US', limit = 5 }) {
+  async searchPlatformAds({ commit }, { platform = 'facebook', brandName, region = 'US', limit = 5 } = {}) {
     commit('SET_SEARCHING', true)
     commit('SET_SEARCH_ERROR', null)
-    commit('CLEAR_SEARCH_RESULTS')
+
+    const params = { brandName, region, limit }
 
     try {
-      const response = await api.competitors.search(brandName, region, limit)
+      let response
+      if (platform === 'google') {
+        response = await api.competitors.searchGoogle(brandName, region, limit)
+      } else if (platform === 'tiktok') {
+        response = await api.competitors.searchTikTok(brandName, region, limit)
+      } else {
+        response = await api.competitors.search(brandName, region, limit)
+      }
 
-      commit('SET_SEARCH_RESULTS', response.data.ads || [])
+      const normalized = platform === 'facebook'
+        ? normalizeFacebookResponse(response.data, params)
+        : normalizeProviderResponse(platform, response.data, params)
+
+      commit('SET_PLATFORM_RESPONSE', { platform, response: normalized })
+      if (normalized.mode === 'data') {
+        commit('SET_SEARCH_RESULTS', normalized.ads || [])
+      } else {
+        commit('CLEAR_SEARCH_RESULTS')
+      }
+
       commit('SET_LAST_SEARCH_PARAMS', { brand: brandName, region, limit })
 
-      return response.data
+      commit('PUSH_PLATFORM_STATUS', {
+        platform,
+        platformLabel: PLATFORM_LABELS[platform] || platform,
+        success: normalized.success,
+        mode: normalized.mode,
+        message: normalized.message,
+        friendlySuggestion: normalized.friendlySuggestion,
+        timestamp: normalized.timestamp
+      })
+
+      return normalized
+
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to search competitor ads'
+      const fallbackPayload = error?.response?.data
+
+      if (fallbackPayload && (fallbackPayload.mode || fallbackPayload.message)) {
+        const normalizedError = platform === 'facebook'
+          ? normalizeFacebookResponse(fallbackPayload, params)
+          : normalizeProviderResponse(platform, fallbackPayload, params)
+
+        commit('SET_PLATFORM_RESPONSE', { platform, response: normalizedError })
+        if (normalizedError.mode === 'data') {
+          commit('SET_SEARCH_RESULTS', normalizedError.ads || [])
+        } else {
+          commit('CLEAR_SEARCH_RESULTS')
+        }
+
+        if (normalizedError.mode === 'error') {
+          commit('SET_SEARCH_ERROR', normalizedError.message)
+        }
+
+        commit('SET_LAST_SEARCH_PARAMS', { brand: brandName, region, limit })
+
+        commit('PUSH_PLATFORM_STATUS', {
+          platform,
+          platformLabel: PLATFORM_LABELS[platform] || platform,
+          success: normalizedError.success,
+          mode: normalizedError.mode,
+          message: normalizedError.message,
+          friendlySuggestion: normalizedError.friendlySuggestion,
+          timestamp: normalizedError.timestamp || new Date().toISOString()
+        })
+
+        return normalizedError
+      }
+
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to search competitor ads'
+      const fallbackIframe = buildDefaultIframeUrl(platform, brandName, region)
+      const fallbackResponse = createPlatformResponse({
+        platform,
+        mode: fallbackIframe && platform !== 'facebook' ? 'iframe' : 'error',
+        iframeUrl: fallbackIframe,
+        success: false,
+        ads: [],
+        totalResults: 0,
+        message: errorMessage,
+        friendlySuggestion: platform === 'facebook'
+          ? 'Vui lòng thử lại sau hoặc kiểm tra kết nối.'
+          : 'Đang chuyển sang iframe do API gặp sự cố.',
+        errorCode: 'client_error',
+        brandName,
+        region,
+        timestamp: new Date().toISOString()
+      })
+
+      commit('SET_PLATFORM_RESPONSE', { platform, response: fallbackResponse })
+      commit('SET_LAST_SEARCH_PARAMS', { brand: brandName, region, limit })
       commit('SET_SEARCH_ERROR', errorMessage)
-      console.error('Search competitor ads error:', error)
+      commit('CLEAR_SEARCH_RESULTS')
+      commit('PUSH_PLATFORM_STATUS', {
+        platform,
+        platformLabel: PLATFORM_LABELS[platform] || platform,
+        success: false,
+        mode: fallbackResponse.mode,
+        message: errorMessage,
+        friendlySuggestion: fallbackResponse.friendlySuggestion,
+        timestamp: fallbackResponse.timestamp
+      })
+
       throw error
+
     } finally {
       commit('SET_SEARCHING', false)
     }
+  },
+
+  /**
+   * Search for competitor ads by brand name
+   */
+  async searchCompetitorAds({ dispatch }, payload) {
+    return dispatch('searchPlatformAds', { platform: 'facebook', ...payload })
   },
 
   /**

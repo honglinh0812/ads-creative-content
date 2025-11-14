@@ -43,11 +43,11 @@ public class StableDiffusionProvider implements AIProvider {
         public StableDiffusionProvider(
             RestTemplate restTemplate,
             @Value("${ai.huggingface.api-key}") String apiKey,
-            @Value("${ai.huggingface.image-api-url:https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0}") String imageApiUrl,
+            @Value("${ai.huggingface.image-api-url:https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0}") String imageApiUrl,
             @Value("${app.image.storage.location:uploads/images}") String imageStorageLocation) {
         this.restTemplate = restTemplate;
         this.apiKey = apiKey;
-        this.imageApiUrl = imageApiUrl;
+        this.imageApiUrl = normalizeApiUrl(imageApiUrl);
         this.imageStorageLocation = imageStorageLocation;
         log.info("Using Stable Diffusion Image API URL: {}", this.imageApiUrl);
         
@@ -58,6 +58,20 @@ public class StableDiffusionProvider implements AIProvider {
         } catch (IOException e) {
             log.error("Could not create image save directory: {}", imageStorageLocation, e);
         }
+    }
+
+    private String normalizeApiUrl(String rawUrl) {
+        if (rawUrl == null || rawUrl.isEmpty()) {
+            return rawUrl;
+        }
+        if (rawUrl.contains("api-inference.huggingface.co")) {
+            String normalized = rawUrl
+                .replace("https://api-inference.huggingface.co", "https://router.huggingface.co/hf-inference")
+                .replace("http://api-inference.huggingface.co", "https://router.huggingface.co/hf-inference");
+            log.warn("Stable Diffusion endpoint '{}' is deprecated. Using router endpoint: {}", rawUrl, normalized);
+            return normalized;
+        }
+        return rawUrl;
     }
 
     @Override

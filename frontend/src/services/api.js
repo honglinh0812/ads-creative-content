@@ -255,6 +255,18 @@ export default {
       limit
     }),
 
+    searchGoogle: (brandName, region = 'US', limit = 20) => apiClient.post('/competitors/search/google', {
+      brandName,
+      region,
+      limit
+    }),
+
+    searchTikTok: (brandName, region = 'US', limit = 20) => apiClient.post('/competitors/search/tiktok', {
+      brandName,
+      region,
+      limit
+    }),
+
     // Fetch specific ads by URLs
     fetchByUrls: (adUrls) => apiClient.post('/competitors/ads/fetch', {
       adUrls

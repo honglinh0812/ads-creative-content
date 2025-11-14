@@ -119,8 +119,21 @@
       </a-card>
     </div>
 
+    <!-- Recent Platform Statuses -->
+    <div v-if="recentPlatformStatuses.length" class="status-feed">
+      <a-alert
+        v-for="status in recentPlatformStatuses"
+        :key="status.id"
+        :type="status.success ? 'success' : status.mode === 'iframe' ? 'info' : status.mode === 'error' ? 'error' : 'warning'"
+        :message="`${status.platformLabel}: ${status.message}`"
+        :description="status.friendlySuggestion"
+        show-icon
+        class="mb-2"
+      />
+    </div>
+
     <!-- Search Results -->
-    <div v-if="hasSearchResults || displayMode === 'iframe'" class="results-section">
+    <div v-if="hasSearchResults || displayMode !== 'empty'" class="results-section">
       <a-card :bordered="false">
         <template v-if="displayMode === 'data' && searchResults.length > 0" #title>
           <div class="flex justify-between items-center">
@@ -142,6 +155,15 @@
             </a-space>
           </div>
         </template>
+
+        <a-alert
+          v-if="platformMessage"
+          :type="platformAlertType"
+          :message="platformMessage"
+          :description="currentResponse.friendlySuggestion"
+          show-icon
+          class="mb-4"
+        />
 
         <!-- Data Mode - Structured Results -->
         <div v-if="displayMode === 'data' && searchResults.length > 0">
@@ -246,13 +268,15 @@
           </div>
 
           <iframe
-            :src="iframeUrl"
+            v-if="currentIframeUrl"
+            :src="currentIframeUrl"
             width="100%"
             height="800px"
             frameborder="0"
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
             style="border: 1px solid #d9d9d9; border-radius: 4px;"
           />
+          <a-empty v-else description="Iframe URL not available" />
 
           <a-space style="margin-top: 16px">
             <a-button @click="openInNewTab" type="primary">
@@ -276,7 +300,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-if="!hasSearchResults && !isSearching && displayMode !== 'iframe'" class="empty-state">
+    <div v-if="!hasSearchResults && !isSearching && displayMode === 'empty'" class="empty-state">
       <a-empty description="Search for competitor brands to view their ads">
         <template #image>
           <search-outlined style="font-size: 64px; color: #d9d9d9" />
@@ -511,8 +535,6 @@ import {
   DatabaseOutlined
 } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import apiClient from '@/services/api'
-
 export default {
   name: 'CompetitorsView',
 
@@ -537,8 +559,6 @@ export default {
     return {
       // Platform selection
       selectedPlatform: 'facebook',
-      displayMode: 'data', // 'data' or 'iframe'
-      iframeUrl: '',
       iframeSearchQuery: '',
 
       // Search form
@@ -580,7 +600,9 @@ export default {
       'isSearching',
       'isAnalyzing',
       'searchError',
-      'analysisError'
+      'analysisError',
+      'platformResponses',
+      'recentPlatformStatuses'
     ]),
 
     ...mapGetters('competitor', [
@@ -596,20 +618,43 @@ export default {
         tiktok: 'TikTok'
       }
       return names[this.selectedPlatform] || this.selectedPlatform
+    },
+
+    currentResponse() {
+      return this.platformResponses?.[this.selectedPlatform] || {}
+    },
+
+    displayMode() {
+      return this.currentResponse.mode || 'empty'
+    },
+
+    currentIframeUrl() {
+      return this.currentResponse.iframeUrl || null
+    },
+
+    platformMessage() {
+      return this.currentResponse.message || ''
+    },
+
+    platformAlertType() {
+      if (this.displayMode === 'data') return 'success'
+      if (this.displayMode === 'iframe') return 'info'
+      if (this.displayMode === 'error') return 'error'
+      return 'warning'
     }
   },
 
   methods: {
-    ...mapActions('competitor', [
-      'searchCompetitorAds',
-      'toggleAdSelection',
-      'clearSelection',
-      'generateSuggestion',
-      'identifyPatterns as identifyPatternsAction',
-      'generateABTest as generateABTestAction',
-      'analyzeCompetitorAd',
-      'clearErrors'
-    ]),
+    ...mapActions('competitor', {
+      searchPlatformAds: 'searchPlatformAds',
+      toggleAdSelection: 'toggleAdSelection',
+      clearSelection: 'clearSelection',
+      generateSuggestion: 'generateSuggestion',
+      identifyPatternsAction: 'identifyPatterns',
+      generateABTestAction: 'generateABTest',
+      analyzeCompetitorAd: 'analyzeCompetitorAd',
+      clearErrors: 'clearErrors'
+    }),
 
     async handleSearch() {
       if (!this.searchForm.brandName.trim()) {
@@ -618,112 +663,38 @@ export default {
       }
 
       try {
-        let endpoint = '/competitors/search'
-
-        // Route to appropriate endpoint based on platform
-        if (this.selectedPlatform === 'google') {
-          endpoint = '/competitors/search/google'
-        } else if (this.selectedPlatform === 'tiktok') {
-          endpoint = '/competitors/search/tiktok'
-        }
-
-        // Phase 5: Clear previous errors before new search
-        this.$store.commit('competitor/SET_SEARCH_ERROR', null)
-        this.$store.commit('competitor/SET_SEARCHING', true)
-
-        const response = await apiClient.post(endpoint, {
-          brandName: this.searchForm.brandName,
+        const result = await this.searchPlatformAds({
+          platform: this.selectedPlatform,
+          brandName: this.searchForm.brandName.trim(),
           region: this.searchForm.region || 'VN',
           limit: this.searchForm.limit || 20
         })
 
-        // Check response mode
-        if (response.data.mode === 'iframe') {
-          // Display in iframe mode
-          this.displayMode = 'iframe'
-          this.iframeUrl = response.data.url
-          this.iframeSearchQuery = this.searchForm.brandName
-          message.info(`Viewing ${this.platformName} ads in embedded mode`)
-        } else if (response.data.ads) {
-          // Structured data mode
-          this.displayMode = 'data'
-          this.$store.commit('competitor/SET_SEARCH_RESULTS', response.data.ads)
-          message.success(`Found ${response.data.ads.length} ads from ${this.platformName}`)
-        } else {
-          // Legacy response format (Facebook)
-          this.displayMode = 'data'
-          await this.searchCompetitorAds({
-            brandName: this.searchForm.brandName,
-            region: this.searchForm.region,
-            limit: this.searchForm.limit
-          })
+        this.iframeSearchQuery = result.brandName || this.searchForm.brandName
 
-          if (this.searchResults.length === 0) {
-            message.info('No competitor ads found for this brand')
-          } else {
-            message.success(`Found ${this.searchResults.length} competitor ads`)
-          }
+        if (result.mode === 'data' && (result.ads || []).length) {
+          message.success(`Found ${result.ads.length} ads from ${this.platformName}`)
+        } else if (result.mode === 'iframe') {
+          message.info(result.message || `Viewing ${this.platformName} ads in embedded mode`)
+        } else if (result.mode === 'empty') {
+          message.warning(result.message || 'No ads found for this search')
+        } else if (result.mode === 'error') {
+          message.error(result.message || 'Failed to search competitor ads')
         }
       } catch (error) {
         console.error('Search error:', error)
-
-        // Phase 5: Check if backend returned specific error with mode='error'
-        const errorResponse = error?.response?.data
-        if (errorResponse && errorResponse.mode === 'error') {
-          // Display user-friendly error message from backend
-          const errorMsg = errorResponse.error || 'An error occurred while searching'
-          const isRetryable = errorResponse.retryable
-
-          this.$store.commit('competitor/SET_SEARCH_ERROR', errorMsg)
-
-          if (isRetryable) {
-            message.warning({
-              content: `${errorMsg} You can try again in a few moments.`,
-              duration: 6
-            })
-          } else {
-            message.error({
-              content: errorMsg,
-              duration: 8
-            })
-          }
-
-          // For critical errors (non-retryable), don't fallback to iframe
-          if (!isRetryable) {
-            return
-          }
-        }
-
-        // Fallback: display in iframe for non-Facebook platforms (retryable errors or network issues)
-        if (this.selectedPlatform !== 'facebook') {
-          const brandName = encodeURIComponent(this.searchForm.brandName)
-          const region = this.searchForm.region || 'VN'
-
-          this.displayMode = 'iframe'
-          this.iframeSearchQuery = this.searchForm.brandName
-
-          if (this.selectedPlatform === 'google') {
-            this.iframeUrl = `https://adstransparency.google.com/?region=${region}&q=${brandName}`
-          } else if (this.selectedPlatform === 'tiktok') {
-            this.iframeUrl = `https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en?keyword=${brandName}`
-          }
-
-          message.info(`Displaying ${this.platformName} in embedded mode due to API limitations`)
-        } else {
-          message.error('Failed to search competitor ads')
-        }
-      } finally {
-        this.$store.commit('competitor/SET_SEARCHING', false)
       }
     },
 
     handlePlatformChange() {
-      // Reset results when switching platform
-      this.$store.commit('competitor/SET_SEARCH_RESULTS', [])
-      this.displayMode = 'data'
-      this.iframeUrl = ''
+      const response = this.currentResponse
+      if (response.mode === 'data') {
+        this.$store.commit('competitor/SET_SEARCH_RESULTS', response.ads || [])
+      } else {
+        this.$store.commit('competitor/CLEAR_SEARCH_RESULTS')
+      }
 
-      // Save preference
+      this.iframeSearchQuery = response.brandName || this.searchForm.brandName
       localStorage.setItem('preferredAdPlatform', this.selectedPlatform)
     },
 
@@ -865,17 +836,26 @@ export default {
       const region = this.searchForm.region || 'VN'
 
       // Update iframe URL based on platform
+      let iframeUrl = this.currentIframeUrl
       if (this.selectedPlatform === 'google') {
-        this.iframeUrl = `https://adstransparency.google.com/?region=${region}&q=${brandName}`
+        iframeUrl = `https://adstransparency.google.com/?region=${region}&q=${brandName}`
       } else if (this.selectedPlatform === 'tiktok') {
-        this.iframeUrl = `https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en?keyword=${brandName}`
+        iframeUrl = `https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en?keyword=${brandName}`
       }
 
+      this.$store.commit('competitor/UPDATE_PLATFORM_IFRAME_URL', {
+        platform: this.selectedPlatform,
+        iframeUrl
+      })
       message.success(`Updated search to: ${this.iframeSearchQuery}`)
     },
 
     openInNewTab() {
-      window.open(this.iframeUrl, '_blank')
+      if (!this.currentIframeUrl) {
+        message.warning('Iframe URL not available yet')
+        return
+      }
+      window.open(this.currentIframeUrl, '_blank')
     },
 
     retryWithDataMode() {
@@ -1178,6 +1158,10 @@ export default {
 }
 
 .results-section {
+  margin-bottom: 24px;
+}
+
+.status-feed {
   margin-bottom: 24px;
 }
 

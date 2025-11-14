@@ -54,12 +54,12 @@ public class HuggingFaceProvider implements AIProvider {
     public HuggingFaceProvider(
             RestTemplate restTemplate,
             @Value("${ai.huggingface.api-key}") String apiKey,
-            @Value("${ai.huggingface.text-api-url:https://api-inference.huggingface.co/models/gpt2}") String textApiUrl,
-            @Value("${ai.huggingface.image-api-url:https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0}") String imageApiUrl) {
+            @Value("${ai.huggingface.text-api-url:https://router.huggingface.co/hf-inference/models/gpt2}") String textApiUrl,
+            @Value("${ai.huggingface.image-api-url:https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0}") String imageApiUrl) {
         this.restTemplate = restTemplate;
         this.apiKey = apiKey;
-        this.textApiUrl = textApiUrl;
-        this.imageApiUrl = imageApiUrl;
+        this.textApiUrl = normalizeApiUrl(textApiUrl);
+        this.imageApiUrl = normalizeApiUrl(imageApiUrl);
         log.info("Using Hugging Face Text API URL: {}", this.textApiUrl);
         log.info("Using Hugging Face Image API URL: {}", this.imageApiUrl);
         // Ensure the image save directory exists
@@ -69,6 +69,20 @@ public class HuggingFaceProvider implements AIProvider {
         } catch (IOException e) {
             log.error("Could not create image save directory: {}", imageSavePath, e);
         }
+    }
+
+    private String normalizeApiUrl(String rawUrl) {
+        if (rawUrl == null || rawUrl.isEmpty()) {
+            return rawUrl;
+        }
+        String normalized = rawUrl;
+        if (rawUrl.contains("api-inference.huggingface.co")) {
+            normalized = rawUrl
+                    .replace("https://api-inference.huggingface.co", "https://router.huggingface.co/hf-inference")
+                    .replace("http://api-inference.huggingface.co", "https://router.huggingface.co/hf-inference");
+            log.warn("Hugging Face endpoint '{}' is deprecated. Using router endpoint: {}", rawUrl, normalized);
+        }
+        return normalized;
     }
     @Override
     public Set<Capability> getCapabilities() {

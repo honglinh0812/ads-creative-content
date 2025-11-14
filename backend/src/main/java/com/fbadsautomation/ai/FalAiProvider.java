@@ -45,6 +45,7 @@ public class FalAiProvider implements AIProvider {
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Value("${app.image.storage.location}")
     private String imageStorageLocation;
+    private volatile boolean accountLocked = false;
 
     public FalAiProvider(
         RestTemplate restTemplate,
@@ -89,8 +90,8 @@ public class FalAiProvider implements AIProvider {
     @Override
     public String generateImage(String prompt) {
         if (!supportsImageGeneration()) {
-            log.warn("Fal.ai image generation not supported (likely missing API key).");
-            return "/img/placeholder.png";
+            log.warn("Fal.ai image generation unavailable (missing API key or account locked).");
+            throw new IllegalStateException("Fal.ai image generation unavailable");
         }
 
         HttpHeaders headers = new HttpHeaders();
@@ -133,8 +134,17 @@ public class FalAiProvider implements AIProvider {
             } else {
                 log.error("Fal.ai API call failed with response: {}", response);
             }
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            if (e.getStatusCode() == org.springframework.http.HttpStatus.FORBIDDEN &&
+                e.getResponseBodyAsString() != null &&
+                e.getResponseBodyAsString().contains("User is locked")) {
+                accountLocked = true;
+                log.error("Fal.ai account locked (likely exhausted balance). Provider will be disabled until balance is restored.");
+            }
+            throw new IllegalStateException("Fal.ai image generation failed: " + e.getStatusCode(), e);
         } catch (Exception e) {
             log.error("Error calling Fal.ai API: {}", e.getMessage(), e);
+            throw new IllegalStateException("Fal.ai image generation failed", e);
         }
 
         return "/img/placeholder.png";
@@ -157,11 +167,14 @@ public class FalAiProvider implements AIProvider {
 
     @Override
     public Set<Capability> getCapabilities() {
+        if (!supportsImageGeneration()) {
+            return EnumSet.noneOf(Capability.class);
+        }
         return EnumSet.of(Capability.IMAGE_GENERATION, Capability.REAL_TIME);
     }
 
     public boolean supportsImageGeneration() {
-        return apiKey != null && !apiKey.isEmpty();
+        return apiKey != null && !apiKey.isEmpty() && !accountLocked;
     }
 
     public String enhanceImage(String imageUrl, String enhancementType, Map<String, Object> params) {

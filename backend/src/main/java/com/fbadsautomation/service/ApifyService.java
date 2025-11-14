@@ -2,7 +2,11 @@ package com.fbadsautomation.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fbadsautomation.dto.AdPlatform;
 import com.fbadsautomation.dto.CompetitorAdDTO;
+import com.fbadsautomation.dto.PlatformSearchErrorCode;
+import com.fbadsautomation.dto.PlatformSearchMode;
+import com.fbadsautomation.dto.PlatformSearchResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -39,6 +43,68 @@ public class ApifyService {
         this.objectMapper = objectMapper;
     }
 
+    private String normalizeRegion(String region) {
+        if (region == null || region.isBlank()) {
+            return "US";
+        }
+        return region.trim().toUpperCase();
+    }
+
+    private List<String> buildTikTokFallbackRegions(String region) {
+        List<String> fallbacks = new ArrayList<>();
+        if (!"US".equals(region)) {
+            fallbacks.add("US");
+        }
+        if ("VN".equals(region)) {
+            fallbacks.add("SG");
+        }
+        if (fallbacks.isEmpty()) {
+            fallbacks.add("GLOBAL");
+        }
+        return fallbacks;
+    }
+
+    private String buildTikTokIframeUrl(String brandName) {
+        String encoded = java.net.URLEncoder.encode(brandName != null ? brandName : "", java.nio.charset.StandardCharsets.UTF_8);
+        return "https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en?keyword=" + encoded;
+    }
+
+    private PlatformSearchResult detectDatasetIssue(JsonNode dataset, PlatformSearchResult.PlatformSearchResultBuilder builder) {
+        if (dataset == null || !dataset.isArray() || dataset.size() == 0) {
+            return null;
+        }
+
+        JsonNode first = dataset.get(0);
+        if (first.has("code") && first.has("msg")) {
+            String msg = first.get("msg").asText("Apify error");
+            int code = first.get("code").asInt();
+            log.warn("Apify dataset reported code {} with message: {}", code, msg);
+            String lower = msg.toLowerCase();
+
+            if (lower.contains("valid cookies")) {
+                return builder
+                    .success(false)
+                    .mode(PlatformSearchMode.ERROR)
+                    .errorCode(PlatformSearchErrorCode.CONFIG_MISSING)
+                    .message("TikTok yêu cầu cookie hợp lệ để lấy dữ liệu (" + msg + ")")
+                    .friendlySuggestion("Cập nhật cookie TikTok trong cấu hình Apify hoặc dùng iframe.")
+                    .retryable(false)
+                    .build();
+            }
+
+            return builder
+                .success(false)
+                .mode(PlatformSearchMode.ERROR)
+                .errorCode(PlatformSearchErrorCode.PROVIDER_ERROR)
+                .message("Apify trả về lỗi: " + msg)
+                .friendlySuggestion("Thử lại sau hoặc kiểm tra actor TikTok Creative Center.")
+                .retryable(code != 0)
+                .build();
+        }
+
+        return null;
+    }
+
     /**
      * Check if Apify is configured and available
      */
@@ -47,42 +113,105 @@ public class ApifyService {
     }
 
     /**
-     * Search TikTok Creative Center for competitor ads
-     *
-     * @param brandName Brand name to search for
-     * @param region Region code (e.g., "VN", "US")
-     * @param limit Maximum number of results
-     * @return List of competitor ads
+     * Search TikTok Creative Center for competitor ads and return unified result
      */
-    public List<CompetitorAdDTO> searchTikTokAds(String brandName, String region, int limit) {
+    public PlatformSearchResult searchTikTokAds(String brandName, String region, int limit) {
+        String sanitizedBrand = brandName != null ? brandName.trim() : "";
+        String normalizedRegion = normalizeRegion(region);
+
+        PlatformSearchResult.PlatformSearchResultBuilder builder = PlatformSearchResult.builder()
+            .platform(AdPlatform.TIKTOK)
+            .brandName(sanitizedBrand)
+            .region(normalizedRegion)
+            .mode(PlatformSearchMode.IFRAME)
+            .iframeUrl(buildTikTokIframeUrl(sanitizedBrand))
+            .fallbackRegions(buildTikTokFallbackRegions(normalizedRegion));
+
         if (!isAvailable()) {
             log.warn("Apify not configured, cannot search TikTok ads");
-            return null;
+            return builder
+                .success(false)
+                .errorCode(PlatformSearchErrorCode.CONFIG_MISSING)
+                .message("TikTok Ads search chưa được cấu hình. Vui lòng thêm Apify API key/cookie.")
+                .friendlySuggestion("Sử dụng iframe Creative Center hoặc cấu hình Apify để có dữ liệu chi tiết.")
+                .build();
         }
 
-        try {
-            log.info("Starting Apify actor for TikTok search: {}", brandName);
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("actorId", tiktokActorId);
+        metadata.put("region", normalizedRegion);
 
-            // Step 1: Start actor run
-            String runId = startActorRun(brandName, region, limit);
+        try {
+            log.info("Starting Apify actor for TikTok search: {}", sanitizedBrand);
+
+            String runId = startActorRun(sanitizedBrand, normalizedRegion, limit);
+            metadata.put("runId", runId);
+
             if (runId == null) {
                 log.error("Failed to start Apify actor run");
-                return null;
+                builder.metadata(metadata);
+                return builder
+                    .success(false)
+                    .mode(PlatformSearchMode.ERROR)
+                    .errorCode(PlatformSearchErrorCode.PROVIDER_ERROR)
+                    .message("Không thể khởi chạy Apify actor cho TikTok.")
+                    .friendlySuggestion("Kiểm tra lại API key hoặc giới hạn run của Apify.")
+                    .retryable(true)
+                    .build();
             }
 
-            // Step 2: Poll for completion
-            JsonNode result = pollForResults(runId);
-            if (result == null) {
+            JsonNode dataset = pollForResults(runId);
+            if (dataset == null) {
                 log.error("Failed to get results from Apify actor");
-                return null;
+                builder.metadata(metadata);
+                return builder
+                    .success(false)
+                    .mode(PlatformSearchMode.ERROR)
+                    .errorCode(PlatformSearchErrorCode.TEMPORARY_ERROR)
+                    .message("Không lấy được kết quả từ Apify. Vui lòng thử lại.")
+                    .friendlySuggestion("Đợi vài phút và tìm lại hoặc mở iframe.")
+                    .retryable(true)
+                    .build();
             }
 
-            // Step 3: Parse results
-            return parseApifyResults(result, limit);
+            metadata.put("datasetSize", dataset.size());
+            builder.metadata(metadata);
+
+            PlatformSearchResult datasetIssue = detectDatasetIssue(dataset, builder);
+            if (datasetIssue != null) {
+                return datasetIssue;
+            }
+
+            List<CompetitorAdDTO> ads = parseApifyResults(dataset, limit);
+            if (!ads.isEmpty()) {
+                return builder
+                    .success(true)
+                    .mode(PlatformSearchMode.DATA)
+                    .errorCode(PlatformSearchErrorCode.NONE)
+                    .ads(ads)
+                    .totalResults(ads.size())
+                    .message(String.format("Found %d TikTok ads for %s", ads.size(), sanitizedBrand))
+                    .build();
+            }
+
+            return builder
+                .success(false)
+                .mode(PlatformSearchMode.EMPTY)
+                .errorCode(PlatformSearchErrorCode.NO_RESULTS)
+                .message(String.format("Không tìm thấy quảng cáo TikTok cho %s tại %s", sanitizedBrand, normalizedRegion))
+                .friendlySuggestion("Thử từ khóa rộng hơn hoặc xem trực tiếp bằng iframe.")
+                .build();
 
         } catch (Exception e) {
             log.error("Error calling Apify for TikTok ads: {}", e.getMessage(), e);
-            return null;
+            return builder
+                .success(false)
+                .mode(PlatformSearchMode.ERROR)
+                .errorCode(PlatformSearchErrorCode.PROVIDER_ERROR)
+                .message("TikTok Ads search gặp lỗi: " + e.getMessage())
+                .friendlySuggestion("Kiểm tra lại thông tin đăng nhập Apify hoặc dùng iframe.")
+                .retryable(true)
+                .build();
         }
     }
 

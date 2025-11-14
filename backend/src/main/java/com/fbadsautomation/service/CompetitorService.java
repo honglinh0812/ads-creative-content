@@ -1,6 +1,9 @@
 package com.fbadsautomation.service;
 
 import com.fbadsautomation.dto.CompetitorAdDTO;
+import com.fbadsautomation.dto.PlatformSearchErrorCode;
+import com.fbadsautomation.dto.PlatformSearchMode;
+import com.fbadsautomation.dto.PlatformSearchResult;
 import com.fbadsautomation.exception.ResourceException;
 import com.fbadsautomation.model.CompetitorSearch;
 import com.fbadsautomation.model.User;
@@ -499,45 +502,33 @@ public class CompetitorService {
     }
 
     /**
-     * Search Google Ads using SerpAPI
-     *
-     * @param brandName Brand name to search
-     * @param region Target region code
-     * @param userId User performing search
-     * @param limit Maximum number of ads
-     * @return List of competitor ads or null for iframe fallback
+     * Search Google Ads using SerpAPI and return structured/fallback response.
      */
-    public List<CompetitorAdDTO> searchGoogleAds(String brandName, String region, Long userId, int limit) {
+    public PlatformSearchResult searchGoogleAds(String brandName, String region, Long userId, int limit) {
         log.info("Searching Google Ads for brand: {}, region: {}", brandName, region);
 
-        // Validate user
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ResourceException.notFound("User", String.valueOf(userId)));
 
-        // Sanitize brand name
         String sanitizedBrand = sanitizeBrandName(brandName);
         int safeLimit = Math.min(Math.max(limit, 1), 50);
 
-        // Try SerpAPI if available
-        if (serpApiService != null && serpApiService.isAvailable()) {
-            try {
-                List<CompetitorAdDTO> ads = serpApiService.searchGoogleAds(sanitizedBrand, region, safeLimit);
+        PlatformSearchResult result = serpApiService.searchGoogleAds(sanitizedBrand, region, safeLimit);
+        boolean hasStructuredData = result != null
+                && result.getMode() == PlatformSearchMode.DATA
+                && result.getAds() != null
+                && !result.getAds().isEmpty();
 
-                if (ads != null && !ads.isEmpty()) {
-                    // Save search history
-                    saveSearchHistory(sanitizedBrand, region, user, "GOOGLE", ads.size(), true);
-                    return ads;
-                }
-            } catch (Exception e) {
-                log.error("SerpAPI search failed: {}", e.getMessage());
-            }
-        } else {
-            log.info("SerpAPI not available, will use iframe mode");
-        }
+        saveSearchHistory(
+            sanitizedBrand,
+            region,
+            user,
+            "GOOGLE",
+            hasStructuredData && result.getTotalResults() != null ? result.getTotalResults() : 0,
+            hasStructuredData
+        );
 
-        // Return null to trigger iframe fallback
-        saveSearchHistory(sanitizedBrand, region, user, "GOOGLE", 0, false);
-        return null;
+        return result;
     }
 
     /**
@@ -549,46 +540,52 @@ public class CompetitorService {
      * @param limit Maximum number of ads
      * @return List of competitor ads or null for iframe fallback
      */
-    public List<CompetitorAdDTO> searchTikTokAds(String brandName, String region, Long userId, int limit) {
+    public PlatformSearchResult searchTikTokAds(String brandName, String region, Long userId, int limit) {
         log.info("TikTok search requested for: {}", brandName);
 
-        // Validate user
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ResourceException.notFound("User", String.valueOf(userId)));
 
         String sanitizedBrand = sanitizeBrandName(brandName);
 
-        // Check if Apify is available
-        if (apifyService == null || !apifyService.isAvailable()) {
-            log.warn("Apify service not available, falling back to iframe mode for TikTok");
-            saveSearchHistory(sanitizedBrand, region, user, "TIKTOK", 0, true);
-            return null; // Trigger iframe mode on frontend
+        PlatformSearchResult result;
+        if (apifyService == null) {
+            log.warn("Apify service bean not available, returning iframe fallback for TikTok");
+            result = PlatformSearchResult.builder()
+                .success(false)
+                .platform(com.fbadsautomation.dto.AdPlatform.TIKTOK)
+                .brandName(sanitizedBrand)
+                .region(region)
+                .mode(PlatformSearchMode.IFRAME)
+                .errorCode(PlatformSearchErrorCode.CONFIG_MISSING)
+                .message("TikTok Ads search chưa khả dụng trên hệ thống này.")
+                .iframeUrl(buildTikTokIframeUrl(sanitizedBrand))
+                .friendlySuggestion("Cấu hình Apify để nhận dữ liệu chi tiết hoặc dùng iframe.")
+                .build();
+        } else {
+            result = apifyService.searchTikTokAds(sanitizedBrand, region, limit);
         }
 
-        try {
-            log.info("Using Apify to search TikTok ads for: {}", sanitizedBrand);
+        boolean hasStructuredData = result != null
+                && result.getMode() == PlatformSearchMode.DATA
+                && result.getAds() != null
+                && !result.getAds().isEmpty();
 
-            // Call Apify service
-            List<CompetitorAdDTO> ads = apifyService.searchTikTokAds(sanitizedBrand, region, limit);
+        saveSearchHistory(
+            sanitizedBrand,
+            region,
+            user,
+            "TIKTOK",
+            hasStructuredData && result.getTotalResults() != null ? result.getTotalResults() : 0,
+            hasStructuredData
+        );
 
-            if (ads != null && !ads.isEmpty()) {
-                // Save successful search history
-                saveSearchHistory(sanitizedBrand, region, user, "TIKTOK", ads.size(), true);
-                log.info("Found {} TikTok ads for brand: {}", ads.size(), sanitizedBrand);
-                return ads;
-            } else {
-                // No results found, fallback to iframe
-                log.warn("No TikTok ads found for brand: {}, falling back to iframe", sanitizedBrand);
-                saveSearchHistory(sanitizedBrand, region, user, "TIKTOK", 0, false);
-                return null;
-            }
+        return result;
+    }
 
-        } catch (Exception e) {
-            // Error occurred, fallback to iframe
-            log.error("Error searching TikTok ads via Apify: {}", e.getMessage(), e);
-            saveSearchHistory(sanitizedBrand, region, user, "TIKTOK", 0, false);
-            return null; // Trigger iframe mode as fallback
-        }
+    private String buildTikTokIframeUrl(String brandName) {
+        String encoded = java.net.URLEncoder.encode(brandName != null ? brandName : "", java.nio.charset.StandardCharsets.UTF_8);
+        return "https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en?keyword=" + encoded;
     }
 
     /**
