@@ -39,7 +39,6 @@ jobs:
       - name: Validate Flyway Migrations
         run: |
           cd backend
-
           # Check migration file naming convention
           echo "=== Checking migration file naming convention ==="
           invalid_files=$(find src/main/resources/db/migration -type f ! -name 'V*__*.sql' -name '*.sql' 2>/dev/null | wc -l)
@@ -49,12 +48,10 @@ jobs:
             exit 1
           fi
           echo "✅ All migration files follow naming convention"
-
           # List all migrations
           echo ""
           echo "=== Current migration files ==="
           ls -1 src/main/resources/db/migration/V*.sql 2>/dev/null || echo "No migrations found"
-
           # Validate SQL syntax (basic check)
           echo ""
           echo "=== Validating SQL syntax ==="
@@ -67,8 +64,6 @@ jobs:
             fi
           done
           echo "✅ SQL syntax validation completed"
-
-
   build:
     name: Build and push images
     runs-on: ubuntu-latest
@@ -101,7 +96,6 @@ jobs:
           tags: |
             ${{ env.BACKEND_IMAGE }}:latest
             ${{ env.BACKEND_IMAGE }}:${{ steps.vars.outputs.sha_short }}
-
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
         with:
@@ -115,7 +109,6 @@ jobs:
           tags: |
             ${{ env.FRONTEND_IMAGE }}:latest
             ${{ env.FRONTEND_IMAGE }}:${{ steps.vars.outputs.sha_short }}
-
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
@@ -131,153 +124,68 @@ jobs:
           echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ env.GCP_HOST }} >> ~/.ssh/known_hosts
-
       - name: Pre-deployment Migration Safety Check
         run: |
           ssh -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }} << 'ENDSSH'
             set -e
-            export PATH="/usr/local/bin:$PATH"
-
-            docker_compose() {
-              if command -v docker-compose >/dev/null 2>&1; then
-                docker-compose "$@"
-              else
-                docker compose "$@"
-              fi
-            }
             echo "=== Pre-Deployment Migration Safety Check ==="
-
             cd ${{ env.DEPLOY_PATH }}
-
-            echo "Syncing repository to origin/main for validation..."
-            git fetch origin >/dev/null 2>&1 || true
-            git reset --hard origin/main >/dev/null 2>&1 || true
-
-            echo "Ensuring PostgreSQL service is running..."
-            docker_compose up -d postgres
-
-            POSTGRES_CONTAINER=$(docker_compose ps -q postgres | head -n 1)
-            if [ -z "$POSTGRES_CONTAINER" ]; then
-              echo "❌ Could not determine Postgres container ID from docker compose"
-              docker_compose ps postgres || true
-              exit 1
-            fi
-
-            echo "Waiting for Postgres container ($POSTGRES_CONTAINER) to be running..."
-            TIMEOUT=15
-            ELAPSED=0
-            while [ $ELAPSED -lt $TIMEOUT ]; do
-              STATUS=$(docker inspect -f '{{.State.Status}}' "$POSTGRES_CONTAINER" 2>/dev/null || echo "unknown")
-              HEALTH=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$POSTGRES_CONTAINER" 2>/dev/null || echo "none")
-
-              if [ "$STATUS" = "running" ] && { [ "$HEALTH" = "healthy" ] || [ "$HEALTH" = "none" ]; }; then
-                echo "Postgres container is running (status=$STATUS, health=$HEALTH)"
-                break
-              fi
-
-              if [ "$STATUS" = "exited" ] || [ "$STATUS" = "dead" ]; then
-                echo "Postgres container exited unexpectedly (status=$STATUS). Recent logs:"
-                docker logs --tail=100 "$POSTGRES_CONTAINER" || true
-                exit 1
-              fi
-
-              sleep 3
-              ELAPSED=$((ELAPSED + 3))
-              echo "Waiting... (${ELAPSED}s/${TIMEOUT}s) status=$STATUS health=$HEALTH"
-            done
-
-            if [ $ELAPSED -ge $TIMEOUT ]; then
-              echo "Postgres did not become ready within $TIMEOUT seconds. Recent logs:"
-              docker logs --tail=100 "$POSTGRES_CONTAINER" || true
-              exit 1
-            fi
-
-            POSTGRES_CMD=(docker exec -i "$POSTGRES_CONTAINER")
-
             # Check if database is accessible
             echo "1. Checking database connectivity..."
-            if "${POSTGRES_CMD[@]}" pg_isready -U postgres; then
+            if docker-compose exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
               echo "✅ Database is accessible"
             else
-              echo "Postgres status:"
-              docker_compose ps postgres || true
-              echo ""
-              echo "Last 50 lines of Postgres logs:"
-              docker_compose logs --tail=50 postgres || true
               echo "❌ ERROR: Database is not accessible!"
               exit 1
             fi
-
             # Create database backup
             echo ""
             echo "2. Creating database backup..."
             BACKUP_DIR="/tmp/db_backups"
             mkdir -p "$BACKUP_DIR"
             BACKUP_FILE="$BACKUP_DIR/backup_$(date +%Y%m%d_%H%M%S).sql"
-
-            if "${POSTGRES_CMD[@]}" pg_dump -U postgres fbadsautomation > "$BACKUP_FILE" 2>/dev/null; then
+            if docker-compose exec -T postgres pg_dump -U postgres fbadsautomation > "$BACKUP_FILE" 2>/dev/null; then
               BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
               echo "✅ Database backed up to $BACKUP_FILE ($BACKUP_SIZE)"
-
               # Keep only last 10 backups
               ls -t "$BACKUP_DIR"/backup_*.sql 2>/dev/null | tail -n +11 | xargs rm -f 2>/dev/null || true
             else
               echo "⚠️  WARNING: Database backup failed!"
             fi
-
             # Check current migration status
             echo ""
             echo "3. Checking current migration status..."
-            "${POSTGRES_CMD[@]}" psql -U postgres fbadsautomation -c "SELECT version, description, installed_on, success FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;" 2>/dev/null || echo "Could not query migration history"
-
+            docker-compose exec -T postgres psql -U postgres fbadsautomation -c "SELECT version, description, installed_on, success FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;" 2>/dev/null || echo "Could not query migration history"
             echo ""
             echo "=== Pre-deployment checks completed ==="
           ENDSSH
-
       - name: Deploy to GCP server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }} << 'ENDSSH'
             set -e
-            export PATH="/usr/local/bin:$PATH"
-
-            docker_compose() {
-              if command -v docker-compose >/dev/null 2>&1; then
-                docker-compose "$@"
-              else
-                docker compose "$@"
-              fi
-            }
-
             echo "Starting deployment..."
             cd ${{ env.DEPLOY_PATH }}
-
             # Pull latest code
             echo "Pulling latest code from GitHub..."
             git fetch origin
             git reset --hard origin/main
-
             # Login to Docker Hub
             echo "Logging in to Docker Hub..."
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-
             # Pull latest images
             echo "Pulling latest Docker images..."
             docker pull ${{ env.BACKEND_IMAGE }}:latest
             docker pull ${{ env.FRONTEND_IMAGE }}:latest
-
             # Health check before deployment
             echo "Checking current service health..."
             BACKEND_HEALTHY=$(docker inspect --format='{{.State.Health.Status}}' fbads-backend 2>/dev/null || echo "none")
             echo "Current backend health: $BACKEND_HEALTHY"
-
             # Clean up old backend images to avoid tag conflicts
             echo "Cleaning up old backend images..."
             docker images ${{ env.BACKEND_IMAGE }} --format "{{.ID}} {{.Tag}}" | grep "<none>" | awk '{print $1}' | xargs -r docker rmi -f || true
-
             # Force recreate backend with new image
             echo "Force recreating backend container with latest image..."
-            docker_compose up -d --force-recreate --no-deps backend
-
+            docker-compose up -d --force-recreate --no-deps backend
             # Wait for new backend to be healthy
             echo "Waiting for backend to be healthy..."
             TIMEOUT=120
@@ -292,62 +200,48 @@ jobs:
               sleep 5
               ELAPSED=$((ELAPSED + 5))
             done
-
             if [ $ELAPSED -ge $TIMEOUT ]; then
               echo "Backend failed health check! Check logs with: docker logs fbads-backend"
               exit 1
             fi
-
             # Update frontend
             echo "Updating frontend..."
-            docker_compose up -d --force-recreate --no-deps frontend
-
+            docker-compose up -d --force-recreate --no-deps frontend
             # Wait for frontend to be ready
             echo "Waiting for frontend..."
             sleep 10
-
             # Clear nginx cache if exists (in case you have proxy caching)
             echo "Clearing any cached assets..."
             docker exec fbads-nginx rm -rf /var/cache/nginx/* 2>/dev/null || true
             docker exec fbads-nginx nginx -s reload 2>/dev/null || true
-
             # Final health check
             echo "Final health check..."
-            docker_compose ps
-
+            docker-compose ps
             # Cleanup old images
             echo "Cleaning up old Docker images..."
             docker image prune -af --filter "until=24h" || true
-
             echo "Deployment completed successfully!"
           ENDSSH
-
       - name: Verify deployment
         run: |
           echo "Verifying deployment..."
-
           # Wait a bit for services to stabilize
           sleep 15
-
           # Check backend health
           BACKEND_STATUS=$(curl -f -s -o /dev/null -w "%{http_code}" https://linhnh.site/api/actuator/health || echo "000")
-
           if [ "$BACKEND_STATUS" = "200" ]; then
             echo "Backend is responding correctly (HTTP $BACKEND_STATUS)"
           else
             echo "Backend health check failed (HTTP $BACKEND_STATUS)"
             exit 1
           fi
-
           # Check frontend
           FRONTEND_STATUS=$(curl -f -s -o /dev/null -w "%{http_code}" https://linhnh.site || echo "000")
-
           if [ "$FRONTEND_STATUS" = "200" ]; then
             echo "Frontend is responding correctly (HTTP $FRONTEND_STATUS)"
           else
             echo "Frontend health check returned HTTP $FRONTEND_STATUS"
           fi
-
       - name: Send deployment notification
         if: always()
         uses: dawidd6/action-send-mail@v3
@@ -362,20 +256,14 @@ jobs:
           from: GitHub Actions <${{ secrets.GMAIL_USERNAME }}>
           body: |
             Deployment Status: ${{ job.status }}
-
             Repository: ${{ github.repository }}
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}
             Author: ${{ github.actor }}
-
             Workflow: ${{ github.workflow }}
             Run ID: ${{ github.run_id }}
-
             ${{ job.status == 'success' && 'All services are running and healthy!' || '❌ Deployment failed! Please check the logs.' }}
-
             View run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-
   rollback:
     name: Rollback Deployment
     runs-on: ubuntu-latest
@@ -389,29 +277,16 @@ jobs:
           echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ env.GCP_HOST }} >> ~/.ssh/known_hosts
-
       - name: Perform rollback
         run: |
           ssh -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }} << 'ENDSSH'
             echo "Performing rollback..."
             cd ${{ env.DEPLOY_PATH }}
-            export PATH="/usr/local/bin:$PATH"
-
-            docker_compose() {
-              if command -v docker-compose >/dev/null 2>&1; then
-                docker-compose "$@"
-              else
-                docker compose "$@"
-              fi
-            }
-
             # Pull previous images
             docker pull ${{ env.BACKEND_IMAGE }}:previous || echo "No previous backend image"
             docker pull ${{ env.FRONTEND_IMAGE }}:previous || echo "No previous frontend image"
-
             # Restart with previous images
-            docker_compose down
-            docker_compose up -d
-
+            docker-compose down
+            docker-compose up -d
             echo "Rollback completed"
           ENDSSH
