@@ -213,6 +213,7 @@ export default {
   // Analytics endpoints
   analyticsAPI: {
     getDashboard: (timeRange = '30d') => apiClient.get(`/analytics/dashboard?timeRange=${timeRange}`),
+    getContentInsights: () => apiClient.get('/analytics/content-insights'),
     exportData: (type, params, format) => apiClient.get(`/analytics/export/${type}`, {
       params: { ...params, format },
       responseType: 'blob'
@@ -225,7 +226,12 @@ export default {
     getHighPriorityRecommendations: () => apiClient.get('/optimization/recommendations/priority/high'),
     acceptRecommendation: (id) => apiClient.post(`/optimization/recommendations/${id}/accept`),
     dismissRecommendation: (id, reason) => apiClient.post(`/optimization/recommendations/${id}/dismiss`, { reason }),
-    updateRecommendationSettings: (settings) => apiClient.put('/optimization/settings', settings)
+    updateRecommendationSettings: (settings) => apiClient.put('/optimization/settings', settings),
+    analyzeAds: (payload) => apiClient.post('/optimization/ad-insights/analyze', payload),
+    saveAdInsights: (payload) => apiClient.post('/optimization/ad-insights/save', payload),
+    getInsightHistory: (page = 0, size = 10) => apiClient.get('/optimization/ad-insights/history', {
+      params: { page, size }
+    })
   },
 
   // Persona endpoints

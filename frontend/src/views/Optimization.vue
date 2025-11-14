@@ -1,788 +1,578 @@
 <template>
-  <div class="optimization-view">
-    <!-- Mobile Header -->
-    <MobileHeader 
-      v-if="isMobile" 
-      @toggle-mobile-menu="toggleMobileMenu"
-    />
-    
-    <!-- Desktop Page Header -->
-    <div v-if="!isMobile" class="page-header">
-      <a-page-header
-        title="Optimization Center"
-        sub-title="AI-powered recommendations to optimize your campaigns, reduce costs, and maximize performance"
-      >
-        <template #extra>
-        </template>
-      </a-page-header>
-    </div>
-
-    <!-- Mobile Page Header -->
-    <div v-if="isMobile" class="mobile-header">
-      <h1>Optimization Center</h1>
-    </div>
-
-    <!-- Navigation Tabs -->
-    <div class="nav-tabs">
-      <a-tabs v-model:activeKey="activeTab" type="card" class="optimization-tabs">
-        <a-tab-pane key="all" tab="All Recommendations">
-          <OptimizationDashboard />
-        </a-tab-pane>
-        
-        <a-tab-pane key="priority" tab="High Priority">
-          <div class="priority-section">
-            <div class="section-header">
-              <h2>High Priority Recommendations</h2>
-              <p>These recommendations require immediate attention and can significantly impact your performance.</p>
-            </div>
-            
-            <div v-if="highPriorityLoading" class="loading-state">
-              <a-spin size="large" />
-              <p>Loading high priority recommendations...</p>
-            </div>
-            
-            <div v-else-if="highPriorityRecommendations.length === 0" class="empty-state">
-              <a-empty description="Great job! You don't have any high priority recommendations at the moment.">
-                <template #image>
-                  <check-circle-outlined style="font-size: 48px; color: #52c41a;" />
-                </template>
-              </a-empty>
-            </div>
-            
-            <div v-else class="recommendations-grid">
-              <RecommendationCard
-                v-for="recommendation in highPriorityRecommendations.filter(r => r != null && r.id != null)"
-                :key="recommendation.id"
-                :recommendation="recommendation"
-                @accept="handleAcceptRecommendation"
-                @dismiss="handleDismissRecommendation"
-                @schedule="handleScheduleRecommendation"
-                @view-details="handleViewDetails"
-              />
-            </div>
-          </div>
-        </a-tab-pane>
-        
-        <a-tab-pane key="category" tab="By Category">
-          <div class="category-section">
-            <div class="section-header">
-              <h2>Recommendations by Category</h2>
-              <p>Explore recommendations organized by optimization category.</p>
-            </div>
-            
-            <a-row :gutter="[16, 16]">
-              <a-col 
-                v-for="category in recommendationCategories" 
-                :key="category.name"
-                :xs="24" :sm="12" :lg="8"
-              >
-                <a-card 
-                  class="category-card" 
-                  hoverable
-                  @click="selectCategory(category)"
-                >
-                  <template #title>
-                    <div class="category-title">
-                      <div class="category-icon" :style="{ backgroundColor: category.color + '20', color: category.color }">
-                        <i :class="category.icon"></i>
-                      </div>
-                      <span>{{ category.name }}</span>
-                    </div>
-                  </template>
-                  <template #extra>
-                    <right-outlined />
-                  </template>
-                  <p>{{ category.description }}</p>
-                  <div class="category-stats">
-                    <a-statistic 
-                      :value="category.count" 
-                      suffix="recommendations"
-                      :value-style="{ fontSize: '16px', color: category.color }"
-                    />
-                    <a-statistic 
-                      :value="category.impact" 
-                      suffix="% potential impact"
-                      :value-style="{ fontSize: '16px', color: '#52c41a' }"
-                    />
-                  </div>
-                </a-card>
-              </a-col>
-            </a-row>
-          </div>
-        </a-tab-pane>
-        
-        <a-tab-pane key="tracking" tab="Performance">
-          <div class="tracking-section">
-            <div class="section-header">
-              <h2>Implementation Tracking</h2>
-              <p>Monitor the effectiveness of implemented recommendations.</p>
-            </div>
-            
-            <!-- Implementation Stats -->
-            <a-row :gutter="[16, 16]" style="margin-bottom: 24px;">
-              <a-col :xs="24" :sm="8">
-                <a-card class="stat-card">
-                  <a-statistic
-                    title="Recommendations Implemented"
-                    :value="implementationStats.totalImplemented"
-                    :value-style="{ color: '#1890ff' }"
-                  >
-                    <template #prefix>
-                      <check-circle-outlined />
-                    </template>
-                  </a-statistic>
-                </a-card>
-              </a-col>
-              
-              <a-col :xs="24" :sm="8">
-                <a-card class="stat-card">
-                  <a-statistic
-                    title="Average Impact Achieved"
-                    :value="implementationStats.averageImpact"
-                    suffix="%"
-                    :value-style="{ color: '#52c41a' }"
-                  >
-                    <template #prefix>
-                      <line-chart-outlined />
-                    </template>
-                  </a-statistic>
-                </a-card>
-              </a-col>
-              
-              <a-col :xs="24" :sm="8">
-                <a-card class="stat-card">
-                  <a-statistic
-                    title="Success Rate"
-                    :value="implementationStats.successRate"
-                    suffix="%"
-                    :value-style="{ color: '#fa8c16' }"
-                  >
-                    <template #prefix>
-                      <trophy-outlined />
-                    </template>
-                  </a-statistic>
-                </a-card>
-              </a-col>
-            </a-row>
-            
-            <!-- Implementation History -->
-            <a-card title="Recent Implementations">
-              <a-list
-                :data-source="implementationHistory"
-                item-layout="horizontal"
-              >
-                <template #renderItem="{ item }">
-                  <a-list-item>
-                <template #actions>
-                  <a-tag :color="getStatusColor(item.status)">
-                    {{ formatStatus(item.status) }}
-                  </a-tag>
-                </template>
-                <a-list-item-meta>
-                  <template #avatar>
-                    <a-avatar :style="{ backgroundColor: getStatusColor(item.status) }">
-                      <i :class="getImplementationStatusIcon(item.status)"></i>
-                    </a-avatar>
-                  </template>
-                  <template #title>
-                    {{ item.title }}
-                  </template>
-                  <template #description>
-                    {{ item.description }}
-                    <div class="history-meta">
-                      <span class="implementation-date">{{ formatDate(item.implementedAt) }}</span>
-                      <span class="implementation-impact" :class="getImpactClass(item.actualImpact)">
-                        {{ item.actualImpact > 0 ? '+' : '' }}{{ item.actualImpact.toFixed(1) }}% impact
-                      </span>
-                    </div>
-                  </template>
-                </a-list-item-meta>
-              </a-list-item>
-            </template>
-          </a-list>
-        </a-card>
-      </div>
-    </a-tab-pane>
-    
-    <a-tab-pane key="settings" tab="Settings">
-      <div class="settings-section">
-        <div class="section-header">
-          <h2>Optimization Settings</h2>
-          <p>Configure how recommendations are generated and delivered.</p>
+  <div class="optimization-lite">
+    <div class="lite-card selection-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">{{ t('optimizationLite.title') }}</p>
+          <h2>{{ t('optimizationLite.subtitle') }}</h2>
+          <p class="hint">{{ t('optimizationLite.description') }}</p>
         </div>
-        
-        <a-card>
-          <a-form
-            :model="settings"
-            layout="vertical"
-            @finish="saveSettings"
-          >
-            <a-row :gutter="16">
-              <a-col :xs="24" :sm="12">
-                <a-form-item label="Recommendation Frequency">
-                  <a-select v-model:value="settings.frequency">
-                    <a-select-option value="daily">Daily</a-select-option>
-                    <a-select-option value="weekly">Weekly</a-select-option>
-                    <a-select-option value="monthly">Monthly</a-select-option>
-                  </a-select>
-                </a-form-item>
-              </a-col>
-              
-              <a-col :xs="24" :sm="12">
-                <a-form-item label="Minimum Confidence Level">
-                  <a-slider
-                    v-model:value="settings.minConfidence"
-                    :min="0.5"
-                    :max="1"
-                    :step="0.05"
-                    :marks="{ 0.5: '50%', 0.7: '70%', 0.9: '90%', 1: '100%' }"
-                  />
-                </a-form-item>
-              </a-col>
-            </a-row>
-            
-            <a-form-item label="Auto-Accept Low Risk Recommendations">
-              <a-switch v-model:checked="settings.autoAccept" />
-              <span style="margin-left: 8px;">Automatically implement low-risk recommendations with high confidence</span>
-            </a-form-item>
-            
-            <a-form-item label="Excluded Recommendation Types">
-              <a-checkbox-group v-model:value="settings.excludedTypes">
-                <a-row>
-                  <a-col :span="8" v-for="type in recommendationTypes" :key="type.value">
-                    <a-checkbox :value="type.value">{{ type.label }}</a-checkbox>
-                  </a-col>
-                </a-row>
-              </a-checkbox-group>
-            </a-form-item>
-            
-            <a-form-item>
-              <a-space>
-                <a-button type="primary" html-type="submit" :loading="savingSettings">
-                  <template #icon>
-                    <save-outlined />
-                  </template>
-                  Save Settings
-                </a-button>
-                <a-button @click="resetSettings">
-                  <template #icon>
-                    <reload-outlined />
-                  </template>
-                  Reset to Defaults
-                </a-button>
-              </a-space>
-            </a-form-item>
-          </a-form>
-        </a-card>
+        <div class="panel-actions">
+          <a-input-search
+            v-model:value="searchTerm"
+            :placeholder="t('optimizationLite.searchPlaceholder')"
+            allow-clear
+            @search="onSearch"
+          />
+          <a-button @click="refreshAds" :loading="adsLoading">
+            {{ t('optimizationLite.actions.refreshAds') }}
+          </a-button>
+        </div>
       </div>
-    </a-tab-pane>
-  </a-tabs>
-</div>
-</div>
+
+      <div class="table-actions">
+        <div class="selection-info">
+          <p>{{ t('optimizationLite.selectionCount', { count: selectedRowKeys.length }) }}</p>
+        </div>
+        <a-space>
+          <a-button
+            type="primary"
+            :disabled="!selectedRowKeys.length"
+            :loading="analyzeLoading"
+            @click="analyzeSelected"
+          >
+            {{ t('optimizationLite.actions.analyze') }}
+          </a-button>
+        </a-space>
+      </div>
+
+      <a-table
+        :columns="tableColumns"
+        :data-source="filteredAds"
+        :loading="adsLoading"
+        :pagination="false"
+        :row-selection="rowSelection"
+        row-key="id"
+        size="middle"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'name'">
+            <div class="ad-name-cell">
+              <strong>{{ record.name || t('optimizationLite.table.untitled') }}</strong>
+              <p class="hint">{{ record.campaignName || t('optimizationLite.table.noCampaign') }}</p>
+            </div>
+          </template>
+          <template v-else-if="column.key === 'cta'">
+            <a-tag v-if="record.callToAction">{{ record.callToAction }}</a-tag>
+            <span v-else>—</span>
+          </template>
+          <template v-else-if="column.key === 'created'">
+            {{ formatDate(record.createdDate) }}
+          </template>
+        </template>
+      </a-table>
+
+      <div class="table-footer">
+        <a-button v-if="hasMoreAds" @click="loadMoreAds" :loading="adsLoading">
+          {{ t('optimizationLite.actions.loadMoreAds') }}
+        </a-button>
+        <p v-else class="hint">{{ t('optimizationLite.noMoreAds') }}</p>
+      </div>
+    </div>
+
+    <div class="insights-grid">
+      <div class="lite-card empty-state" v-if="!analyzedInsights.length && !analyzeLoading">
+        <p class="eyebrow">{{ t('optimizationLite.empty.title') }}</p>
+        <p class="hint">{{ t('optimizationLite.empty.description') }}</p>
+      </div>
+
+      <div
+        v-for="insight in analyzedInsights"
+        :key="insight.adId"
+        class="lite-card insight-card"
+      >
+        <div class="insight-header">
+          <div>
+            <p class="eyebrow">{{ insight.campaignName || t('optimizationLite.table.noCampaign') }}</p>
+            <h3>{{ insight.adName }}</h3>
+            <p class="hint">
+              {{ t('optimizationLite.card.type', { type: insight.adType || '—' }) }}
+              · {{ formatDate(insight.createdDate) }}
+            </p>
+          </div>
+          <div class="score-pill">
+            <span>{{ Math.round(insight.scorecard.total) }}</span>
+            <p>{{ t('optimizationLite.card.score') }}</p>
+          </div>
+        </div>
+
+        <div class="suggestions">
+          <div
+            v-for="category in categoryOrder"
+            :key="category"
+            class="suggestion-column"
+          >
+            <h4>{{ categoryLabels[category] }}</h4>
+            <ul>
+              <li v-for="(suggestion, index) in (insight.suggestions[category] || [])" :key="index">
+                {{ suggestion }}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <div class="scores">
+            <div>
+              <p class="label">{{ t('optimizationLite.card.compliance') }}</p>
+              <p class="value">{{ Math.round(insight.scorecard.compliance) }}</p>
+            </div>
+            <div>
+              <p class="label">{{ t('optimizationLite.card.linguistic') }}</p>
+              <p class="value">{{ Math.round(insight.scorecard.linguistic) }}</p>
+            </div>
+            <div>
+              <p class="label">{{ t('optimizationLite.card.persuasiveness') }}</p>
+              <p class="value">{{ Math.round(insight.scorecard.persuasiveness) }}</p>
+            </div>
+          </div>
+          <a-button
+            type="primary"
+            :loading="savingInsightId === insight.adId"
+            :disabled="insight.saved"
+            @click="saveInsight(insight)"
+          >
+            {{ insight.saved ? t('optimizationLite.actions.saved') : t('optimizationLite.actions.save') }}
+          </a-button>
+        </div>
+      </div>
+    </div>
+
+    <div class="lite-card history-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">{{ t('optimizationLite.history.title') }}</p>
+          <h3>{{ t('optimizationLite.history.subtitle') }}</h3>
+        </div>
+        <a-button @click="refreshHistory" :loading="historyLoading">
+          {{ t('optimizationLite.actions.refreshHistory') }}
+        </a-button>
+      </div>
+
+      <div v-if="history.length" class="history-list">
+        <div v-for="entry in history" :key="entry.id" class="history-item">
+          <div>
+            <h4>{{ entry.adName }}</h4>
+            <p class="hint">
+              {{ entry.campaignName || t('optimizationLite.table.noCampaign') }}
+              · {{ formatDate(entry.createdAt) }}
+            </p>
+            <div class="history-tags" v-if="entry.suggestions">
+              <a-tag v-for="(items, category) in entry.suggestions" :key="category">
+                {{ categoryLabels[category] }} · {{ items.length }}
+              </a-tag>
+            </div>
+          </div>
+          <p class="score">{{ Math.round(entry.scorecard?.total || 0) }}</p>
+        </div>
+        <div class="history-footer">
+          <a-button v-if="historyHasMore" @click="loadHistory" :loading="historyLoading">
+            {{ t('optimizationLite.actions.loadMoreHistory') }}
+          </a-button>
+          <p v-else class="hint">{{ t('optimizationLite.history.end') }}</p>
+        </div>
+      </div>
+      <p v-else class="empty-text">{{ t('optimizationLite.history.empty') }}</p>
+    </div>
+
+    <a-alert
+      v-if="error"
+      type="error"
+      show-icon
+      :message="t('optimizationLite.error.title')"
+      :description="error"
+    />
+  </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
-import OptimizationDashboard from '@/components/optimization/OptimizationDashboard.vue'
-import RecommendationCard from '@/components/optimization/RecommendationCard.vue'
-import MobileHeader from '@/components/MobileHeader.vue'
-import {
-  ReloadOutlined,
-  CheckCircleOutlined,
-  RightOutlined,
-  LineChartOutlined,
-  TrophyOutlined,
-  SaveOutlined
-} from '@ant-design/icons-vue'
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { message } from 'ant-design-vue'
 import api from '@/services/api'
 
 export default {
-  name: 'OptimizationView',
-  components: {
-    OptimizationDashboard,
-    RecommendationCard,
-    MobileHeader,
-    ReloadOutlined,
-    CheckCircleOutlined,
-    RightOutlined,
-    LineChartOutlined,
-    TrophyOutlined,
-    SaveOutlined
-  },
-  
+  name: 'OptimizationLiteView',
   setup() {
-    // Reactive data
-    const activeTab = ref('all')
-    const loading = ref(false)
-    const optimizationSummary = ref(null)
-    const highPriorityRecommendations = ref([])
-    const highPriorityLoading = ref(false)
-    const isMobile = ref(false)
-    const implementationStats = ref({
-      totalImplemented: 15,
-      averageImpact: 12.5,
-      successRate: 78.3
-    })
-    const implementationHistory = ref([])
-    const settings = ref({
-      frequency: 'daily',
-      minConfidence: 0.7,
-      autoAccept: false,
-      excludedTypes: []
-    })
-    const savingSettings = ref(false)
-    
-    const recommendationCategories = ref([
+    const { t, locale } = useI18n()
+    const ads = ref([])
+    const adsLoading = ref(false)
+    const searchTerm = ref('')
+    const pagination = ref({ page: 0, size: 25, total: 0 })
+    const selectedRowKeys = ref([])
+    const analyzedInsights = ref([])
+    const analyzeLoading = ref(false)
+    const savingInsightId = ref(null)
+    const history = ref([])
+    const historyPage = ref(0)
+    const historyHasMore = ref(true)
+    const historyLoading = ref(false)
+    const error = ref(null)
+
+    const tableColumns = computed(() => [
       {
-        name: 'Budget Optimization',
-        description: 'Optimize budget allocation across campaigns',
-        icon: 'pi pi-dollar',
-        color: '#10b981',
-        count: 3,
-        impact: 18.5
+        title: t('optimizationLite.table.columns.name'),
+        key: 'name',
+        dataIndex: 'name'
       },
       {
-        name: 'AI Optimization',
-        description: 'Improve AI provider selection and content quality',
-        icon: 'pi pi-cog',
-        color: '#3b82f6',
-        count: 2,
-        impact: 12.3
+        title: t('optimizationLite.table.columns.type'),
+        key: 'type',
+        dataIndex: 'adType'
       },
       {
-        name: 'Campaign Strategy',
-        description: 'Optimize campaign objectives and targeting',
-        icon: 'pi pi-target',
-        color: '#f59e0b',
-        count: 4,
-        impact: 15.7
+        title: t('optimizationLite.table.columns.cta'),
+        key: 'cta',
+        dataIndex: 'callToAction'
       },
       {
-        name: 'Creative Optimization',
-        description: 'Refresh ad creatives and improve engagement',
-        icon: 'pi pi-image',
-        color: '#8b5cf6',
-        count: 2,
-        impact: 9.2
-      },
-      {
-        name: 'Timing Optimization',
-        description: 'Optimize ad scheduling and delivery timing',
-        icon: 'pi pi-clock',
-        color: '#ef4444',
-        count: 1,
-        impact: 6.8
+        title: t('optimizationLite.table.columns.created'),
+        key: 'created',
+        dataIndex: 'createdDate'
       }
     ])
-    
-    const recommendationTypes = ref([
-      { value: 'BUDGET_REALLOCATION', label: 'Budget Reallocation' },
-      { value: 'AI_PROVIDER_SWITCH', label: 'AI Provider Switch' },
-      { value: 'CAMPAIGN_OBJECTIVE_OPTIMIZATION', label: 'Campaign Objective' },
-      { value: 'AD_SCHEDULING', label: 'Ad Scheduling' },
-      { value: 'CONTENT_TYPE_OPTIMIZATION', label: 'Content Type' },
-      { value: 'AD_CREATIVE_REFRESH', label: 'Creative Refresh' }
-    ])
-    
-    // Methods
 
+    const rowSelection = computed(() => ({
+      selectedRowKeys: selectedRowKeys.value,
+      onChange: (keys) => {
+        selectedRowKeys.value = keys
+      }
+    }))
 
-    
-    const fetchOptimizationSummary = async () => {
-      try {
-        const response = await api.optimizationAPI.getOptimizationSummary()
-        optimizationSummary.value = response.data
-      } catch (error) {
-        console.error('Error fetching optimization summary:', error)
+    const filteredAds = computed(() => {
+      if (!searchTerm.value) return ads.value
+      const term = searchTerm.value.toLowerCase()
+      return ads.value.filter(ad =>
+        ad.name?.toLowerCase().includes(term) ||
+        ad.campaignName?.toLowerCase().includes(term)
+      )
+    })
+
+    const hasMoreAds = computed(() => ads.value.length < pagination.value.total)
+
+    const categoryOrder = ['copy', 'visual', 'cta', 'hook', 'length', 'target']
+    const categoryLabels = computed(() => ({
+      copy: t('optimizationLite.categories.copy'),
+      visual: t('optimizationLite.categories.visual'),
+      cta: t('optimizationLite.categories.cta'),
+      hook: t('optimizationLite.categories.hook'),
+      length: t('optimizationLite.categories.length'),
+      target: t('optimizationLite.categories.target')
+    }))
+
+    const mapDtoToRow = (ad) => ({
+      id: ad.id,
+      name: ad.name,
+      adType: ad.adType,
+      campaignName: ad.campaignName,
+      callToAction: ad.callToAction,
+      createdDate: ad.createdDate
+    })
+
+    const loadAds = async (reset = false) => {
+      if (reset) {
+        pagination.value.page = 0
+        ads.value = []
+        selectedRowKeys.value = []
       }
-    }
-    
-    const fetchHighPriorityRecommendations = async () => {
+      adsLoading.value = true
+      error.value = null
       try {
-        highPriorityLoading.value = true
-        console.log('[FRONTEND] Starting fetch high priority recommendations')
-        const response = await api.optimizationAPI.getHighPriorityRecommendations()
-        
-        // Debug: Log the actual response structure
-        console.log('[FRONTEND] Raw response from API:', JSON.stringify(response, null, 2))
-        
-        // Log response structure analysis
-        if (response) {
-          console.log('[FRONTEND] Response analysis - Type:', typeof response, 'Is Array:', Array.isArray(response))
-          if (typeof response === 'object') {
-            console.log('[FRONTEND] Response keys:', Object.keys(response))
-            if (response.data !== undefined) {
-              console.log('[FRONTEND] Response.data - Type:', typeof response.data, 'Value:', response.data)
-            }
-          }
-        } else {
-          console.log('[FRONTEND] Response is null or undefined')
-        }
-        
-        // Ensure we have an array to work with
-        let dataArray = []
-        if (Array.isArray(response)) {
-          dataArray = response
-          console.log('[FRONTEND] Using response directly as array, length:', dataArray.length)
-        } else if (response && typeof response === 'object' && response.data !== undefined) {
-          if (Array.isArray(response.data)) {
-            dataArray = response.data
-            console.log('[FRONTEND] Using response.data as array, length:', dataArray.length)
-          } else {
-            console.log('[FRONTEND] response.data is not an array, type:', typeof response.data)
-          }
-        } else {
-          console.log('[FRONTEND] Response is not an array or valid object with data property')
-        }
-        
-        // Issue #4: Filter out null/undefined recommendations
-        const filteredArray = dataArray.filter(r => {
-          const isValid = r != null && r.id != null
-          if (!isValid) {
-            console.log('[FRONTEND] Filtering out invalid recommendation:', r)
-          }
-          return isValid
-        })
-        
-        console.log('[FRONTEND] Final filtered recommendations count:', filteredArray.length)
-        highPriorityRecommendations.value = filteredArray
-        
-      } catch (error) {
-        console.error('[FRONTEND] Error fetching high priority recommendations:', error)
-        console.error('[FRONTEND] Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
-        })
-        // Issue #4: Ensure empty array on error
-        highPriorityRecommendations.value = []
+        const { data } = await api.ads.getAll(pagination.value.page, pagination.value.size)
+        pagination.value.total = data.totalElements || 0
+        const newAds = (data.content || []).map(mapDtoToRow)
+        ads.value = reset ? newAds : [...ads.value, ...newAds]
+      } catch (err) {
+        error.value = err?.message || 'Unable to load ads'
       } finally {
-        highPriorityLoading.value = false
-        console.log('[FRONTEND] Finished fetch high priority recommendations')
+        adsLoading.value = false
       }
     }
-    
-    const loadImplementationHistory = () => {
-      // Mock implementation history
-      implementationHistory.value = [
-        {
-          id: '1',
-          title: 'Increased Budget for Campaign A',
-          description: 'Budget increased from $500 to $750 daily',
-          implementedAt: new Date('2024-01-10'),
-          actualImpact: 22.3,
-          status: 'SUCCESS'
-        },
-        {
-          id: '2',
-          title: 'Switched to OpenAI Provider',
-          description: 'Changed AI provider for content generation',
-          implementedAt: new Date('2024-01-08'),
-          actualImpact: 15.7,
-          status: 'SUCCESS'
-        },
-        {
-          id: '3',
-          title: 'Optimized Ad Scheduling',
-          description: 'Adjusted delivery schedule for better performance',
-          implementedAt: new Date('2024-01-05'),
-          actualImpact: -2.1,
-          status: 'PARTIAL'
+
+    const refreshAds = () => loadAds(true)
+    const loadMoreAds = () => {
+      pagination.value.page += 1
+      loadAds()
+    }
+
+    const analyzeSelected = async () => {
+      analyzeLoading.value = true
+      error.value = null
+      try {
+        const payload = {
+          adIds: selectedRowKeys.value,
+          language: locale.value
         }
-      ]
-    }
-    
-    const handleAcceptRecommendation = async (recommendation) => {
-      try {
-        await api.optimizationAPI.acceptRecommendation(recommendation.id)
-        recommendation.status = 'ACCEPTED'
-      } catch (error) {
-        console.error('Error accepting recommendation:', error)
-      }
-    }
-    
-    const handleDismissRecommendation = async (recommendation, reason) => {
-      try {
-        await api.optimizationAPI.dismissRecommendation(recommendation.id, reason)
-        recommendation.status = 'DISMISSED'
-      } catch (error) {
-        console.error('Error dismissing recommendation:', error)
-      }
-    }
-    
-    const handleScheduleRecommendation = (recommendation) => {
-      console.log('Schedule recommendation:', recommendation.id)
-    }
-    
-    const handleViewDetails = (recommendation) => {
-      console.log('View details:', recommendation.id)
-    }
-    
-    const selectCategory = (category) => {
-      console.log('Selected category:', category.name)
-    }
-    
-    const saveSettings = async () => {
-      try {
-        savingSettings.value = true
-        await api.optimizationAPI.updateRecommendationSettings(settings.value)
-        // Show success message
-      } catch (error) {
-        console.error('Error saving settings:', error)
+        const { data } = await api.optimizationAPI.analyzeAds(payload)
+        analyzedInsights.value = data.data || []
+        if (!analyzedInsights.value.length) {
+          message.info(t('optimizationLite.messages.noInsights'))
+        }
+      } catch (err) {
+        console.error(err)
+        error.value = err?.message || 'Unable to analyze ads'
+        message.error(error.value)
       } finally {
-        savingSettings.value = false
+        analyzeLoading.value = false
       }
     }
-    
-    const resetSettings = () => {
-      settings.value = {
-        frequency: 'daily',
-        minConfidence: 0.7,
-        autoAccept: false,
-        excludedTypes: []
+
+    const saveInsight = async (insight) => {
+      savingInsightId.value = insight.adId
+      try {
+        await api.optimizationAPI.saveAdInsights({
+          adId: insight.adId,
+          adName: insight.adName,
+          campaignName: insight.campaignName,
+          language: locale.value,
+          suggestions: insight.suggestions,
+          scorecard: insight.scorecard
+        })
+        insight.saved = true
+        message.success(t('optimizationLite.messages.saved'))
+        refreshHistory()
+      } catch (err) {
+        console.error(err)
+        message.error(err?.message || 'Unable to save insight')
+      } finally {
+        savingInsightId.value = null
       }
     }
-    
-    const getImplementationStatusIcon = (status) => {
-      const icons = {
-        'SUCCESS': 'pi pi-check-circle',
-        'PARTIAL': 'pi pi-exclamation-circle',
-        'FAILED': 'pi pi-times-circle'
+
+    const loadHistory = async (reset = false) => {
+      if (reset) {
+        history.value = []
+        historyPage.value = 0
+        historyHasMore.value = true
       }
-      return icons[status] || 'pi pi-question-circle'
-    }
-    
-    const getStatusColor = (status) => {
-      const colors = {
-        'SUCCESS': 'green',
-        'PARTIAL': 'orange',
-        'FAILED': 'red'
+      if (!historyHasMore.value) return
+
+      historyLoading.value = true
+      try {
+        const { data } = await api.optimizationAPI.getInsightHistory(historyPage.value, 5)
+        const pageData = data.data || { content: [], last: true }
+        const entries = pageData.content || []
+        history.value = reset ? entries : [...history.value, ...entries]
+        historyHasMore.value = !pageData.last
+        historyPage.value += 1
+      } catch (err) {
+        console.error(err)
+        message.error(err?.message || 'Unable to load history')
+      } finally {
+        historyLoading.value = false
       }
-      return colors[status] || 'default'
     }
-    
-    const getImpactClass = (impact) => {
-      if (impact > 0) return 'impact-positive'
-      if (impact < 0) return 'impact-negative'
-      return 'impact-neutral'
+
+    const refreshHistory = () => loadHistory(true)
+
+    const onSearch = () => {
+      // search is reactive, but we keep handler for keyboard enter
     }
-    
-    const formatDate = (date) => {
-      return new Intl.DateTimeFormat('en-US', {
+
+    const formatDate = (value) => {
+      if (!value) return '—'
+      return new Intl.DateTimeFormat(undefined, {
+        day: '2-digit',
         month: 'short',
-        day: 'numeric',
         year: 'numeric'
-      }).format(date)
+      }).format(new Date(value))
     }
-    
-    const formatStatus = (status) => {
-      return status.toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
-    }
-    
-    const toggleMobileMenu = () => {
-      console.log('Toggle mobile menu')
-    }
-    
-    const checkMobile = () => {
-      isMobile.value = window.innerWidth <= 768
-    }
-    
-    // Lifecycle
+
     onMounted(() => {
-      checkMobile()
-      window.addEventListener('resize', checkMobile)
-      fetchOptimizationSummary()
-      fetchHighPriorityRecommendations()
-      loadImplementationHistory()
+      loadAds(true)
+      loadHistory(true)
     })
-    
+
     return {
-      activeTab,
-      loading,
-      optimizationSummary,
-      highPriorityRecommendations,
-      highPriorityLoading,
-      isMobile,
-      recommendationCategories,
-      implementationStats,
-      implementationHistory,
-      settings,
-      savingSettings,
-      recommendationTypes,
-      handleAcceptRecommendation,
-      handleDismissRecommendation,
-      handleScheduleRecommendation,
-      handleViewDetails,
-      selectCategory,
-      saveSettings,
-      resetSettings,
-      getImplementationStatusIcon,
-      getStatusColor,
-      getImpactClass,
-      formatDate,
-      formatStatus,
-      toggleMobileMenu
+      t,
+      adsLoading,
+      filteredAds,
+      tableColumns,
+      rowSelection,
+      selectedRowKeys,
+      searchTerm,
+      analyzedInsights,
+      analyzeLoading,
+      savingInsightId,
+      categoryOrder,
+      categoryLabels,
+      hasMoreAds,
+      history,
+      historyLoading,
+      historyHasMore,
+      error,
+      loadMoreAds,
+      refreshAds,
+      analyzeSelected,
+      saveInsight,
+      loadHistory,
+      refreshHistory,
+      onSearch,
+      formatDate
     }
   }
 }
 </script>
 
 <style scoped>
-.optimization-view {
-  background: #f5f5f5;
-  min-height: 100vh;
-}
-
-.mobile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.mobile-header h1 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.nav-tabs {
-  padding: 24px;
-}
-
-.optimization-tabs {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.section-header {
-  margin-bottom: 24px;
-}
-
-.section-header h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 8px;
-}
-
-.section-header p {
-  font-size: 16px;
-  color: #6b7280;
-  margin: 0;
-}
-
-.loading-state {
+.optimization-lite {
+  padding: 32px;
+  background: #f5f6fa;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 64px;
-  text-align: center;
-  color: #6b7280;
-}
-
-.loading-state p {
-  margin-top: 16px;
-  font-size: 16px;
-}
-
-.empty-state {
-  padding: 64px;
-}
-
-.recommendations-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 24px;
 }
 
-.category-card {
-  cursor: pointer;
-  transition: all 0.2s ease;
+.lite-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
-.category-card:hover {
-  border-color: #dae4eb;
-}
-
-.category-title {
+.selection-panel .panel-header {
   display: flex;
-  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.panel-actions {
+  display: flex;
   gap: 12px;
 }
 
-.category-icon {
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.hint {
+  color: #94a3b8;
+}
+
+.table-actions {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  font-size: 18px;
+  margin: 16px 0;
 }
 
-.category-stats {
-  display: flex;
-  gap: 16px;
-  margin-top: 12px;
-}
-
-.stat-card {
+.table-footer {
+  margin-top: 16px;
   text-align: center;
 }
 
-.history-meta {
-  display: flex;
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 16px;
-  font-size: 12px;
+}
+
+.insight-card .suggestions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.suggestion-column h4 {
+  margin-bottom: 8px;
+}
+
+.suggestion-column ul {
+  list-style: disc;
+  padding-left: 18px;
+  color: #0f172a;
+}
+
+.score-pill {
+  background: #ebe9fe;
+  color: #5b21b6;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.score-pill span {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.scores {
+  display: flex;
+  gap: 24px;
+}
+
+.scores .label {
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.scores .value {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.history-panel .history-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.history-item .score {
+  font-size: 24px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.history-tags {
   margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.implementation-date {
-  color: #9ca3af;
+.empty-state {
+  text-align: center;
 }
 
-.implementation-impact {
-  font-weight: 500;
+.empty-text {
+  color: #94a3b8;
 }
 
-.impact-positive {
-  color: #52c41a;
-}
-
-.impact-negative {
-  color: #ff4d4f;
-}
-
-.impact-neutral {
-  color: #6b7280;
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
-  .nav-tabs {
+  .optimization-lite {
     padding: 16px;
   }
-  
-  .recommendations-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .category-stats {
+
+  .selection-panel .panel-header {
     flex-direction: column;
-    gap: 8px;
   }
-  
-  .history-meta {
+
+  .panel-actions {
     flex-direction: column;
-    gap: 4px;
+  }
+
+  .table-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .scores {
+    flex-direction: column;
   }
 }
 </style>

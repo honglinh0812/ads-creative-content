@@ -95,6 +95,106 @@
     "lightMode": "Light mode enabled",
     "darkMode": "Dark mode enabled"
   },
+  "analyticsLite": {
+    "summaryLabel": "Ads created",
+    "summarySubtitle": "Every creative generated inside Ads Creative",
+    "generatedAt": "Updated {{ time }}",
+    "actions": {
+      "refresh": "Refresh",
+      "goToAds": "Go to Ads"
+    },
+    "stats": {
+      "textAds": "Text-first ads",
+      "mediaAds": "Ads with media",
+      "campaigns": "Campaigns touched",
+      "campaignHint": "Unique campaigns"
+    },
+    "copy": {
+      "title": "Copy health",
+      "subtitle": "Track how your messaging evolves",
+      "keywords": "Common keywords",
+      "headline": "Avg headline",
+      "primary": "Avg primary text",
+      "description": "Avg description",
+      "characters": "chars"
+    },
+    "cta": {
+      "title": "CTA usage",
+      "subtitle": "Most used calls to action",
+      "percent": "{{ value }}% of ads",
+      "empty": "No CTA data yet"
+    },
+    "recent": {
+      "title": "Recent ads",
+      "subtitle": "Latest creatives you generated",
+      "media": "Media attached",
+      "noMedia": "No media",
+      "uncategorized": "No campaign",
+      "empty": "Start generating ads to see them here"
+    },
+    "error": {
+      "title": "Unable to load insights"
+    }
+  },
+  "optimizationLite": {
+    "title": "Optimization workspace",
+    "subtitle": "Pick ads, let AI review copy & visuals, then keep what works",
+    "description": "Focus on the creative itself—no complicated dashboards or KPIs.",
+    "searchPlaceholder": "Search by ad or campaign name",
+    "selectionCount": "Selected {{ count }} ads",
+    "actions": {
+      "refreshAds": "Refresh ads",
+      "analyze": "Analyze selected",
+      "loadMoreAds": "Load more ads",
+      "save": "Save recommendations",
+      "saved": "Saved",
+      "refreshHistory": "Refresh history",
+      "loadMoreHistory": "Load more history"
+    },
+    "noMoreAds": "You reached the end of your ads.",
+    "table": {
+      "columns": {
+        "name": "Ad",
+        "type": "Type",
+        "cta": "CTA",
+        "created": "Created"
+      },
+      "untitled": "Untitled ad",
+      "noCampaign": "No campaign"
+    },
+    "categories": {
+      "copy": "Copy",
+      "visual": "Visual",
+      "cta": "CTA",
+      "hook": "Hook",
+      "length": "Length",
+      "target": "Audience"
+    },
+    "card": {
+      "type": "Type: {{ type }}",
+      "score": "Quality score",
+      "compliance": "Compliance",
+      "linguistic": "Readability",
+      "persuasiveness": "Persuasiveness"
+    },
+    "empty": {
+      "title": "Select ads to start optimizing",
+      "description": "Choose one or more creatives above, then run AI analysis."
+    },
+    "history": {
+      "title": "Saved recommendations",
+      "subtitle": "Quick access to previous AI reviews",
+      "empty": "No saved recommendations yet",
+      "end": "No more history"
+    },
+    "messages": {
+      "saved": "Optimization snapshot saved",
+      "noInsights": "No suggestions returned for the selected ads"
+    },
+    "error": {
+      "title": "Unable to run optimization"
+    }
+  },
   "campaign": {
     "page": {
       "title": "Campaigns",
@@ -891,7 +991,7 @@
         "addButton": "Add Question"
       },
       "prompt": {
-        "label": "Prompt",
+        "label": "What do you want to advertise?",
         "placeholder": "Describe your product/service or enter specific instructions for the AI..."
       },
       "adLinks": {
