@@ -149,11 +149,19 @@ jobs:
 
             cd ${{ env.DEPLOY_PATH }}
 
+            echo "Ensuring PostgreSQL service is running..."
+            docker_compose up -d postgres >/dev/null 2>&1 || true
+
             # Check if database is accessible
             echo "1. Checking database connectivity..."
-            if docker_compose exec -T postgres pg_isready -U postgres > /dev/null; then
+            if docker_compose exec -T postgres pg_isready -U postgres; then
               echo "✅ Database is accessible"
             else
+              echo "Postgres status:"
+              docker_compose ps postgres || true
+              echo ""
+              echo "Last 50 lines of Postgres logs:"
+              docker_compose logs --tail=50 postgres || true
               echo "❌ ERROR: Database is not accessible!"
               exit 1
             fi
