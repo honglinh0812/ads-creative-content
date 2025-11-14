@@ -163,13 +163,12 @@ export default {
     }
   },
   computed: {
-    ...mapState("campaign", [
-      "campaigns",
-      "totalItems",
-      "totalPages",
-      "loading",
-      "error"
-    ]),
+    ...mapState("campaign", {
+      campaigns: state => state.campaigns,
+      loading: state => state.loading,
+      error: state => state.error,
+      campaignTotalItems: state => state.totalItems
+    }),
     displayedCampaigns() {
       if (!this.searchQuery.trim()) {
         return this.campaigns
@@ -177,6 +176,9 @@ export default {
       return this.filteredCampaigns
     },
 
+    totalItems() {
+      return this.campaignTotalItems ?? this.campaigns.length
+    }
   },
   async mounted() {
     await this.loadCampaigns()

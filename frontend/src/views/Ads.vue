@@ -19,7 +19,7 @@
         :ads="ads"
         :campaigns="campaigns"
         :loading="loading"
-        :total-items="totalAds"
+        :total-items="totalItems"
         :current-page="page + 1"
         :page-size="size"
         @view-details="showAdDetails"
@@ -228,12 +228,12 @@ export default {
     }
   },
   computed: {
-    ...mapState("ad", [
-      "ads",
-      "totalAds",
-      "loading",
-      "error"
-    ]),
+    ...mapState("ad", {
+      ads: state => state.ads,
+      loading: state => state.loading,
+      error: state => state.error,
+      adTotalItems: state => state.totalItems
+    }),
     ...mapState("campaign", {
       campaigns: "campaigns"
     }),
@@ -256,12 +256,13 @@ export default {
 
 
 
-    totalPages() {
-      return Math.ceil(this.totalAds / this.size)
+    totalItems() {
+      return this.adTotalItems ?? this.ads.length
     },
 
-    totalItems() {
-      return this.totalAds
+    totalPages() {
+      if (!this.totalItems) return 0
+      return Math.ceil(this.totalItems / this.size)
     }
   },
   async mounted() {

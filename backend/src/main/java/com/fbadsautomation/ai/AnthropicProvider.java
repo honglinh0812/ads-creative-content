@@ -12,9 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.scheduling.annotation.Async;
 import java.util.concurrent.CompletableFuture;
 
@@ -28,6 +30,7 @@ public class AnthropicProvider implements AIProvider {
     private final String apiKey;
     private final String apiUrl;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private volatile boolean providerUnavailable = false;
     public AnthropicProvider(
             RestTemplate restTemplate,
             @Value("${ai.anthropic.api-key:") String apiKey,
@@ -39,11 +42,12 @@ public class AnthropicProvider implements AIProvider {
     }
     @Override
     public List<AdContent> generateAdContent(String prompt, int numberOfVariations, String language, com.fbadsautomation.model.FacebookCTA callToAction) {
-        List<AdContent> adContents = new ArrayList<>();
-        if (apiKey == null || apiKey.isEmpty()) {
-            log.warn("Anthropic API key is missing. Returning mock data.");
-            return generateMockAdContents(prompt, numberOfVariations, callToAction);
+        if (!isProviderAvailable()) {
+            log.warn("Anthropic provider unavailable (missing API key or disabled).");
+            throw new IllegalStateException("Anthropic provider unavailable");
         }
+
+        List<AdContent> adContents = new ArrayList<>();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-api-key", apiKey);
@@ -85,17 +89,17 @@ public class AnthropicProvider implements AIProvider {
             }
             
             if (adContents.isEmpty()) {
-                log.warn("Failed to parse valid ad content from Anthropic response. Response: {}", response);
+                throw new IllegalStateException("Failed to parse valid ad content from Anthropic response");
             }
+
+            return adContents;
+        } catch (HttpClientErrorException e) {
+            handleAnthropicError(e);
+            throw new IllegalStateException("Anthropic API error: " + e.getStatusCode(), e);
         } catch (Exception e) {
             log.error("Error calling Anthropic API: {}", e.getMessage(), e);
+            throw new IllegalStateException("Anthropic API error", e);
         }
-
-        while (adContents.size() < numberOfVariations) {
-            log.warn("Generated/Parsed only {} valid ad contents from Anthropic, filling remaining {} with mock data.", adContents.size(), numberOfVariations - adContents.size());
-            adContents.addAll(generateMockAdContents(prompt, 1, callToAction));
-        }
-        return adContents;
     }
 
     /**
@@ -104,8 +108,8 @@ public class AnthropicProvider implements AIProvider {
      */
     @Override
     public String generateTextCompletion(String prompt, String systemPrompt, Integer maxTokens) {
-        if (apiKey == null || apiKey.isEmpty()) {
-            log.warn("Anthropic API key is missing for text completion");
+        if (!isProviderAvailable()) {
+            log.warn("Anthropic provider unavailable for text completion");
             return null;
         }
 
@@ -148,6 +152,9 @@ public class AnthropicProvider implements AIProvider {
             log.warn("Anthropic text completion returned empty response");
             return null;
 
+        } catch (HttpClientErrorException e) {
+            handleAnthropicError(e);
+            return null;
         } catch (Exception e) {
             log.error("Error calling Anthropic for text completion: {}", e.getMessage(), e);
             return null;
@@ -179,32 +186,15 @@ public class AnthropicProvider implements AIProvider {
 
     @Override
     public java.util.Set<com.fbadsautomation.model.Capability> getCapabilities() {
+        if (!isProviderAvailable()) {
+            return java.util.EnumSet.noneOf(com.fbadsautomation.model.Capability.class);
+        }
         return java.util.EnumSet.of(com.fbadsautomation.model.Capability.TEXT_GENERATION);
     }
 
     @Override
     public String getApiUrl() {
         return apiUrl;
-    }
-
-    private List<AdContent> generateMockAdContents(String prompt, int numberOfVariations, com.fbadsautomation.model.FacebookCTA callToAction) {
-        List<AdContent> mockContents = new ArrayList<>();
-        for (int i = 0; i < numberOfVariations; i++) {
-            AdContent adContent = new AdContent();
-            // Ensure headline stays within 40 character limit
-            String shortPrompt = prompt.length() > 20 ? prompt.substring(0, 17) + "..." : prompt;
-            adContent.setHeadline("Mẫu Claude " + (i + 1) + ": " + shortPrompt); // Max ~35 chars
-            adContent.setDescription("Nội dung quảng cáo được tạo bởi Claude AI, phiên bản " + (i + 1)); // Max 125 chars
-            adContent.setPrimaryText("Mẫu Claude số " + (i + 1) + " cho: " + prompt + ". " +
-                "Nội dung được tạo tự động bởi Claude AI với chất lượng cao, tối ưu hóa cho Facebook Ads."); // Within 1000 chars
-            adContent.setCallToAction(callToAction);
-            adContent.setCta(callToAction);
-            adContent.setImageUrl("/img/placeholder.png");
-            adContent.setAiProvider(AdContent.AIProvider.ANTHROPIC);
-            adContent.setIsSelected(false);
-            mockContents.add(adContent);
-        }
-        return mockContents;
     }
 
     @Override
@@ -218,6 +208,21 @@ public class AnthropicProvider implements AIProvider {
             CompletableFuture<List<AdContent>> future = new CompletableFuture<>();
             future.completeExceptionally(e);
             return future;
+        }
+    }
+
+    private boolean isProviderAvailable() {
+        return apiKey != null && !apiKey.isEmpty() && !providerUnavailable;
+    }
+
+    private void handleAnthropicError(HttpClientErrorException e) {
+        log.error("Anthropic API returned {}: {}", e.getStatusCode(), e.getResponseBodyAsString());
+        if (e.getStatusCode() == HttpStatus.PAYMENT_REQUIRED ||
+            e.getStatusCode() == HttpStatus.FORBIDDEN ||
+            e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS ||
+            e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+            providerUnavailable = true;
+            log.warn("Anthropic provider disabled due to API status {}. It will remain hidden until service access is restored.", e.getStatusCode());
         }
     }
 

@@ -133,6 +133,7 @@ services:
 
       # Apify Configuration
       APIFY_API_KEY: ${APIFY_API_KEY}
+      APIFY_TIKTOK_COOKIE: ${APIFY_TIKTOK_COOKIE:-}
 
       # Server Configuration
       SERVER_PORT: 8080

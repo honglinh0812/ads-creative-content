@@ -29,6 +29,9 @@ public class ApifyService {
     @Value("${apify.tiktok.actor:doliz/tiktok-creative-center-scraper}")
     private String tiktokActorId;
 
+    @Value("${apify.tiktok.cookie:}")
+    private String tiktokCookie;
+
     @Value("${apify.poll.max.attempts:30}")
     private int pollMaxAttempts;
 
@@ -140,6 +143,11 @@ public class ApifyService {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("actorId", tiktokActorId);
         metadata.put("region", normalizedRegion);
+        metadata.put("cookieConfigured", tiktokCookie != null && !tiktokCookie.isBlank());
+
+        if (tiktokCookie == null || tiktokCookie.isBlank()) {
+            log.warn("TikTok cookie not configured. Apify actor may fail for protected regions.");
+        }
 
         try {
             log.info("Starting Apify actor for TikTok search: {}", sanitizedBrand);
@@ -235,6 +243,11 @@ public class ApifyService {
             input.put("region", region != null ? region.toUpperCase() : "US");
             input.put("maxResults", Math.min(limit, 100)); // Limit to 100 per API constraints
             input.put("adType", "all"); // Search all ad types
+
+            if (tiktokCookie != null && !tiktokCookie.isBlank()) {
+                input.put("cookie", tiktokCookie);
+                input.put("cookies", tiktokCookie);
+            }
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
