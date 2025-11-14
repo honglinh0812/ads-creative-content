@@ -132,7 +132,7 @@ jobs:
             cd ${{ env.DEPLOY_PATH }}
             # Check if database is accessible
             echo "1. Checking database connectivity..."
-            if docker-compose exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
+            if docker compose exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
               echo "✅ Database is accessible"
             else
               echo "❌ ERROR: Database is not accessible!"
@@ -144,7 +144,7 @@ jobs:
             BACKUP_DIR="/tmp/db_backups"
             mkdir -p "$BACKUP_DIR"
             BACKUP_FILE="$BACKUP_DIR/backup_$(date +%Y%m%d_%H%M%S).sql"
-            if docker-compose exec -T postgres pg_dump -U postgres fbadsautomation > "$BACKUP_FILE" 2>/dev/null; then
+            if docker compose exec -T postgres pg_dump -U postgres fbadsautomation > "$BACKUP_FILE" 2>/dev/null; then
               BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
               echo "✅ Database backed up to $BACKUP_FILE ($BACKUP_SIZE)"
               # Keep only last 10 backups
@@ -155,7 +155,7 @@ jobs:
             # Check current migration status
             echo ""
             echo "3. Checking current migration status..."
-            docker-compose exec -T postgres psql -U postgres fbadsautomation -c "SELECT version, description, installed_on, success FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;" 2>/dev/null || echo "Could not query migration history"
+            docker compose exec -T postgres psql -U postgres fbadsautomation -c "SELECT version, description, installed_on, success FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;" 2>/dev/null || echo "Could not query migration history"
             echo ""
             echo "=== Pre-deployment checks completed ==="
           ENDSSH
@@ -185,7 +185,7 @@ jobs:
             docker images ${{ env.BACKEND_IMAGE }} --format "{{.ID}} {{.Tag}}" | grep "<none>" | awk '{print $1}' | xargs -r docker rmi -f || true
             # Force recreate backend with new image
             echo "Force recreating backend container with latest image..."
-            docker-compose up -d --force-recreate --no-deps backend
+            docker compose up -d --force-recreate --no-deps backend
             # Wait for new backend to be healthy
             echo "Waiting for backend to be healthy..."
             TIMEOUT=120
@@ -206,7 +206,7 @@ jobs:
             fi
             # Update frontend
             echo "Updating frontend..."
-            docker-compose up -d --force-recreate --no-deps frontend
+            docker compose up -d --force-recreate --no-deps frontend
             # Wait for frontend to be ready
             echo "Waiting for frontend..."
             sleep 10
@@ -216,7 +216,7 @@ jobs:
             docker exec fbads-nginx nginx -s reload 2>/dev/null || true
             # Final health check
             echo "Final health check..."
-            docker-compose ps
+            docker compose ps
             # Cleanup old images
             echo "Cleaning up old Docker images..."
             docker image prune -af --filter "until=24h" || true
@@ -286,7 +286,7 @@ jobs:
             docker pull ${{ env.BACKEND_IMAGE }}:previous || echo "No previous backend image"
             docker pull ${{ env.FRONTEND_IMAGE }}:previous || echo "No previous frontend image"
             # Restart with previous images
-            docker-compose down
-            docker-compose up -d
+            docker compose down
+            docker compose up -d
             echo "Rollback completed"
           ENDSSH
