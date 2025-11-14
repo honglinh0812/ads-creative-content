@@ -136,13 +136,22 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }} << 'ENDSSH'
             set -e
+            export PATH="/usr/local/bin:$PATH"
+
+            docker_compose() {
+              if command -v docker-compose >/dev/null 2>&1; then
+                docker-compose "$@"
+              else
+                docker compose "$@"
+              fi
+            }
             echo "=== Pre-Deployment Migration Safety Check ==="
 
             cd ${{ env.DEPLOY_PATH }}
 
             # Check if database is accessible
             echo "1. Checking database connectivity..."
-            if docker-compose exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
+            if docker_compose exec -T postgres pg_isready -U postgres > /dev/null; then
               echo "✅ Database is accessible"
             else
               echo "❌ ERROR: Database is not accessible!"
@@ -156,7 +165,7 @@ jobs:
             mkdir -p "$BACKUP_DIR"
             BACKUP_FILE="$BACKUP_DIR/backup_$(date +%Y%m%d_%H%M%S).sql"
 
-            if docker-compose exec -T postgres pg_dump -U postgres fbadsautomation > "$BACKUP_FILE" 2>/dev/null; then
+            if docker_compose exec -T postgres pg_dump -U postgres fbadsautomation > "$BACKUP_FILE" 2>/dev/null; then
               BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
               echo "✅ Database backed up to $BACKUP_FILE ($BACKUP_SIZE)"
 
@@ -169,7 +178,7 @@ jobs:
             # Check current migration status
             echo ""
             echo "3. Checking current migration status..."
-            docker-compose exec -T postgres psql -U postgres fbadsautomation -c "SELECT version, description, installed_on, success FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;" 2>/dev/null || echo "Could not query migration history"
+            docker_compose exec -T postgres psql -U postgres fbadsautomation -c "SELECT version, description, installed_on, success FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;" 2>/dev/null || echo "Could not query migration history"
 
             echo ""
             echo "=== Pre-deployment checks completed ==="
@@ -179,6 +188,15 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }} << 'ENDSSH'
             set -e
+            export PATH="/usr/local/bin:$PATH"
+
+            docker_compose() {
+              if command -v docker-compose >/dev/null 2>&1; then
+                docker-compose "$@"
+              else
+                docker compose "$@"
+              fi
+            }
 
             echo "Starting deployment..."
             cd ${{ env.DEPLOY_PATH }}
@@ -208,7 +226,7 @@ jobs:
 
             # Force recreate backend with new image
             echo "Force recreating backend container with latest image..."
-            docker-compose up -d --force-recreate --no-deps backend
+            docker_compose up -d --force-recreate --no-deps backend
 
             # Wait for new backend to be healthy
             echo "Waiting for backend to be healthy..."
@@ -232,7 +250,7 @@ jobs:
 
             # Update frontend
             echo "Updating frontend..."
-            docker-compose up -d --force-recreate --no-deps frontend
+            docker_compose up -d --force-recreate --no-deps frontend
 
             # Wait for frontend to be ready
             echo "Waiting for frontend..."
@@ -245,7 +263,7 @@ jobs:
 
             # Final health check
             echo "Final health check..."
-            docker-compose ps
+            docker_compose ps
 
             # Cleanup old images
             echo "Cleaning up old Docker images..."
@@ -327,14 +345,23 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }} << 'ENDSSH'
             echo "Performing rollback..."
             cd ${{ env.DEPLOY_PATH }}
+            export PATH="/usr/local/bin:$PATH"
+
+            docker_compose() {
+              if command -v docker-compose >/dev/null 2>&1; then
+                docker-compose "$@"
+              else
+                docker compose "$@"
+              fi
+            }
 
             # Pull previous images
             docker pull ${{ env.BACKEND_IMAGE }}:previous || echo "No previous backend image"
             docker pull ${{ env.FRONTEND_IMAGE }}:previous || echo "No previous frontend image"
 
             # Restart with previous images
-            docker-compose down
-            docker-compose up -d
+            docker_compose down
+            docker_compose up -d
 
             echo "Rollback completed"
           ENDSSH
