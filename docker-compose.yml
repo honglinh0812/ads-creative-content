@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # PostgreSQL Database
@@ -120,7 +119,7 @@ services:
 
       # Server Configuration
       SERVER_SERVLET_CONTEXT_PATH: ${SERVER_CONTEXT_PATH:-}
-      SERVER_USE_FORWARD_HEADERS: "true"
+      SERVER_USE_FORWARD_HEADERS: "${SERVER_USE_FORWARD_HEADERS:-true}"
 
       # CORS Configuration
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://linhnh.site,https://api.linhnh.site}
