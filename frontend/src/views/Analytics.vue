@@ -70,7 +70,7 @@
             <div v-for="cta in ctaUsage" :key="cta.cta" class="cta-item">
               <div>
                 <p class="value">{{ cta.cta }}</p>
-                <p class="hint">{{ t('analyticsLite.cta.percent', { value: cta.percentage }) }}</p>
+                <p class="hint">{{ t('analyticsLite.cta.percent', { value: cta.percentageValue.toFixed(1) }) }}</p>
               </div>
               <p class="count">{{ cta.count }}</p>
             </div>
@@ -137,6 +137,7 @@ export default {
     const loading = ref(false)
     const error = ref(null)
     const fallbackRange = '30d'
+    const contentInsightsSupported = ref(true)
 
     const formatNumber = (value) => new Intl.NumberFormat().format(value || 0)
 
@@ -181,13 +182,23 @@ export default {
       ]
     })
 
+    const normalizeNumber = (value) => {
+      if (typeof value === 'number' && Number.isFinite(value)) return value
+      const parsed = Number(value)
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+
     const ctaUsage = computed(() => {
       if (!insights.value?.ctaUsage) return []
-      return insights.value.ctaUsage.slice(0, 4).map(item => ({
-        cta: item.cta,
-        count: formatNumber(item.count),
-        percentage: item.percentage?.toFixed(1)
-      }))
+      return insights.value.ctaUsage.slice(0, 4).map(item => {
+        const countNumber = normalizeNumber(item.count)
+        const percentageNumber = normalizeNumber(item.percentage)
+        return {
+          cta: item.cta,
+          count: formatNumber(countNumber),
+          percentageValue: percentageNumber
+        }
+      })
     })
 
     const recentAds = computed(() => insights.value?.recentAds || [])
@@ -201,11 +212,17 @@ export default {
       loading.value = true
       error.value = null
       try {
-        const { data } = await api.analyticsAPI.getContentInsights()
-        insights.value = data.data
+        if (contentInsightsSupported.value) {
+          const { data } = await api.analyticsAPI.getContentInsights()
+          insights.value = data.data
+          loading.value = false
+          return
+        }
+        await loadFallbackInsights()
       } catch (err) {
         console.error(err)
         if (shouldUseFallback(err)) {
+          contentInsightsSupported.value = false
           await loadFallbackInsights()
         } else {
           error.value = err?.message || 'Unable to load insights'
@@ -269,8 +286,8 @@ export default {
       })
       return Array.from(counts.entries()).map(([cta, count]) => ({
         cta,
-        count: formatNumber(count),
-        percentage: ((count / ads.length) * 100).toFixed(1)
+        count,
+        percentage: (count / ads.length) * 100
       }))
     }
 

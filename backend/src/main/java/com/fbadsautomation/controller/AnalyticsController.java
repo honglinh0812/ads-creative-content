@@ -1,6 +1,7 @@
 package com.fbadsautomation.controller;
 import com.fbadsautomation.dto.AnalyticsResponse;
 import com.fbadsautomation.dto.ApiResponse;
+import com.fbadsautomation.dto.ContentInsightsResponse;
 import com.fbadsautomation.service.AnalyticsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -56,6 +57,20 @@ public class AnalyticsController {
             log.error("Error fetching analytics dashboard: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(ApiResponse.error("Failed to fetch analytics dashboard"));
+        }
+    }
+
+    @GetMapping("/content-insights")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<ContentInsightsResponse>> getContentInsights(Authentication authentication) {
+        try {
+            Long userId = getUserIdFromAuthentication(authentication);
+            ContentInsightsResponse response = analyticsService.getContentInsights(userId);
+            return ResponseEntity.ok(ApiResponse.success("Content insights retrieved successfully", response));
+        } catch (Exception e) {
+            log.error("Error fetching content insights", e);
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("Failed to fetch content insights"));
         }
     }
 

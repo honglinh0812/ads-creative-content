@@ -189,7 +189,9 @@
     },
     "messages": {
       "saved": "Optimization snapshot saved",
-      "noInsights": "No suggestions returned for the selected ads"
+      "noInsights": "No suggestions returned for the selected ads",
+      "insightsUnavailable": "AI optimization insights aren’t available on this environment yet.",
+      "historyUnavailable": "Optimization history isn’t available on this environment."
     },
     "error": {
       "title": "Unable to run optimization"

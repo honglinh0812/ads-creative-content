@@ -189,7 +189,9 @@
     },
     "messages": {
       "saved": "Đã lưu bản ghi tối ưu",
-      "noInsights": "AI chưa có gợi ý cho nhóm quảng cáo này"
+      "noInsights": "AI chưa có gợi ý cho nhóm quảng cáo này",
+      "insightsUnavailable": "AI tối ưu hóa chưa sẵn sàng ở môi trường này.",
+      "historyUnavailable": "Chưa thể tải lịch sử tối ưu trên môi trường hiện tại."
     },
     "error": {
       "title": "Không thể chạy tối ưu"

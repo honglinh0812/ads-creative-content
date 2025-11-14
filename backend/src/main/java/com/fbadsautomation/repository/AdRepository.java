@@ -113,4 +113,10 @@ public interface AdRepository extends JpaRepository<Ad, Long> {
      * Count ads by user and date range
      */
     long countByUserAndCreatedDateBetween(User user, LocalDateTime startDate, LocalDateTime endDate);
+
+    /**
+     * Fetch a batch of ads for a user (including campaign) to support bulk optimization.
+     */
+    @Query("SELECT a FROM Ad a LEFT JOIN FETCH a.campaign WHERE a.user = :user AND a.id IN :adIds")
+    List<Ad> findByUserAndIdInWithCampaign(@Param("user") User user, @Param("adIds") List<Long> adIds);
 }

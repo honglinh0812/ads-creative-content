@@ -1,15 +1,22 @@
 package com.fbadsautomation.controller;
 
+import com.fbadsautomation.dto.AdOptimizationAnalyzeRequest;
+import com.fbadsautomation.dto.AdOptimizationInsightDTO;
+import com.fbadsautomation.dto.AdOptimizationSnapshotDTO;
 import com.fbadsautomation.dto.ApiResponse;
 import com.fbadsautomation.dto.OptimizationResponse.*;
 import com.fbadsautomation.dto.OptimizationResponse;
+import com.fbadsautomation.dto.SaveAdOptimizationInsightRequest;
+import com.fbadsautomation.service.AdOptimizationInsightService;
 import com.fbadsautomation.service.OptimizationService;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -22,10 +29,13 @@ public class OptimizationController {
     private static final Logger log = LoggerFactory.getLogger(OptimizationController.class);
     
     private final OptimizationService optimizationService;
+    private final AdOptimizationInsightService adOptimizationInsightService;
 
     @Autowired
-    public OptimizationController(OptimizationService optimizationService) {
+    public OptimizationController(OptimizationService optimizationService,
+                                  AdOptimizationInsightService adOptimizationInsightService) {
         this.optimizationService = optimizationService;
+        this.adOptimizationInsightService = adOptimizationInsightService;
     }
 
     /**
@@ -46,6 +56,65 @@ public class OptimizationController {
             log.error("Error fetching optimization recommendations: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(ApiResponse.error("Failed to fetch optimization recommendations"));
+        }
+    }
+
+    /**
+     * Simplified ad-level analysis used by the streamlined Optimization view.
+     */
+    @PostMapping("/ad-insights/analyze")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<List<AdOptimizationInsightDTO>>> analyzeAds(
+            @RequestBody AdOptimizationAnalyzeRequest request,
+            Authentication authentication) {
+        try {
+            Long userId = getUserIdFromAuthentication(authentication);
+            List<AdOptimizationInsightDTO> insights = adOptimizationInsightService.analyzeAds(userId, request);
+            return ResponseEntity.ok(ApiResponse.success("Ad insights generated", insights));
+        } catch (Exception e) {
+            log.error("Error analyzing ads", e);
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("Failed to analyze ads"));
+        }
+    }
+
+    /**
+     * Persist an optimization snapshot so the user can revisit it later.
+     */
+    @PostMapping("/ad-insights/save")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<AdOptimizationSnapshotDTO>> saveAdInsight(
+            @RequestBody SaveAdOptimizationInsightRequest request,
+            Authentication authentication) {
+        try {
+            Long userId = getUserIdFromAuthentication(authentication);
+            AdOptimizationSnapshotDTO snapshot = adOptimizationInsightService.saveSnapshot(userId, request);
+            return ResponseEntity.ok(ApiResponse.success("Optimization snapshot saved", snapshot));
+        } catch (Exception e) {
+            log.error("Error saving optimization snapshot", e);
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("Failed to save optimization snapshot"));
+        }
+    }
+
+    /**
+     * List previously saved optimization snapshots.
+     */
+    @GetMapping("/ad-insights/history")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<Page<AdOptimizationSnapshotDTO>>> history(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Authentication authentication) {
+        try {
+            Long userId = getUserIdFromAuthentication(authentication);
+            Page<AdOptimizationSnapshotDTO> history = adOptimizationInsightService.history(
+                userId, PageRequest.of(page, size));
+            return ResponseEntity.ok(ApiResponse.success("Optimization history retrieved", history));
+        } catch (Exception e) {
+            log.error("Error fetching optimization history", e);
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("Failed to fetch optimization history"));
         }
     }
 

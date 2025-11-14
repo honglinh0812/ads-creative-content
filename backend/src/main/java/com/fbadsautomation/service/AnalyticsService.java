@@ -2,6 +2,11 @@ package com.fbadsautomation.service;
 
 import com.fbadsautomation.dto.AnalyticsResponse.*;
 import com.fbadsautomation.dto.AnalyticsResponse;
+import com.fbadsautomation.dto.ContentInsightsResponse;
+import com.fbadsautomation.dto.ContentInsightsResponse.CopyMetrics;
+import com.fbadsautomation.dto.ContentInsightsResponse.KeywordHighlight;
+import com.fbadsautomation.dto.ContentInsightsResponse.RecentAd;
+import com.fbadsautomation.dto.ContentInsightsResponse.Summary;
 import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.AdContent;
 import com.fbadsautomation.model.Campaign;
@@ -13,6 +18,7 @@ import com.fbadsautomation.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +30,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class AnalyticsService {
 
     private static final Logger log = LoggerFactory.getLogger(AnalyticsService.class);
+    private static final Set<String> STOP_WORDS = Set.of(
+        "the", "and", "for", "with", "that", "this", "from", "your", "have", "our",
+        "cua", "của", "cho", "và", "các", "những", "một", "cùng", "khi", "đang",
+        "trong", "đến", "hay", "như", "được", "để", "cần", "là", "đang", "từ"
+    );
 
     private final UserRepository userRepository;
     private final CampaignRepository campaignRepository;
@@ -150,6 +161,43 @@ public class AnalyticsService {
                 throw new RuntimeException("Failed to generate analytics: " + e.getMessage(), e);
             }
         }
+    }
+
+    /**
+     * Return a trimmed-down snapshot that only contains insights generated from
+     * the creatives available inside the platform (no external performance data).
+     */
+    @Transactional(readOnly = true)
+    public ContentInsightsResponse getContentInsights(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        List<Ad> ads = adRepository.findByUser(user);
+        ContentInsightsResponse response = new ContentInsightsResponse();
+
+        Summary summary = new Summary();
+        summary.setTotalAds(ads.size());
+        summary.setTextAds((int) ads.stream().filter(this::hasCopy).count());
+        summary.setMediaAds((int) ads.stream().filter(this::hasMedia).count());
+        summary.setUniqueCampaigns((int) ads.stream()
+            .map(ad -> ad.getCampaign() != null ? ad.getCampaign().getId() : null)
+            .filter(Objects::nonNull)
+            .distinct()
+            .count());
+        response.setSummary(summary);
+
+        CopyMetrics copyMetrics = new CopyMetrics();
+        copyMetrics.setAverageHeadlineLength(averageLength(ads, Ad::getHeadline));
+        copyMetrics.setAveragePrimaryTextLength(averageLength(ads, Ad::getPrimaryText));
+        copyMetrics.setAverageDescriptionLength(averageLength(ads, Ad::getDescription));
+        copyMetrics.setKeywordHighlights(extractKeywordHighlights(ads));
+        response.setCopyMetrics(copyMetrics);
+
+        response.setCtaUsage(calculateCtaUsage(ads));
+        response.setAdTypeBreakdown(calculateAdTypeBreakdown(ads));
+        response.setRecentAds(buildRecentAds(ads));
+        response.setGeneratedAt(java.time.LocalDateTime.now());
+        return response;
     }
 
     /**
@@ -846,5 +894,111 @@ public class AnalyticsService {
     private double calculateGrowthRate(long current, long previous) {
         if (previous == 0) return current > 0 ? 100.0 : 0.0;
         return ((double) (current - previous) / previous) * 100.0;
+    }
+
+    private boolean hasCopy(Ad ad) {
+        return (ad.getPrimaryText() != null && !ad.getPrimaryText().isBlank()) ||
+               (ad.getHeadline() != null && !ad.getHeadline().isBlank()) ||
+               (ad.getDescription() != null && !ad.getDescription().isBlank());
+    }
+
+    private boolean hasMedia(Ad ad) {
+        return (ad.getImageUrl() != null && !ad.getImageUrl().isBlank()) ||
+               (ad.getVideoUrl() != null && !ad.getVideoUrl().isBlank());
+    }
+
+    private double averageLength(List<Ad> ads, Function<Ad, String> extractor) {
+        return ads.stream()
+            .map(extractor)
+            .filter(Objects::nonNull)
+            .map(String::trim)
+            .filter(text -> !text.isEmpty())
+            .mapToInt(String::length)
+            .average()
+            .orElse(0.0);
+    }
+
+    private List<KeywordHighlight> extractKeywordHighlights(List<Ad> ads) {
+        Map<String, Long> keywordCounts = ads.stream()
+            .flatMap(ad -> extractWords(ad).stream())
+            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        return keywordCounts.entrySet().stream()
+            .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+            .limit(6)
+            .map(entry -> new KeywordHighlight(entry.getKey(), entry.getValue()))
+            .collect(Collectors.toList());
+    }
+
+    private List<String> extractWords(Ad ad) {
+        String combined = String.join(" ",
+            Optional.ofNullable(ad.getHeadline()).orElse(""),
+            Optional.ofNullable(ad.getPrimaryText()).orElse(""),
+            Optional.ofNullable(ad.getDescription()).orElse("")
+        );
+
+        return Arrays.stream(combined.toLowerCase().split("[^\\p{L}\\p{N}]+"))
+            .filter(word -> word.length() > 3)
+            .filter(word -> !STOP_WORDS.contains(word))
+            .filter(word -> word.chars().anyMatch(Character::isLetter))
+            .collect(Collectors.toList());
+    }
+
+    private List<ContentInsightsResponse.CTAUsage> calculateCtaUsage(List<Ad> ads) {
+        if (ads.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<String, Long> ctaCounts = ads.stream()
+            .map(ad -> ad.getCallToAction() != null ? ad.getCallToAction().name() : "NONE")
+            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        int total = ads.size();
+
+        return ctaCounts.entrySet().stream()
+            .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+            .map(entry -> new ContentInsightsResponse.CTAUsage(
+                entry.getKey(),
+                entry.getValue(),
+                total > 0 ? (entry.getValue() * 100.0) / total : 0.0
+            ))
+            .collect(Collectors.toList());
+    }
+
+    private Map<String, Integer> calculateAdTypeBreakdown(List<Ad> ads) {
+        return ads.stream()
+            .collect(Collectors.toMap(
+                ad -> ad.getAdType() != null ? ad.getAdType().name() : "UNKNOWN",
+                ad -> 1,
+                Integer::sum
+            ));
+    }
+
+    private List<RecentAd> buildRecentAds(List<Ad> ads) {
+        return ads.stream()
+            .sorted(Comparator.comparing(ad -> Optional.ofNullable(ad.getCreatedDate())
+                .orElse(java.time.LocalDateTime.MIN), Comparator.reverseOrder()))
+            .limit(5)
+            .map(ad -> new RecentAd(
+                ad.getId(),
+                Optional.ofNullable(ad.getName()).orElse("Untitled Ad"),
+                ad.getCampaign() != null ? ad.getCampaign().getName() : null,
+                ad.getAdType() != null ? ad.getAdType().name() : null,
+                hasMedia(ad),
+                buildExcerpt(ad),
+                ad.getCreatedDate()
+            ))
+            .collect(Collectors.toList());
+    }
+
+    private String buildExcerpt(Ad ad) {
+        String source = Optional.ofNullable(ad.getPrimaryText())
+            .filter(text -> !text.isBlank())
+            .orElseGet(() -> Optional.ofNullable(ad.getHeadline()).orElse(""));
+
+        if (source.length() <= 140) {
+            return source;
+        }
+        return source.substring(0, 140).trim() + "...";
     }
 }

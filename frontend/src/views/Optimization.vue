@@ -27,7 +27,7 @@
         <a-space>
           <a-button
             type="primary"
-            :disabled="!selectedRowKeys.length"
+            :disabled="!selectedRowKeys.length || !adInsightsSupported"
             :loading="analyzeLoading"
             @click="analyzeSelected"
           >
@@ -71,7 +71,11 @@
     </div>
 
     <div class="insights-grid">
-      <div class="lite-card empty-state" v-if="!analyzedInsights.length && !analyzeLoading">
+      <div class="lite-card empty-state" v-if="!adInsightsSupported">
+        <p class="eyebrow">{{ t('optimizationLite.empty.title') }}</p>
+        <p class="hint">{{ t('optimizationLite.messages.insightsUnavailable') }}</p>
+      </div>
+      <div class="lite-card empty-state" v-else-if="!analyzedInsights.length && !analyzeLoading">
         <p class="eyebrow">{{ t('optimizationLite.empty.title') }}</p>
         <p class="hint">{{ t('optimizationLite.empty.description') }}</p>
       </div>
@@ -172,6 +176,9 @@
           <p v-else class="hint">{{ t('optimizationLite.history.end') }}</p>
         </div>
       </div>
+      <p v-else-if="!historySupported" class="empty-text">
+        {{ t('optimizationLite.messages.historyUnavailable') }}
+      </p>
       <p v-else class="empty-text">{{ t('optimizationLite.history.empty') }}</p>
     </div>
 
@@ -208,6 +215,8 @@ export default {
     const historyHasMore = ref(true)
     const historyLoading = ref(false)
     const error = ref(null)
+    const adInsightsSupported = ref(true)
+    const historySupported = ref(true)
 
     const tableColumns = computed(() => [
       {
@@ -295,7 +304,16 @@ export default {
       loadAds()
     }
 
+    const shouldDisableFeature = (err) => {
+      const status = err?.response?.status
+      return status === 404 || status === 501 || status === 503
+    }
+
     const analyzeSelected = async () => {
+      if (!adInsightsSupported.value) {
+        message.info(t('optimizationLite.messages.insightsUnavailable'))
+        return
+      }
       analyzeLoading.value = true
       error.value = null
       try {
@@ -310,8 +328,13 @@ export default {
         }
       } catch (err) {
         console.error(err)
-        error.value = err?.message || 'Unable to analyze ads'
-        message.error(error.value)
+        if (shouldDisableFeature(err)) {
+          adInsightsSupported.value = false
+          message.info(t('optimizationLite.messages.insightsUnavailable'))
+        } else {
+          error.value = err?.message || 'Unable to analyze ads'
+          message.error(error.value)
+        }
       } finally {
         analyzeLoading.value = false
       }
@@ -340,6 +363,7 @@ export default {
     }
 
     const loadHistory = async (reset = false) => {
+      if (!historySupported.value) return
       if (reset) {
         history.value = []
         historyPage.value = 0
@@ -357,13 +381,21 @@ export default {
         historyPage.value += 1
       } catch (err) {
         console.error(err)
-        message.error(err?.message || 'Unable to load history')
+        if (shouldDisableFeature(err)) {
+          historySupported.value = false
+          message.info(t('optimizationLite.messages.historyUnavailable'))
+        } else {
+          message.error(err?.message || 'Unable to load history')
+        }
       } finally {
         historyLoading.value = false
       }
     }
 
-    const refreshHistory = () => loadHistory(true)
+    const refreshHistory = () => {
+      historySupported.value = true
+      loadHistory(true)
+    }
 
     const onSearch = () => {
       // search is reactive, but we keep handler for keyboard enter
@@ -408,7 +440,9 @@ export default {
       loadHistory,
       refreshHistory,
       onSearch,
-      formatDate
+      formatDate,
+      adInsightsSupported,
+      historySupported
     }
   }
 }
