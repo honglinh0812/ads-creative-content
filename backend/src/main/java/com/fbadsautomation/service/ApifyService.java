@@ -13,6 +13,9 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -32,6 +35,9 @@ public class ApifyService {
     @Value("${apify.tiktok.cookie:}")
     private String tiktokCookie;
 
+    @Value("${apify.tiktok.cookie.file:}")
+    private String tiktokCookieFile;
+
     @Value("${apify.poll.max.attempts:30}")
     private int pollMaxAttempts;
 
@@ -40,10 +46,46 @@ public class ApifyService {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private String resolvedTiktokCookie;
 
     public ApifyService(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
+    }
+
+    private synchronized String getTikTokCookie() {
+        if (resolvedTiktokCookie != null && !resolvedTiktokCookie.isBlank()) {
+            return resolvedTiktokCookie;
+        }
+
+        if (tiktokCookie != null && !tiktokCookie.isBlank()) {
+            resolvedTiktokCookie = tiktokCookie.trim();
+            return resolvedTiktokCookie;
+        }
+
+        if (tiktokCookieFile == null || tiktokCookieFile.isBlank()) {
+            return null;
+        }
+
+        try {
+            String content = Files.readString(Path.of(tiktokCookieFile));
+            if (content != null) {
+                String sanitized = content.trim();
+                if (!sanitized.isEmpty()) {
+                    resolvedTiktokCookie = sanitized;
+                    return resolvedTiktokCookie;
+                }
+            }
+            log.warn("TikTok cookie file {} is empty", tiktokCookieFile);
+        } catch (IOException e) {
+            log.error("Failed to read TikTok cookie file {}: {}", tiktokCookieFile, e.getMessage());
+        }
+        return null;
+    }
+
+    private boolean hasTikTokCookie() {
+        String cookie = getTikTokCookie();
+        return cookie != null && !cookie.isBlank();
     }
 
     private String normalizeRegion(String region) {
@@ -143,9 +185,9 @@ public class ApifyService {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("actorId", tiktokActorId);
         metadata.put("region", normalizedRegion);
-        metadata.put("cookieConfigured", tiktokCookie != null && !tiktokCookie.isBlank());
+        metadata.put("cookieConfigured", hasTikTokCookie());
 
-        if (tiktokCookie == null || tiktokCookie.isBlank()) {
+        if (!hasTikTokCookie()) {
             log.warn("TikTok cookie not configured. Apify actor may fail for protected regions.");
         }
 
@@ -244,9 +286,10 @@ public class ApifyService {
             input.put("maxResults", Math.min(limit, 100)); // Limit to 100 per API constraints
             input.put("adType", "all"); // Search all ad types
 
-            if (tiktokCookie != null && !tiktokCookie.isBlank()) {
-                input.put("cookie", tiktokCookie);
-                input.put("cookies", tiktokCookie);
+            String cookie = getTikTokCookie();
+            if (cookie != null && !cookie.isBlank()) {
+                input.put("cookie", cookie);
+                input.put("cookies", cookie);
             }
 
             HttpHeaders headers = new HttpHeaders();

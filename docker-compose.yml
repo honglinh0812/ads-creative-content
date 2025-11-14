@@ -134,6 +134,7 @@ services:
       # Apify Configuration
       APIFY_API_KEY: ${APIFY_API_KEY}
       APIFY_TIKTOK_COOKIE: ${APIFY_TIKTOK_COOKIE:-}
+      APIFY_TIKTOK_COOKIE_FILE: ${APIFY_TIKTOK_COOKIE_FILE:-}
 
       # Server Configuration
       SERVER_PORT: 8080
@@ -143,6 +144,7 @@ services:
     volumes:
       - backend_uploads:/app/uploads
       - backend_logs:/app/logs
+      - ./secrets:/app/secrets:ro
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     healthcheck:
