@@ -98,7 +98,7 @@
   "analyticsLite": {
     "summaryLabel": "Quảng cáo đã tạo",
     "summarySubtitle": "Mọi nội dung được tạo trong Ads Creative",
-    "generatedAt": "Cập nhật {{ time }}",
+    "generatedAt": "Cập nhật {time}",
     "actions": {
       "refresh": "Làm mới",
       "goToAds": "Xem danh sách quảng cáo"
@@ -121,7 +121,7 @@
     "cta": {
       "title": "CTA đang dùng",
       "subtitle": "Các lời kêu gọi hành động phổ biến",
-      "percent": "{{ value }}% quảng cáo",
+      "percent": "{value}% quảng cáo",
       "empty": "Chưa có dữ liệu CTA"
     },
     "recent": {
@@ -141,7 +141,7 @@
     "subtitle": "Chọn quảng cáo, để AI rà soát copy & visual rồi giữ lại điều hiệu quả",
     "description": "Chỉ tập trung vào nội dung sáng tạo – không cần dashboard phức tạp.",
     "searchPlaceholder": "Tìm theo tên quảng cáo hoặc chiến dịch",
-    "selectionCount": "Đã chọn {{ count }} quảng cáo",
+    "selectionCount": "Đã chọn {count} quảng cáo",
     "actions": {
       "refreshAds": "Tải lại danh sách",
       "analyze": "Phân tích quảng cáo đã chọn",
@@ -171,7 +171,7 @@
       "target": "Đối tượng"
     },
     "card": {
-      "type": "Loại: {{ type }}",
+      "type": "Loại: {type}",
       "score": "Điểm chất lượng",
       "compliance": "Tuân thủ",
       "linguistic": "Khả năng đọc",

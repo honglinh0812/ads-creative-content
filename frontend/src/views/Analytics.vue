@@ -136,6 +136,7 @@ export default {
     const insights = ref(null)
     const loading = ref(false)
     const error = ref(null)
+    const fallbackRange = '30d'
 
     const formatNumber = (value) => new Intl.NumberFormat().format(value || 0)
 
@@ -191,6 +192,11 @@ export default {
 
     const recentAds = computed(() => insights.value?.recentAds || [])
 
+    const shouldUseFallback = (err) => {
+      const status = err?.response?.status
+      return status === 404 || status === 501 || status === 503
+    }
+
     const loadInsights = async () => {
       loading.value = true
       error.value = null
@@ -199,9 +205,137 @@ export default {
         insights.value = data.data
       } catch (err) {
         console.error(err)
-        error.value = err?.message || 'Unable to load insights'
+        if (shouldUseFallback(err)) {
+          await loadFallbackInsights()
+        } else {
+          error.value = err?.message || 'Unable to load insights'
+        }
       } finally {
         loading.value = false
+      }
+    }
+
+    const loadFallbackInsights = async () => {
+      try {
+        const { data } = await api.analyticsAPI.getDashboard(fallbackRange)
+        insights.value = buildInsightsFromDashboard(data.data)
+      } catch (dashboardErr) {
+        console.error(dashboardErr)
+        error.value = dashboardErr?.message || 'Unable to load fallback insights'
+      }
+    }
+
+    const hasCopy = (ad = {}) => {
+      return [ad.primaryText, ad.headline, ad.description].some(text =>
+        typeof text === 'string' && text.trim().length > 0
+      )
+    }
+
+    const hasMedia = (ad = {}) => Boolean(ad.imageUrl || ad.videoUrl)
+
+    const averageLength = (texts = []) => {
+      const valid = texts
+        .filter(text => typeof text === 'string')
+        .map(text => text.trim().length)
+        .filter(length => length > 0)
+      if (!valid.length) return 0
+      return valid.reduce((sum, length) => sum + length, 0) / valid.length
+    }
+
+    const extractKeywords = (ads = []) => {
+      const counts = new Map()
+      ads.forEach(ad => {
+        const text = [ad.primaryText, ad.headline, ad.description]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+        const tokens = text.split(/[^a-zA-Z0-9À-ỹ]+/).filter(word => word.length > 3)
+        tokens.forEach(token => {
+          counts.set(token, (counts.get(token) || 0) + 1)
+        })
+      })
+      return Array.from(counts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([keyword, count]) => ({ keyword, count }))
+    }
+
+    const buildCtaUsage = (ads = []) => {
+      if (!ads.length) return []
+      const counts = new Map()
+      ads.forEach(ad => {
+        const value = ad.callToAction || 'NONE'
+        counts.set(value, (counts.get(value) || 0) + 1)
+      })
+      return Array.from(counts.entries()).map(([cta, count]) => ({
+        cta,
+        count: formatNumber(count),
+        percentage: ((count / ads.length) * 100).toFixed(1)
+      }))
+    }
+
+    const buildAdTypeBreakdown = (ads = []) => {
+      return ads.reduce((acc, ad) => {
+        const key = ad.adType || 'UNKNOWN'
+        acc[key] = (acc[key] || 0) + 1
+        return acc
+      }, {})
+    }
+
+    const buildRecentAds = (ads = []) => {
+      return [...ads]
+        .sort((a, b) => {
+          const aDate = new Date(a.createdDate || 0).getTime()
+          const bDate = new Date(b.createdDate || 0).getTime()
+          return bDate - aDate
+        })
+        .slice(0, 5)
+        .map(ad => ({
+          id: ad.adId || ad.id,
+          name: ad.adName || ad.name || t('analyticsLite.recent.uncategorized'),
+          campaignName: ad.campaignName,
+          adType: ad.adType,
+          hasMedia: hasMedia(ad),
+          excerpt: buildExcerpt(ad),
+          createdDate: ad.createdDate
+        }))
+    }
+
+    const buildExcerpt = (ad = {}) => {
+      const source = ad.primaryText || ad.headline || ''
+      if (source.length <= 140) {
+        return source
+      }
+      return `${source.slice(0, 137).trim()}...`
+    }
+
+    const buildInsightsFromDashboard = (dashboardData = {}) => {
+      const ads = Array.isArray(dashboardData.adAnalytics) ? dashboardData.adAnalytics : []
+      const summary = {
+        totalAds: ads.length,
+        textAds: ads.filter(hasCopy).length,
+        mediaAds: ads.filter(hasMedia).length,
+        uniqueCampaigns: new Set(ads.map(ad => ad.campaignName).filter(Boolean)).size
+      }
+
+      const copyMetrics = {
+        averageHeadlineLength: averageLength(ads.map(ad => ad.headline)),
+        averagePrimaryTextLength: averageLength(ads.map(ad => ad.primaryText)),
+        averageDescriptionLength: averageLength(ads.map(ad => ad.description)),
+        keywordHighlights: extractKeywords(ads)
+      }
+
+      const ctaUsage = buildCtaUsage(ads)
+      const adTypeBreakdown = buildAdTypeBreakdown(ads)
+      const recentAds = buildRecentAds(ads)
+
+      return {
+        summary,
+        copyMetrics,
+        ctaUsage,
+        adTypeBreakdown,
+        recentAds,
+        generatedAt: new Date().toISOString()
       }
     }
 

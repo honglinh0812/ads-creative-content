@@ -98,7 +98,7 @@
   "analyticsLite": {
     "summaryLabel": "Ads created",
     "summarySubtitle": "Every creative generated inside Ads Creative",
-    "generatedAt": "Updated {{ time }}",
+    "generatedAt": "Updated {time}",
     "actions": {
       "refresh": "Refresh",
       "goToAds": "Go to Ads"
@@ -121,7 +121,7 @@
     "cta": {
       "title": "CTA usage",
       "subtitle": "Most used calls to action",
-      "percent": "{{ value }}% of ads",
+      "percent": "{value}% of ads",
       "empty": "No CTA data yet"
     },
     "recent": {
@@ -141,7 +141,7 @@
     "subtitle": "Pick ads, let AI review copy & visuals, then keep what works",
     "description": "Focus on the creative itself—no complicated dashboards or KPIs.",
     "searchPlaceholder": "Search by ad or campaign name",
-    "selectionCount": "Selected {{ count }} ads",
+    "selectionCount": "Selected {count} ads",
     "actions": {
       "refreshAds": "Refresh ads",
       "analyze": "Analyze selected",
@@ -171,7 +171,7 @@
       "target": "Audience"
     },
     "card": {
-      "type": "Type: {{ type }}",
+      "type": "Type: {type}",
       "score": "Quality score",
       "compliance": "Compliance",
       "linguistic": "Readability",
