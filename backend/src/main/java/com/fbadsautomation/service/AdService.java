@@ -130,7 +130,7 @@ public class AdService {
      */
     @Transactional
     public Map<String, Object> createAdWithAIContent(Long campaignId, String adType, String prompt,
-                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, String adStyle, Long personaId, List<String> trendingKeywords) {
+                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, String adStyle, Long personaId, List<String> trendingKeywords, List<AdGenerationRequest.VariationProviderConfig> variationConfigs) {
         log.info("Creating ad with AI content for user ID: {}, personaId: {}, trending keywords: {}", userId, personaId, trendingKeywords != null ? trendingKeywords.size() : 0);
 
         User user = userRepository.findById(userId)
@@ -213,7 +213,7 @@ public class AdService {
         log.info("Retrieved managed ad with ID: {}", ad.getId());
 
         // Generate AI content - pass persona and trending keywords (Phase 1 & 2)
-        List<AdContent> contents = aiContentService.generateAdContent(ad, prompt, mediaFile, textProvider, imageProvider, numberOfVariations, language, adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment, userSelectedPersona, trendingKeywords);
+        List<AdContent> contents = aiContentService.generateAdContent(ad, prompt, mediaFile, textProvider, imageProvider, numberOfVariations, language, adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment, userSelectedPersona, trendingKeywords, variationConfigs);
         // Nếu có contents được tạo, copy nội dung đầu tiên vào ad
         if (!contents.isEmpty()) {
             AdContent firstContent = contents.get(0);
@@ -506,7 +506,7 @@ public class AdService {
                                                  String textProvider, String imageProvider, Integer numberOfVariations,
                                                  String language, List<String> adLinks,
                                                  String extractedContent, String mediaFileUrl,
-                                                 com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, Long personaId, List<String> trendingKeywords) {
+                                                 com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, Long personaId, List<String> trendingKeywords, List<AdGenerationRequest.VariationProviderConfig> variationConfigs) {
         log.info("Generating preview content for ad: {}, personaId: {}, trending keywords: {}", tempAd.getName(), personaId, trendingKeywords != null ? trendingKeywords.size() : 0);
 
         // Phase 1: Fetch user-selected persona if provided
@@ -528,7 +528,7 @@ public class AdService {
         // Generate AI content without saving to database
         List<AdContent> contents = aiContentService.generateAdContent(tempAd, prompt, mediaFile, textProvider,
                                                                      imageProvider, numberOfVariations, language,
-                                                                     adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment, userSelectedPersona, trendingKeywords);
+                                                                     adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment, userSelectedPersona, trendingKeywords, variationConfigs);
         // Set temporary IDs for preview
         for (int i = 0; i < contents.size(); i++) {
             AdContent content = contents.get(i);
@@ -1042,5 +1042,3 @@ public class AdService {
                 .build();
     }
 }
-
-

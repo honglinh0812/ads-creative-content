@@ -109,7 +109,8 @@ public class AsyncAdController {
                 request.getAudienceSegment(),
                 request.getPersonaId(),        // Phase 1: Persona ID
                 request.getTrendingKeywords(), // Phase 2: Trending keywords
-                request.getAdStyle()           // Issue #6: Ad style
+                request.getAdStyle(),          // Issue #6: Ad style
+                request.getVariations()
             );
 
             return ResponseEntity.status(HttpStatus.ACCEPTED)

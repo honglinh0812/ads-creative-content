@@ -48,7 +48,8 @@ public class AsyncAIContentService {
             AudienceSegmentRequest audienceSegment,
             Long personaId,
             List<String> trendingKeywords,
-            String adStyle) {              // Issue #6: Ad style
+            String adStyle,
+            List<AdGenerationRequest.VariationProviderConfig> variationConfigs) {              // Issue #6: Ad style
 
         try {
             errorHandlingService.validateJobExecution(jobId, "content-generation");
@@ -133,7 +134,8 @@ public class AsyncAIContentService {
                 callToAction,
                 audienceSegment,
                 userSelectedPersona, // Phase 1: User-selected persona
-                trendingKeywords     // Phase 2: Trending keywords
+                trendingKeywords,     // Phase 2: Trending keywords
+                variationConfigs
             );
 
             asyncJobService.updateJobProgress(jobId, 90, "Processing generated content");

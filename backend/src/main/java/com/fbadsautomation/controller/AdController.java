@@ -190,7 +190,8 @@ public class AdController {
                     request.getLeadFormQuestions(), // truyền lead form questions vào
                     request.getAudienceSegment(), // truyền audience segment vào
                     request.getPersonaId(), // truyền persona ID vào (Phase 1)
-                    request.getTrendingKeywords() // truyền trending keywords vào (Phase 2)
+                    request.getTrendingKeywords(), // truyền trending keywords vào (Phase 2)
+                    request.getVariations()
                 );
                 // Convert to AdGenerationResponse with quality metrics
                 List<AdGenerationResponse.AdVariation> variations = contents.stream()
@@ -238,7 +239,8 @@ public class AdController {
                     request.getAudienceSegment(), // truyền audience segment vào
                     request.getAdStyle(), // truyền ad style vào (Issue #8)
                     request.getPersonaId(), // truyền persona ID vào (Phase 1)
-                    request.getTrendingKeywords() // truyền trending keywords vào (Phase 2)
+                    request.getTrendingKeywords(), // truyền trending keywords vào (Phase 2)
+                    request.getVariations()
                 );
                 List<AdContent> contents = (List<AdContent>) adResult.get("contents");
                 Ad ad = (Ad) adResult.get("ad");

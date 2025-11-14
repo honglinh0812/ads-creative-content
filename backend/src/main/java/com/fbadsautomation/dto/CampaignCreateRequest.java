@@ -15,8 +15,10 @@ public class CampaignCreateRequest {
     private String name;
 
     @NotBlank(message = "Campaign objective is required")
-    @Pattern(regexp = "^(CONVERSIONS|LINK_CLICKS|PAGE_LIKES|POST_ENGAGEMENT|REACH|TRAFFIC|BRAND_AWARENESS|LEAD_GENERATION)$",
-             message = "Invalid campaign objective")
+    @Pattern(
+        regexp = "^(BRAND_AWARENESS|REACH|TRAFFIC|ENGAGEMENT|APP_INSTALLS|VIDEO_VIEWS|LEAD_GENERATION|CONVERSIONS|CATALOG_SALES|STORE_TRAFFIC)$",
+        message = "Invalid campaign objective"
+    )
     private String objective;
 
     @NotBlank(message = "Budget type is required")

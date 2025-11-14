@@ -1,5 +1,6 @@
 package com.fbadsautomation.service;
 
+import com.fbadsautomation.dto.AdGenerationRequest;
 import com.fbadsautomation.dto.ProviderResponse;
 import com.fbadsautomation.integration.ai.AIContentServiceImpl;
 import com.fbadsautomation.ai.AIProvider;
@@ -9,6 +10,7 @@ import com.fbadsautomation.model.AdType;
 import com.fbadsautomation.repository.AdContentRepository;
 import com.fbadsautomation.repository.AdRepository;
 import com.fbadsautomation.service.AIProviderService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,7 +40,21 @@ import org.springframework.stereotype.Service;
     * @param trendingKeywords Trending keywords to incorporate (Phase 2, optional)
     * @return List of generated ad contents
     */
-   public List<AdContent> generateAdContent(Ad ad, String prompt, org.springframework.web.multipart.MultipartFile mediaFile, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, com.fbadsautomation.model.Persona userSelectedPersona, List<String> trendingKeywords) {
+   public List<AdContent> generateAdContent(Ad ad,
+                                           String prompt,
+                                           org.springframework.web.multipart.MultipartFile mediaFile,
+                                           String textProvider,
+                                           String imageProvider,
+                                           Integer numberOfVariations,
+                                           String language,
+                                           List<String> adLinks,
+                                           String extractedContent,
+                                           String mediaFileUrl,
+                                           com.fbadsautomation.model.FacebookCTA callToAction,
+                                           com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment,
+                                           com.fbadsautomation.model.Persona userSelectedPersona,
+                                           List<String> trendingKeywords,
+                                           List<AdGenerationRequest.VariationProviderConfig> variationConfigs) {
        log.info("[Issue #9] Generating content for ad: {}, campaign: {}, mediaFileUrl: {}, persona: {}, trending keywords: {}",
                 ad.getId(),
                 ad.getCampaign() != null ? ad.getCampaign().getId() : "none",
@@ -61,14 +77,48 @@ import org.springframework.stereotype.Service;
        // Sử dụng CTA được truyền hoặc default nếu null
        com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
 
+       int effectiveVariations = numberOfVariations != null ? numberOfVariations : DEFAULT_VARIATIONS;
+       if (variationConfigs != null && !variationConfigs.isEmpty()) {
+           effectiveVariations = variationConfigs.size();
+       }
+
        // Issue #9: Pass Campaign and AdStyle instead of AudienceSegment
        // Phase 1 & 2: Pass persona and trending keywords
        // Note: We still accept audienceSegment parameter for backward compatibility but prefer Campaign
-       List<AdContent> generatedContents = aiIntegrationService.generateContentWithCampaign(
-               prompt, contentType, textProvider, imageProvider,
-               numberOfVariations != null ? numberOfVariations : DEFAULT_VARIATIONS,
-               language, adLinks, extractedContent,
-               mediaFileUrl, cta, campaign, ad.getAdStyle(), userSelectedPersona, trendingKeywords);
+       List<AdContent> generatedContents;
+       if (variationConfigs != null && !variationConfigs.isEmpty()) {
+           generatedContents = generatePerVariationContent(
+               prompt,
+               contentType,
+               variationConfigs,
+               textProvider,
+               imageProvider,
+               language,
+               adLinks,
+               extractedContent,
+               mediaFileUrl,
+               cta,
+               campaign,
+               ad.getAdStyle(),
+               userSelectedPersona,
+               trendingKeywords);
+       } else {
+           generatedContents = aiIntegrationService.generateContentWithCampaign(
+               prompt,
+               contentType,
+               textProvider,
+               imageProvider,
+               effectiveVariations,
+               language,
+               adLinks,
+               extractedContent,
+               mediaFileUrl,
+               cta,
+               campaign,
+               ad.getAdStyle(),
+               userSelectedPersona,
+               trendingKeywords);
+       }
        
        // Set ad reference and preview order for each content
        for (int i = 0; i < generatedContents.size(); i++) {
@@ -101,6 +151,80 @@ import org.springframework.stereotype.Service;
            log.info("Preview mode: returning {} contents without saving to database", generatedContents.size());
            return generatedContents;
        }
+   }
+
+   private List<AdContent> generatePerVariationContent(String prompt,
+                                                       AdContent.ContentType contentType,
+                                                       List<AdGenerationRequest.VariationProviderConfig> variationConfigs,
+                                                       String fallbackTextProvider,
+                                                       String fallbackImageProvider,
+                                                       String language,
+                                                       List<String> adLinks,
+                                                       String extractedContent,
+                                                       String defaultMediaFileUrl,
+                                                       com.fbadsautomation.model.FacebookCTA callToAction,
+                                                       com.fbadsautomation.model.Campaign campaign,
+                                                       com.fbadsautomation.model.AdStyle adStyle,
+                                                       com.fbadsautomation.model.Persona userSelectedPersona,
+                                                       List<String> trendingKeywords) {
+       List<AdContent> perVariationContents = new ArrayList<>();
+
+       for (int i = 0; i < variationConfigs.size(); i++) {
+           AdGenerationRequest.VariationProviderConfig config = variationConfigs.get(i);
+           String variationTextProvider = resolveTextProvider(config.getTextProvider(), fallbackTextProvider);
+
+           String mediaFileToUse = defaultMediaFileUrl;
+           String variationImageProvider = null;
+           if (config.getUploadedFileUrl() != null && !config.getUploadedFileUrl().isBlank()) {
+               mediaFileToUse = config.getUploadedFileUrl();
+           } else {
+               variationImageProvider = resolveImageProvider(config.getImageProvider(), fallbackImageProvider);
+           }
+
+           List<AdContent> generated = aiIntegrationService.generateContentWithCampaign(
+               prompt,
+               contentType,
+               variationTextProvider,
+               variationImageProvider,
+               1,
+               language,
+               adLinks,
+               extractedContent,
+               mediaFileToUse,
+               callToAction,
+               campaign,
+               adStyle,
+               userSelectedPersona,
+               trendingKeywords);
+
+           if (!generated.isEmpty()) {
+               perVariationContents.add(generated.get(0));
+           } else {
+               log.warn("No content returned for variation {} using provider {}", i + 1, variationTextProvider);
+           }
+       }
+
+       return perVariationContents;
+   }
+
+   private String resolveTextProvider(String primary, String fallback) {
+       if (primary != null && !primary.isBlank()) {
+           return primary;
+       }
+       if (fallback != null && !fallback.isBlank()) {
+           return fallback;
+       }
+       return "openai";
+   }
+
+   private String resolveImageProvider(String primary, String fallback) {
+       if (primary != null && !primary.isBlank()) {
+           return primary;
+       }
+       if (fallback != null && !fallback.isBlank()) {
+           return fallback;
+       }
+       return null;
    }
    
    @org.springframework.transaction.annotation.Transactional
