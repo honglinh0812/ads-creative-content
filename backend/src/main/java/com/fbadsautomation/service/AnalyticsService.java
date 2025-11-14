@@ -33,7 +33,7 @@ public class AnalyticsService {
     private static final Set<String> STOP_WORDS = Set.of(
         "the", "and", "for", "with", "that", "this", "from", "your", "have", "our",
         "cua", "của", "cho", "và", "các", "những", "một", "cùng", "khi", "đang",
-        "trong", "đến", "hay", "như", "được", "để", "cần", "là", "đang", "từ"
+        "trong", "đến", "hay", "như", "được", "để", "cần", "là", "từ"
     );
 
     private final UserRepository userRepository;
