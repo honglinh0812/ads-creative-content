@@ -149,6 +149,10 @@ jobs:
 
             cd ${{ env.DEPLOY_PATH }}
 
+            echo "Syncing repository to origin/main for validation..."
+            git fetch origin >/dev/null 2>&1 || true
+            git reset --hard origin/main >/dev/null 2>&1 || true
+
             echo "Ensuring PostgreSQL service is running..."
             docker_compose up -d postgres >/dev/null 2>&1 || true
 
