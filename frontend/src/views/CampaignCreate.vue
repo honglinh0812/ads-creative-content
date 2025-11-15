@@ -176,11 +176,6 @@
             <AudienceSegmentForm v-model="form.audienceSegment" />
           </a-col>
 
-          <!-- Error Display -->
-          <a-col :span="24">
-            <FieldError :error="submitError" />
-          </a-col>
-
           <!-- Submit -->
           <a-col :span="24">
             <a-form-item style="margin-top: 24px;">
@@ -246,7 +241,6 @@
 <script>
 import { mapState, mapActions } from 'vuex'
 import api from '@/services/api'
-import FieldError from '@/components/FieldError.vue'
 import AudienceSegmentForm from '@/components/AudienceSegmentForm.vue'
 
 import {
@@ -287,7 +281,6 @@ export default {
     ATypographyText: Typography.Text,
     QuestionCircleOutlined,
     ArrowLeftOutlined,
-    FieldError,
     AudienceSegmentForm
   },
   data() {
@@ -504,7 +497,7 @@ export default {
         console.log('Campaign create response:', response)
         this.showToast({
           type: 'success',
-          message: 'Campaign created successfully!'
+          message: this.$t('campaignCreate.notifications.success')
         })
         await this.$store.dispatch('dashboard/fetchDashboardData', null, { root: true })
         this.$router.push('/dashboard')
@@ -518,7 +511,7 @@ export default {
 
         this.showToast({
           type: 'error',
-          message: error.message || 'Unable to create campaign. Please try again.'
+          message: this.$t('campaignCreate.notifications.error')
         })
       } finally {
         this.isSubmitting = false
@@ -675,4 +668,3 @@ export default {
   }
 }
 </style>
-

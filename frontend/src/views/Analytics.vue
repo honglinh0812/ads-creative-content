@@ -1,25 +1,30 @@
 <template>
   <div class="analytics-lite">
+    <!-- Hero Section -->
     <div class="lite-card hero" v-if="!loading">
-      <div>
-        <p class="eyebrow">{{ t('analyticsLite.summaryLabel') }}</p>
-        <h1>{{ insights?.summary?.totalAds ?? '—' }}</h1>
-        <p class="subtitle">{{ t('analyticsLite.summarySubtitle') }}</p>
-        <p class="generated-at" v-if="insights?.generatedAt">
-          {{ t('analyticsLite.generatedAt', { time: formatDate(insights.generatedAt) }) }}
-        </p>
+      <div class="hero-content">
+        <div class="hero-text">
+          <p class="eyebrow">{{ t('analyticsLite.summaryLabel') }}</p>
+          <h1 class="hero-number">{{ insights?.summary?.totalAds ?? '—' }}</h1>
+          <p class="subtitle">{{ t('analyticsLite.summarySubtitle') }}</p>
+          <p class="generated-at" v-if="insights?.generatedAt">
+            {{ t('analyticsLite.generatedAt', { time: formatDate(insights.generatedAt) }) }}
+          </p>
+        </div>
+        <a-space class="hero-actions" :size="12">
+          <a-button @click="loadInsights" :loading="loading" size="large">
+            <template #icon><ReloadOutlined /></template>
+            {{ t('analyticsLite.actions.refresh') }}
+          </a-button>
+          <a-button type="primary" @click="$router.push('/ads')" size="large">
+            <template #icon><AppstoreOutlined /></template>
+            {{ t('analyticsLite.actions.goToAds') }}
+          </a-button>
+        </a-space>
       </div>
-      <a-space>
-        <a-button @click="loadInsights" :loading="loading">
-          {{ t('analyticsLite.actions.refresh') }}
-        </a-button>
-        <a-button type="primary" @click="$router.push('/ads')">
-          {{ t('analyticsLite.actions.goToAds') }}
-        </a-button>
-      </a-space>
     </div>
 
-    <a-spin v-if="loading" size="large" class="page-spinner" />
+    <a-spin v-if="loading" size="large" class="page-spinner" tip="Đang tải dữ liệu..." />
 
     <div v-else>
       <div class="stat-grid" v-if="statCards.length">
@@ -127,10 +132,15 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ReloadOutlined, AppstoreOutlined } from '@ant-design/icons-vue'
 import api from '@/services/api'
 
 export default {
   name: 'AnalyticsLiteView',
+  components: {
+    ReloadOutlined,
+    AppstoreOutlined
+  },
   setup() {
     const { t } = useI18n()
     const insights = ref(null)
@@ -389,25 +399,46 @@ export default {
 
 <style scoped>
 .analytics-lite {
-  padding: 32px;
+  padding: clamp(16px, 4vw, 32px);
   background: #f5f6fa;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: clamp(16px, 3vw, 24px);
 }
 
 .lite-card {
   background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  padding: clamp(20px, 3vw, 24px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .hero {
+  border-radius: 8px;
+}
+
+.hero-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 24px;
+}
+
+.hero-text {
+  flex: 1;
+}
+
+.hero-number {
+  font-size: clamp(48px, 8vw, 64px);
+  font-weight: 700;
+  margin: 8px 0 12px;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.hero-actions {
+  flex-shrink: 0;
 }
 
 .eyebrow {
@@ -415,44 +446,50 @@ export default {
   letter-spacing: 0.1em;
   color: #64748b;
   font-size: 12px;
+  margin-bottom: 4px;
 }
 
 .subtitle {
   color: #475569;
   margin-top: 8px;
+  font-size: 14px;
 }
 
 .generated-at {
   color: #94a3b8;
-  margin-top: 4px;
+  margin-top: 8px;
   font-size: 12px;
 }
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: clamp(12px, 2vw, 16px);
 }
 
 .stat-card .label {
-  color: #475569;
+  color: #64748b;
   margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .stat-card .value {
-  font-size: 32px;
+  font-size: clamp(28px, 5vw, 32px);
   font-weight: 700;
   color: #0f172a;
+  margin-bottom: 4px;
 }
 
 .stat-card .hint {
   color: #94a3b8;
+  font-size: 12px;
 }
 
 .insight-panels {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: clamp(12px, 2vw, 16px);
 }
 
 .panel-header {
@@ -464,6 +501,9 @@ export default {
 
 .panel h3 {
   margin: 4px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .metrics {
@@ -561,24 +601,78 @@ export default {
   padding: 64px 0;
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
   .analytics-lite {
     padding: 16px;
+    gap: 16px;
   }
 
-  .hero {
+  .hero-content {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .hero-actions {
+    width: 100%;
+  }
+
+  .hero-actions :deep(.ant-space-item) {
+    flex: 1;
+  }
+
+  .hero-actions :deep(.ant-btn) {
+    width: 100%;
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .insight-panels {
+    grid-template-columns: 1fr;
   }
 
   .recent-item {
     flex-direction: column;
+    gap: 12px;
   }
 
   .tag-group {
     flex-direction: row;
     flex-wrap: wrap;
+  }
+
+  .scores {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+}
+
+/* Tablet specific */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .insight-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Print styles */
+@media print {
+  .hero-actions,
+  .generated-at {
+    display: none;
+  }
+
+  .analytics-lite {
+    background: white;
+    padding: 0;
+  }
+
+  .lite-card {
+    box-shadow: none;
+    border: 1px solid #e2e8f0;
+    page-break-inside: avoid;
   }
 }
 </style>

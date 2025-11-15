@@ -640,11 +640,12 @@
             <div class="ad-preview-grid">
               <div
                 v-for="variation in adVariations"
-                :key="variation.id"
+                :key="getVariationIdentifier(variation)"
                 class="ad-preview-card"
                 :class="{
-                  selected: selectedVariations.some(v => v.id === variation.id),
-                  'best-quality': variation.qualityScore?.totalScore === bestQualityScoreValue
+                  selected: isVariationSelected(variation),
+                  'best-quality': variation.qualityScore?.totalScore === bestQualityScoreValue,
+                  'unsaved-highlight': highlightUnsavedVariations
                 }"
                 @click="selectVariation(variation)"
               >
@@ -776,6 +777,21 @@
         <h4>{{ selectedVariation.headline }}</h4>
         <p>{{ selectedVariation.primaryText }}</p>
       </div>
+    </a-modal>
+
+    <!-- Unsaved Variations Warning Modal -->
+    <a-modal
+      v-model:open="showUnsavedLeaveModal"
+      :title="$t('adCreate.modals.unsavedVariations.title')"
+      :ok-text="$t('adCreate.modals.unsavedVariations.confirm')"
+      :cancel-text="$t('adCreate.modals.unsavedVariations.cancel')"
+      :closable="false"
+      :mask-closable="false"
+      @ok="handleLeaveModalConfirm"
+      @cancel="handleLeaveModalCancel"
+    >
+      <p>{{ $t('adCreate.modals.unsavedVariations.message') }}</p>
+      <p class="unsaved-tip">{{ $t('adCreate.modals.unsavedVariations.highlightHint') }}</p>
     </a-modal>
 
     <!-- Extract Error Dialog -->
@@ -1131,12 +1147,17 @@ export default {
         }
       ],
       adVariations: [],
+      highlightUnsavedVariations: false,
+      highlightUnsavedTimeoutId: null,
       selectedVariations: [], // Changed from selectedVariation to support multiple selection
       editingVariation: null,
       adLinks: [''],
       uploadedFiles: [],
       uploadedFileUrl: '',
       selectedMediaUrl: '',
+      showUnsavedLeaveModal: false,
+      pendingRouteLeaveResolve: null,
+      hasSavedAd: false,
       
       // Loading states
       loadingCampaigns: false,
@@ -1355,6 +1376,18 @@ export default {
   beforeUnmount() {
     // Clean up polling interval
     this.stopJobPolling()
+    if (this.highlightUnsavedTimeoutId) {
+      clearTimeout(this.highlightUnsavedTimeoutId)
+      this.highlightUnsavedTimeoutId = null
+    }
+  },
+  beforeRouteLeave() {
+    if (this.shouldPreventRouteLeave()) {
+      return new Promise(resolve => {
+        this.pendingRouteLeaveResolve = resolve
+        this.showUnsavedLeaveModal = true
+      })
+    }
   },
   methods: {
     ...mapActions('cta', ['loadCTAs']),
@@ -1366,6 +1399,45 @@ export default {
       } else {
         this.selectedCampaign = null
       }
+    },
+
+    shouldPreventRouteLeave() {
+      return (
+        this.currentStep === 3 &&
+        this.adVariations.length > 0 &&
+        !this.hasSavedAd &&
+        !this.showUnsavedLeaveModal
+      )
+    },
+
+    handleLeaveModalConfirm() {
+      this.showUnsavedLeaveModal = false
+      if (this.pendingRouteLeaveResolve) {
+        const resolve = this.pendingRouteLeaveResolve
+        this.pendingRouteLeaveResolve = null
+        resolve(true)
+      }
+    },
+
+    handleLeaveModalCancel() {
+      this.showUnsavedLeaveModal = false
+      if (this.pendingRouteLeaveResolve) {
+        const resolve = this.pendingRouteLeaveResolve
+        this.pendingRouteLeaveResolve = null
+        resolve(false)
+      }
+      this.highlightUnsavedVariationCards()
+    },
+
+    highlightUnsavedVariationCards() {
+      if (this.highlightUnsavedTimeoutId) {
+        clearTimeout(this.highlightUnsavedTimeoutId)
+      }
+      this.highlightUnsavedVariations = true
+      this.highlightUnsavedTimeoutId = setTimeout(() => {
+        this.highlightUnsavedVariations = false
+        this.highlightUnsavedTimeoutId = null
+      }, 2000)
     },
 
     /**
@@ -1953,10 +2025,8 @@ export default {
         const response = await api.post('/ads/generate', requestData)
 
         if (response.data.status === 'success') {
-          this.adVariations = response.data.variations.map(v => ({
-            ...v,
-            imageUrl: v.imageUrl || this.uploadedFileUrl || v.mediaFileUrl || ''
-          }))
+          this.adVariations = this.normalizeVariations(response.data.variations)
+          this.hasSavedAd = false
 
           this.adId = response.data.adId
           this.currentStep = 3
@@ -2084,10 +2154,8 @@ export default {
         console.log('[ASYNC] Result:', result)
 
         // Extract variations
-        this.adVariations = result.map(v => ({
-          ...v,
-          imageUrl: v.imageUrl || this.uploadedFileUrl || ''
-        }))
+        this.adVariations = this.normalizeVariations(result)
+        this.hasSavedAd = false
 
         // Close progress modal
         this.showAsyncProgressModal = false
@@ -2217,18 +2285,51 @@ export default {
         this.asyncHealthy = false
       }
     },
+
+    normalizeVariations(variations = []) {
+      const timestamp = Date.now()
+      return variations.map((variation, index) => {
+        const clientId = variation.id || variation.clientId || `variation-${timestamp}-${index}`
+        return {
+          ...variation,
+          clientId,
+          imageUrl: variation.imageUrl || variation.uploadedFileUrl || variation.mediaFileUrl || this.uploadedFileUrl || ''
+        }
+      })
+    },
+
+    getVariationIdentifier(variation) {
+      if (!variation) return null
+      if (variation.id) return variation.id
+      if (variation.clientId) return variation.clientId
+      const generatedId = `variation-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      variation.clientId = generatedId
+      return generatedId
+    },
+
+    isVariationSelected(variation) {
+      const identifier = this.getVariationIdentifier(variation)
+      if (!identifier) return false
+      return this.selectedVariations.some(v => this.getVariationIdentifier(v) === identifier)
+    },
     
     selectVariation(variation) {
       // Toggle selection: add if not selected, remove if already selected
-      const index = this.selectedVariations.findIndex(v => v.id === variation.id)
+      const identifier = this.getVariationIdentifier(variation)
+      const index = this.selectedVariations.findIndex(
+        v => this.getVariationIdentifier(v) === identifier
+      )
       if (index > -1) {
         // Deselect: Create new array to trigger Vue reactivity
-        this.selectedVariations = this.selectedVariations.filter(v => v.id !== variation.id)
+        this.selectedVariations = this.selectedVariations.filter(
+          v => this.getVariationIdentifier(v) !== identifier
+        )
       } else {
         // Select: Ensure variation has correct imageUrl before adding
         // Priority: variation's own imageUrl > uploadedFileUrl (per-variation) > mediaFileUrl > global uploadedFileUrl
         const variationWithImage = {
           ...variation,
+          clientId: variation.clientId || identifier,
           imageUrl: variation.imageUrl || variation.uploadedFileUrl || variation.mediaFileUrl || this.uploadedFileUrl || ''
         }
         // Create new array to trigger Vue reactivity
@@ -2248,12 +2349,30 @@ export default {
     
     saveEdit() {
       if (this.editingVariation) {
-        const index = this.adVariations.findIndex(v => v.id === this.editingVariation.id)
+        const identifier = this.getVariationIdentifier(this.editingVariation)
+        const index = this.adVariations.findIndex(
+          v => this.getVariationIdentifier(v) === identifier
+        )
         if (index !== -1) {
-          this.adVariations[index] = { ...this.editingVariation }
-          if (this.selectedVariation?.id === this.editingVariation.id) {
-            this.selectedVariation = { ...this.editingVariation }
+          const updatedVariation = {
+            ...this.editingVariation,
+            clientId: this.editingVariation.clientId || identifier
           }
+          const updatedAdVariations = [...this.adVariations]
+          updatedAdVariations[index] = updatedVariation
+          this.adVariations = updatedAdVariations
+        }
+
+        const selectedIndex = this.selectedVariations.findIndex(
+          v => this.getVariationIdentifier(v) === identifier
+        )
+        if (selectedIndex !== -1) {
+          const updatedSelectedVariations = [...this.selectedVariations]
+          updatedSelectedVariations[selectedIndex] = {
+            ...this.editingVariation,
+            clientId: this.editingVariation.clientId || identifier
+          }
+          this.selectedVariations = updatedSelectedVariations
         }
       }
       this.showEditModal = false
@@ -2309,6 +2428,7 @@ export default {
         if (response.data.status === 'success') {
           this.$message.success(this.$t('adCreate.messages.success.adSaved'))
           await this.$store.dispatch('dashboard/fetchDashboardData', null, { root: true })
+          this.hasSavedAd = true
           this.$router.push('/dashboard')
         } else {
           throw new Error(response.data.message)
@@ -2414,10 +2534,8 @@ export default {
         const response = await api.post('/ads/generate', requestData)
         
         if (response.data.status === 'success') {
-          this.adVariations = response.data.variations.map(v => ({
-            ...v,
-            imageUrl: v.imageUrl || this.uploadedFileUrl || v.mediaFileUrl || ''
-          }))
+          this.adVariations = this.normalizeVariations(response.data.variations)
+          this.hasSavedAd = false
           this.adId = response.data.adId
           this.currentStep = 3
           this.$message.success(this.$t('adCreate.messages.success.adCreated'))
@@ -3359,6 +3477,12 @@ export default {
   text-align: center;
 }
 
+.unsaved-tip {
+  margin-top: 12px;
+  color: #fa8c16;
+  font-weight: 500;
+}
+
 .ad-preview-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -3389,6 +3513,21 @@ export default {
   border-color: #4a8c4a;
   background: #f2f8f2;
   box-shadow: 0 3px 12px rgba(74, 140, 74, 0.12);
+}
+
+.ad-preview-card.unsaved-highlight {
+  border-color: #faad14;
+  box-shadow: 0 0 0 3px rgba(250, 173, 20, 0.3), 0 12px 24px rgba(250, 173, 20, 0.25);
+  animation: unsaved-highlight-pulse 0.8s ease-in-out alternate;
+}
+
+@keyframes unsaved-highlight-pulse {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-3px);
+  }
 }
 
 .ad-preview-content {

@@ -23,6 +23,7 @@
 <script>
 import { computed } from 'vue'
 import { useStore } from 'vuex'
+import { useI18n } from 'vue-i18n'
 import { DownOutlined, CheckOutlined } from '@ant-design/icons-vue'
 
 export default {
@@ -33,6 +34,7 @@ export default {
   },
   setup() {
     const store = useStore()
+    const { t } = useI18n()
 
     // Get locale data from Vuex store (Issue: I18n Phase 1)
     const currentLocale = computed(() => store.getters['locale/currentLocale'])
@@ -46,15 +48,16 @@ export default {
 
     const onLanguageChange = ({ key }) => {
       if (key !== currentLocale.value) {
+        const nextLocale = availableLocales.value.find(locale => locale.code === key)
+        const languageName = nextLocale ? nextLocale.name : key
+
         // Dispatch Vuex action to change locale
         store.dispatch('locale/changeLocale', key)
 
-        // Show success toast
+        // Show success toast with localized content
         store.dispatch('toast/showSuccess', {
-          title: key === 'vi' ? 'Đã đổi ngôn ngữ' : 'Language Changed',
-          message: key === 'vi'
-            ? 'Giao diện đã chuyển sang tiếng Việt'
-            : 'Interface switched to English',
+          title: t('languageSwitcher.changeSuccessTitle'),
+          message: t('languageSwitcher.changeSuccessMessage', { language: languageName }),
           duration: 3000
         })
       }

@@ -22,23 +22,103 @@ const PLATFORM_IFRAME_BUILDERS = {
   }
 }
 
-const createPlatformResponse = (overrides = {}) => ({
-  platform: overrides.platform || 'facebook',
-  mode: overrides.mode || 'empty',
-  success: overrides.success || false,
-  ads: overrides.ads || [],
-  totalResults: overrides.totalResults || 0,
-  iframeUrl: overrides.iframeUrl || null,
-  message: overrides.message || '',
-  friendlySuggestion: overrides.friendlySuggestion || '',
-  fallbackRegions: overrides.fallbackRegions || [],
-  errorCode: overrides.errorCode || null,
-  metadata: overrides.metadata || {},
-  brandName: overrides.brandName || null,
-  region: overrides.region || null,
-  retryable: typeof overrides.retryable === 'boolean' ? overrides.retryable : null,
-  timestamp: overrides.timestamp || null
-})
+const BRAND_PLACEHOLDER = 'thương hiệu này'
+
+const formatBrandPart = (brandName) => {
+  if (!brandName || !brandName.trim()) {
+    return ` cho ${BRAND_PLACEHOLDER}`
+  }
+  return ` cho "${brandName.trim()}"`
+}
+
+const formatRegionPart = (region) => {
+  if (!region || region.trim().length === 0 || region.toUpperCase() === 'GLOBAL') {
+    return ''
+  }
+  return ` tại ${region.trim().toUpperCase()}`
+}
+
+const getPlatformLabel = (platform) => PLATFORM_LABELS[platform] || platform || 'Competitor Ads'
+
+const buildUserFriendlyMessage = (response) => {
+  const mode = (response.mode || '').toString().toLowerCase()
+  const errorCode = (response.errorCode || '').toString().toLowerCase()
+  const serverMessage = response.message
+  const platformLabel = getPlatformLabel(response.platform)
+  const brandPart = formatBrandPart(response.brandName)
+  const regionPart = formatRegionPart(response.region)
+  const ads = response.ads || []
+  const defaultError = `Không thể tải dữ liệu ${platformLabel}. Vui lòng thử lại sau hoặc mở trực tiếp trang ${platformLabel}.`
+
+  if (serverMessage && ['data', 'empty', 'iframe'].includes(mode)) {
+    return serverMessage
+  }
+
+  if (serverMessage && ['config_missing', 'validation_error', 'region_unsupported', 'no_results'].includes(errorCode)) {
+    return serverMessage
+  }
+
+  if (mode === 'data' && ads.length) {
+    return serverMessage || `Đã tìm thấy ${ads.length} quảng cáo trên ${platformLabel}${brandPart}${regionPart}.`
+  }
+
+  if (mode === 'empty' || errorCode === 'no_results') {
+    return serverMessage || `Không tìm thấy quảng cáo ${platformLabel}${brandPart}${regionPart}.`
+  }
+
+  if (mode === 'iframe') {
+    return serverMessage || `Đang hiển thị ${platformLabel} ở chế độ nhúng.`
+  }
+
+  switch (errorCode) {
+    case 'config_missing':
+      return 'Tính năng này chưa được cấu hình đầy đủ. Vui lòng cập nhật API key hoặc liên hệ quản trị viên.'
+    case 'region_unsupported':
+      return `${platformLabel} chưa hỗ trợ khu vực ${response.region || ''}. Vui lòng thử khu vực như US hoặc SG.`
+    case 'rate_limited':
+    case 'quota_exceeded':
+      return `${platformLabel} đang bị giới hạn truy vấn. Thử lại sau ít phút.`
+    case 'validation_error':
+      return `Không thể tìm quảng cáo ${platformLabel} vì thông tin tìm kiếm chưa hợp lệ. Hãy kiểm tra lại từ khóa hoặc khu vực.`
+    case 'provider_error':
+    case 'client_error':
+    case 'temporary_error':
+      return `Không thể tải dữ liệu ${platformLabel} lúc này. Vui lòng thử lại sau hoặc sử dụng chế độ iframe.`
+    default:
+      break
+  }
+
+  if (serverMessage) {
+    return serverMessage
+  }
+
+  return defaultError
+}
+
+const createPlatformResponse = (overrides = {}) => {
+  const base = {
+    platform: overrides.platform || 'facebook',
+    mode: overrides.mode || 'empty',
+    success: overrides.success || false,
+    ads: overrides.ads || [],
+    totalResults: overrides.totalResults || 0,
+    iframeUrl: overrides.iframeUrl || null,
+    message: overrides.message || '',
+    friendlySuggestion: overrides.friendlySuggestion || '',
+    fallbackRegions: overrides.fallbackRegions || [],
+    errorCode: overrides.errorCode || null,
+    metadata: overrides.metadata || {},
+    brandName: overrides.brandName || null,
+    region: overrides.region || null,
+    retryable: typeof overrides.retryable === 'boolean' ? overrides.retryable : null,
+    timestamp: overrides.timestamp || null
+  }
+
+  return {
+    ...base,
+    userMessage: overrides.userMessage || buildUserFriendlyMessage(base)
+  }
+}
 
 const normalizeFacebookResponse = (payload = {}, params) => {
   const ads = payload.ads || []
@@ -346,6 +426,7 @@ const actions = {
         success: normalized.success,
         mode: normalized.mode,
         message: normalized.message,
+        userMessage: normalized.userMessage,
         friendlySuggestion: normalized.friendlySuggestion,
         timestamp: normalized.timestamp
       })
@@ -368,7 +449,7 @@ const actions = {
         }
 
         if (normalizedError.mode === 'error') {
-          commit('SET_SEARCH_ERROR', normalizedError.message)
+          commit('SET_SEARCH_ERROR', normalizedError.userMessage || normalizedError.message)
         }
 
         commit('SET_LAST_SEARCH_PARAMS', { brand: brandName, region, limit })
@@ -379,6 +460,7 @@ const actions = {
           success: normalizedError.success,
           mode: normalizedError.mode,
           message: normalizedError.message,
+          userMessage: normalizedError.userMessage,
           friendlySuggestion: normalizedError.friendlySuggestion,
           timestamp: normalizedError.timestamp || new Date().toISOString()
         })
@@ -407,14 +489,15 @@ const actions = {
 
       commit('SET_PLATFORM_RESPONSE', { platform, response: fallbackResponse })
       commit('SET_LAST_SEARCH_PARAMS', { brand: brandName, region, limit })
-      commit('SET_SEARCH_ERROR', errorMessage)
+      commit('SET_SEARCH_ERROR', fallbackResponse.userMessage || errorMessage)
       commit('CLEAR_SEARCH_RESULTS')
       commit('PUSH_PLATFORM_STATUS', {
         platform,
         platformLabel: PLATFORM_LABELS[platform] || platform,
         success: false,
         mode: fallbackResponse.mode,
-        message: errorMessage,
+        message: fallbackResponse.message,
+        userMessage: fallbackResponse.userMessage,
         friendlySuggestion: fallbackResponse.friendlySuggestion,
         timestamp: fallbackResponse.timestamp
       })

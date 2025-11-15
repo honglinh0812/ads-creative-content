@@ -88,10 +88,9 @@
         <div class="insight-header">
           <div>
             <p class="eyebrow">{{ insight.campaignName || t('optimizationLite.table.noCampaign') }}</p>
-            <h3>{{ insight.adName }}</h3>
+            <h3>{{ insight.adName || t('optimizationLite.table.untitled') }}</h3>
             <p class="hint">
-              {{ t('optimizationLite.card.type', { type: insight.adType || '—' }) }}
-              · {{ formatDate(insight.createdDate) }}
+              {{ t('optimizationLite.card.type', { type: insight.adType || '—' }) }} · {{ formatDate(insight.createdDate) }}
             </p>
           </div>
           <div class="score-pill">

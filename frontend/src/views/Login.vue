@@ -19,19 +19,34 @@
 
         <div v-if="mode === 'login'" class="login-options">
           <div class="login-methods">
-            <a-button
-              type="primary"
-              size="large"
-              class="facebook-login-button"
-              @click="handleLoginFacebook"
-              :loading="loadingFacebook"
-              block
-            >
-              <template #icon>
-                <facebook-outlined />
-              </template>
-              {{ $t('auth.loginForm.facebookButton') }}
-            </a-button>
+            <div class="social-login-buttons">
+              <a-button
+                type="primary"
+                size="large"
+                class="facebook-login-button"
+                @click="handleLoginFacebook"
+                :loading="loadingFacebook"
+                block
+              >
+                <template #icon>
+                  <facebook-outlined />
+                </template>
+                {{ $t('auth.loginForm.facebookButton') }}
+              </a-button>
+
+              <a-button
+                size="large"
+                class="google-login-button"
+                @click="handleLoginGoogle"
+                :loading="loadingGoogle"
+                block
+              >
+                <template #icon>
+                  <google-outlined />
+                </template>
+                {{ $t('auth.loginForm.googleButton') }}
+              </a-button>
+            </div>
 
             <a-divider>{{ $t('auth.loginForm.or') }}</a-divider>
 
@@ -235,9 +250,10 @@
 <script>
 import { mapActions } from 'vuex'
 import FieldError from '@/components/FieldError.vue'
-import { getApiBaseUrl, getFacebookLoginUrl } from '@/config/api.config'
+import { getApiBaseUrl, getOAuthLoginUrl } from '@/config/api.config'
 import {
   FacebookOutlined,
+  GoogleOutlined,
   UserOutlined,
   LockOutlined,
   MailOutlined,
@@ -252,6 +268,7 @@ export default {
   components: {
     FieldError,
     FacebookOutlined,
+    GoogleOutlined,
     UserOutlined,
     LockOutlined,
     MailOutlined,
@@ -265,6 +282,7 @@ export default {
       mode: 'login', // 'login' | 'register' | 'forgot'
       loadingLoginApp: false,
       loadingFacebook: false,
+      loadingGoogle: false,
       loadingRegister: false,
       loadingForgot: false,
       error: '',
@@ -289,11 +307,17 @@ export default {
   },
   methods: {
     ...mapActions('toast', ['showSuccess', 'showError', 'showInfo']),
-    handleLoginFacebook() {
-      this.loadingFacebook = true
+    startOAuthLogin(provider, loadingKey) {
+      this[loadingKey] = true
       const redirectPath = this.$route.query.redirect || '/dashboard'
       sessionStorage.setItem('redirectAfterLogin', redirectPath)
-      window.location.href = getFacebookLoginUrl()
+      window.location.href = getOAuthLoginUrl(provider)
+    },
+    handleLoginFacebook() {
+      this.startOAuthLogin('facebook', 'loadingFacebook')
+    },
+    handleLoginGoogle() {
+      this.startOAuthLogin('google', 'loadingGoogle')
     },
     async handleLoginApp() {
       this.error = ''
@@ -538,6 +562,14 @@ export default {
         font-size: 1.1rem;
         line-height: 1.6;
       }
+
+      .social-login-buttons {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
       
       .facebook-login-button {
         background: #2d5aa0;
@@ -555,6 +587,23 @@ export default {
         &:focus {
           background: #274d89;
           border-color: #1f3d6b;
+        }
+      }
+
+      .google-login-button {
+        background: #fff;
+        color: #1c1e21;
+        border: 1px solid #dcdfe6;
+        font-size: 1.1rem;
+        height: 48px;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+
+        &:hover,
+        &:focus {
+          color: #1c1e21;
+          border-color: #c6cbd4;
+          box-shadow: 0 2px 8px rgba(60, 64, 67, 0.15);
         }
       }
       

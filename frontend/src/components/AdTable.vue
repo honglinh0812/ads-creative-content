@@ -143,7 +143,7 @@
         :data-source="paginatedAds"
         :loading="loading"
         :pagination="false"
-        :scroll="{ x: 1400 }"
+        :scroll="{ x: 1530 }"
         :row-selection="rowSelection"
         row-key="id"
         size="middle"
@@ -182,10 +182,12 @@
           </template>
           
           <template v-else-if="column.key === 'adType'">
-            <a-tag color="blue" v-if="record.adType">
-              {{ formatAdType(record.adType) }}
-            </a-tag>
-            <span v-else class="text-gray-400">-</span>
+            <div class="ad-type-cell">
+              <a-tag color="blue" v-if="record.adType">
+                {{ formatAdType(record.adType) }}
+              </a-tag>
+              <span v-else class="text-gray-400">-</span>
+            </div>
           </template>
           
           <template v-else-if="column.key === 'content'">
@@ -498,20 +500,22 @@ export default {
         dataIndex: 'name',
         sorter: true,
         width: 200,
-        fixed: 'left'
+        fixed: 'left',
+        ellipsis: true
       },
       {
         title: t('adTable.table.columns.campaign'),
         key: 'campaign',
         sorter: true,
-        width: 180
+        width: 180,
+        ellipsis: true
       },
       {
         title: t('adTable.table.columns.status'),
         key: 'status',
         dataIndex: 'status',
         sorter: true,
-        width: 100,
+        width: 120,
         filters: [
           { text: t('adTable.table.statusFilters.active'), value: 'ACTIVE' },
           { text: t('adTable.table.statusFilters.paused'), value: 'PAUSED' },
@@ -524,12 +528,14 @@ export default {
         key: 'adType',
         dataIndex: 'adType',
         sorter: true,
-        width: 100
+        width: 130,
+        ellipsis: true
       },
       {
         title: t('adTable.table.columns.content'),
         key: 'content',
-        width: 300
+        width: 300,
+        ellipsis: true
       },
       {
         title: t('adTable.table.columns.media'),
@@ -542,7 +548,8 @@ export default {
         key: 'createdDate',
         dataIndex: 'createdDate',
         sorter: true,
-        width: 150
+        width: 150,
+        ellipsis: true
       },
       {
         title: t('adTable.table.columns.actions'),
@@ -837,8 +844,23 @@ export default {
   @apply space-y-1;
 }
 
+.ad-type-cell {
+  @apply flex items-center;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.ad-type-cell .ant-tag {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .content-cell {
   @apply space-y-2;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .content-item {
@@ -1010,5 +1032,23 @@ export default {
 
 :deep(.ant-table-body::-webkit-scrollbar-thumb:hover) {
   @apply bg-gray-400 dark:bg-gray-400;
+}
+
+/* Prevent column content overflow and overlapping */
+:deep(.ant-table-cell) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+}
+
+:deep(.ant-table-tbody > tr > td) {
+  vertical-align: middle;
+}
+
+/* Ensure fixed columns don't overlap */
+:deep(.ant-table-cell-fix-left),
+:deep(.ant-table-cell-fix-right) {
+  z-index: 2;
+  background: inherit;
 }
 </style>

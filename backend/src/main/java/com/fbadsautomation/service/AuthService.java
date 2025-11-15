@@ -26,6 +26,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Optional;
+import org.springframework.util.StringUtils;
 
 @Service
 public class AuthService {
@@ -317,18 +318,23 @@ public class AuthService {
     /**
      * Process OAuth2 user from Spring Security
      * @param oauth2User The OAuth2 user from Spring Security
+     * @param provider OAuth provider id (facebook, google, etc.)
      * @return JWT token for our application
      */
     @Transactional
-    public String processOAuth2User(org.springframework.security.oauth2.core.user.OAuth2User oauth2User) {
+    public String processOAuth2User(org.springframework.security.oauth2.core.user.OAuth2User oauth2User, String provider) {
         try {
+            Map<String, Object> attributes = oauth2User.getAttributes();
+            String normalizedProvider = provider != null ? provider.toLowerCase() : "facebook";
+            String email = getAttributeAsString(attributes, "email");
+            String name = resolveDisplayName(attributes, email);
+            String providerUserId = extractProviderUserId(attributes, normalizedProvider);
+
             // Extract user information from OAuth2User
-            String fbUserId = oauth2User.getAttribute("id");
-            String name = oauth2User.getAttribute("name");
-            String email = oauth2User.getAttribute("email");
-            log.info("Processing OAuth2 user: id={}, name={}, email={}", fbUserId, name, email);
+            log.info("Processing OAuth2 user: provider={}, id={}, name={}, email={}",
+                normalizedProvider, providerUserId, name, email);
             
-            if (email == null) { // Changed from fbUserId to email as primary identifier
+            if (email == null) { // Changed from provider user id to email as primary identifier
                 throw new ApiException(HttpStatus.BAD_REQUEST, "Email not found in OAuth2 response");
             }
 
@@ -389,5 +395,51 @@ public class AuthService {
             });
         log.info("Successfully retrieved user: {} with email: {}", user.getId(), user.getEmail());
         return user;
+    }
+
+    private String extractProviderUserId(Map<String, Object> attributes, String provider) {
+        if ("google".equals(provider)) {
+            return getAttributeAsString(attributes, "sub");
+        }
+        return getAttributeAsString(attributes, "id");
+    }
+
+    private String resolveDisplayName(Map<String, Object> attributes, String fallbackEmail) {
+        String name = getAttributeAsString(attributes, "name");
+        if (!StringUtils.hasText(name)) {
+            String givenName = getAttributeAsString(attributes, "given_name");
+            String familyName = getAttributeAsString(attributes, "family_name");
+            StringBuilder builder = new StringBuilder();
+            if (StringUtils.hasText(givenName)) {
+                builder.append(givenName.trim());
+            }
+            if (StringUtils.hasText(familyName)) {
+                if (builder.length() > 0) {
+                    builder.append(" ");
+                }
+                builder.append(familyName.trim());
+            }
+            if (builder.length() > 0) {
+                name = builder.toString();
+            }
+        }
+
+        if (!StringUtils.hasText(name) && StringUtils.hasText(fallbackEmail)) {
+            int atIndex = fallbackEmail.indexOf('@');
+            if (atIndex > 0) {
+                name = fallbackEmail.substring(0, atIndex);
+            } else {
+                name = fallbackEmail;
+            }
+        }
+        return name;
+    }
+
+    private String getAttributeAsString(Map<String, Object> attributes, String key) {
+        if (attributes == null || key == null) {
+            return null;
+        }
+        Object value = attributes.get(key);
+        return value != null ? value.toString() : null;
     }
 }

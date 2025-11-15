@@ -17,6 +17,7 @@
     "loginForm": {
       "title": "Đăng nhập",
       "facebookButton": "Đăng nhập bằng Facebook",
+      "googleButton": "Đăng nhập bằng Google",
       "or": "Hoặc",
       "usernamePlaceholder": "Tên đăng nhập hoặc Email",
       "passwordPlaceholder": "Mật khẩu",
@@ -86,7 +87,17 @@
     "title": "Thông báo",
     "noNotifications": "Chưa có thông báo nào",
     "emptyDescription": "Các thông báo về chiến dịch và quảng cáo sẽ hiển thị ở đây",
-    "markAllAsRead": "Đánh dấu tất cả đã đọc"
+    "markAllAsRead": "Đánh dấu tất cả đã đọc",
+    "unreadAria": "{count} thông báo chưa đọc",
+    "toast": {
+      "close": "Đóng thông báo"
+    },
+    "defaultTitle": {
+      "success": "Thành công",
+      "error": "Lỗi",
+      "warning": "Cảnh báo",
+      "info": "Thông tin"
+    }
   },
   "user": {
     "defaultName": "Người dùng"
@@ -95,63 +106,77 @@
     "lightMode": "Chế độ sáng đang bật",
     "darkMode": "Chế độ tối đang bật"
   },
+  "languageSwitcher": {
+    "changeSuccessTitle": "Đã đổi ngôn ngữ",
+    "changeSuccessMessage": "Giao diện đã chuyển sang {language}"
+  },
+  "errors": {
+    "unexpectedTitle": "Lỗi hệ thống",
+    "unexpectedMessage": "Đã xảy ra lỗi không xác định. Vui lòng thử lại sau."
+  },
+  "campaignCreate": {
+    "notifications": {
+      "success": "Tạo chiến dịch thành công!",
+      "error": "Không thể tạo chiến dịch. Vui lòng thử lại."
+    }
+  },
   "analyticsLite": {
-    "summaryLabel": "Quảng cáo đã tạo",
-    "summarySubtitle": "Mọi nội dung được tạo trong Ads Creative",
-    "generatedAt": "Cập nhật {time}",
+    "summaryLabel": "Tổng số quảng cáo",
+    "summarySubtitle": "Toàn bộ nội dung đã tạo",
+    "generatedAt": "Cập nhật lúc {time}",
     "actions": {
       "refresh": "Làm mới",
-      "goToAds": "Xem danh sách quảng cáo"
+      "goToAds": "Xem tất cả"
     },
     "stats": {
-      "textAds": "Quảng cáo thiên về chữ",
-      "mediaAds": "Quảng cáo có media",
-      "campaigns": "Chiến dịch đã chạm tới",
-      "campaignHint": "Số chiến dịch khác nhau"
+      "textAds": "Dạng văn bản",
+      "mediaAds": "Có hình ảnh/video",
+      "campaigns": "Chiến dịch",
+      "campaignHint": "Chiến dịch riêng biệt"
     },
     "copy": {
-      "title": "Sức khỏe nội dung",
-      "subtitle": "Theo dõi cách thông điệp thay đổi",
-      "keywords": "Từ khóa lặp lại",
-      "headline": "Tiêu đề trung bình",
-      "primary": "Nội dung chính TB",
+      "title": "Nội dung",
+      "subtitle": "Phân tích độ dài văn bản",
+      "keywords": "Từ khóa phổ biến",
+      "headline": "Tiêu đề TB",
+      "primary": "Nội dung TB",
       "description": "Mô tả TB",
       "characters": "ký tự"
     },
     "cta": {
-      "title": "CTA đang dùng",
-      "subtitle": "Các lời kêu gọi hành động phổ biến",
-      "percent": "{value}% quảng cáo",
-      "empty": "Chưa có dữ liệu CTA"
+      "title": "Lời kêu gọi",
+      "subtitle": "CTA được dùng nhiều nhất",
+      "percent": "{value}%",
+      "empty": "Chưa có CTA"
     },
     "recent": {
-      "title": "Quảng cáo gần nhất",
-      "subtitle": "Những nội dung bạn vừa tạo",
-      "media": "Đã có media",
-      "noMedia": "Chưa có media",
-      "uncategorized": "Chưa gắn chiến dịch",
-      "empty": "Hãy tạo quảng cáo để xem tại đây"
+      "title": "Mới nhất",
+      "subtitle": "Quảng cáo vừa tạo gần đây",
+      "media": "Có media",
+      "noMedia": "Chưa có",
+      "uncategorized": "Chưa gắn",
+      "empty": "Chưa có quảng cáo nào"
     },
     "error": {
-      "title": "Không thể tải báo cáo nội dung"
+      "title": "Không tải được dữ liệu"
     }
   },
   "optimizationLite": {
-    "title": "Không gian tối ưu",
-    "subtitle": "Chọn quảng cáo, để AI rà soát copy & visual rồi giữ lại điều hiệu quả",
-    "description": "Chỉ tập trung vào nội dung sáng tạo – không cần dashboard phức tạp.",
-    "searchPlaceholder": "Tìm theo tên quảng cáo hoặc chiến dịch",
-    "selectionCount": "Đã chọn {count} quảng cáo",
+    "title": "Tối ưu quảng cáo",
+    "subtitle": "Chọn quảng cáo, AI sẽ phân tích nội dung & hình ảnh để đưa ra gợi ý cải thiện",
+    "description": "Tập trung vào sáng tạo nội dung, không cần báo cáo phức tạp",
+    "searchPlaceholder": "Tìm tên quảng cáo hoặc chiến dịch",
+    "selectionCount": "{count} quảng cáo",
     "actions": {
-      "refreshAds": "Tải lại danh sách",
-      "analyze": "Phân tích quảng cáo đã chọn",
-      "loadMoreAds": "Xem thêm quảng cáo",
-      "save": "Lưu gợi ý",
+      "refreshAds": "Làm mới",
+      "analyze": "Phân tích",
+      "loadMoreAds": "Xem thêm",
+      "save": "Lưu",
       "saved": "Đã lưu",
-      "refreshHistory": "Tải lại lịch sử",
-      "loadMoreHistory": "Xem thêm lịch sử"
+      "refreshHistory": "Làm mới",
+      "loadMoreHistory": "Xem thêm"
     },
-    "noMoreAds": "Bạn đã xem hết danh sách quảng cáo.",
+    "noMoreAds": "Đã hết quảng cáo",
     "table": {
       "columns": {
         "name": "Quảng cáo",
@@ -160,41 +185,41 @@
         "created": "Ngày tạo"
       },
       "untitled": "Chưa đặt tên",
-      "noCampaign": "Chưa gắn chiến dịch"
+      "noCampaign": "Chưa gắn"
     },
     "categories": {
-      "copy": "Nội dung",
+      "copy": "Văn bản",
       "visual": "Hình ảnh",
       "cta": "CTA",
-      "hook": "Hook",
+      "hook": "Mở đầu",
       "length": "Độ dài",
       "target": "Đối tượng"
     },
     "card": {
-      "type": "Loại: {type}",
-      "score": "Điểm chất lượng",
+      "type": "{type}",
+      "score": "Điểm",
       "compliance": "Tuân thủ",
-      "linguistic": "Khả năng đọc",
+      "linguistic": "Dễ đọc",
       "persuasiveness": "Thuyết phục"
     },
     "empty": {
-      "title": "Hãy chọn quảng cáo để bắt đầu tối ưu",
-      "description": "Chọn một hoặc nhiều quảng cáo ở phía trên rồi chạy phân tích AI."
+      "title": "Chọn quảng cáo để bắt đầu",
+      "description": "Chọn một hoặc nhiều quảng cáo rồi nhấn Phân tích"
     },
     "history": {
-      "title": "Gợi ý đã lưu",
-      "subtitle": "Xem nhanh các lần đánh giá trước",
-      "empty": "Chưa có gợi ý nào được lưu",
-      "end": "Không còn lịch sử"
+      "title": "Lịch sử phân tích",
+      "subtitle": "Kết quả phân tích trước đây",
+      "empty": "Chưa có lịch sử",
+      "end": "Đã hết"
     },
     "messages": {
-      "saved": "Đã lưu bản ghi tối ưu",
-      "noInsights": "AI chưa có gợi ý cho nhóm quảng cáo này",
-      "insightsUnavailable": "AI tối ưu hóa chưa sẵn sàng ở môi trường này.",
-      "historyUnavailable": "Chưa thể tải lịch sử tối ưu trên môi trường hiện tại."
+      "saved": "Đã lưu kết quả",
+      "noInsights": "AI chưa có gợi ý",
+      "insightsUnavailable": "Tính năng AI chưa khả dụng",
+      "historyUnavailable": "Lịch sử chưa khả dụng"
     },
     "error": {
-      "title": "Không thể chạy tối ưu"
+      "title": "Không thể phân tích"
     }
   },
   "campaign": {
@@ -1103,9 +1128,9 @@
         "emoji": "📝"
       },
       "step2": {
-        "title": "Phép thuật AI",
+        "title": "Chọn nhà cung cấp AI",
         "description": "Chọn công cụ AI của bạn",
-        "emoji": "🤖"
+        "emoji": ""
       },
       "step3": {
         "title": "Xem trước",
@@ -1424,6 +1449,13 @@
       "confirmSave": {
         "title": "Xác nhận lưu",
         "message": "Bạn có chắc chắn muốn lưu biến thể quảng cáo này?"
+      },
+      "unsavedVariations": {
+        "title": "Biến thể quảng cáo chưa được lưu",
+        "message": "Bạn đang có các biến thể quảng cáo vừa tạo nhưng chưa lưu. Nếu rời trang, toàn bộ nội dung sẽ bị mất.",
+        "confirm": "Rời trang và hủy nội dung",
+        "cancel": "Ở lại trang này",
+        "highlightHint": "Chúng tôi đã làm nổi bật các biến thể cần được lưu."
       },
       "extractionFailed": {
         "title": "Trích xuất nội dung thất bại",

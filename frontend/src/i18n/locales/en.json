@@ -17,6 +17,7 @@
     "loginForm": {
       "title": "Login",
       "facebookButton": "Login with Facebook",
+      "googleButton": "Login with Google",
       "or": "Or",
       "usernamePlaceholder": "Username or Email",
       "passwordPlaceholder": "Password",
@@ -86,7 +87,17 @@
     "title": "Notifications",
     "noNotifications": "No notifications yet",
     "emptyDescription": "Notifications about campaigns and ads will appear here",
-    "markAllAsRead": "Mark all as read"
+    "markAllAsRead": "Mark all as read",
+    "unreadAria": "{count} unread notifications",
+    "toast": {
+      "close": "Dismiss notification"
+    },
+    "defaultTitle": {
+      "success": "Success",
+      "error": "Error",
+      "warning": "Warning",
+      "info": "Information"
+    }
   },
   "user": {
     "defaultName": "User"
@@ -95,63 +106,77 @@
     "lightMode": "Light mode enabled",
     "darkMode": "Dark mode enabled"
   },
+  "languageSwitcher": {
+    "changeSuccessTitle": "Language updated",
+    "changeSuccessMessage": "Interface switched to {language}"
+  },
+  "errors": {
+    "unexpectedTitle": "Application Error",
+    "unexpectedMessage": "An unexpected error occurred. Please try again later."
+  },
+  "campaignCreate": {
+    "notifications": {
+      "success": "Campaign created successfully!",
+      "error": "Unable to create campaign. Please try again."
+    }
+  },
   "analyticsLite": {
-    "summaryLabel": "Ads created",
-    "summarySubtitle": "Every creative generated inside Ads Creative",
+    "summaryLabel": "Total ads",
+    "summarySubtitle": "All content created",
     "generatedAt": "Updated {time}",
     "actions": {
       "refresh": "Refresh",
-      "goToAds": "Go to Ads"
+      "goToAds": "View all"
     },
     "stats": {
-      "textAds": "Text-first ads",
-      "mediaAds": "Ads with media",
-      "campaigns": "Campaigns touched",
+      "textAds": "Text-based",
+      "mediaAds": "With media",
+      "campaigns": "Campaigns",
       "campaignHint": "Unique campaigns"
     },
     "copy": {
-      "title": "Copy health",
-      "subtitle": "Track how your messaging evolves",
-      "keywords": "Common keywords",
+      "title": "Content",
+      "subtitle": "Text length analysis",
+      "keywords": "Top keywords",
       "headline": "Avg headline",
-      "primary": "Avg primary text",
+      "primary": "Avg copy",
       "description": "Avg description",
       "characters": "chars"
     },
     "cta": {
-      "title": "CTA usage",
-      "subtitle": "Most used calls to action",
-      "percent": "{value}% of ads",
-      "empty": "No CTA data yet"
+      "title": "Calls to action",
+      "subtitle": "Most used CTAs",
+      "percent": "{value}%",
+      "empty": "No CTAs yet"
     },
     "recent": {
-      "title": "Recent ads",
-      "subtitle": "Latest creatives you generated",
-      "media": "Media attached",
+      "title": "Latest",
+      "subtitle": "Recently created ads",
+      "media": "Has media",
       "noMedia": "No media",
       "uncategorized": "No campaign",
-      "empty": "Start generating ads to see them here"
+      "empty": "No ads yet"
     },
     "error": {
-      "title": "Unable to load insights"
+      "title": "Unable to load data"
     }
   },
   "optimizationLite": {
-    "title": "Optimization workspace",
-    "subtitle": "Pick ads, let AI review copy & visuals, then keep what works",
-    "description": "Focus on the creative itself—no complicated dashboards or KPIs.",
-    "searchPlaceholder": "Search by ad or campaign name",
-    "selectionCount": "Selected {count} ads",
+    "title": "Ad optimizer",
+    "subtitle": "Select ads, AI analyzes copy & visuals, then provides recommendations",
+    "description": "Focus on creative content, skip complex reports",
+    "searchPlaceholder": "Search ad or campaign name",
+    "selectionCount": "{count} ads",
     "actions": {
-      "refreshAds": "Refresh ads",
-      "analyze": "Analyze selected",
-      "loadMoreAds": "Load more ads",
-      "save": "Save recommendations",
+      "refreshAds": "Refresh",
+      "analyze": "Analyze",
+      "loadMoreAds": "Load more",
+      "save": "Save",
       "saved": "Saved",
-      "refreshHistory": "Refresh history",
-      "loadMoreHistory": "Load more history"
+      "refreshHistory": "Refresh",
+      "loadMoreHistory": "Load more"
     },
-    "noMoreAds": "You reached the end of your ads.",
+    "noMoreAds": "No more ads",
     "table": {
       "columns": {
         "name": "Ad",
@@ -159,7 +184,7 @@
         "cta": "CTA",
         "created": "Created"
       },
-      "untitled": "Untitled ad",
+      "untitled": "Untitled",
       "noCampaign": "No campaign"
     },
     "categories": {
@@ -171,30 +196,30 @@
       "target": "Audience"
     },
     "card": {
-      "type": "Type: {type}",
-      "score": "Quality score",
+      "type": "{type}",
+      "score": "Score",
       "compliance": "Compliance",
       "linguistic": "Readability",
-      "persuasiveness": "Persuasiveness"
+      "persuasiveness": "Persuasion"
     },
     "empty": {
-      "title": "Select ads to start optimizing",
-      "description": "Choose one or more creatives above, then run AI analysis."
+      "title": "Select ads to begin",
+      "description": "Choose one or more ads then click Analyze"
     },
     "history": {
-      "title": "Saved recommendations",
-      "subtitle": "Quick access to previous AI reviews",
-      "empty": "No saved recommendations yet",
-      "end": "No more history"
+      "title": "Analysis history",
+      "subtitle": "Previous analysis results",
+      "empty": "No history yet",
+      "end": "End of history"
     },
     "messages": {
-      "saved": "Optimization snapshot saved",
-      "noInsights": "No suggestions returned for the selected ads",
-      "insightsUnavailable": "AI optimization insights aren’t available on this environment yet.",
-      "historyUnavailable": "Optimization history isn’t available on this environment."
+      "saved": "Results saved",
+      "noInsights": "No AI suggestions",
+      "insightsUnavailable": "AI feature unavailable",
+      "historyUnavailable": "History unavailable"
     },
     "error": {
-      "title": "Unable to run optimization"
+      "title": "Unable to analyze"
     }
   },
   "campaign": {
@@ -923,9 +948,9 @@
         "emoji": "📝"
       },
       "step2": {
-        "title": "AI Magic",
+        "title": "Choose AI providers",
         "description": "Choose your AI tools",
-        "emoji": "🤖"
+        "emoji": ""
       },
       "step3": {
         "title": "Preview",
@@ -1244,6 +1269,13 @@
       "confirmSave": {
         "title": "Confirm Save",
         "message": "Are you sure you want to save this ad variation?"
+      },
+      "unsavedVariations": {
+        "title": "Unsaved Ad Variations",
+        "message": "You have newly generated ad variations that haven't been saved yet. Leave this page and the content will be lost.",
+        "confirm": "Leave Without Saving",
+        "cancel": "Stay on This Page",
+        "highlightHint": "We've highlighted the ad variations that still need to be saved."
       },
       "extractionFailed": {
         "title": "Content Extraction Failed",

@@ -88,8 +88,8 @@ app.config.errorHandler = (err, vm, info) => {
   
   // Show user-friendly error message
   store.dispatch('toast/showError', {
-    title: 'Application Error',
-    message: 'An unexpected error occurred. Please try again later.'
+    title: i18n.global.t('errors.unexpectedTitle'),
+    message: i18n.global.t('errors.unexpectedMessage')
   })
   
   // Sentry error handler is set up in plugins/sentry.js
@@ -155,4 +155,3 @@ async function initializeApp() {
 
 // Start the app
 initializeApp()
-

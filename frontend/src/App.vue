@@ -110,7 +110,12 @@
                 <div v-if="showNotificationDropdown" class="notification-dropdown">
                   <div class="notification-header">{{ $t('notifications.title') }}</div>
                   <div v-if="recentNotifications.length > 0" class="notification-list">
-                    <div v-for="noti in recentNotifications" :key="noti.id" class="notification-item">
+                    <div
+                      v-for="noti in recentNotifications"
+                      :key="noti.id"
+                      :class="['notification-item', { 'notification-read': noti.read }]"
+                      @click="handleNotificationClick(noti)"
+                    >
                       <span :class="noti.type">{{ noti.title || noti.type }}</span>
                       <div>{{ noti.message }}</div>
                       <div>{{ formatTime(noti.timestamp) }}</div>
@@ -199,16 +204,15 @@ export default {
       breadcrumbs: [
         { name: 'Dashboard', path: '/dashboard' }
       ],
-      showNotificationDropdown: false,
-      notificationCount: 0
+      showNotificationDropdown: false
     }
   },
   computed: {
     ...mapGetters('auth', ['isAuthenticated', 'loading', 'user']),
-    ...mapGetters('toast', ['toasts']),
+    ...mapGetters('toast', ['toasts', 'unreadCount']),
     ...mapGetters('locale', { antdLocale: 'antdLocale' }), // Issue: I18n Phase 1
     notificationCountFunc() {
-      return this.toasts.length
+      return this.unreadCount
     },
     recentNotifications() {
       return [...this.toasts].sort((a, b) => b.timestamp - a.timestamp).slice(0, 5)
@@ -242,9 +246,19 @@ export default {
       this.showNotificationDropdown = !this.showNotificationDropdown
     },
     closeNotificationDropdown(event) {
-      if (!event.target.closest('.notification-badge')) {
+      if (!event || !event.target.closest('.notification-badge')) {
         this.showNotificationDropdown = false
       }
+    },
+    markAllAsRead() {
+      this.showNotificationDropdown = false
+      this.$store.dispatch('toast/markAllAsRead')
+    },
+    handleNotificationClick(notification) {
+      if (notification?.id) {
+        this.$store.dispatch('toast/markToastRead', notification.id)
+      }
+      this.showNotificationDropdown = false
     },
     formatTime(timestamp) {
       return new Date(timestamp).toLocaleString()
@@ -560,6 +574,10 @@ export default {
   border-bottom: none;
 }
 
+.notification-item.notification-read {
+  opacity: 0.7;
+}
+
 .notification-footer {
   padding: 12px 20px;
   text-align: center;
@@ -737,4 +755,3 @@ export default {
   }
 }
 </style>
-

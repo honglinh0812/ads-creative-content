@@ -125,8 +125,8 @@
         v-for="status in recentPlatformStatuses"
         :key="status.id"
         :type="status.success ? 'success' : status.mode === 'iframe' ? 'info' : status.mode === 'error' ? 'error' : 'warning'"
-        :message="`${status.platformLabel}: ${status.message}`"
-        :description="status.friendlySuggestion"
+        :message="getStatusMessage(status)"
+        :description="getStatusDescription(status)"
         show-icon
         class="mb-2"
       />
@@ -633,7 +633,7 @@ export default {
     },
 
     platformMessage() {
-      return this.currentResponse.message || ''
+      return this.currentResponse.userMessage || this.currentResponse.message || ''
     },
 
     platformAlertType() {
@@ -656,6 +656,19 @@ export default {
       clearErrors: 'clearErrors'
     }),
 
+    getStatusMessage(status) {
+      if (!status) return ''
+      const base = status.userMessage || status.message || ''
+      const label = status.platformLabel || ''
+      if (!label) return base
+      return base ? `${label}: ${base}` : label
+    },
+
+    getStatusDescription(status) {
+      if (!status) return undefined
+      return status.friendlySuggestion || undefined
+    },
+
     async handleSearch() {
       if (!this.searchForm.brandName.trim()) {
         message.warning('Please enter a brand name')
@@ -671,15 +684,16 @@ export default {
         })
 
         this.iframeSearchQuery = result.brandName || this.searchForm.brandName
+        const displayMessage = result.userMessage || result.message
 
         if (result.mode === 'data' && (result.ads || []).length) {
-          message.success(`Found ${result.ads.length} ads from ${this.platformName}`)
+          message.success(displayMessage || `Found ${result.ads.length} ads from ${this.platformName}`)
         } else if (result.mode === 'iframe') {
-          message.info(result.message || `Viewing ${this.platformName} ads in embedded mode`)
+          message.info(displayMessage || `Viewing ${this.platformName} ads in embedded mode`)
         } else if (result.mode === 'empty') {
-          message.warning(result.message || 'No ads found for this search')
+          message.warning(displayMessage || 'No ads found for this search')
         } else if (result.mode === 'error') {
-          message.error(result.message || 'Failed to search competitor ads')
+          message.error(displayMessage || 'Failed to search competitor ads')
         }
       } catch (error) {
         console.error('Search error:', error)

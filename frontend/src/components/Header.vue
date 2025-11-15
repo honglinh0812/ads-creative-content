@@ -29,10 +29,10 @@
           @keydown.escape="closeNotificationDropdown"
           :aria-expanded="showNotificationDropdown"
           aria-haspopup="true"
-          aria-label="Notifications"
+          :aria-label="$t('notifications.title')"
           :aria-describedby="notificationCount > 0 ? 'notification-count' : undefined"
           tabindex="0" 
-          title="Notifications"
+          :title="$t('notifications.title')"
         >
           <i class="fas fa-bell" aria-hidden="true"></i>
           <span 
@@ -41,7 +41,7 @@
             class="badge bg-primary-500 text-white" 
             role="status" 
             aria-live="polite"
-            :aria-label="`${notificationCount} unread notifications`"
+            :aria-label="$t('notifications.unreadAria', { count: notificationCount })"
           >
             {{ notificationCount > 99 ? '99+' : notificationCount }}
           </span>
@@ -62,7 +62,10 @@
               <div 
                 v-for="noti in recentNotifications" 
                 :key="noti.id" 
-                class="notification-item hover:bg-neutral-50 dark:hover:bg-neutral-700"
+                :class="[
+                  'notification-item hover:bg-neutral-50 dark:hover:bg-neutral-700',
+                  { 'notification-read': noti.read }
+                ]"
                 role="listitem"
                 tabindex="0"
                 @keydown.enter="handleNotificationClick(noti)"
@@ -223,7 +226,7 @@ export default {
   },
   computed: {
     ...mapGetters('auth', ['user']),
-    ...mapGetters('toast', ['toasts']),
+    ...mapGetters('toast', ['toasts', 'unreadCount']),
     avatar() {
       return this.user && this.user.avatar ? this.user.avatar : this.defaultAvatar
     },
@@ -232,7 +235,7 @@ export default {
       return this.user.fullName || this.user.username || this.user.name || this.user.email?.split('@')[0] || this.$t('user.defaultName')
     },
     notificationCount() {
-      return this.toasts.length
+      return this.unreadCount
     },
     recentNotifications() {
       return [...this.toasts].sort((a, b) => b.timestamp - a.timestamp).slice(0, 5)
@@ -278,7 +281,7 @@ export default {
     },
     markAllAsRead() {
       this.showNotificationDropdown = false
-      this.$store.dispatch('toast/clearAll')
+      this.$store.dispatch('toast/markAllAsRead')
     },
     getNotificationIcon(type) {
       const iconMap = {
@@ -298,8 +301,9 @@ export default {
       this.$emit('search', this.search)
     },
     handleNotificationClick(notification) {
-      // Handle notification click - could navigate to specific page or mark as read
-      console.log('Notification clicked:', notification)
+      if (notification?.id) {
+        this.$store.dispatch('toast/markToastRead', notification.id)
+      }
       this.closeNotificationDropdown()
     },
     focusFirstMenuItem() {
@@ -377,7 +381,7 @@ export default {
       }, 2000)
 
       // Show a special message
-      this.$store.dispatch('toast/show', {
+      this.$store.dispatch('toast/showToast', {
         type: 'success',
         title: 'Super Easter Egg!',
         message: 'You discovered the ultimate easter egg! You must be a developer too. 🎊',
@@ -670,6 +674,10 @@ export default {
 
 .dark .notification-item {
   border-bottom-color: theme('colors.neutral.700');
+}
+
+.notification-item.notification-read {
+  opacity: 0.7;
 }
 
 .notification-item:last-child {

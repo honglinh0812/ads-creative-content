@@ -23,6 +23,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -115,7 +116,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 
                 try {
                     OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal(); // Process the OAuth2 user and create/update our user
-                    String token = authService.processOAuth2User(oauth2User);
+                    String registrationId = authentication instanceof OAuth2AuthenticationToken
+                        ? ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId()
+                        : "facebook";
+                    String token = authService.processOAuth2User(oauth2User, registrationId);
                     // Redirect to frontend with token
                     String redirectUrl = "https://linhnh.site/auth-success#token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
                     response.sendRedirect(redirectUrl);

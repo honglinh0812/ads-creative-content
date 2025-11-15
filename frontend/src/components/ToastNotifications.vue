@@ -3,7 +3,7 @@
     <div class="toast-container">
       <transition-group name="toast" tag="div">
         <div
-          v-for="toast in toasts"
+          v-for="toast in activeToasts"
           :key="toast.id"
           :class="getToastClass(toast.type)"
           class="toast bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-lg hover:shadow-lg transition-shadow duration-200 ease-out"
@@ -41,7 +41,11 @@
               </div>
             </div>
 
-            <button @click="removeToast(toast.id)" class="toast-close text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-all duration-200">
+            <button
+              @click="dismissToast(toast.id)"
+              class="toast-close text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-all duration-200"
+              :aria-label="$t('notifications.toast.close')"
+            >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
@@ -62,15 +66,15 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'ToastNotifications',
   computed: {
-    ...mapState('toast', ['toasts'])
+    ...mapGetters('toast', ['activeToasts'])
   },
   methods: {
-    ...mapActions('toast', ['removeToast']),
+    ...mapActions('toast', ['removeToast', 'markToastRead']),
 
     getToastClass(type) {
       const baseClass = 'toast'
@@ -96,8 +100,13 @@ export default {
 
       // Remove toast if action is configured to do so
       if (action.dismissOnClick !== false) {
-        this.removeToast(toastId)
+        this.dismissToast(toastId)
       }
+    },
+
+    dismissToast(toastId) {
+      this.markToastRead(toastId)
+      this.removeToast(toastId)
     }
   }
 }
@@ -108,11 +117,14 @@ export default {
   position: fixed;
   top: 1.5rem;
   right: 1.5rem;
+  left: auto;
   z-index: 9999;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 0.75rem;
   max-width: 24rem;
+  width: 100%;
   pointer-events: none;
 }
 
@@ -430,4 +442,3 @@ export default {
   }
 }
 </style>
-

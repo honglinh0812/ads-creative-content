@@ -53,18 +53,19 @@ export default {
     }
   },
   actions: {
-    async login({ commit, dispatch }) {
+    async login({ commit, dispatch }, provider = 'facebook') {
       commit('SET_LOADING', true);
       commit('SET_ERROR', null);
       
       try {
         // Redirect to Facebook OAuth login
-        window.location.href = api.auth.login();
+        window.location.href = api.auth.login(provider);
       } catch (error) {
         commit('SET_ERROR', error.message || 'Authentication failed');
+        const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
         dispatch('toast/showError', {
           title: 'Login Failed',
-          message: 'Failed to authenticate with Facebook. Please try again.'
+          message: `Failed to authenticate with ${providerName}. Please try again.`
         }, { root: true });
       } finally {
         commit('SET_LOADING', false);
@@ -123,4 +124,3 @@ export default {
     }
   }
 }
-

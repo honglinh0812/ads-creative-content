@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getFullApiUrl } from '@/config/api.config'
 
 // Create axios instance
 const apiClient = axios.create({
@@ -79,7 +80,7 @@ export default {
   
   // Auth endpoints
   auth: {
-    login: () => `${window.location.origin}/api/auth/oauth2/authorize/facebook`,
+    login: (provider = 'facebook') => `${getFullApiUrl()}/auth/oauth2/authorize/${provider}`,
     callback: () => '/auth/oauth2/callback/facebook',
     logout: () => apiClient.post('/auth/logout'),
     getUser: () => apiClient.get('/auth/user'),

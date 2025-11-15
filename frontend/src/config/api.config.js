@@ -33,11 +33,14 @@ export const getFullApiUrl = () => {
 }
 
 /**
- * Get OAuth login URL for Facebook
+ * Get OAuth login URL for a provider
  */
-export const getFacebookLoginUrl = () => {
-  return `${getFullApiUrl()}/auth/oauth2/authorize/facebook`
+export const getOAuthLoginUrl = (provider = 'facebook') => {
+  return `${getFullApiUrl()}/auth/oauth2/authorize/${provider}`
 }
+
+export const getFacebookLoginUrl = () => getOAuthLoginUrl('facebook')
+export const getGoogleLoginUrl = () => getOAuthLoginUrl('google')
 
 /**
  * API endpoints configuration
@@ -85,6 +88,8 @@ export const API_ENDPOINTS = {
 export default {
   getApiBaseUrl,
   getFullApiUrl,
+  getOAuthLoginUrl,
   getFacebookLoginUrl,
+  getGoogleLoginUrl,
   API_ENDPOINTS
 }
