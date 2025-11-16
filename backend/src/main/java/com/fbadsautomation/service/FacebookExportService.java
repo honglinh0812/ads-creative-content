@@ -47,6 +47,7 @@ public class FacebookExportService {
     private final AdRepository adRepository;
     private final CampaignService campaignService;
     private final MinIOStorageService minioStorageService;
+    private final com.fbadsautomation.util.AdContentValidator adContentValidator;
     
     // Enhanced URL pattern supporting:
     // - HTTP/HTTPS protocols (case-insensitive)
@@ -135,6 +136,12 @@ public class FacebookExportService {
         if (!StringUtils.hasText(ad.getHeadline())) {
             throw new ApiException(HttpStatus.BAD_REQUEST,
                 "Headline is required for Facebook export");
+        }
+
+        boolean normalized = adContentValidator.enforceAdLimits(ad);
+        if (normalized) {
+            log.warn("Headline/body exceeded Facebook limits for ad {}. Values were auto-truncated during export validation.", ad.getId());
+            adRepository.save(ad);
         }
 
         if (!StringUtils.hasText(ad.getPrimaryText())) {

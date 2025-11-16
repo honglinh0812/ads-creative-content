@@ -43,11 +43,11 @@ jobs:
           echo "=== Checking migration file naming convention ==="
           invalid_files=$(find src/main/resources/db/migration -type f ! -name 'V*__*.sql' -name '*.sql' 2>/dev/null | wc -l)
           if [ "$invalid_files" -gt 0 ]; then
-            echo "❌ ERROR: Found migration files with invalid naming:"
+            echo "ERROR: Found migration files with invalid naming:"
             find src/main/resources/db/migration -type f ! -name 'V*__*.sql' -name '*.sql'
             exit 1
           fi
-          echo "✅ All migration files follow naming convention"
+          echo "All migration files follow naming convention"
           # List all migrations
           echo ""
           echo "=== Current migration files ==="
@@ -59,11 +59,11 @@ jobs:
             if [ -f "$file" ]; then
               echo "Checking $(basename $file)..."
               if ! grep -q ";" "$file"; then
-                echo "⚠️  WARNING: $file may be missing semicolons"
+                echo "WARNING: $file may be missing semicolons"
               fi
             fi
           done
-          echo "✅ SQL syntax validation completed"
+          echo "SQL syntax validation completed"
   build:
     name: Build and push images
     runs-on: ubuntu-latest
@@ -133,9 +133,9 @@ jobs:
             # Check if database is accessible
             echo "1. Checking database connectivity..."
             if docker compose exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
-              echo "✅ Database is accessible"
+              echo "Successful, database is accessible"
             else
-              echo "❌ ERROR: Database is not accessible!"
+              echo "ERROR: Database is not accessible!"
               exit 1
             fi
             # Create database backup
@@ -146,11 +146,11 @@ jobs:
             BACKUP_FILE="$BACKUP_DIR/backup_$(date +%Y%m%d_%H%M%S).sql"
             if docker compose exec -T postgres pg_dump -U postgres fbadsautomation > "$BACKUP_FILE" 2>/dev/null; then
               BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
-              echo "✅ Database backed up to $BACKUP_FILE ($BACKUP_SIZE)"
+              echo "Successful: Database backed up to $BACKUP_FILE ($BACKUP_SIZE)"
               # Keep only last 10 backups
               ls -t "$BACKUP_DIR"/backup_*.sql 2>/dev/null | tail -n +11 | xargs rm -f 2>/dev/null || true
             else
-              echo "⚠️  WARNING: Database backup failed!"
+              echo "WARNING: Database backup failed!"
             fi
             # Check current migration status
             echo ""
@@ -251,7 +251,7 @@ jobs:
           username: ${{ secrets.GMAIL_USERNAME }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
           subject: |
-            ${{ job.status == 'success' && '✅' || '❌' }} Deployment ${{ job.status }} - ads-creative-content
+            ${{ job.status == 'success' && 'Deploy successful' || 'Deploy failed' }} Deployment ${{ job.status }} - ads-creative-content
           to: ${{ secrets.NOTIFY_EMAIL }}
           from: GitHub Actions <${{ secrets.GMAIL_USERNAME }}>
           body: |
@@ -262,7 +262,7 @@ jobs:
             Author: ${{ github.actor }}
             Workflow: ${{ github.workflow }}
             Run ID: ${{ github.run_id }}
-            ${{ job.status == 'success' && 'All services are running and healthy!' || '❌ Deployment failed! Please check the logs.' }}
+            ${{ job.status == 'success' && 'All services are running and healthy!' || 'Deployment failed! Please check the logs.' }}
             View run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
   rollback:
     name: Rollback Deployment
