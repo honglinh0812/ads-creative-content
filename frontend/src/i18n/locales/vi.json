@@ -1871,6 +1871,10 @@
           "message": "Nhập từ khóa tìm kiếm để khám phá từ khóa thịnh hành",
           "description": "Tìm các chủ đề phổ biến liên quan đến sản phẩm hoặc dịch vụ của bạn"
         },
+        "sourceTooltip": {
+          "title": "Nguồn dữ liệu",
+          "description": "Kết hợp Google Trends (nhu cầu tìm kiếm) và TikTok Creative Center/Apify (hashtag quảng cáo). Hãy cấu hình SERPAPI_API_KEY và Apify để có dữ liệu thời gian thực."
+        },
         "selection": {
           "maxTitle": "Đã chọn tối đa từ khóa",
           "maxDescription": "Bạn đã chọn tối đa 5 từ khóa. Bỏ chọn một số để thêm các từ khác.",

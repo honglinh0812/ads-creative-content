@@ -118,6 +118,7 @@ public class GoogleTrendsApiService {
                                     .region(region)
                                     .searchVolume((long) searchVolume * 1000)
                                     .category("Real-time")
+                                    .source("Google Trends")
                                     .build());
                             }
                         }
@@ -141,6 +142,7 @@ public class GoogleTrendsApiService {
                             .region(region)
                             .searchVolume(100000L)
                             .category("Rising")
+                            .source("Google Trends")
                             .build());
                     }
                 }

@@ -1,5 +1,17 @@
 <template>
-  <a-card :title="cardTitle" class="trending-keywords-card">
+  <a-card class="trending-keywords-card">
+    <template #title>
+      <div class="trending-card-title">
+        <span>{{ cardTitle }}</span>
+        <a-tooltip placement="topRight">
+          <template #title>
+            <strong>{{ $t('components.trendingKeywords.sourceTooltip.title') }}</strong>
+            <div>{{ $t('components.trendingKeywords.sourceTooltip.description') }}</div>
+          </template>
+          <info-circle-outlined class="source-info-icon" />
+        </a-tooltip>
+      </div>
+    </template>
     <a-row :gutter="16" class="search-row">
       <a-col :span="16">
         <a-form-item
@@ -59,13 +71,31 @@
               @change="handleSelectionChange(item)"
               :disabled="!item.selected && selectedKeywords.length >= 5"
             >
-              <span class="keyword-text">{{ item.keyword }}</span>
-              <a-tag color="green" class="growth-tag">
-                <arrow-up-outlined /> +{{ item.growth }}%
-              </a-tag>
-              <span class="search-volume" v-if="item.searchVolume">
-                {{ $t('components.trendingKeywords.list.searches', { volume: formatSearchVolume(item.searchVolume) }) }}
-              </span>
+              <div class="keyword-row">
+                <div class="keyword-info">
+                  <span class="keyword-text">{{ item.keyword }}</span>
+                  <div class="keyword-tags">
+                    <a-tag v-if="item.source" color="blue" class="source-tag">
+                      {{ item.source }}
+                    </a-tag>
+                    <a-tag
+                      v-if="item.category && item.category !== 'General'"
+                      color="purple"
+                      class="category-tag"
+                    >
+                      {{ item.category }}
+                    </a-tag>
+                  </div>
+                </div>
+                <div class="keyword-metrics">
+                  <a-tag color="green" class="growth-tag">
+                    <arrow-up-outlined /> +{{ item.growth }}%
+                  </a-tag>
+                  <span class="search-volume" v-if="item.searchVolume">
+                    {{ $t('components.trendingKeywords.list.searches', { volume: formatSearchVolume(item.searchVolume) }) }}
+                  </span>
+                </div>
+              </div>
             </a-checkbox>
           </a-list-item>
         </template>
@@ -135,14 +165,15 @@
 </template>
 
 <script>
-import { ArrowUpOutlined, PlusOutlined } from '@ant-design/icons-vue';
+import { ArrowUpOutlined, PlusOutlined, InfoCircleOutlined } from '@ant-design/icons-vue';
 import axios from 'axios';
 
 export default {
   name: 'TrendingKeywords',
   components: {
     ArrowUpOutlined,
-    PlusOutlined
+    PlusOutlined,
+    InfoCircleOutlined
   },
   props: {
     language: {
@@ -358,6 +389,17 @@ export default {
   margin-bottom: 16px;
 }
 
+.trending-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.source-info-icon {
+  color: #8c8c8c;
+  cursor: pointer;
+}
+
 .search-row {
   margin-bottom: 16px;
 }
@@ -372,9 +414,35 @@ export default {
   margin-bottom: 16px;
 }
 
+.keyword-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.keyword-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .keyword-text {
   font-weight: 500;
-  margin-right: 8px;
+}
+
+.keyword-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.keyword-metrics {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
 }
 
 .growth-tag {

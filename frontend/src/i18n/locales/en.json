@@ -1795,6 +1795,10 @@
           "message": "Enter a search term to discover trending keywords",
           "description": "Find popular topics related to your product or service"
         },
+        "sourceTooltip": {
+          "title": "Data sources",
+          "description": "Blend of Google Trends (search demand) and TikTok Creative Center hashtags (via Apify). Configure SERPAPI_API_KEY and Apify credentials for live data."
+        },
         "selection": {
           "maxTitle": "Maximum keywords selected",
           "maxDescription": "You have selected the maximum of 5 keywords. Deselect some to add different ones.",

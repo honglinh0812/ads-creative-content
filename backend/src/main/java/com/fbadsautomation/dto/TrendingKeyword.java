@@ -19,6 +19,7 @@ public class TrendingKeyword implements Serializable {
     private String region;
     private Long searchVolume;
     private String category;
+    private String source;
 
     public TrendingKeyword(String keyword, Integer growth) {
         this.keyword = keyword;

@@ -105,17 +105,6 @@
             </a-button>
           </a-form-item>
         </a-form>
-
-        <!-- Search Error -->
-        <a-alert
-          v-if="searchError"
-          type="error"
-          :message="searchError"
-          show-icon
-          closable
-          @close="clearErrors"
-          class="mt-4"
-        />
       </a-card>
     </div>
 
@@ -155,15 +144,6 @@
             </a-space>
           </div>
         </template>
-
-        <a-alert
-          v-if="platformMessage"
-          :type="platformAlertType"
-          :message="platformMessage"
-          :description="currentResponse.friendlySuggestion"
-          show-icon
-          class="mb-4"
-        />
 
         <!-- Data Mode - Structured Results -->
         <div v-if="displayMode === 'data' && searchResults.length > 0">
@@ -235,14 +215,7 @@
 
         <!-- Iframe Mode - Embedded View -->
         <div v-else-if="displayMode === 'iframe'" class="iframe-container">
-          <a-alert
-            type="info"
-            :message="`Viewing ${platformName} in embedded mode`"
-            description="For structured data export and AI analysis, ensure SERPAPI_KEY is configured."
-            show-icon
-            style="margin-bottom: 16px"
-            closable
-          />
+
 
           <!-- Quick Search Bar for Iframe Mode -->
           <div class="iframe-search-bar">
