@@ -75,14 +75,13 @@ public class FacebookExportService {
     
     // Facebook Ads Import Template Headers
     // Matches Facebook's official bulk import template format
-    // Total: 30 columns (Campaign: 9, Ad Set: 12, Ad: 9)
+    // Total: 29 columns (Campaign: 8, Ad Set: 12, Ad: 9)
     private static final String[] CSV_HEADERS = {
-        // Campaign Level Fields (9 fields)
+        // Campaign Level Fields (8 fields)
         "Campaign Name",
         "Campaign Status",
         "Campaign Objective",
         "Buying Type",
-        "Account Currency",              // NEW: Required for correct budget interpretation
         "Campaign Daily Budget",
         "Campaign Lifetime Budget",
         "Campaign Start Time",
@@ -628,20 +627,20 @@ public class FacebookExportService {
     }
 
     private String mapCampaignObjective(Campaign.CampaignObjective objective) {
-        if (objective == null) return "TRAFFIC";
-        
+        if (objective == null) return "Traffic";
+
         switch (objective) {
-            case BRAND_AWARENESS: return "BRAND_AWARENESS";
-            case REACH: return "REACH";
-            case TRAFFIC: return "TRAFFIC";
-            case ENGAGEMENT: return "ENGAGEMENT";
-            case APP_INSTALLS: return "APP_INSTALLS";
-            case VIDEO_VIEWS: return "VIDEO_VIEWS";
-            case LEAD_GENERATION: return "LEAD_GENERATION";
-            case CONVERSIONS: return "CONVERSIONS";
-            case CATALOG_SALES: return "CATALOG_SALES";
-            case STORE_TRAFFIC: return "STORE_TRAFFIC";
-            default: return "TRAFFIC";
+            case BRAND_AWARENESS: return "Brand Awareness";
+            case REACH: return "Reach";
+            case TRAFFIC: return "Traffic";
+            case ENGAGEMENT: return "Post Engagement";
+            case APP_INSTALLS: return "App Installs";
+            case VIDEO_VIEWS: return "Video Views";
+            case LEAD_GENERATION: return "Lead Generation";
+            case CONVERSIONS: return "Conversions";
+            case CATALOG_SALES: return "Catalog Sales";
+            case STORE_TRAFFIC: return "Store Traffic";
+            default: return "Traffic";
         }
     }
     
@@ -750,12 +749,11 @@ public class FacebookExportService {
         
         // Facebook format preview (as it would appear in CSV)
         List<String> csvRow = Arrays.asList(
-            // Campaign Level (9 fields)
+            // Campaign Level (8 fields)
             campaign.getName(),
             "ACTIVE",
             mapCampaignObjective(campaign.getObjective()),
             "AUCTION",
-            getAccountCurrency(),                                    // NEW
             formatBudgetForFacebook(campaign.getDailyBudget()),     // UPDATED
             formatBudgetForFacebook(campaign.getTotalBudget()),     // UPDATED
             formatDateTime(campaign.getStartDate()),
@@ -831,12 +829,11 @@ public class FacebookExportService {
             
             // Create CSV row
             List<String> csvRow = Arrays.asList(
-                // Campaign Level (9 fields)
+                // Campaign Level (8 fields)
                 campaign.getName(),
                 "ACTIVE",
                 mapCampaignObjective(campaign.getObjective()),
                 "AUCTION",
-                getAccountCurrency(),                                    // NEW
                 formatBudgetForFacebook(campaign.getDailyBudget()),     // UPDATED
                 formatBudgetForFacebook(campaign.getTotalBudget()),     // UPDATED
                 formatDateTime(campaign.getStartDate()),
@@ -987,12 +984,11 @@ public class FacebookExportService {
                 Campaign campaign = ad.getCampaign();
 
                 List<String> csvRow = Arrays.asList(
-                    // Campaign Level Fields (9 fields)
+                    // Campaign Level Fields (8 fields)
                     escapeCsvValue(campaign.getName()),
                     escapeCsvValue("ACTIVE"),
                     escapeCsvValue(mapCampaignObjective(campaign.getObjective())),
                     escapeCsvValue("AUCTION"),
-                    escapeCsvValue(getAccountCurrency()),                                    // NEW: Account Currency
                     escapeCsvValue(formatBudgetForFacebook(campaign.getDailyBudget())),     // UPDATED: Format for FB
                     escapeCsvValue(formatBudgetForFacebook(campaign.getTotalBudget())),     // UPDATED: Format for FB
                     escapeCsvValue(formatDateTime(campaign.getStartDate())),
@@ -1215,18 +1211,6 @@ public class FacebookExportService {
     }
 
     /**
-     * Get account currency for Facebook export
-     * Defaults to USD if not configured
-     *
-     * @return Currency code (e.g., "USD", "VND")
-     */
-    private String getAccountCurrency() {
-        // Default to USD for international compatibility
-        // Can be overridden in application.properties: facebook.ads.currency
-        return "USD";
-    }
-
-    /**
      * Get budget multiplier for currency conversion
      * USD: 100 (convert dollars to cents)
      * VND: 1 (already in smallest unit)
@@ -1329,12 +1313,11 @@ public class FacebookExportService {
 
                 int colNum = 0;
 
-                // Campaign Level Fields (9 fields)
+                // Campaign Level Fields (8 fields)
                 createCell(row, colNum++, campaign.getName(), dataStyle);
                 createCell(row, colNum++, "ACTIVE", dataStyle);
                 createCell(row, colNum++, mapCampaignObjective(campaign.getObjective()), dataStyle);
                 createCell(row, colNum++, "AUCTION", dataStyle);
-                createCell(row, colNum++, getAccountCurrency(), dataStyle);                                    // NEW: Account Currency
                 createCell(row, colNum++, formatBudgetForFacebook(campaign.getDailyBudget()), dataStyle);     // UPDATED: Format for FB
                 createCell(row, colNum++, formatBudgetForFacebook(campaign.getTotalBudget()), dataStyle);     // UPDATED: Format for FB
                 createCell(row, colNum++, formatDateTime(campaign.getStartDate()), dataStyle);
