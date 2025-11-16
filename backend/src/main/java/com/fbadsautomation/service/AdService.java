@@ -202,7 +202,7 @@ public class AdService {
         }
         
         // Lưu ad trước để đảm bảo có ID
-        ad = adRepository.save(ad);
+        ad = saveAdWithCreativeValidation(ad);
         log.info("Saved ad with ID: {}", ad.getId());
         
         // Flush để đảm bảo ad được lưu hoàn toàn
@@ -217,6 +217,7 @@ public class AdService {
         // Nếu có contents được tạo, copy nội dung đầu tiên vào ad
         if (!contents.isEmpty()) {
             AdContent firstContent = contents.get(0);
+            adContentValidator.validateAndTruncate(firstContent);
             ad.setHeadline(firstContent.getHeadline());
             ad.setPrimaryText(firstContent.getPrimaryText());
             ad.setDescription(firstContent.getDescription());
@@ -229,7 +230,7 @@ public class AdService {
             adContentRepository.save(firstContent);
 
             // Save updated ad
-            ad = adRepository.save(ad);
+            ad = saveAdWithCreativeValidation(ad);
         }
         
         Map<String, Object> result = new HashMap<>();
@@ -281,7 +282,7 @@ public class AdService {
         // Mark selected content
         selectedContent.setIsSelected(true);
         adContentRepository.save(selectedContent);
-        return adRepository.save(ad);
+        return saveAdWithCreativeValidation(ad);
     }
 
     /**
@@ -323,7 +324,7 @@ public class AdService {
         // Clear selected_content_id reference first to avoid foreign key constraint violation
         if (ad.getSelectedContentId() != null) {
             ad.setSelectedContentId(null);
-            adRepository.save(ad);
+            saveAdWithCreativeValidation(ad);
             log.info("Cleared selected_content_id reference for ad: {}", adId);
             // Verify the update
             Ad updatedAd = adRepository.findById(adId).orElse(null);
@@ -337,7 +338,7 @@ public class AdService {
             // Clear all references to avoid foreign key constraint violation
             for (Ad otherAd : adsWithSameContent) {
                 otherAd.setSelectedContentId(null);
-                adRepository.save(otherAd);
+                saveAdWithCreativeValidation(otherAd);
                 log.info("Cleared selectedContentId for ad: {}", otherAd.getId());
             }
         }
@@ -419,7 +420,7 @@ public class AdService {
             ad.setUpdatedBy(user.getId().toString());
             ad.setUpdatedAt(LocalDateTime.now());
 
-            return adRepository.save(ad);
+            return saveAdWithCreativeValidation(ad);
         } catch (Exception e) {
             log.error("[updateAd] Error updating ad {}: {}", adId, e.getMessage(), e);
             throw e;
@@ -661,7 +662,7 @@ public class AdService {
             ad.setImageUrl(imageUrl);
 
             // Save Ad
-            ad = adRepository.save(ad);
+            ad = saveAdWithCreativeValidation(ad);
             log.info("Saved ad {} with ID: {}", createdAds.size() + 1, ad.getId());
             createdAds.add(ad);
 
@@ -680,6 +681,7 @@ public class AdService {
             content.setIsSelected(true);
             content.setCreatedDate(LocalDateTime.now());
 
+            adContentValidator.validateAndTruncate(content);
             content = adContentRepository.save(content);
             createdContents.add(content);
         }
@@ -753,7 +755,7 @@ public class AdService {
         }
         
         // Lưu ad trước để đảm bảo có ID
-        ad = adRepository.save(ad);
+        ad = saveAdWithCreativeValidation(ad);
         log.info("Saved ad with ID: {}", ad.getId());
         
         // Tạo AdContent từ selectedVariation
@@ -775,6 +777,7 @@ public class AdService {
         content.setCreatedDate(LocalDateTime.now());
         
         // Save content
+        adContentValidator.validateAndTruncate(content);
         content = adContentRepository.save(content);
         // Copy content to ad
         ad.setHeadline(content.getHeadline());
@@ -784,12 +787,27 @@ public class AdService {
         ad.setImageUrl(content.getImageUrl());
         
         // Save updated ad
-        ad = adRepository.save(ad);
+        ad = saveAdWithCreativeValidation(ad);
         Map<String, Object> result = new HashMap<>();
         result.put("ad", ad);
         result.put("contents", List.of(content));
         
         return result;
+    }
+
+    /**
+     * Centralized save to enforce Facebook creative limits before persisting.
+     */
+    private Ad saveAdWithCreativeValidation(Ad ad) {
+        if (ad == null) {
+            return null;
+        }
+
+        boolean modified = adContentValidator.enforceAdLimits(ad);
+        if (modified) {
+            log.info("Normalized creative fields for ad {} to satisfy Facebook export limits", ad.getId());
+        }
+        return adRepository.save(ad);
     }
 
     private AIProvider getProvider(String providerName) {
@@ -822,7 +840,7 @@ public class AdService {
             adData.setStatus("DRAFT");
         }
         
-        return adRepository.save(adData);
+        return saveAdWithCreativeValidation(adData);
     }
 
     private Ad createAdFromRequest(AdGenerationRequest request, User user, Campaign campaign) {
@@ -1022,7 +1040,7 @@ public class AdService {
             List<AdGenerationResponse.AdVariation> responseVariations) {
 
         Ad ad = createAdFromRequest(request, user, campaign);
-        ad = adRepository.save(ad);
+        ad = saveAdWithCreativeValidation(ad);
         log.info("Saved new ad with ID: {}", ad.getId());
 
         for (int i = 0; i < generatedContents.size(); i++) {
@@ -1031,6 +1049,7 @@ public class AdService {
             content.setUser(user);
             content.setImageUrl(imageUrls[i]);
             content.setIsSelected(false);
+            adContentValidator.validateAndTruncate(content);
             adContentRepository.save(content);
         }
         log.info("Saved {} ad contents for ad ID: {}", generatedContents.size(), ad.getId());

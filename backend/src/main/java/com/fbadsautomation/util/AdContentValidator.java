@@ -1,9 +1,11 @@
 package com.fbadsautomation.util;
 
+import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.AdContent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import java.util.Objects;
 
 /**
  * Validator for AdContent to ensure compliance with Facebook advertising limits.
@@ -85,6 +87,35 @@ public class AdContentValidator {
             // Hard cut at character limit
             return text.substring(0, cutPoint).trim() + "...";
         }
+    }
+
+    /**
+     * Applies the same Facebook limits to Ad entities before persistence.
+     *
+     * @param ad The Ad to validate and truncate
+     * @return true if any field was truncated
+     */
+    public boolean enforceAdLimits(Ad ad) {
+        if (ad == null) {
+            return false;
+        }
+
+        AdContent mirror = new AdContent();
+        mirror.setHeadline(ad.getHeadline());
+        mirror.setDescription(ad.getDescription());
+        mirror.setPrimaryText(ad.getPrimaryText());
+
+        validateAndTruncate(mirror);
+
+        boolean modified = !Objects.equals(ad.getHeadline(), mirror.getHeadline())
+                || !Objects.equals(ad.getDescription(), mirror.getDescription())
+                || !Objects.equals(ad.getPrimaryText(), mirror.getPrimaryText());
+
+        ad.setHeadline(mirror.getHeadline());
+        ad.setDescription(mirror.getDescription());
+        ad.setPrimaryText(mirror.getPrimaryText());
+
+        return modified;
     }
 
     /**
