@@ -145,16 +145,25 @@ public class AuthService {
     public String getFacebookAuthorizationUrl() {
         String state = UUID.randomUUID().toString();
         stateStore.put(state, "pending");
-        String scope = facebookProperties.getScope() != null
-            ? facebookProperties.getScope().replace(" ", "")
-            : "email,public_profile";
+        String rawScope = facebookProperties.getScope();
+        // Default to full business scope
+        String scope = (rawScope != null && !rawScope.isBlank())
+            ? rawScope.replace(" ", "")
+            : "email,public_profile,ads_management,business_management,ads_read,pages_manage_ads";
+        String encodedScope;
+        try {
+            encodedScope = java.net.URLEncoder.encode(scope, java.nio.charset.StandardCharsets.UTF_8.toString());
+        } catch (Exception e) {
+            encodedScope = scope;
+        }
+
         return String.format(
-            "https://www.facebook.com/v%s/dialog/oauth?client_id=%s&redirect_uri=%s&state=%s&scope=%s",
+            "https://www.facebook.com/v%s/dialog/oauth?client_id=%s&redirect_uri=%s&state=%s&scope=%s&auth_type=rerequest",
             facebookProperties.getApiVersion(),
             facebookProperties.getAppId(),
             facebookProperties.getRedirectUri(),
             state,
-            scope
+            encodedScope
         );
     }
 
