@@ -14,6 +14,16 @@
         Download Only
       </a-button>
       <a-button
+        v-if="showAutoUpload"
+        key="upload"
+        type="default"
+        @click="handleUploadDirect"
+        :loading="exporting"
+        :disabled="!canUploadDirect"
+      >
+        Auto Upload to Facebook
+      </a-button>
+      <a-button
         key="export"
         type="primary"
         @click="handleExportAndRedirect"
@@ -230,6 +240,10 @@ export default {
       type: Boolean,
       required: true
     },
+    showAutoUpload: {
+      type: Boolean,
+      default: true
+    },
     adIds: {
       type: Array,
       default: () => []
@@ -309,6 +323,10 @@ export default {
       return this.selectedCount > 0 && !this.loading && !this.exporting
     },
 
+    canUploadDirect() {
+      return this.selectedCount > 0 && !this.loading && !this.exporting
+    },
+
     previewTableData() {
       if (!this.previewData) return []
 
@@ -380,7 +398,8 @@ export default {
       'exportToFacebook',
       'downloadOnly',
       'clearError',
-      'clearSelection'
+      'clearSelection',
+      'uploadDirect'
     ]),
 
     async initializeExport() {
@@ -420,6 +439,23 @@ export default {
       } catch (error) {
         this.exportProgress = 0
         this.$message.error('Download failed: ' + error.message)
+        this.$emit('error', error)
+      }
+    },
+
+    async handleUploadDirect() {
+      try {
+        this.exportProgress = 0
+        this.simulateProgress()
+        await this.uploadDirect()
+        this.exportProgress = 100
+        this.$message.success('Uploaded to Facebook via Marketing API!')
+        window.open('https://business.facebook.com/adsmanager/manage/ads', '_blank', 'noopener,noreferrer')
+        this.$emit('success')
+        this.handleClose()
+      } catch (error) {
+        this.exportProgress = 0
+        this.$message.error('Upload failed: ' + (error.message || 'Unknown error'))
         this.$emit('error', error)
       }
     },

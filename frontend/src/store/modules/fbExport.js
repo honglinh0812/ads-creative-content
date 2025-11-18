@@ -284,6 +284,34 @@ const actions = {
   },
 
   /**
+   * Upload directly via Marketing API (requires server token & ad account id)
+   */
+  async uploadDirect({ state, commit }) {
+    if (state.selectedAdIds.length === 0) {
+      commit('SET_ERROR', 'Please select at least one ad to export')
+      throw new Error('No ads selected')
+    }
+
+    commit('SET_EXPORTING', true)
+    commit('CLEAR_ERROR')
+
+    try {
+      const response = await api.facebookExport.uploadToFacebook(
+        state.selectedAdIds,
+        null
+      )
+      return response.data
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to upload ads'
+      commit('SET_ERROR', errorMessage)
+      console.error('Upload to Facebook error:', error)
+      throw error
+    } finally {
+      commit('SET_EXPORTING', false)
+    }
+  },
+
+  /**
    * Show/hide instructions modal
    */
   showInstructions({ commit }, show) {
@@ -308,6 +336,11 @@ const actions = {
     commit('SET_EXPORTING', false)
     commit('SHOW_INSTRUCTIONS_MODAL', false)
     commit('CLEAR_ERROR')
+  },
+
+  async uploadAfterPreview({ dispatch }) {
+    await dispatch('previewExport')
+    return dispatch('uploadDirect')
   }
 }
 

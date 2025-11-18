@@ -73,6 +73,7 @@
     "allCampaigns": "All Campaigns",
     "createCampaign": "Create Campaign",
     "ads": "Ads",
+    "adLearning": "Ad Learning",
     "allAds": "All Ads",
     "createAd": "Create Ad",
     "personas": "Personas",
@@ -865,6 +866,10 @@
     "recent": "Recently Created",
     "quota": "Quota Used",
     "mostCommonTone": "Most Common Tone",
+    "stats": {
+      "last7Days": "Last 7 days",
+      "notAvailable": "N/A"
+    },
     "name": "Persona Name",
     "age": "Age",
     "gender": "Gender",
@@ -900,7 +905,86 @@
     "updatedSuccess": "Persona updated successfully",
     "selectForAd": "Select a persona to automatically tailor your ad content",
     "promptEnhancement": "Your ad prompt will be automatically enriched with this persona's profile",
-    "targeting": "Targeting persona:"
+    "targeting": "Targeting persona:",
+    "paginationTotal": "Total {total} personas",
+    "actions": {
+      "create": "Create Persona",
+      "update": "Update Persona",
+      "cancel": "Cancel",
+      "reset": "Reset to Original",
+      "close": "Close",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "form": {
+      "namePlaceholder": "e.g., Eco-Conscious Millennial",
+      "agePlaceholder": "e.g., 28",
+      "genderPlaceholder": "Select gender",
+      "interestsHint": "Add up to 20 interests (press Enter or use commas to separate)",
+      "interestsPlaceholder": "e.g., Sustainability, Fitness, Outdoor Activities",
+      "painPointsHint": "Add up to 10 pain points or challenges this persona faces",
+      "painPointsPlaceholder": "e.g., Plastic waste concerns, Affordable sustainable products",
+      "desiredOutcomeHint": "What does this persona want to achieve? (Optional)",
+      "desiredOutcomePlaceholder": "e.g., Reduce environmental impact while staying active",
+      "descriptionHint": "Additional context about this persona (Optional)",
+      "descriptionPlaceholder": "e.g., Urban professional who values sustainability and wellness...",
+      "preview": "Preview",
+      "validation": {
+        "nameRequired": "Please enter a persona name",
+        "nameLength": "Name must be between 2-100 characters",
+        "nameInvalid": "Only letters (including accented), numbers, spaces, hyphens, underscores, apostrophes, and periods are allowed",
+        "ageRequired": "Please enter age",
+        "ageRange": "Age must be between 13-120",
+        "genderRequired": "Please select gender",
+        "interestsRequired": "Please add at least one interest",
+        "interestsCount": "Maximum 20 interests allowed",
+        "interestTooShort": "Each interest must be at least 2 characters",
+        "interestTooLong": "Each interest must not exceed 50 characters",
+        "toneRequired": "Please select a tone",
+        "painPointsRequired": "Please add at least one pain point",
+        "painPointsCount": "Maximum 10 pain points allowed",
+        "painPointTooShort": "Each pain point must be at least 2 characters",
+        "painPointTooLong": "Each pain point must not exceed 200 characters",
+        "fixErrors": "Please fix validation errors before submitting",
+        "reset": "Form reset to original values"
+      }
+    },
+    "toneLabels": {
+      "professional": "Professional",
+      "casual": "Casual",
+      "funny": "Funny",
+      "inspirational": "Inspirational",
+      "friendly": "Friendly",
+      "formal": "Formal",
+      "enthusiastic": "Enthusiastic"
+    },
+    "toneDescriptions": {
+      "professional": "Formal and business-oriented",
+      "casual": "Friendly and conversational",
+      "funny": "Humorous and lighthearted",
+      "inspirational": "Motivating and uplifting",
+      "friendly": "Warm, approachable, and helpful",
+      "formal": "Structured and respectful",
+      "enthusiastic": "Energetic and positive"
+    },
+    "card": {
+      "age": "{age} years old",
+      "more": "+{count} more",
+      "moreEllipsis": "+{count} more...",
+      "date": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "daysAgo": "{count} days ago",
+        "weeksAgo": "{count} weeks ago",
+        "monthsAgo": "{count} months ago"
+      }
+    },
+    "messages": {
+      "loadError": "Failed to load personas: {error}",
+      "saveError": "Failed to save persona: {error}",
+      "deleteError": "Failed to delete persona: {error}",
+      "selectedForAd": "Persona \"{name}\" selected for ad creation"
+    }
   },
   "competitors": {
     "title": "Competitor Insights",
@@ -1337,6 +1421,7 @@
         "fileUploadFailed": "Failed to upload file",
         "fileTooLarge": "File is too large. Maximum size is 10MB",
         "promptOrLinksRequired": "Please enter prompt content or provide ad links",
+        "promptRequired": "Please enter prompt content",
         "adCreationFailed": "Could not create ad. Please try again.",
         "adSaveFailed": "Could not save ad. Please try again.",
         "extractionFailed": "Could not extract content",
@@ -1372,6 +1457,116 @@
     },
     "promptEnhancement": {
       "ctaInstruction": "Note: Only use one of the following Call to Actions for the ad: {ctaList}. Do not create other CTAs."
+    }
+  },
+  "adLearn": {
+    "pageHeader": {
+      "title": "Learn & Improve Ads",
+      "subtitle": "Study a Meta Ad Library example, keep the style, and tailor it to your offer",
+      "backToAds": "Back to Ads"
+    },
+    "progress": {
+      "headerTitle": "Learning workflow",
+      "stepOf": "Step {step} of {total}"
+    },
+    "progressSteps": {
+      "step1": {
+        "title": "Fill info",
+        "description": "Campaign, goal, reference link",
+        "emoji": "🎯"
+      },
+      "step2": {
+        "title": "Choose AI",
+        "description": "Pick text & image providers",
+        "emoji": "🤖"
+      },
+      "step3": {
+        "title": "Preview & save",
+        "description": "Review variations and save",
+        "emoji": "🎉"
+      }
+    },
+    "step1": {
+      "cardTitle": "Learn from a reference ad",
+      "campaign": {
+        "label": "Campaign",
+        "placeholder": "Select a campaign"
+      },
+      "adName": {
+        "label": "Ad name",
+        "placeholder": "Enter ad name"
+      },
+      "variations": {
+        "label": "Number of ads"
+      },
+      "language": {
+        "label": "Language",
+        "vietnamese": "Vietnamese",
+        "english": "English"
+      },
+      "baseContent": {
+        "label": "Content to promote",
+        "placeholder": "Describe your product/service, audience, key benefits"
+      },
+      "referenceLink": {
+        "label": "Reference ad link (Meta Ad Library)",
+        "placeholder": "Paste one Meta Ad Library link",
+        "previewReady": "Reference extracted. Will use style cues, not copy text.",
+        "fallbackSummary": "Reference analyzed"
+      },
+      "creativeStyle": {
+        "label": "Style",
+        "tooltip": "Select a tone to guide rewriting",
+        "placeholder": "Select a style"
+      },
+      "callToAction": {
+        "label": "Call to action",
+        "placeholder": "Choose CTA (optional)"
+      },
+      "next": "Next"
+    },
+    "step2": {
+      "cardTitle": "AI provider selection",
+      "sectionTitle": "Pick your AI copilots",
+      "sectionSubtitle": "Choose the engines that will rewrite and illustrate your ads",
+      "textProvider": "Text provider",
+      "imageProvider": "Image provider",
+      "generate": "Generate previews"
+    },
+    "step3": {
+      "cardTitle": "Ad preview",
+      "empty": "Generate ads to see previews",
+      "defaultHeadline": "Improved ad",
+      "save": "Save selected"
+    },
+    "navigation": {
+      "back": "Back"
+    },
+    "messages": {
+      "success": {
+        "extracted": "Reference content extracted",
+        "generated": "Ads generated",
+        "saved": "Ads saved"
+      },
+      "warning": {
+        "loadProvidersFailed": "Could not load providers. Using defaults.",
+        "noContent": "No content found in the reference link",
+        "selectVariations": "Please select at least one variation to save"
+      },
+      "error": {
+        "loadCampaignsFailed": "Failed to load campaigns",
+        "loadCTAsFailed": "Failed to load call-to-actions",
+        "extractContentFailed": "Failed to extract content from reference link",
+        "generateAdFailed": "Failed to generate ads",
+        "saveAdFailed": "Failed to save ads"
+      }
+    },
+    "prompt": {
+      "referenceStyle": "Rewrite the messaging to follow the style/themes above but make it bespoke to the user's offer.",
+      "referenceLinkOnly": "Use the style and layout patterns from this reference link: {link}. Do not copy text verbatim.",
+      "styleCue": "Apply this tone/style: {style}.",
+      "ctaCue": "Use this call-to-action: {cta}.",
+      "guardrail": "Do not copy the reference text exactly; create fresh, original copy suitable for the requested product/service."
     }
   },
   "ads": {
@@ -1720,6 +1915,7 @@
       "personaSelector": {
         "title": "🎭 Target Persona (Optional)",
         "createNew": "Create New",
+        "createModalTitle": "Create Persona without leaving your flow",
         "form": {
           "label": "Select a persona to tailor your ad",
           "placeholder": "Choose a target persona (optional)"
@@ -1752,7 +1948,9 @@
         "messages": {
           "loadError": "Failed to load personas: {error}",
           "selected": "Persona \"{name}\" selected",
-          "cleared": "Persona selection cleared"
+          "cleared": "Persona selection cleared",
+          "created": "Persona \"{name}\" created",
+          "createError": "Failed to create persona: {error}"
         },
         "gender": {
           "male": "Male",

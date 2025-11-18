@@ -18,7 +18,7 @@
     <a-card-meta :title="persona.name">
       <template #description>
         <div class="persona-basic-info">
-          <a-tag color="blue">{{ persona.age }} years old</a-tag>
+          <a-tag color="blue">{{ $t('personas.card.age', { age: persona.age }) }}</a-tag>
           <a-tag :color="getGenderColor()">{{ formatGender(persona.gender) }}</a-tag>
           <a-tag color="purple">{{ formatTone(persona.tone) }}</a-tag>
         </div>
@@ -28,7 +28,7 @@
     <!-- Interests Section -->
     <div v-if="persona.interests && persona.interests.length" class="persona-section">
       <div class="section-title">
-        <heart-outlined /> Interests
+        <heart-outlined /> {{ $t('personas.interests') }}
       </div>
       <div class="tag-container">
         <a-tag
@@ -40,7 +40,7 @@
           {{ interest }}
         </a-tag>
         <a-tag v-if="hasMoreInterests" class="more-tag">
-          +{{ persona.interests.length - maxDisplayItems }} more
+          {{ $t('personas.card.more', { count: persona.interests.length - maxDisplayItems }) }}
         </a-tag>
       </div>
     </div>
@@ -48,14 +48,14 @@
     <!-- Pain Points Section -->
     <div v-if="persona.painPoints && persona.painPoints.length" class="persona-section">
       <div class="section-title">
-        <alert-outlined /> Pain Points
+        <alert-outlined /> {{ $t('personas.painPoints') }}
       </div>
       <ul class="pain-points-list">
         <li v-for="(painPoint, index) in displayedPainPoints" :key="index">
           {{ painPoint }}
         </li>
         <li v-if="hasMorePainPoints" class="more-item">
-          +{{ persona.painPoints.length - maxDisplayItems }} more...
+          {{ $t('personas.card.moreEllipsis', { count: persona.painPoints.length - maxDisplayItems }) }}
         </li>
       </ul>
     </div>
@@ -63,7 +63,7 @@
     <!-- Desired Outcome -->
     <div v-if="persona.desiredOutcome" class="persona-section">
       <div class="section-title">
-        <rocket-outlined /> Goal
+        <rocket-outlined /> {{ $t('personas.goal') }}
       </div>
       <p class="desired-outcome">{{ persona.desiredOutcome }}</p>
     </div>
@@ -71,20 +71,20 @@
     <!-- Description -->
     <div v-if="persona.description && showFullDetails" class="persona-section">
       <div class="section-title">
-        <file-text-outlined /> Description
+        <file-text-outlined /> {{ $t('personas.description') }}
       </div>
       <p class="description">{{ persona.description }}</p>
     </div>
 
     <!-- Card Actions -->
     <template v-if="!previewMode" #actions>
-      <a-tooltip title="View Details">
+      <a-tooltip :title="$t('personas.actions.view')">
         <eye-outlined key="view" @click="handleView" />
       </a-tooltip>
-      <a-tooltip title="Edit">
+      <a-tooltip :title="$t('personas.actions.edit')">
         <edit-outlined key="edit" @click="handleEdit" />
       </a-tooltip>
-      <a-tooltip title="Select for Ad">
+      <a-tooltip :title="$t('personas.selectForAd')">
         <check-circle-outlined
           key="select"
           :class="{ 'selected-icon': isSelected }"
@@ -92,12 +92,12 @@
         />
       </a-tooltip>
       <a-popconfirm
-        title="Are you sure you want to delete this persona?"
-        ok-text="Yes"
-        cancel-text="No"
+        :title="$t('personas.deleteConfirm')"
+        :ok-text="$t('common.action.yes')"
+        :cancel-text="$t('common.action.no')"
         @confirm="handleDelete"
       >
-        <a-tooltip title="Delete">
+        <a-tooltip :title="$t('personas.actions.delete')">
           <delete-outlined key="delete" class="delete-action" />
         </a-tooltip>
       </a-popconfirm>
@@ -222,14 +222,15 @@ export default {
     },
     formatGender(gender) {
       const genderMap = {
-        MALE: 'Male',
-        FEMALE: 'Female',
-        ALL: 'All'
+        MALE: this.$t('personas.male'),
+        FEMALE: this.$t('personas.female'),
+        ALL: this.$t('personas.all')
       }
       return genderMap[gender] || gender
     },
     formatTone(tone) {
-      return tone ? tone.charAt(0).toUpperCase() + tone.slice(1) : ''
+      const toneKey = tone ? tone.toLowerCase() : ''
+      return toneKey ? this.$t(`personas.toneLabels.${toneKey}`, tone) : ''
     },
     formatDate(dateString) {
       if (!dateString) return ''
@@ -238,11 +239,11 @@ export default {
       const diffTime = Math.abs(now - date)
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-      if (diffDays === 0) return 'Today'
-      if (diffDays === 1) return 'Yesterday'
-      if (diffDays < 7) return `${diffDays} days ago`
-      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
-      if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`
+      if (diffDays === 0) return this.$t('personas.card.date.today')
+      if (diffDays === 1) return this.$t('personas.card.date.yesterday')
+      if (diffDays < 7) return this.$t('personas.card.date.daysAgo', { count: diffDays })
+      if (diffDays < 30) return this.$t('personas.card.date.weeksAgo', { count: Math.floor(diffDays / 7) })
+      if (diffDays < 365) return this.$t('personas.card.date.monthsAgo', { count: Math.floor(diffDays / 30) })
       return date.toLocaleDateString()
     },
     handleView() {

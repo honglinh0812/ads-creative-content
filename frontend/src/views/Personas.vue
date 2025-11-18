@@ -2,21 +2,21 @@
   <div class="personas-page">
     <!-- Page Header -->
     <a-page-header
-      title="Audience Personas"
-      sub-title="Create and manage target audience personas for better ad targeting"
+      :title="$t('personas.title')"
+      :sub-title="$t('personas.subtitle')"
     >
       <template #extra>
         <a-space>
           <a-input-search
             v-model:value="searchQuery"
-            placeholder="Search personas..."
+            :placeholder="$t('personas.searchPlaceholder')"
             style="width: 250px"
             @search="handleSearch"
             allow-clear
           />
           <a-button type="primary" @click="showCreateModal = true">
             <template #icon><plus-outlined /></template>
-            Create Persona
+            {{ $t('personas.createPersona') }}
           </a-button>
         </a-space>
       </template>
@@ -27,7 +27,7 @@
       <a-col :xs="24" :sm="12" :md="6">
         <a-card>
           <a-statistic
-            title="Total Personas"
+            :title="$t('personas.total')"
             :value="personas.length"
             :prefix="'👥'"
           />
@@ -36,20 +36,20 @@
       <a-col :xs="24" :sm="12" :md="6">
         <a-card>
           <a-statistic
-            title="Recently Created"
+            :title="$t('personas.recent')"
             :value="recentPersonasCount"
             :prefix="'🆕'"
             :value-style="{ color: '#3f8600' }"
           />
           <template #extra>
-            <span class="stat-extra">Last 7 days</span>
+            <span class="stat-extra">{{ $t('personas.stats.last7Days') }}</span>
           </template>
         </a-card>
       </a-col>
       <a-col :xs="24" :sm="12" :md="6">
         <a-card>
           <a-statistic
-            title="Most Common Tone"
+            :title="$t('personas.mostCommonTone')"
             :value="mostCommonTone"
             :prefix="toneEmoji"
           />
@@ -58,7 +58,7 @@
       <a-col :xs="24" :sm="12" :md="6">
         <a-card>
           <a-statistic
-            title="Quota Used"
+            :title="$t('personas.quota')"
             :value="quotaPercentage"
             suffix="%"
             :value-style="quotaPercentage > 80 ? { color: '#cf1322' } : {}"
@@ -73,7 +73,7 @@
     <!-- Personas Grid -->
     <a-card class="personas-grid-card" :loading="loading">
       <template #title>
-        <span>Your Personas ({{ filteredPersonas.length }})</span>
+        <span>{{ `${$t('personas.title')} (${filteredPersonas.length})` }}</span>
       </template>
 
       <template #extra>
@@ -83,10 +83,10 @@
             style="width: 150px"
             @change="handleSortChange"
           >
-            <a-select-option value="createdAt,desc">Newest First</a-select-option>
-            <a-select-option value="createdAt,asc">Oldest First</a-select-option>
-            <a-select-option value="name,asc">Name A-Z</a-select-option>
-            <a-select-option value="name,desc">Name Z-A</a-select-option>
+            <a-select-option value="createdAt,desc">{{ $t('personas.sortNewest') }}</a-select-option>
+            <a-select-option value="createdAt,asc">{{ $t('personas.sortOldest') }}</a-select-option>
+            <a-select-option value="name,asc">{{ $t('personas.sortNameAZ') }}</a-select-option>
+            <a-select-option value="name,desc">{{ $t('personas.sortNameZA') }}</a-select-option>
           </a-select>
           <a-radio-group v-model:value="viewMode" button-style="solid">
             <a-radio-button value="grid">
@@ -102,13 +102,13 @@
       <!-- Empty State -->
       <a-empty
         v-if="!loading && personas.length === 0"
-        description="No personas yet"
+        :description="$t('personas.noPersonas')"
       >
         <template #image>
           <span style="font-size: 64px">👥</span>
         </template>
         <a-button type="primary" @click="showCreateModal = true">
-          Create Your First Persona
+          {{ $t('personas.createFirst') }}
         </a-button>
       </a-empty>
 
@@ -151,7 +151,7 @@
                 <check-outlined />
               </a-button>
               <a-popconfirm
-                title="Delete this persona?"
+                :title="$t('personas.deleteConfirm')"
                 @confirm="handleDeletePersona(item)"
               >
                 <a-button size="small" danger>
@@ -170,9 +170,9 @@
               </template>
               <template #description>
                 <a-space>
-                  <a-tag>{{ item.age }} years</a-tag>
-                  <a-tag>{{ item.gender }}</a-tag>
-                  <a-tag>{{ item.tone }}</a-tag>
+                  <a-tag>{{ $t('personas.card.age', { age: item.age }) }}</a-tag>
+                  <a-tag>{{ formatGender(item.gender) }}</a-tag>
+                  <a-tag>{{ formatTone(item.tone) }}</a-tag>
                   <span class="list-interests">
                     {{ item.interests.slice(0, 3).join(', ') }}
                     <span v-if="item.interests.length > 3">...</span>
@@ -191,7 +191,7 @@
           v-model:page-size="pageSize"
           :total="filteredPersonas.length"
           :show-size-changer="true"
-          :show-total="total => `Total ${total} personas`"
+          :show-total="total => $t('personas.paginationTotal', { total })"
           :page-size-options="['12', '24', '48', '96']"
         />
       </div>
@@ -200,7 +200,7 @@
     <!-- Create/Edit Modal -->
     <a-modal
       v-model:visible="showCreateModal"
-      :title="editingPersona ? 'Edit Persona' : 'Create New Persona'"
+      :title="editingPersona ? $t('personas.editPersona') : $t('personas.createPersona')"
       :footer="null"
       :width="900"
       :destroy-on-close="true"
@@ -216,7 +216,7 @@
     <!-- View Details Modal -->
     <a-modal
       v-model:visible="showViewModal"
-      title="Persona Details"
+      :title="$t('personas.viewPersona')"
       :footer="null"
       :width="700"
     >
@@ -229,9 +229,9 @@
       />
       <template #footer>
         <a-space>
-          <a-button @click="showViewModal = false">Close</a-button>
+          <a-button @click="showViewModal = false">{{ $t('personas.actions.close') }}</a-button>
           <a-button type="primary" @click="handleEditFromView">
-            <edit-outlined /> Edit
+            <edit-outlined /> {{ $t('personas.actions.edit') }}
           </a-button>
         </a-space>
       </template>
@@ -294,8 +294,8 @@ export default {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
       return this.personas.filter(p => new Date(p.createdAt) >= sevenDaysAgo).length
     },
-    mostCommonTone() {
-      if (this.personas.length === 0) return 'N/A'
+    mostCommonToneKey() {
+      if (this.personas.length === 0) return null
       const toneCounts = {}
       this.personas.forEach(p => {
         toneCounts[p.tone] = (toneCounts[p.tone] || 0) + 1
@@ -303,16 +303,23 @@ export default {
       const maxTone = Object.keys(toneCounts).reduce((a, b) =>
         toneCounts[a] > toneCounts[b] ? a : b
       )
-      return maxTone.charAt(0).toUpperCase() + maxTone.slice(1)
+      return maxTone
+    },
+    mostCommonTone() {
+      if (!this.mostCommonToneKey) return this.$t('personas.stats.notAvailable')
+      return this.formatTone(this.mostCommonToneKey)
     },
     toneEmoji() {
       const emojiMap = {
-        Professional: '💼',
-        Casual: '😊',
-        Funny: '😄',
-        Inspirational: '✨'
+        professional: '💼',
+        casual: '😊',
+        funny: '😄',
+        inspirational: '✨',
+        friendly: '🤝',
+        formal: '🏛️',
+        enthusiastic: '🚀'
       }
-      return emojiMap[this.mostCommonTone] || '📝'
+      return emojiMap[this.mostCommonToneKey] || '📝'
     },
     quotaPercentage() {
       return Math.round((this.personas.length / 100) * 100)
@@ -330,7 +337,7 @@ export default {
         this.filteredPersonas = [...this.personas]
         this.applySorting()
       } catch (error) {
-        this.$message.error('Failed to load personas: ' + error.message)
+        this.$message.error(this.$t('personas.messages.loadError', { error: error.message }))
       } finally {
         this.loading = false
       }
@@ -379,15 +386,15 @@ export default {
       // Store selected persona and navigate to ad creation
       this.$store.commit('adCreation/UPDATE_FORM_DATA', { personaId: persona.id })
       this.$router.push('/ads/create')
-      this.$message.success(`Persona "${persona.name}" selected for ad creation`)
+      this.$message.success(this.$t('personas.messages.selectedForAd', { name: persona.name }))
     },
     async handleDeletePersona(persona) {
       try {
         await api.personas.delete(persona.id)
-        this.$message.success('Persona deleted successfully')
+        this.$message.success(this.$t('personas.deletedSuccess'))
         this.loadPersonas()
       } catch (error) {
-        this.$message.error('Failed to delete persona: ' + error.message)
+        this.$message.error(this.$t('personas.messages.deleteError', { error: error.message }))
       }
     },
     async handleSubmitPersona(personaData) {
@@ -395,16 +402,16 @@ export default {
       try {
         if (this.editingPersona?.id) {
           await api.personas.update(this.editingPersona.id, personaData)
-          this.$message.success('Persona updated successfully')
+          this.$message.success(this.$t('personas.updatedSuccess'))
         } else {
           await api.personas.create(personaData)
-          this.$message.success('Persona created successfully')
+          this.$message.success(this.$t('personas.createdSuccess'))
         }
         this.showCreateModal = false
         this.editingPersona = null
         this.loadPersonas()
       } catch (error) {
-        this.$message.error('Failed to save persona: ' + error.message)
+        this.$message.error(this.$t('personas.messages.saveError', { error: error.message }))
       } finally {
         this.submitting = false
       }
@@ -420,6 +427,28 @@ export default {
         hash = str.charCodeAt(i) + ((hash << 5) - hash)
       }
       return colors[Math.abs(hash) % colors.length]
+    },
+    formatGender(gender) {
+      const genderMap = {
+        MALE: this.$t('personas.male'),
+        FEMALE: this.$t('personas.female'),
+        ALL: this.$t('personas.all')
+      }
+      return genderMap[gender] || gender
+    },
+    formatTone(tone) {
+      if (!tone) return ''
+      const toneKey = tone.toLowerCase()
+      const labelMap = {
+        professional: this.$t('personas.toneLabels.professional'),
+        casual: this.$t('personas.toneLabels.casual'),
+        funny: this.$t('personas.toneLabels.funny'),
+        friendly: this.$t('personas.toneLabels.friendly'),
+        formal: this.$t('personas.toneLabels.formal'),
+        inspirational: this.$t('personas.toneLabels.inspirational'),
+        enthusiastic: this.$t('personas.toneLabels.enthusiastic')
+      }
+      return labelMap[toneKey] || tone
     }
   }
 }

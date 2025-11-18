@@ -1,5 +1,5 @@
 <template>
-  <a-card :title="isEditing ? 'Edit Persona' : 'Create New Persona'" class="persona-form-card">
+  <a-card :title="isEditing ? $t('personas.editPersona') : $t('personas.createPersona')" class="persona-form-card">
     <a-form
       ref="formRef"
       :model="localPersona"
@@ -8,17 +8,17 @@
     >
       <!-- Name -->
       <a-form-item
-        label="Persona Name"
+        :label="$t('personas.name')"
         name="name"
         :rules="[
-          { required: true, message: 'Please enter a persona name' },
-          { min: 2, max: 100, message: 'Name must be between 2-100 characters' },
-          { pattern: /^[a-zA-Z0-9\s\-_'.]+$/, message: 'Only letters, numbers, spaces, hyphens, underscores, and apostrophes allowed' }
+          { required: true, message: $t('personas.form.validation.nameRequired') },
+          { min: 2, max: 100, message: $t('personas.form.validation.nameLength') },
+          { pattern: namePattern, message: $t('personas.form.validation.nameInvalid') }
         ]"
       >
         <a-input
           v-model:value="localPersona.name"
-          placeholder="e.g., Eco-Conscious Millennial"
+          :placeholder="$t('personas.form.namePlaceholder')"
           :maxlength="100"
           show-count
         />
@@ -28,18 +28,18 @@
       <a-row :gutter="16">
         <a-col :xs="24" :sm="12">
           <a-form-item
-            label="Age"
+            :label="$t('personas.age')"
             name="age"
             :rules="[
-              { required: true, message: 'Please enter age' },
-              { type: 'number', min: 13, max: 120, message: 'Age must be between 13-120' }
+              { required: true, message: $t('personas.form.validation.ageRequired') },
+              { type: 'number', min: 13, max: 120, message: $t('personas.form.validation.ageRange') }
             ]"
           >
             <a-input-number
               v-model:value="localPersona.age"
               :min="13"
               :max="120"
-              placeholder="e.g., 28"
+              :placeholder="$t('personas.form.agePlaceholder')"
               style="width: 100%"
             />
           </a-form-item>
@@ -47,14 +47,14 @@
 
         <a-col :xs="24" :sm="12">
           <a-form-item
-            label="Gender"
+            :label="$t('personas.gender')"
             name="gender"
-            :rules="[{ required: true, message: 'Please select gender' }]"
+            :rules="[{ required: true, message: $t('personas.form.validation.genderRequired') }]"
           >
-            <a-select v-model:value="localPersona.gender" placeholder="Select gender">
-              <a-select-option value="MALE">Male</a-select-option>
-              <a-select-option value="FEMALE">Female</a-select-option>
-              <a-select-option value="ALL">All / Other</a-select-option>
+            <a-select v-model:value="localPersona.gender" :placeholder="$t('personas.form.genderPlaceholder')">
+              <a-select-option value="MALE">{{ $t('personas.male') }}</a-select-option>
+              <a-select-option value="FEMALE">{{ $t('personas.female') }}</a-select-option>
+              <a-select-option value="ALL">{{ $t('personas.all') }}</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
@@ -62,20 +62,20 @@
 
       <!-- Interests -->
       <a-form-item
-        label="Interests"
+        :label="$t('personas.interests')"
         name="interests"
         :rules="[
-          { required: true, message: 'Please add at least one interest' },
+          { required: true, message: $t('personas.form.validation.interestsRequired') },
           { validator: validateInterests }
         ]"
       >
         <template #extra>
-          <span class="field-hint">Add up to 20 interests (press Enter or use commas to separate)</span>
+          <span class="field-hint">{{ $t('personas.form.interestsHint') }}</span>
         </template>
         <a-select
           v-model:value="localPersona.interests"
           mode="tags"
-          placeholder="e.g., Sustainability, Fitness, Outdoor Activities"
+          :placeholder="$t('personas.form.interestsPlaceholder')"
           :max-tag-count="5"
           :max-tag-text-length="20"
         />
@@ -83,33 +83,45 @@
 
       <!-- Tone -->
       <a-form-item
-        label="Preferred Communication Tone"
+        :label="$t('personas.tone')"
         name="tone"
-        :rules="[{ required: true, message: 'Please select a tone' }]"
+        :rules="[{ required: true, message: $t('personas.form.validation.toneRequired') }]"
       >
         <a-radio-group v-model:value="localPersona.tone">
           <a-radio value="professional">
             <span class="tone-option">
-              💼 Professional
-              <small>Formal and business-oriented</small>
+              💼 {{ $t('personas.toneLabels.professional') }}
+              <small>{{ $t('personas.toneDescriptions.professional') }}</small>
             </span>
           </a-radio>
           <a-radio value="casual">
             <span class="tone-option">
-              😊 Casual
-              <small>Friendly and conversational</small>
+              😊 {{ $t('personas.toneLabels.casual') }}
+              <small>{{ $t('personas.toneDescriptions.casual') }}</small>
             </span>
           </a-radio>
           <a-radio value="funny">
             <span class="tone-option">
-              😄 Funny
-              <small>Humorous and lighthearted</small>
+              😄 {{ $t('personas.toneLabels.funny') }}
+              <small>{{ $t('personas.toneDescriptions.funny') }}</small>
             </span>
           </a-radio>
-          <a-radio value="inspirational">
+          <a-radio value="friendly">
             <span class="tone-option">
-              ✨ Inspirational
-              <small>Motivating and uplifting</small>
+              🤝 {{ $t('personas.toneLabels.friendly') }}
+              <small>{{ $t('personas.toneDescriptions.friendly') }}</small>
+            </span>
+          </a-radio>
+          <a-radio value="formal">
+            <span class="tone-option">
+              🏛️ {{ $t('personas.toneLabels.formal') }}
+              <small>{{ $t('personas.toneDescriptions.formal') }}</small>
+            </span>
+          </a-radio>
+          <a-radio value="enthusiastic">
+            <span class="tone-option">
+              🚀 {{ $t('personas.toneLabels.enthusiastic') }}
+              <small>{{ $t('personas.toneDescriptions.enthusiastic') }}</small>
             </span>
           </a-radio>
         </a-radio-group>
@@ -117,20 +129,20 @@
 
       <!-- Pain Points -->
       <a-form-item
-        label="Pain Points"
+        :label="$t('personas.painPoints')"
         name="painPoints"
         :rules="[
-          { required: true, message: 'Please add at least one pain point' },
+          { required: true, message: $t('personas.form.validation.painPointsRequired') },
           { validator: validatePainPoints }
         ]"
       >
         <template #extra>
-          <span class="field-hint">Add up to 10 pain points or challenges this persona faces</span>
+          <span class="field-hint">{{ $t('personas.form.painPointsHint') }}</span>
         </template>
         <a-select
           v-model:value="localPersona.painPoints"
           mode="tags"
-          placeholder="e.g., Plastic waste concerns, Want affordable sustainable products"
+          :placeholder="$t('personas.form.painPointsPlaceholder')"
           :max-tag-count="5"
           :max-tag-text-length="50"
         />
@@ -138,15 +150,15 @@
 
       <!-- Desired Outcome -->
       <a-form-item
-        label="Desired Outcome"
+        :label="$t('personas.desiredOutcome')"
         name="desiredOutcome"
       >
         <template #extra>
-          <span class="field-hint">What does this persona want to achieve? (Optional)</span>
+          <span class="field-hint">{{ $t('personas.form.desiredOutcomeHint') }}</span>
         </template>
         <a-textarea
           v-model:value="localPersona.desiredOutcome"
-          placeholder="e.g., Reduce environmental impact while staying active"
+          :placeholder="$t('personas.form.desiredOutcomePlaceholder')"
           :maxlength="500"
           :rows="3"
           show-count
@@ -155,15 +167,15 @@
 
       <!-- Description -->
       <a-form-item
-        label="Description"
+        :label="$t('personas.description')"
         name="description"
       >
         <template #extra>
-          <span class="field-hint">Additional context about this persona (Optional)</span>
+          <span class="field-hint">{{ $t('personas.form.descriptionHint') }}</span>
         </template>
         <a-textarea
           v-model:value="localPersona.description"
-          placeholder="e.g., Urban professional who values sustainability and wellness..."
+          :placeholder="$t('personas.form.descriptionPlaceholder')"
           :maxlength="1000"
           :rows="4"
           show-count
@@ -175,20 +187,20 @@
         <a-space>
           <a-button type="primary" html-type="submit" :loading="loading">
             <template #icon><save-outlined /></template>
-            {{ isEditing ? 'Update Persona' : 'Create Persona' }}
+            {{ isEditing ? $t('personas.actions.update') : $t('personas.actions.create') }}
           </a-button>
           <a-button @click="handleCancel">
-            Cancel
+            {{ $t('personas.actions.cancel') }}
           </a-button>
           <a-button v-if="isEditing" type="text" danger @click="handleReset">
-            Reset to Original
+            {{ $t('personas.actions.reset') }}
           </a-button>
         </a-space>
       </a-form-item>
     </a-form>
 
     <!-- Preview Card -->
-    <a-divider>Preview</a-divider>
+    <a-divider>{{ $t('personas.form.preview') }}</a-divider>
     <div class="persona-preview">
       <PersonaCard :persona="previewPersona" preview-mode />
     </div>
@@ -219,7 +231,8 @@ export default {
   data() {
     return {
       localPersona: this.getInitialPersona(),
-      originalPersona: null
+      originalPersona: null,
+      namePattern: /^[\p{L}\p{M}0-9\s\-_'.]+$/u
     }
   },
   computed: {
@@ -261,36 +274,36 @@ export default {
     },
     validateInterests(rule, value) {
       if (!value || value.length === 0) {
-        return Promise.reject('Please add at least one interest')
+        return Promise.reject(this.$t('personas.form.validation.interestsRequired'))
       }
       if (value.length > 20) {
-        return Promise.reject('Maximum 20 interests allowed')
+        return Promise.reject(this.$t('personas.form.validation.interestsCount'))
       }
       // Check individual interest length
       for (const interest of value) {
         if (interest.trim().length < 2) {
-          return Promise.reject('Each interest must be at least 2 characters')
+          return Promise.reject(this.$t('personas.form.validation.interestTooShort'))
         }
         if (interest.trim().length > 50) {
-          return Promise.reject('Each interest must not exceed 50 characters')
+          return Promise.reject(this.$t('personas.form.validation.interestTooLong'))
         }
       }
       return Promise.resolve()
     },
     validatePainPoints(rule, value) {
       if (!value || value.length === 0) {
-        return Promise.reject('Please add at least one pain point')
+        return Promise.reject(this.$t('personas.form.validation.painPointsRequired'))
       }
       if (value.length > 10) {
-        return Promise.reject('Maximum 10 pain points allowed')
+        return Promise.reject(this.$t('personas.form.validation.painPointsCount'))
       }
       // Check individual pain point length
       for (const painPoint of value) {
         if (painPoint.trim().length < 2) {
-          return Promise.reject('Each pain point must be at least 2 characters')
+          return Promise.reject(this.$t('personas.form.validation.painPointTooShort'))
         }
         if (painPoint.trim().length > 200) {
-          return Promise.reject('Each pain point must not exceed 200 characters')
+          return Promise.reject(this.$t('personas.form.validation.painPointTooLong'))
         }
       }
       return Promise.resolve()
@@ -307,7 +320,7 @@ export default {
         }
         this.$emit('submit', sanitizedPersona)
       }).catch(() => {
-        this.$message.error('Please fix validation errors before submitting')
+        this.$message.error(this.$t('personas.form.validation.fixErrors'))
       })
     },
     handleCancel() {
@@ -316,7 +329,7 @@ export default {
     handleReset() {
       if (this.originalPersona) {
         this.localPersona = { ...this.originalPersona }
-        this.$message.info('Form reset to original values')
+        this.$message.info(this.$t('personas.form.validation.reset'))
       }
     }
   }

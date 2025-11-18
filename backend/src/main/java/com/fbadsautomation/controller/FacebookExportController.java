@@ -79,6 +79,22 @@ public class FacebookExportController {
         return facebookExportService.exportAdsBulk(request.getAdIds(), request.getFormat());
     }
 
+    @Operation(summary = "Upload ads directly to Facebook via Marketing API (dev mode)",
+               description = "Best effort upload. Requires marketing access token configured on server and an ad account id (act_...).")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Ads uploaded to Facebook"),
+        @ApiResponse(responseCode = "400", description = "Invalid request or missing token"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @PostMapping("/ads/bulk/upload")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<com.fbadsautomation.integration.facebook.FacebookMarketingApiClient.UploadResult>> uploadAds(
+            @RequestBody @Valid UploadRequest request) {
+        log.info("Uploading {} ads to ad account {}", request.getAdIds().size(), request.getAdAccountId());
+        var result = facebookExportService.uploadAdsToFacebook(request.getAdIds(), request.getAdAccountId());
+        return ResponseEntity.ok(result);
+    }
+
     @Operation(summary = "Preview Facebook format for single ad",
                description = "Preview how the ad will appear in Facebook export format without downloading")
     @ApiResponses(value = {
@@ -127,5 +143,17 @@ public class FacebookExportController {
         @NotNull(message = "Export format cannot be null")
         @Parameter(description = "Export format: csv, excel, or xlsx", example = "excel")
         private String format;
+    }
+
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    public static class UploadRequest {
+        @NotNull(message = "Ad IDs list cannot be null")
+        @Size(min = 1, max = 1000, message = "Must upload between 1 and 1000 ads")
+        private List<Long> adIds;
+
+        @Parameter(description = "Ad account id in format act_<id>. If omitted, server default will be used.")
+        private String adAccountId;
     }
 }

@@ -2,8 +2,10 @@ package com.fbadsautomation.config;
 
 import com.fbadsautomation.integration.facebook.FacebookProperties;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
@@ -12,16 +14,22 @@ import org.springframework.web.client.RestTemplate;
 public class FacebookConfig {
 
     // RestTemplate bean moved to RestTemplateConfig to avoid conflicts
+    @Autowired
+    private Environment environment;
     
     @Bean
     public FacebookProperties facebookProperties() {
         FacebookProperties properties = new FacebookProperties();
-        properties.setApiUrl("https://graph.facebook.com");
-        properties.setApiVersion("18.0");
-        properties.setAppId("${spring.security.oauth2.client.registration.facebook.client-id}");
-        properties.setAppSecret("${spring.security.oauth2.client.registration.facebook.client-secret}");
-        properties.setScope("email, public_profile");
-        properties.setRedirectUri("${spring.security.oauth2.client.registration.facebook.redirect-uri}");
+        properties.setApiUrl(environment.getProperty("facebook.api-url", "https://graph.facebook.com"));
+        properties.setApiVersion(environment.getProperty("facebook.api-version", "18.0"));
+        properties.setAppId(environment.getProperty("spring.security.oauth2.client.registration.facebook.client-id"));
+        properties.setAppSecret(environment.getProperty("spring.security.oauth2.client.registration.facebook.client-secret"));
+        properties.setScope(environment.getProperty("facebook.scope", "email,public_profile,ads_management,business_management"));
+        properties.setRedirectUri(environment.getProperty("spring.security.oauth2.client.registration.facebook.redirect-uri"));
+        properties.setMarketingAccessToken(environment.getProperty("facebook.marketing.access-token", ""));
+        properties.setPageId(environment.getProperty("facebook.page-id", ""));
+        properties.setPixelId(environment.getProperty("facebook.pixel-id", ""));
+        properties.setDefaultAdAccountId(environment.getProperty("facebook.default-ad-account-id", ""));
         return properties;
     }
 }

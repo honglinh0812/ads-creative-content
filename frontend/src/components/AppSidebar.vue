@@ -51,7 +51,7 @@ import { computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { HomeOutlined, ThunderboltOutlined, FileTextOutlined, MenuOutlined, ArrowLeftOutlined, TeamOutlined, FundOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, ThunderboltOutlined, FileTextOutlined, MenuOutlined, ArrowLeftOutlined, TeamOutlined, FundOutlined, BulbOutlined } from '@ant-design/icons-vue'
 
 export default {
   name: 'AppSidebar',
@@ -62,7 +62,8 @@ export default {
     MenuOutlined,
     ArrowLeftOutlined,
     TeamOutlined,
-    FundOutlined
+    FundOutlined,
+    BulbOutlined
   },
   props: {
     sidebarOpen: {
@@ -83,12 +84,14 @@ export default {
     const menu = computed(() => [
       { label: t('navigation.dashboard'), path: '/dashboard', icon: HomeOutlined, match: ['dashboard'] },
       { label: t('navigation.campaigns'), path: '/campaigns', icon: ThunderboltOutlined, match: ['campaign', 'campaigns'] },
-      { label: t('navigation.ads'), path: '/ads', icon: FileTextOutlined, match: ['ad', 'ads'] },
+      { label: t('navigation.ads'), path: '/ads', icon: FileTextOutlined, match: ['/ads'] },
+      { label: t('navigation.adLearning'), path: '/ads/learn', icon: BulbOutlined, match: ['/ads/learn'] },
       { label: t('navigation.personas') || 'Personas', path: '/personas', icon: TeamOutlined, match: ['persona', 'personas'] },
       { label: t('navigation.competitors') || 'Competitors', path: '/competitors', icon: FundOutlined, match: ['competitor', 'competitors'] }
     ])
     // Determine if menu item is active
     function isActive(item) {
+      if (route.path === '/ads/learn' && item.path === '/ads') return false
       return item.match.some(m => route.path.includes(m))
     }
     // Check if current page is dashboard

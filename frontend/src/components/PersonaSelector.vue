@@ -1,7 +1,7 @@
 <template>
   <a-card :title="$t('components.personaSelector.title')" class="persona-selector-card">
     <template #extra>
-      <a-button type="link" size="small" @click="navigateToPersonas">
+      <a-button type="link" size="small" @click="openCreateModal">
         <plus-outlined /> {{ $t('components.personaSelector.createNew') }}
       </a-button>
     </template>
@@ -23,7 +23,7 @@
       >
         <template #notFoundContent>
           <a-empty :description="$t('components.personaSelector.empty.description')">
-            <a-button type="primary" size="small" @click="navigateToPersonas">
+            <a-button type="primary" size="small" @click="openCreateModal">
               {{ $t('components.personaSelector.empty.action') }}
             </a-button>
           </a-empty>
@@ -163,6 +163,22 @@
         <strong>{{ $t('components.personaSelector.help.title') }}:</strong> {{ $t('components.personaSelector.help.description') }}
       </template>
     </a-alert>
+
+    <!-- Inline Persona Creation Modal -->
+    <a-modal
+      v-model:visible="showCreateModal"
+      :title="$t('components.personaSelector.createModalTitle')"
+      :footer="null"
+      :destroy-on-close="true"
+      width="900px"
+      @cancel="handleCancelCreate"
+    >
+      <PersonaForm
+        :loading="submitting"
+        @submit="handleCreatePersona"
+        @cancel="handleCancelCreate"
+      />
+    </a-modal>
   </a-card>
 </template>
 
@@ -176,6 +192,7 @@ import {
   CloseOutlined
 } from '@ant-design/icons-vue'
 import api from '@/services/api'
+import PersonaForm from './PersonaForm.vue'
 
 export default {
   name: 'PersonaSelector',
@@ -185,7 +202,8 @@ export default {
     AlertOutlined,
     RocketOutlined,
     EyeOutlined,
-    CloseOutlined
+    CloseOutlined,
+    PersonaForm
   },
   props: {
     modelValue: {
@@ -199,8 +217,10 @@ export default {
       personas: [],
       selectedPersonaId: this.modelValue,
       loading: false,
+      submitting: false,
       validationStatus: '',
-      validationMessage: ''
+      validationMessage: '',
+      showCreateModal: false
     }
   },
   computed: {
@@ -218,16 +238,20 @@ export default {
     this.loadPersonas()
   },
   methods: {
-    async loadPersonas() {
+    async loadPersonas(selectId = null) {
       this.loading = true
       try {
         const response = await api.personas.getAll()
         this.personas = response.data
 
-        // If there's a pre-selected persona, validate it exists
-        if (this.selectedPersonaId) {
-          const exists = this.personas.find(p => p.id === this.selectedPersonaId)
-          if (!exists) {
+        const targetId = selectId || this.selectedPersonaId
+        if (targetId) {
+          const exists = this.personas.find(p => p.id === targetId)
+          if (exists) {
+            this.selectedPersonaId = targetId
+            this.$emit('update:modelValue', targetId)
+            this.$emit('persona-selected', exists)
+          } else {
             this.selectedPersonaId = null
             this.$emit('update:modelValue', null)
           }
@@ -271,8 +295,25 @@ export default {
         this.$router.push(`/personas?highlight=${this.selectedPersona.id}`)
       }
     },
-    navigateToPersonas() {
-      this.$router.push('/personas')
+    openCreateModal() {
+      this.showCreateModal = true
+    },
+    async handleCreatePersona(personaData) {
+      this.submitting = true
+      try {
+        const response = await api.personas.create(personaData)
+        const createdPersona = response.data
+        this.$message.success(this.$t('components.personaSelector.messages.created', { name: createdPersona?.name || '' }))
+        this.showCreateModal = false
+        await this.loadPersonas(createdPersona?.id)
+      } catch (error) {
+        this.$message.error(this.$t('components.personaSelector.messages.createError', { error: error.message }))
+      } finally {
+        this.submitting = false
+      }
+    },
+    handleCancelCreate() {
+      this.showCreateModal = false
     },
     getGenderEmoji(gender) {
       const emojiMap = {

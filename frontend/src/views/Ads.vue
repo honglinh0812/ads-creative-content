@@ -27,6 +27,7 @@
         @delete-ad="confirmDeleteAd"
         @duplicate-ad="duplicateAd"
         @export-ad="exportAdToFacebook"
+        @download-ad="openDownloadModal"
         @page-change="onPageChange"
         @page-size-change="onPageSizeChange"
       />
@@ -119,6 +120,7 @@
       <ExportToFacebookModal
         :visible="showExportModal"
         :ad-ids="selectedAdIds"
+        :show-auto-upload="exportModalShowAutoUpload"
         @update:visible="showExportModal = $event"
         @success="handleExportSuccess"
         @error="handleExportError"
@@ -131,6 +133,17 @@
         :timestamp="exportTimestamp"
         @update:visible="showInstructionsModal = $event"
       />
+
+      <!-- Bulk Export Confirm Modal -->
+      <a-modal
+        :open="showBulkConfirmModal"
+        :title="'Xác nhận'"
+        :confirm-loading="$store.state.fbExport.isExporting"
+        @ok="handleBulkConfirm"
+        @cancel="showBulkConfirmModal = false"
+      >
+        <p>Bạn sắp upload {{ selectedAdIds.length }} quảng cáo lên Ads Manager. Tiếp tục?</p>
+      </a-modal>
 
       <!-- Edit Ad Modal -->
       <a-modal v-model:open="showEditModal" :title="$t('ads.editModal.title')" width="90vw" style="max-width: 1200px">
@@ -222,6 +235,8 @@ export default {
       errors: {},
       selectedAdIds: [],
       showExportModal: false,
+      exportModalShowAutoUpload: true,
+      showBulkConfirmModal: false,
       showInstructionsModal: false,
       exportFormat: 'csv',
       exportTimestamp: Date.now()
@@ -277,7 +292,8 @@ export default {
     ...mapActions("ad", ["fetchAds", "deleteAd", "updateAd"]),
     ...mapActions("fbExport", {
       setSelectedAdsForExport: "setSelectedAds",
-      showFBInstructions: "showInstructions"
+      showFBInstructions: "showInstructions",
+      uploadAfterPreview: "uploadAfterPreview"
     }),
     ...mapActions('cta', ['loadCTAs']),
 
@@ -565,9 +581,15 @@ export default {
       this.selectedAdIds = adIds;
       this.setSelectedAdsForExport(adIds);
 
-      // Show export modal
-      this.showExportModal = true;
-      this.exportTimestamp = Date.now();
+      // If bulk selection (>1), show confirm modal then auto-upload
+      if (adIds.length > 1) {
+        this.showBulkConfirmModal = true
+        this.exportModalShowAutoUpload = false
+        return
+      }
+
+      // Single ad: auto upload immediately
+      this.autoUploadSelectedAds()
     },
 
     handleExportSuccess() {
@@ -602,6 +624,43 @@ export default {
 
     clearSelection() {
       this.selectedAdIds = []
+    },
+
+    openDownloadModal(ad) {
+      const adIds = Array.isArray(ad) ? ad : [ad.id || ad]
+      if (!adIds.length) {
+        message.warning(this.$t('ads.messages.warning.selectAdToExport'))
+        return
+      }
+      this.selectedAdIds = adIds
+      this.setSelectedAdsForExport(adIds)
+      this.exportModalShowAutoUpload = false
+      this.showExportModal = true
+    },
+
+    async autoUploadSelectedAds() {
+      if (!this.selectedAdIds.length) {
+        message.warning(this.$t('ads.messages.warning.selectAdToExport'))
+        return
+      }
+      const hide = message.loading(this.$t('ads.messages.info.exportingAds') || 'Đang upload quảng cáo...', 0)
+      try {
+        await this.uploadAfterPreview()
+        message.success(this.$t('ads.messages.success.uploadedToFacebook') || 'Đã upload quảng cáo lên Facebook')
+        window.open('https://business.facebook.com/adsmanager/manage/ads', '_blank', 'noopener,noreferrer')
+        this.clearSelection()
+      } catch (error) {
+        const errMsg = error.response?.data?.message || error.message || 'Upload failed'
+        message.error(errMsg)
+        console.error('Auto upload error:', error)
+      } finally {
+        hide()
+        this.showBulkConfirmModal = false
+      }
+    },
+
+    async handleBulkConfirm() {
+      await this.autoUploadSelectedAds()
     },
 
     async duplicateAd(adId) {

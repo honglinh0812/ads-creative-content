@@ -148,6 +148,10 @@ export default {
     }, {
       responseType: 'blob'
     }),
+    uploadToFacebook: (adIds, adAccountId) => apiClient.post('/facebook-export/ads/bulk/upload', {
+      adIds,
+      adAccountId
+    }),
     previewAd: (adId) => apiClient.get(`/facebook-export/preview/ad/${adId}`),
     previewMultipleAds: (adIds) => apiClient.post('/facebook-export/preview/ads/bulk', adIds)
   },

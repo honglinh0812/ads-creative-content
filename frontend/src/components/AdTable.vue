@@ -265,18 +265,31 @@
                 </a-button>
               </a-tooltip>
 
-              <a-tooltip :title="$t('adTable.actions.exportToFacebook')">
-                <a-button
-                  size="small"
-                  type="primary"
-                  :aria-label="$t('adTable.actions.exportLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
-                  @click="$emit('export-ad', record)"
-                >
-                  <template #icon>
-                    <ExportOutlined aria-hidden="true" />
-                  </template>
-                </a-button>
-              </a-tooltip>
+              <a-space size="small">
+                <a-tooltip :title="$t('adTable.actions.exportToFacebook')">
+                  <a-button
+                    size="small"
+                    type="primary"
+                    :aria-label="$t('adTable.actions.exportLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
+                    @click="$emit('export-ad', record)"
+                  >
+                    <template #icon>
+                      <ExportOutlined aria-hidden="true" />
+                    </template>
+                  </a-button>
+                </a-tooltip>
+                <a-tooltip :title="$t('adTable.actions.downloadAd')">
+                  <a-button
+                    size="small"
+                    :aria-label="$t('adTable.actions.downloadLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
+                    @click="$emit('download-ad', record)"
+                  >
+                    <template #icon>
+                      <DownloadOutlined aria-hidden="true" />
+                    </template>
+                  </a-button>
+                </a-tooltip>
+              </a-space>
 
               <a-popconfirm
                 :title="$t('adTable.actions.deleteConfirm')"
@@ -477,7 +490,7 @@ export default {
       default: 24
     }
   },
-  emits: ['view-details', 'edit-ad', 'delete-ad', 'duplicate-ad', 'export-ad', 'page-change', 'page-size-change'],
+  emits: ['view-details', 'edit-ad', 'delete-ad', 'duplicate-ad', 'export-ad', 'download-ad', 'page-change', 'page-size-change'],
 
   setup(props, { emit }) {
     const { t, locale } = useI18n()

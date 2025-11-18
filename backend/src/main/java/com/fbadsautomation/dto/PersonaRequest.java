@@ -24,8 +24,8 @@ public class PersonaRequest {
     @NotBlank(message = "Persona name is required")
     @Size(min = 2, max = 100, message = "Persona name must be between 2 and 100 characters")
     @Pattern(
-        regexp = "^[a-zA-Z0-9\\s\\-_'.]+$",
-        message = "Persona name contains invalid characters. Only letters, numbers, spaces, hyphens, underscores, apostrophes, and periods are allowed"
+        regexp = "^[\\p{L}\\p{M}0-9\\s\\-_'\\.]+$",
+        message = "Persona name contains invalid characters. Accented letters, numbers, spaces, hyphens, underscores, apostrophes, and periods are allowed"
     )
     private String name;
 

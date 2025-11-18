@@ -289,50 +289,6 @@
               />
             </a-form-item>
 
-            <!-- Ad Links -->
-            <a-form-item :label="$t('adCreate.step1.adLinks.label')">
-              <div class="ad-links-container">
-                <div
-                  v-for="(link, index) in adLinks"
-                  :key="index"
-                  class="ad-link-item"
-                >
-                  <a-input
-                    v-model:value="adLinks[index]"
-                    :placeholder="$t('adCreate.step1.adLinks.placeholder')"
-                    ref="adLinkInput"
-                  >
-                    <template #suffix>
-                      <a-button
-                        type="text"
-                        size="small"
-                        @click="removeAdLink(index)"
-                        danger
-                      >
-                        <template #icon><delete-outlined /></template>
-                      </a-button>
-                    </template>
-                  </a-input>
-                </div>
-                <a-button
-                  type="dashed"
-                  @click="addAdLink"
-                  block
-                  style="margin-top: 8px"
-                >
-                  <template #icon><plus-outlined /></template>
-                  {{ $t('adCreate.step1.adLinks.addButton') }}
-                </a-button>
-                <a-alert
-                  :message="$t('adCreate.step1.adLinks.autoExtract.message')"
-                  :description="$t('adCreate.step1.adLinks.autoExtract.description')"
-                  type="info"
-                  show-icon
-                  style="margin-top: 12px"
-                />
-              </div>
-            </a-form-item>
-
             <!-- Issue #9: Audience Segment removed - now at campaign level -->
 
             <!-- Persona Selector -->
@@ -1626,12 +1582,7 @@ export default {
     
     async nextStep() {
       if (this.currentStep < 3) {
-        // Auto-extract content from ad links when moving from Step 1 to Step 2
-        if (this.currentStep === 1 && this.adLinks.some(link => link.trim())) {
-          await this.autoExtractContent()
-        } else {
-          this.currentStep++
-        }
+        this.currentStep++
       }
     },
 
@@ -1765,7 +1716,7 @@ export default {
       return this.formData.campaignId && 
              this.formData.name && 
              this.formData.adType &&
-             (this.formData.prompt || this.adLinks.some(link => link.trim()))
+             this.formData.prompt
     },
     
     validateStep2() {
@@ -1889,8 +1840,8 @@ export default {
 
       try {
         // Validate required fields
-        if (!this.formData.prompt && !this.adLinks.some(link => link.trim())) {
-          this.$message.error(this.$t('adCreate.messages.error.promptOrLinksRequired'))
+        if (!this.formData.prompt) {
+          this.$message.error(this.$t('adCreate.messages.error.promptRequired'))
           this.currentStep = 1
           this.showValidation = true
           return
@@ -1978,7 +1929,7 @@ export default {
 
         this.$message.error(errorMessage)
 
-        if (errorMessage.includes('Please enter prompt content') || errorMessage.includes('valid ad link')) {
+        if (errorMessage.includes('Please enter prompt content') || errorMessage.includes('prompt')) {
           this.currentStep = 1
           this.showValidation = true
         }

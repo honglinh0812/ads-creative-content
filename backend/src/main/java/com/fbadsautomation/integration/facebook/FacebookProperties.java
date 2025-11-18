@@ -13,6 +13,10 @@ public class FacebookProperties {
     private String appSecret;
     private String redirectUri;
     private String scope;
+    private String marketingAccessToken;
+    private String pageId;
+    private String pixelId;
+    private String defaultAdAccountId;
     
     // Getter methods
     public String getApiUrl() {
@@ -38,6 +42,22 @@ public class FacebookProperties {
     public String getScope() {
         return scope;
     }
+
+    public String getMarketingAccessToken() {
+        return marketingAccessToken;
+    }
+
+    public String getPageId() {
+        return pageId;
+    }
+
+    public String getPixelId() {
+        return pixelId;
+    }
+
+    public String getDefaultAdAccountId() {
+        return defaultAdAccountId;
+    }
     
     // Setter methods
     public void setApiUrl(String apiUrl) {
@@ -62,5 +82,21 @@ public class FacebookProperties {
     
     public void setScope(String scope) {
         this.scope = scope;
+    }
+
+    public void setMarketingAccessToken(String marketingAccessToken) {
+        this.marketingAccessToken = marketingAccessToken;
+    }
+
+    public void setPageId(String pageId) {
+        this.pageId = pageId;
+    }
+
+    public void setPixelId(String pixelId) {
+        this.pixelId = pixelId;
+    }
+
+    public void setDefaultAdAccountId(String defaultAdAccountId) {
+        this.defaultAdAccountId = defaultAdAccountId;
     }
 }

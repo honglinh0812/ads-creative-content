@@ -48,6 +48,8 @@ public class FacebookExportService {
     private final CampaignService campaignService;
     private final MinIOStorageService minioStorageService;
     private final com.fbadsautomation.util.AdContentValidator adContentValidator;
+    private final com.fbadsautomation.integration.facebook.FacebookMarketingApiClient marketingApiClient;
+    private final com.fbadsautomation.integration.facebook.FacebookProperties facebookProperties;
     
     // Enhanced URL pattern supporting:
     // - HTTP/HTTPS protocols (case-insensitive)
@@ -1222,7 +1224,7 @@ public class FacebookExportService {
         // Can be overridden in application.properties: facebook.ads.budget.multiplier
         return 100;
     }
-
+    
     /**
      * Export ads to Excel format (.xlsx) with proper formatting and UTF-8 support
      * Security: Input validation, resource cleanup, bounded memory usage
@@ -1279,6 +1281,49 @@ public class FacebookExportService {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR,
                 "Failed to export ads to Excel: " + e.getMessage());
         }
+    }
+
+    /**
+     * Upload ads directly to Facebook Marketing API (best effort).
+     * Requires facebook.marketing.access-token and ad account id (act_...)
+     */
+    public List<com.fbadsautomation.integration.facebook.FacebookMarketingApiClient.UploadResult> uploadAdsToFacebook(
+        List<Long> adIds,
+        String adAccountId
+    ) {
+        String resolvedAdAccountId = StringUtils.hasText(adAccountId)
+            ? adAccountId
+            : facebookProperties.getDefaultAdAccountId();
+
+        log.info("Uploading {} ads to Facebook ad account {}", adIds.size(), resolvedAdAccountId);
+
+        if (!StringUtils.hasText(facebookProperties.getMarketingAccessToken())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                "Facebook Marketing access token is missing. Set FACEBOOK_MARKETING_ACCESS_TOKEN env.");
+        }
+        if (!StringUtils.hasText(resolvedAdAccountId)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                "Ad account id is required. Provide act_... or set FACEBOOK_DEFAULT_AD_ACCOUNT_ID env.");
+        }
+        if (adIds == null || adIds.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Ad IDs list cannot be empty");
+        }
+
+        List<Ad> ads = adRepository.findAllById(adIds);
+        if (ads.isEmpty()) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "No ads found with provided IDs");
+        }
+
+        List<com.fbadsautomation.integration.facebook.FacebookMarketingApiClient.UploadResult> results = new ArrayList<>();
+
+        for (Ad ad : ads) {
+            validateAdContentForFacebook(ad);
+            var result = marketingApiClient.uploadAdToAccount(ad, resolvedAdAccountId, facebookProperties.getMarketingAccessToken());
+            results.add(result);
+            markCampaignAsExportedForAd(ad);
+        }
+
+        return results;
     }
 
     /**

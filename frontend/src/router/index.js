@@ -12,6 +12,7 @@ const CampaignCreate = () => import('../views/CampaignCreate.vue')
 const CampaignDetail = () => import('../views/CampaignDetail.vue')
 const Ads = () => import('../views/Ads.vue')
 const AdCreate = () => import('../views/AdCreate.vue')
+const AdLearn = () => import('../views/AdLearn.vue')
 const AdDetail = () => import('../views/AdDetail.vue')
 const Personas = () => import('../views/Personas.vue')
 const Competitors = () => import('../views/Competitors.vue')
@@ -85,6 +86,12 @@ const routes = [
     path: '/ads',
     name: 'Ads',
     component: Ads,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/ads/learn',
+    name: 'AdLearn',
+    component: AdLearn,
     meta: { requiresAuth: true }
   },
   {

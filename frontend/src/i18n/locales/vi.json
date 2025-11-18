@@ -73,6 +73,7 @@
     "allCampaigns": "Tất cả chiến dịch",
     "createCampaign": "Tạo chiến dịch",
     "ads": "Quảng cáo",
+    "adLearning": "Học quảng cáo",
     "allAds": "Tất cả quảng cáo",
     "createAd": "Tạo quảng cáo",
     "personas": "Persona",
@@ -1045,6 +1046,10 @@
     "recent": "Mới tạo gần đây",
     "quota": "Đã sử dụng",
     "mostCommonTone": "Giọng điệu phổ biến nhất",
+    "stats": {
+      "last7Days": "7 ngày gần nhất",
+      "notAvailable": "Không có sẵn"
+    },
     "name": "Tên Persona",
     "age": "Tuổi",
     "gender": "Giới tính",
@@ -1080,7 +1085,86 @@
     "updatedSuccess": "Cập nhật persona thành công",
     "selectForAd": "Chọn persona để tự động điều chỉnh nội dung quảng cáo",
     "promptEnhancement": "Nội dung quảng cáo của bạn sẽ được tự động làm phong phú với hồ sơ persona này",
-    "targeting": "Nhắm mục tiêu persona:"
+    "targeting": "Nhắm mục tiêu persona:",
+    "paginationTotal": "Tổng {total} persona",
+    "actions": {
+      "create": "Tạo Persona",
+      "update": "Cập nhật Persona",
+      "cancel": "Hủy",
+      "reset": "Khôi phục giá trị ban đầu",
+      "close": "Đóng",
+      "edit": "Chỉnh sửa",
+      "delete": "Xóa"
+    },
+    "form": {
+      "namePlaceholder": "Ví dụ: Người trẻ yêu môi trường",
+      "agePlaceholder": "Ví dụ: 28",
+      "genderPlaceholder": "Chọn giới tính",
+      "interestsHint": "Thêm tối đa 20 sở thích (nhấn Enter hoặc dùng dấu phẩy để tách)",
+      "interestsPlaceholder": "Ví dụ: Bền vững, Thể hình, Hoạt động ngoài trời",
+      "painPointsHint": "Thêm tối đa 10 điểm đau hoặc thách thức mà persona gặp phải",
+      "painPointsPlaceholder": "Ví dụ: Lo ngại rác thải nhựa, Muốn sản phẩm bền vững giá phải chăng",
+      "desiredOutcomeHint": "Persona muốn đạt điều gì? (Tùy chọn)",
+      "desiredOutcomePlaceholder": "Ví dụ: Giảm tác động môi trường nhưng vẫn năng động",
+      "descriptionHint": "Ngữ cảnh bổ sung về persona (Tùy chọn)",
+      "descriptionPlaceholder": "Ví dụ: Dân văn phòng thành thị, coi trọng bền vững và sức khỏe...",
+      "preview": "Xem trước",
+      "validation": {
+        "nameRequired": "Vui lòng nhập tên persona",
+        "nameLength": "Tên phải từ 2-100 ký tự",
+        "nameInvalid": "Chỉ cho phép chữ (bao gồm dấu), số, khoảng trắng, dấu gạch ngang, gạch dưới, dấu nháy đơn và dấu chấm",
+        "ageRequired": "Vui lòng nhập tuổi",
+        "ageRange": "Tuổi phải trong khoảng 13-120",
+        "genderRequired": "Vui lòng chọn giới tính",
+        "interestsRequired": "Vui lòng thêm ít nhất một sở thích",
+        "interestsCount": "Tối đa 20 sở thích",
+        "interestTooShort": "Mỗi sở thích phải có ít nhất 2 ký tự",
+        "interestTooLong": "Mỗi sở thích không vượt quá 50 ký tự",
+        "toneRequired": "Vui lòng chọn giọng điệu",
+        "painPointsRequired": "Vui lòng thêm ít nhất một điểm đau",
+        "painPointsCount": "Tối đa 10 điểm đau",
+        "painPointTooShort": "Mỗi điểm đau phải có ít nhất 2 ký tự",
+        "painPointTooLong": "Mỗi điểm đau không vượt quá 200 ký tự",
+        "fixErrors": "Vui lòng sửa các lỗi trước khi gửi",
+        "reset": "Đã khôi phục giá trị ban đầu của biểu mẫu"
+      }
+    },
+    "toneLabels": {
+      "professional": "Chuyên nghiệp",
+      "casual": "Thân mật",
+      "funny": "Hài hước",
+      "inspirational": "Truyền cảm hứng",
+      "friendly": "Thân thiện",
+      "formal": "Trang trọng",
+      "enthusiastic": "Nhiệt huyết"
+    },
+    "toneDescriptions": {
+      "professional": "Trang trọng, định hướng kinh doanh",
+      "casual": "Gần gũi và trò chuyện",
+      "funny": "Hài hước và nhẹ nhàng",
+      "inspirational": "Truyền cảm hứng và nâng cao tinh thần",
+      "friendly": "Ấm áp, dễ tiếp cận và hữu ích",
+      "formal": "Cấu trúc và tôn trọng",
+      "enthusiastic": "Năng động và tích cực"
+    },
+    "card": {
+      "age": "{age} tuổi",
+      "more": "+{count} nữa",
+      "moreEllipsis": "+{count} nữa...",
+      "date": {
+        "today": "Hôm nay",
+        "yesterday": "Hôm qua",
+        "daysAgo": "{count} ngày trước",
+        "weeksAgo": "{count} tuần trước",
+        "monthsAgo": "{count} tháng trước"
+      }
+    },
+    "messages": {
+      "loadError": "Không tải được persona: {error}",
+      "saveError": "Lưu persona thất bại: {error}",
+      "deleteError": "Xóa persona thất bại: {error}",
+      "selectedForAd": "Đã chọn persona \"{name}\" cho việc tạo quảng cáo"
+    }
   },
   "competitors": {
     "title": "Phân tích đối thủ",
@@ -1517,6 +1601,7 @@
         "fileUploadFailed": "Không thể tải file lên",
         "fileTooLarge": "File quá lớn. Kích thước tối đa là 10MB",
         "promptOrLinksRequired": "Vui lòng nhập nội dung prompt hoặc cung cấp link quảng cáo",
+        "promptRequired": "Vui lòng nhập nội dung prompt",
         "adCreationFailed": "Không thể tạo quảng cáo. Vui lòng thử lại.",
         "adSaveFailed": "Không thể lưu quảng cáo. Vui lòng thử lại.",
         "extractionFailed": "Không thể trích xuất nội dung",
@@ -1552,6 +1637,116 @@
     },
     "promptEnhancement": {
       "ctaInstruction": "Lưu ý: Chỉ sử dụng một trong các Call to Action sau cho quảng cáo: {ctaList}. Không tạo CTA khác."
+    }
+  },
+  "adLearn": {
+    "pageHeader": {
+      "title": "Học tập & Cải thiện quảng cáo",
+      "subtitle": "Học phong cách từ quảng cáo trong Meta Ad Library và điều chỉnh cho nội dung của bạn",
+      "backToAds": "Quay lại danh sách quảng cáo"
+    },
+    "progress": {
+      "headerTitle": "Quy trình học quảng cáo",
+      "stepOf": "Bước {step} / {total}"
+    },
+    "progressSteps": {
+      "step1": {
+        "title": "Điền thông tin",
+        "description": "Chiến dịch, nội dung, link tham khảo",
+        "emoji": "🎯"
+      },
+      "step2": {
+        "title": "Chọn AI",
+        "description": "Chọn AI viết và tạo ảnh",
+        "emoji": "🤖"
+      },
+      "step3": {
+        "title": "Xem trước & lưu",
+        "description": "Duyệt biến thể và lưu lại",
+        "emoji": "🎉"
+      }
+    },
+    "step1": {
+      "cardTitle": "Học từ quảng cáo tham khảo",
+      "campaign": {
+        "label": "Chiến dịch",
+        "placeholder": "Chọn chiến dịch"
+      },
+      "adName": {
+        "label": "Tên quảng cáo",
+        "placeholder": "Nhập tên quảng cáo"
+      },
+      "variations": {
+        "label": "Số lượng quảng cáo"
+      },
+      "language": {
+        "label": "Ngôn ngữ",
+        "vietnamese": "Tiếng Việt",
+        "english": "Tiếng Anh"
+      },
+      "baseContent": {
+        "label": "Nội dung cần quảng cáo",
+        "placeholder": "Mô tả sản phẩm/dịch vụ, khách hàng mục tiêu, lợi ích chính..."
+      },
+      "referenceLink": {
+        "label": "Link quảng cáo tham khảo (Meta Ad Library)",
+        "placeholder": "Dán 1 link Meta Ad Library",
+        "previewReady": "Đã phân tích quảng cáo tham khảo. Sẽ dùng phong cách, không sao chép nội dung.",
+        "fallbackSummary": "Đã phân tích quảng cáo tham khảo"
+      },
+      "creativeStyle": {
+        "label": "Phong cách",
+        "tooltip": "Chọn giọng điệu để định hướng viết lại",
+        "placeholder": "Chọn phong cách"
+      },
+      "callToAction": {
+        "label": "Call to action",
+        "placeholder": "Chọn CTA (không bắt buộc)"
+      },
+      "next": "Tiếp tục"
+    },
+    "step2": {
+      "cardTitle": "Chọn nhà cung cấp AI",
+      "sectionTitle": "Chọn AI đồng hành",
+      "sectionSubtitle": "Chọn AI để viết lại nội dung và tạo hình",
+      "textProvider": "Nhà cung cấp nội dung",
+      "imageProvider": "Nhà cung cấp hình ảnh",
+      "generate": "Tạo xem trước"
+    },
+    "step3": {
+      "cardTitle": "Xem trước quảng cáo",
+      "empty": "Hãy tạo quảng cáo để xem trước",
+      "defaultHeadline": "Quảng cáo đã cải thiện",
+      "save": "Lưu lựa chọn"
+    },
+    "navigation": {
+      "back": "Quay lại"
+    },
+    "messages": {
+      "success": {
+        "extracted": "Đã trích xuất nội dung tham khảo",
+        "generated": "Đã tạo quảng cáo",
+        "saved": "Đã lưu quảng cáo"
+      },
+      "warning": {
+        "loadProvidersFailed": "Không tải được nhà cung cấp. Dùng giá trị mặc định.",
+        "noContent": "Không tìm thấy nội dung trong link tham khảo",
+        "selectVariations": "Vui lòng chọn ít nhất một biến thể để lưu"
+      },
+      "error": {
+        "loadCampaignsFailed": "Không thể tải chiến dịch",
+        "loadCTAsFailed": "Không thể tải call-to-action",
+        "extractContentFailed": "Không thể trích xuất nội dung từ link tham khảo",
+        "generateAdFailed": "Không thể tạo quảng cáo",
+        "saveAdFailed": "Không thể lưu quảng cáo"
+      }
+    },
+    "prompt": {
+      "referenceStyle": "Viết lại nội dung theo phong cách/thông điệp ở trên nhưng điều chỉnh phù hợp với sản phẩm/dịch vụ của người dùng.",
+      "referenceLinkOnly": "Học cách trình bày từ link tham khảo: {link}. Không sao chép nguyên văn nội dung.",
+      "styleCue": "Áp dụng phong cách/giọng điệu: {style}.",
+      "ctaCue": "Sử dụng call-to-action: {cta}.",
+      "guardrail": "Không được sao chép nguyên văn quảng cáo tham khảo; tạo nội dung mới, phù hợp với nhu cầu đã mô tả."
     }
   },
   "adTable": {
@@ -1796,6 +1991,7 @@
       "personaSelector": {
         "title": "🎭 Chân dung khách hàng mục tiêu (Tùy chọn)",
         "createNew": "Tạo mới",
+        "createModalTitle": "Tạo chân dung khách hàng mà không rời khỏi bước hiện tại",
         "form": {
           "label": "Chọn chân dung khách hàng để điều chỉnh quảng cáo của bạn",
           "placeholder": "Chọn chân dung khách hàng mục tiêu (tùy chọn)"
@@ -1828,7 +2024,9 @@
         "messages": {
           "loadError": "Không tải được chân dung khách hàng: {error}",
           "selected": "Đã chọn chân dung khách hàng \"{name}\"",
-          "cleared": "Đã xóa lựa chọn chân dung khách hàng"
+          "cleared": "Đã xóa lựa chọn chân dung khách hàng",
+          "created": "Đã tạo chân dung khách hàng \"{name}\"",
+          "createError": "Không thể tạo chân dung khách hàng: {error}"
         },
         "gender": {
           "male": "Nam",
