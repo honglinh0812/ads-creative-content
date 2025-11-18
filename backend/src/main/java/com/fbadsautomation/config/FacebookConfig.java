@@ -13,7 +13,6 @@ import org.springframework.web.client.RestTemplate;
 
 public class FacebookConfig {
 
-    // RestTemplate bean moved to RestTemplateConfig to avoid conflicts
     @Autowired
     private Environment environment;
     
@@ -21,7 +20,7 @@ public class FacebookConfig {
     public FacebookProperties facebookProperties() {
         FacebookProperties properties = new FacebookProperties();
         properties.setApiUrl(environment.getProperty("facebook.api-url", "https://graph.facebook.com"));
-        properties.setApiVersion(environment.getProperty("facebook.api-version", "18.0"));
+        properties.setApiVersion(environment.getProperty("facebook.api-version", "24.0"));
         properties.setAppId(environment.getProperty("spring.security.oauth2.client.registration.facebook.client-id"));
         properties.setAppSecret(environment.getProperty("spring.security.oauth2.client.registration.facebook.client-secret"));
         properties.setScope(environment.getProperty("facebook.scope", "email,public_profile,ads_management,business_management"));
