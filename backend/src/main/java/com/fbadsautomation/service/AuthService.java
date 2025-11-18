@@ -145,13 +145,16 @@ public class AuthService {
     public String getFacebookAuthorizationUrl() {
         String state = UUID.randomUUID().toString();
         stateStore.put(state, "pending");
+        String scope = facebookProperties.getScope() != null
+            ? facebookProperties.getScope().replace(" ", "")
+            : "email,public_profile";
         return String.format(
-            "https://www.facebook.com/v%s/dialog/oauth?client_id= %s&redirect_uri=%s&state=%s&scope=%s",
-            facebookProperties.getApiVersion( ),
+            "https://www.facebook.com/v%s/dialog/oauth?client_id=%s&redirect_uri=%s&state=%s&scope=%s",
+            facebookProperties.getApiVersion(),
             facebookProperties.getAppId(),
             facebookProperties.getRedirectUri(),
             state,
-            facebookProperties.getScope()
+            scope
         );
     }
 

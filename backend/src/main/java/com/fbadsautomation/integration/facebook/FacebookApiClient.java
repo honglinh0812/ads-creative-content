@@ -51,7 +51,7 @@ public class FacebookApiClient {
     }
 
     public Map<String, Object> getUserInfo(String accessToken) {
-        String userInfoUrl = String.format("%s/v%s/me?fields = id,name,email,picture&access_token=%s",
+        String userInfoUrl = String.format("%s/v%s/me?fields=id,name,email,picture&access_token=%s",
             facebookProperties.getApiUrl(),
             facebookProperties.getApiVersion(),
             accessToken
