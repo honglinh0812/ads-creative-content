@@ -314,6 +314,25 @@ export default {
     pageSize: {
       type: Number,
       default: 24
+    },
+    adTypeOptions: {
+      type: Array,
+      default: () => [
+        { label: 'Website Conversion', value: 'WEBSITE_CONVERSION_AD' },
+        { label: 'Page Post', value: 'PAGE_POST_AD' },
+        { label: 'Lead Form', value: 'LEAD_FORM_AD' }
+      ]
+    },
+    statusOptions: {
+      type: Array,
+      default: () => [
+        { label: 'Draft', value: 'DRAFT' },
+        { label: 'Ready', value: 'READY' },
+        { label: 'Active', value: 'ACTIVE' },
+        { label: 'Paused', value: 'PAUSED' },
+        { label: 'Completed', value: 'COMPLETED' },
+        { label: 'Failed', value: 'FAILED' }
+      ]
     }
   },
   emits: [
@@ -345,19 +364,29 @@ export default {
       }
     )
 
-    const statusSelectOptions = [
-      { label: 'Active', value: 'ACTIVE' },
-      { label: 'Paused', value: 'PAUSED' },
-      { label: 'Draft', value: 'DRAFT' },
-      { label: 'Archived', value: 'ARCHIVED' }
-    ]
+    const statusSelectOptions = computed(() => {
+      if (props.statusOptions && props.statusOptions.length) {
+        return props.statusOptions
+      }
+      return Array.from(
+        new Set(safeAds.value.map(ad => ad.status).filter(Boolean))
+      ).map(status => ({
+        label: formatStatus(status),
+        value: status
+      }))
+    })
 
-    const adTypeSelectOptions = [
-      { label: 'Image', value: 'IMAGE' },
-      { label: 'Video', value: 'VIDEO' },
-      { label: 'Carousel', value: 'CAROUSEL' },
-      { label: 'Collection', value: 'COLLECTION' }
-    ]
+    const adTypeSelectOptions = computed(() => {
+      if (props.adTypeOptions && props.adTypeOptions.length) {
+        return props.adTypeOptions
+      }
+      return Array.from(
+        new Set(safeAds.value.map(ad => ad.adType).filter(Boolean))
+      ).map(type => ({
+        label: formatAdType(type),
+        value: type
+      }))
+    })
 
     const safeCampaigns = computed(() => (Array.isArray(props.campaigns) ? props.campaigns : []))
 
@@ -460,17 +489,21 @@ export default {
         dataIndex: 'status',
         sorter: true,
         width: 120,
-        filters: statusSelectOptions.map((item) => ({
+        filters: statusSelectOptions.value.map((item) => ({
           text: item.label,
           value: item.value
         }))
       },
       {
-        title: 'Type',
+        title: 'Ad type',
         key: 'adType',
         dataIndex: 'adType',
         sorter: true,
-        width: 120
+        width: 140,
+        filters: adTypeSelectOptions.value.map((item) => ({
+          text: item.label,
+          value: item.value
+        }))
       },
       {
         title: 'Content',
@@ -535,6 +568,10 @@ export default {
       if (filters?.status?.length) {
         statusFilter.value = filters.status[0]
       }
+
+      if (filters?.adType?.length) {
+        adTypeFilter.value = filters.adType[0]
+      }
     }
 
     const handlePageChange = (page, size) => {
@@ -568,6 +605,9 @@ export default {
 
     const formatAdType = (adType) =>
       adType?.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase())
+
+    const formatStatus = (status) =>
+      status?.toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase())
 
     const truncateText = (text, maxLength) => {
       if (!text) return ''

@@ -87,6 +87,7 @@ public class FacebookMarketingApiClient {
         form.add("objective", mapObjective(campaign.getObjective()));
         form.add("status", "PAUSED"); // create in paused state for safety
         form.add("special_ad_categories", "[]");
+        form.add("is_adset_budget_sharing_enabled", String.valueOf(facebookProperties.isAdsetBudgetSharingEnabled()));
         form.add("access_token", accessToken);
 
         Map<String, Object> response = postForm(url, form);

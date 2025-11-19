@@ -239,6 +239,8 @@ export default {
         this.$router.push('/ads')
       } else if (key === 'ads-create') {
         this.$router.push('/ad/create')
+      } else if (key === 'ads-learn') {
+        this.$router.push('/ads/learn')
       } else {
         this.$router.push(`/${key}`)
       }
@@ -275,7 +277,6 @@ export default {
       }
     },
     toggleMobileMenu() {
-      // Toggle mobile menu through sidebar component
       if (this.$refs.sidebar) {
         this.$refs.sidebar.toggleMobileMenu()
       }

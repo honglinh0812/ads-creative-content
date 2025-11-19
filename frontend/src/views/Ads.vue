@@ -3,16 +3,18 @@
     <div class="ads-content">
 
       <!-- Page Header -->
-      <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
-        <div>
-          <h1 class="text-3xl font-bold text-secondary-900">{{ $t('ads.pageHeader.title') }}</h1>
-          <p class="text-secondary-600">{{ $t('ads.pageHeader.subtitle') }}</p>
-        </div>
-        <a-button type="primary" size="large" @click="$router.push('/ad/create')">
-          <template #icon><plus-outlined /></template>
-          {{ $t('ads.pageHeader.newAdButton') }}
-        </a-button>
-      </div>
+      <a-page-header
+        class="ads-page-header"
+        :title="$t('ads.pageHeader.title')"
+        :sub-title="$t('ads.pageHeader.subtitle')"
+      >
+        <template #extra>
+          <a-button type="primary" size="large" @click="$router.push('/ad/create')">
+            <template #icon><plus-outlined /></template>
+            {{ $t('ads.pageHeader.newAdButton') }}
+          </a-button>
+        </template>
+      </a-page-header>
 
       <!-- Ad Table Component -->
       <AdTable
@@ -22,6 +24,8 @@
         :total-items="totalItems"
         :current-page="page + 1"
         :page-size="size"
+        :status-options="statusOptions"
+        :ad-type-options="adTypeOptions"
         @view-details="showAdDetails"
         @edit-ad="showEditAdModal"
         @delete-ad="confirmDeleteAd"
@@ -32,24 +36,24 @@
         @page-size-change="onPageSizeChange"
       />
 
-          <!-- Error State -->
-          <CreativeEmptyState
-            v-if="error"
-            variant="loading-failed"
-            :custom-message="error"
-            :action-text="$t('common.actions.tryAgain')"
-            :action-handler="loadAds"
-          />
+      <!-- Error State -->
+      <CreativeEmptyState
+        v-if="error"
+        variant="loading-failed"
+        :custom-message="error"
+        :action-text="$t('common.actions.tryAgain')"
+        :action-handler="loadAds"
+        class="mt-6"
+      />
 
       <!-- Empty State -->
       <CreativeEmptyState
-        v-if="!loading && safeAds.length === 0"
-            variant="no-ads"
-            :action-text="$t('common.actions.createFirstAd')"
-            :action-handler="() => $router.push('/ad/create')"
-          />
-      </div>
-
+        v-else-if="!loading && safeAds.length === 0"
+        variant="no-ads"
+        :action-text="$t('common.actions.createFirstAd')"
+        :action-handler="() => $router.push('/ad/create')"
+        class="mt-6"
+      />
       <!-- Ad Detail Modal -->
       <a-modal v-model:open="showDetailModal" :title="$t('ads.detailModal.title')" width="90vw" style="max-width: 1200px">
         <div v-if="selectedAd">
@@ -193,6 +197,7 @@
         </template>
       </a-modal>
     </div>
+  </div>
 </template>
 
 <script>
@@ -260,6 +265,25 @@ export default {
     // Use Vuex CTAs instead of local state
     standardCTAs() {
       return this.allCTAs
+    },
+
+    statusOptions() {
+      return [
+        { label: this.$t('ads.filter.status.ready'), value: 'READY' },
+        { label: this.$t('ads.filter.status.active'), value: 'ACTIVE' },
+        { label: this.$t('ads.filter.status.paused'), value: 'PAUSED' },
+        { label: this.$t('ads.filter.status.completed'), value: 'COMPLETED' },
+        { label: this.$t('ads.filter.status.failed'), value: 'FAILED' },
+        { label: this.$t('ads.filter.status.draft'), value: 'DRAFT' }
+      ]
+    },
+
+    adTypeOptions() {
+      return [
+        { label: this.$t('ads.filter.types.website'), value: 'WEBSITE_CONVERSION_AD' },
+        { label: this.$t('ads.filter.types.pagePost'), value: 'PAGE_POST_AD' },
+        { label: this.$t('ads.filter.types.leadForm'), value: 'LEAD_FORM_AD' }
+      ]
     },
 
     displayedAds() {
@@ -732,19 +756,27 @@ export default {
   min-height: 100vh;
 }
 
+.ads-page-header {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+}
+
 /* Mobile Responsiveness - Phase 2 Implementation */
 @media (max-width: 768px) {
   .ads-page {
     padding: 12px;
   }
 
-  .page-header {
+  .ads-page-header {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
 
-  .page-header .ant-btn {
+  .ads-page-header .ant-btn {
     width: 100%;
     order: -1;
   }
@@ -770,15 +802,15 @@ export default {
     padding: 8px;
   }
 
-  .page-header {
+  .ads-page-header {
     gap: 8px;
   }
 
-  .page-header h1 {
+  .ads-page-header h1 {
     font-size: 1.75rem;
   }
 
-  .page-header p {
+  .ads-page-header p {
     font-size: 0.9rem;
   }
 

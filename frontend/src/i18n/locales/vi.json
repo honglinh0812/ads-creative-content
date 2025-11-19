@@ -73,8 +73,8 @@
     "allCampaigns": "Tất cả chiến dịch",
     "createCampaign": "Tạo chiến dịch",
     "ads": "Quảng cáo",
-    "mimicAds": "Học quảng cáo",
-    "adLearning": "Học quảng cáo",
+    "mimicAds": "Cải thiện quảng cáo từ mẫu",
+    "adLearning": "Cải thiện quảng cáo từ mẫu",
     "allAds": "Tất cả quảng cáo",
     "createAd": "Tạo quảng cáo",
     "personas": "Persona",
@@ -1645,33 +1645,33 @@
   },
   "adLearn": {
     "pageHeader": {
-      "title": "Học tập & Cải thiện quảng cáo",
-      "subtitle": "Học phong cách từ quảng cáo trong Meta Ad Library và điều chỉnh cho nội dung của bạn",
+      "title": "Cải thiện quảng cáo từ mẫu",
+      "subtitle": "Học phong cách từ quảng cáo trong Meta Ad Library và điều chỉnh cho phù hợp với nội dung của bạn",
       "backToAds": "Quay lại danh sách quảng cáo"
     },
     "progress": {
-      "headerTitle": "Quy trình học quảng cáo",
+      "headerTitle": "Quy trình cải thiện quảng cáo",
       "stepOf": "Bước {step} / {total}"
     },
     "progressSteps": {
       "step1": {
         "title": "Điền thông tin",
         "description": "Chiến dịch, nội dung, link tham khảo",
-        "emoji": "🎯"
+        "emoji": ""
       },
       "step2": {
         "title": "Chọn AI",
-        "description": "Chọn AI viết và tạo ảnh",
-        "emoji": "🤖"
+        "description": "Chọn AI để sinh văn bản và tạo ảnh",
+        "emoji": ""
       },
       "step3": {
         "title": "Xem trước & lưu",
-        "description": "Duyệt biến thể và lưu lại",
-        "emoji": "🎉"
+        "description": "Duyệt các nội dung và lưu lại",
+        "emoji": ""
       }
     },
     "step1": {
-      "cardTitle": "Học từ quảng cáo tham khảo",
+      "cardTitle": "Cải thiện quảng cáo từ mẫu",
       "campaign": {
         "label": "Chiến dịch",
         "placeholder": "Chọn chiến dịch"
