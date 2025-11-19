@@ -1,469 +1,295 @@
 <template>
-  <div class="ad-table-container">
-    <!-- Advanced Filters -->
-    <div class="filters-section">
-      <a-row :gutter="[16, 16]" align="middle">
-        <a-col :xs="24" :sm="12" :md="6">
-          <a-input
-            v-model:value="searchQuery"
-            :placeholder="$t('adTable.filters.searchPlaceholder')"
-            size="large"
-            allow-clear
-            :aria-label="$t('adTable.filters.searchLabel')"
-            role="searchbox"
-            @input="handleSearch"
-            @keydown.enter="handleSearch"
-          >
-            <template #prefix>
-              <SearchOutlined aria-hidden="true" />
-            </template>
-          </a-input>
-        </a-col>
-        
-        <a-col :xs="24" :sm="12" :md="4">
-          <a-select
-            v-model:value="statusFilter"
-            :placeholder="$t('adTable.filters.statusPlaceholder')"
-            size="large"
-            allow-clear
-            style="width: 100%"
-            :aria-label="$t('adTable.filters.statusLabel')"
-            @change="handleFilterChange"
-          >
-            <a-select-option value="">{{ $t('adTable.filterOptions.allStatus') }}</a-select-option>
-            <a-select-option value="ACTIVE">{{ $t('adTable.filterOptions.active') }}</a-select-option>
-            <a-select-option value="PAUSED">{{ $t('adTable.filterOptions.paused') }}</a-select-option>
-            <a-select-option value="DRAFT">{{ $t('adTable.filterOptions.draft') }}</a-select-option>
-            <a-select-option value="ARCHIVED">{{ $t('adTable.filterOptions.archived') }}</a-select-option>
-          </a-select>
-        </a-col>
-        
-        <a-col :xs="24" :sm="12" :md="4">
-          <a-select
-            v-model:value="adTypeFilter"
-            :placeholder="$t('adTable.filters.adTypePlaceholder')"
-            size="large"
-            allow-clear
-            style="width: 100%"
-            :aria-label="$t('adTable.filters.adTypeLabel')"
-            @change="handleFilterChange"
-          >
-            <a-select-option value="">{{ $t('adTable.filterOptions.allTypes') }}</a-select-option>
-            <a-select-option value="IMAGE">{{ $t('adTable.filterOptions.image') }}</a-select-option>
-            <a-select-option value="VIDEO">{{ $t('adTable.filterOptions.video') }}</a-select-option>
-            <a-select-option value="CAROUSEL">{{ $t('adTable.filterOptions.carousel') }}</a-select-option>
-            <a-select-option value="COLLECTION">{{ $t('adTable.filterOptions.collection') }}</a-select-option>
-          </a-select>
-        </a-col>
-        
-        <a-col :xs="24" :sm="12" :md="4">
-          <a-select
-            v-model:value="campaignFilter"
-            :placeholder="$t('adTable.filters.campaignPlaceholder')"
-            size="large"
-            allow-clear
-            style="width: 100%"
-            :aria-label="$t('adTable.filters.campaignLabel')"
-            @change="handleFilterChange"
-          >
-            <a-select-option value="">{{ $t('adTable.filterOptions.allCampaigns') }}</a-select-option>
-            <a-select-option v-for="campaign in campaigns" :key="campaign.id" :value="campaign.id">
-              {{ campaign.name }}
-            </a-select-option>
-          </a-select>
-        </a-col>
-        
-        <a-col :xs="24" :sm="12" :md="3">
-          <a-button
-            size="large"
-            style="width: 100%"
-            :aria-label="$t('adTable.filters.resetLabel')"
-            @click="resetFilters"
-          >
-            <template #icon>
-              <ClearOutlined aria-hidden="true" />
-            </template>
-            {{ $t('adTable.filters.resetButton') }}
-          </a-button>
-        </a-col>
+  <section class="ad-table">
+    <a-card class="panel" :bordered="false" :body-style="{ padding: '24px' }">
+      <header class="panel__header">
+        <div>
+          <p class="panel__eyebrow">Creative library</p>
+          <h2 class="panel__title">Ad performance overview</h2>
+          <p class="panel__subtitle">Use filters to focus on the assets that matter today.</p>
+        </div>
+        <a-segmented
+          v-model:value="viewMode"
+          class="view-toggle"
+          :options="viewOptions"
+          size="large"
+        />
+      </header>
 
-        <a-col :xs="24" :sm="12" :md="3">
-          <a-button
-            type="primary"
-            size="large"
-            style="width: 100%"
-            :aria-label="viewMode === 'table' ? $t('adTable.filters.viewToggleTable') : $t('adTable.filters.viewToggleCards')"
-            @click="toggleView"
-          >
-            <template #icon>
-              <component :is="viewMode === 'table' ? 'AppstoreOutlined' : 'TableOutlined'" aria-hidden="true" />
-            </template>
-            {{ viewMode === 'table' ? $t('adTable.filters.cardsButton') : $t('adTable.filters.tableButton') }}
-          </a-button>
-        </a-col>
-      </a-row>
-    </div>
+      <a-form layout="vertical" class="filter-form">
+        <a-row :gutter="[16, 16]">
+          <a-col :xs="24" :md="8">
+            <a-form-item label="Search ads">
+              <a-input
+                v-model:value="searchQuery"
+                placeholder="Search by ad name, campaign, or text"
+                allow-clear
+                @input="handleSearch"
+                @pressEnter="handleSearch"
+              />
+            </a-form-item>
+          </a-col>
 
-    <!-- Results Summary & Bulk Actions -->
-    <div class="results-actions-bar">
-      <div id="results-summary" class="results-summary" role="status" aria-live="polite">
-        <a-typography-text type="secondary">
-          {{ $t('adTable.results.showing', { count: filteredAds.length, total: totalAds }) }}
-          <span v-if="hasActiveFilters"> {{ $t('adTable.results.filtered') }}</span>
-        </a-typography-text>
-      </div>
+          <a-col :xs="24" :md="5">
+            <a-form-item label="Status">
+              <a-select
+                v-model:value="statusFilter"
+                placeholder="Select status"
+                allow-clear
+                :options="statusSelectOptions"
+                @change="handleFilterChange"
+              />
+            </a-form-item>
+          </a-col>
 
-      <!-- Bulk Actions -->
-      <div v-if="selectedRowKeys.length > 0" class="bulk-actions">
-        <a-space>
-          <a-typography-text strong>
-            {{ $t('adTable.bulkActions.selected', { count: selectedRowKeys.length }) }}
-          </a-typography-text>
-          <a-button size="small" @click="clearSelection">
-            {{ $t('adTable.bulkActions.clearSelection') }}
+          <a-col :xs="24" :md="5">
+            <a-form-item label="Ad type">
+              <a-select
+                v-model:value="adTypeFilter"
+                placeholder="Select type"
+                allow-clear
+                :options="adTypeSelectOptions"
+                @change="handleFilterChange"
+              />
+            </a-form-item>
+          </a-col>
+
+          <a-col :xs="24" :md="4">
+            <a-form-item label="Campaign">
+              <a-select
+                v-model:value="campaignFilter"
+                placeholder="Select campaign"
+                allow-clear
+                :options="campaignOptions"
+                @change="handleFilterChange"
+              />
+            </a-form-item>
+          </a-col>
+
+          <a-col :xs="24" :md="2">
+            <a-form-item label=" ">
+              <a-button block ghost @click="resetFilters">
+                Reset
+              </a-button>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </a-card>
+
+    <a-card class="summary-card" :bordered="false" :body-style="{ padding: '20px' }">
+      <div class="summary-card__content">
+        <div>
+          <p class="summary-card__title">Showing {{ filteredAds.length }} of {{ totalAds }} ads</p>
+          <p class="summary-card__muted">Live data synced with Facebook every few minutes.</p>
+        </div>
+        <div class="summary-card__badges">
+          <span v-if="hasActiveFilters" class="badge">Filters active</span>
+          <span v-if="selectedRowKeys.length" class="badge">Selected {{ selectedRowKeys.length }}</span>
+        </div>
+        <div class="summary-card__actions">
+          <a-button type="link" v-if="selectedRowKeys.length" @click="clearSelection">
+            Clear selection
           </a-button>
           <a-button
             type="primary"
-            size="small"
+            :disabled="!selectedRowKeys.length"
             @click="handleBulkExport"
           >
-            <template #icon>
-              <ExportOutlined />
-            </template>
-            {{ $t('adTable.bulkActions.exportSelected') }}
+            Export selected
           </a-button>
-        </a-space>
+        </div>
       </div>
-    </div>
+    </a-card>
 
-    <!-- Table View -->
-    <div v-if="viewMode === 'table'" class="table-section">
+    <div v-if="viewMode === 'table'" class="table-view">
       <a-table
-        :columns="translatedColumns"
+        :columns="columns"
         :data-source="paginatedAds"
         :loading="loading"
         :pagination="false"
-        :scroll="{ x: 1530 }"
         :row-selection="rowSelection"
         row-key="id"
         size="middle"
-        role="table"
-        :aria-label="$t('adTable.table.ariaLabel')"
-        aria-describedby="results-summary"
+        :scroll="{ x: 1200 }"
         @change="handleTableChange"
       >
-        <!-- Custom column renderers -->
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'name'">
-            <div class="ad-name-cell">
-              <a-typography-title :level="5" style="margin: 0; cursor: pointer" @click="$emit('view-details', record)">
-                {{ record.name || $t('adTable.cells.untitledAd') }}
-              </a-typography-title>
-              <a-typography-text type="secondary" style="font-size: 12px">
-                {{ $t('adTable.cells.adId', { id: record.id }) }}
-              </a-typography-text>
-            </div>
+            <button type="button" class="link-button" @click="$emit('view-details', record)">
+              {{ record.name || 'Untitled ad' }}
+            </button>
+            <p class="cell-muted">Ad ID • {{ record.id }}</p>
           </template>
 
           <template v-else-if="column.key === 'campaign'">
-            <div class="campaign-cell">
-              <a-typography-text strong>{{ getCampaignName(record.campaignId) }}</a-typography-text>
-              <br>
-              <a-typography-text type="secondary" style="font-size: 11px">
-                {{ $t('adTable.cells.campaignId', { id: record.campaignId }) }}
-              </a-typography-text>
-            </div>
+            <p class="cell-strong">{{ getCampaignName(record.campaignId) }}</p>
+            <p class="cell-muted">Campaign ID • {{ record.campaignId || 'N/A' }}</p>
           </template>
 
           <template v-else-if="column.key === 'status'">
-            <a-tag :color="getStatusColor(record.status)">
-              {{ record.status || $t('adTable.cells.unknown') }}
-            </a-tag>
+            <span class="status-pill" :data-state="record.status">
+              {{ record.status || 'Unknown' }}
+            </span>
           </template>
-          
+
           <template v-else-if="column.key === 'adType'">
-            <div class="ad-type-cell">
-              <a-tag color="blue" v-if="record.adType">
-                {{ formatAdType(record.adType) }}
-              </a-tag>
-              <span v-else class="text-gray-400">-</span>
-            </div>
+            <span class="type-pill" v-if="record.adType">{{ formatAdType(record.adType) }}</span>
+            <span v-else class="cell-muted">—</span>
           </template>
-          
+
           <template v-else-if="column.key === 'content'">
-            <div class="content-cell">
-              <div v-if="record.headline" class="content-item">
-                <strong>{{ $t('adTable.cells.headline') }}</strong> {{ truncateText(record.headline, 30) }}
-              </div>
-              <div v-if="record.primaryText" class="content-item">
-                <strong>{{ $t('adTable.cells.text') }}</strong> {{ truncateText(record.primaryText, 40) }}
-              </div>
-              <div v-if="record.callToAction" class="content-item">
-                <a-tag size="small" color="green">{{ record.callToAction }}</a-tag>
-              </div>
+            <div class="content-preview">
+              <p v-if="record.headline">
+                <span class="label">Headline</span>
+                {{ truncateText(record.headline, 80) }}
+              </p>
+              <p v-if="record.primaryText">
+                <span class="label">Text</span>
+                {{ truncateText(record.primaryText, 110) }}
+              </p>
+              <p v-if="record.callToAction">
+                <span class="label">CTA</span>
+                {{ record.callToAction }}
+              </p>
+              <p v-if="!record.headline && !record.primaryText && !record.callToAction" class="cell-muted">
+                Content unavailable
+              </p>
             </div>
           </template>
-          
+
           <template v-else-if="column.key === 'media'">
-            <div class="media-cell">
-              <div v-if="record.imageUrl" class="media-item">
-                <img :src="record.imageUrl" alt="Ad Image" class="media-thumbnail" />
-              </div>
-              <div v-else-if="record.videoUrl" class="media-item">
-                <video :src="record.videoUrl" class="media-thumbnail" controls />
-              </div>
-              <div v-else class="no-media">
-                <FileImageOutlined style="font-size: 24px; color: #d9d9d9;" />
-              </div>
+            <div class="media-thumb" v-if="record.imageUrl || record.videoUrl">
+              <img v-if="record.imageUrl" :src="record.imageUrl" alt="Ad media" />
+              <video v-else :src="record.videoUrl" muted />
             </div>
+            <span v-else class="cell-muted">No media</span>
           </template>
-          
+
           <template v-else-if="column.key === 'createdDate'">
-            <div class="date-cell">
-              <div>{{ formatDate(record.createdDate) }}</div>
-              <a-typography-text type="secondary" style="font-size: 11px">
-                {{ formatRelativeTime(record.createdDate) }}
-              </a-typography-text>
-            </div>
+            <p>{{ formatDate(record.createdDate) }}</p>
+            <p class="cell-muted">{{ formatRelativeTime(record.createdDate) }}</p>
           </template>
-          
+
           <template v-else-if="column.key === 'actions'">
-            <a-space size="small">
-              <a-tooltip :title="$t('adTable.actions.viewDetails')">
-                <a-button
-                  size="small"
-                  :aria-label="$t('adTable.actions.viewDetailsLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
-                  @click="$emit('view-details', record)"
-                >
-                  <template #icon>
-                    <EyeOutlined aria-hidden="true" />
-                  </template>
-                </a-button>
-              </a-tooltip>
-
-              <a-tooltip :title="$t('adTable.actions.editAd')">
-                <a-button
-                  size="small"
-                  :aria-label="$t('adTable.actions.editLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
-                  @click="$emit('edit-ad', record)"
-                >
-                  <template #icon>
-                    <EditOutlined aria-hidden="true" />
-                  </template>
-                </a-button>
-              </a-tooltip>
-
-              <a-tooltip :title="$t('adTable.actions.duplicateAd')">
-                <a-button
-                  size="small"
-                  :aria-label="$t('adTable.actions.duplicateLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
-                  @click="$emit('duplicate-ad', record)"
-                >
-                  <template #icon>
-                    <CopyOutlined aria-hidden="true" />
-                  </template>
-                </a-button>
-              </a-tooltip>
-
-              <a-space size="small">
-                <a-tooltip :title="$t('adTable.actions.exportToFacebook')">
-                  <a-button
-                    size="small"
-                    type="primary"
-                    :aria-label="$t('adTable.actions.exportLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
-                    @click="$emit('export-ad', record)"
-                  >
-                    <template #icon>
-                      <ExportOutlined aria-hidden="true" />
-                    </template>
-                  </a-button>
-                </a-tooltip>
-                <a-tooltip :title="$t('adTable.actions.downloadAd')">
-                  <a-button
-                    size="small"
-                    :aria-label="$t('adTable.actions.downloadLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
-                    @click="$emit('download-ad', record)"
-                  >
-                    <template #icon>
-                      <DownloadOutlined aria-hidden="true" />
-                    </template>
-                  </a-button>
-                </a-tooltip>
-              </a-space>
-
+            <div class="row-actions">
+              <a-button type="link" size="small" @click="$emit('view-details', record)">
+                View
+              </a-button>
+              <a-button type="link" size="small" @click="$emit('edit-ad', record)">
+                Edit
+              </a-button>
+              <a-button type="link" size="small" @click="$emit('duplicate-ad', record)">
+                Duplicate
+              </a-button>
+              <a-button type="link" size="small" @click="$emit('export-ad', record)">
+                Export
+              </a-button>
+              <a-button type="link" size="small" @click="$emit('download-ad', record)">
+                Download
+              </a-button>
               <a-popconfirm
-                :title="$t('adTable.actions.deleteConfirm')"
-                :ok-text="$t('adTable.actions.deleteYes')"
-                :cancel-text="$t('adTable.actions.deleteNo')"
+                title="Delete this ad?"
+                ok-text="Delete"
+                cancel-text="Cancel"
                 @confirm="$emit('delete-ad', record.id)"
               >
-                <a-tooltip :title="$t('adTable.actions.deleteAd')">
-                  <a-button
-                    size="small"
-                    danger
-                    :aria-label="$t('adTable.actions.deleteLabel', { name: record.name || $t('adTable.cells.untitledAd') })"
-                  >
-                    <template #icon>
-                      <DeleteOutlined aria-hidden="true" />
-                    </template>
-                  </a-button>
-                </a-tooltip>
+                <a-button type="link" danger size="small">
+                  Delete
+                </a-button>
               </a-popconfirm>
-            </a-space>
+            </div>
           </template>
         </template>
       </a-table>
     </div>
 
-    <!-- Card View -->
-    <div v-else class="cards-section">
-      <a-row :gutter="[24, 24]">
-        <a-col v-for="ad in paginatedAds" :key="ad.id" :xs="24" :sm="12" :md="8" :lg="6">
-          <a-card
-            hoverable
-            class="ad-card"
-            :body-style="{ padding: '16px' }"
-          >
-            <!-- Ad Media -->
-            <div class="ad-media">
-              <div v-if="ad.imageUrl" class="media-container">
-                <img :src="ad.imageUrl" alt="Ad Image" class="ad-image" />
-              </div>
-              <div v-else-if="ad.videoUrl" class="media-container">
-                <video :src="ad.videoUrl" class="ad-video" controls />
-              </div>
-              <div v-else class="no-media-placeholder">
-                <FileImageOutlined style="font-size: 48px; color: #d9d9d9;" />
-                <p>{{ $t('adTable.card.noMedia') }}</p>
-              </div>
+    <div v-else class="card-view">
+      <a-empty
+        v-if="!paginatedAds.length && !loading"
+        description="No ads match the selected filters."
+      />
+      <div v-else class="card-grid">
+        <a-card
+          v-for="ad in paginatedAds"
+          :key="ad.id"
+          class="ad-card"
+          :bordered="false"
+          hoverable
+        >
+          <div class="ad-card__media">
+            <div v-if="ad.imageUrl || ad.videoUrl" class="media-frame">
+              <img v-if="ad.imageUrl" :src="ad.imageUrl" alt="Ad visual" />
+              <video v-else :src="ad.videoUrl" muted controls />
             </div>
-            
-            <!-- Ad Info -->
-            <div class="ad-info">
-              <a-typography-title :level="5" :ellipsis="{ rows: 2 }" style="margin-bottom: 8px;">
-                {{ ad.name || $t('adTable.card.untitledAd') }}
-              </a-typography-title>
-
-              <div class="ad-meta">
-                <a-tag :color="getStatusColor(ad.status)" size="small">
-                  {{ ad.status || $t('adTable.card.unknown') }}
-                </a-tag>
-                <a-tag color="blue" size="small" v-if="ad.adType">
-                  {{ formatAdType(ad.adType) }}
-                </a-tag>
-              </div>
-
-              <div class="campaign-info">
-                <a-typography-text type="secondary" style="font-size: 12px;">
-                  {{ $t('adTable.card.campaign', { name: getCampaignName(ad.campaignId) }) }}
-                </a-typography-text>
-              </div>
-
-              <div class="ad-content" v-if="ad.headline || ad.primaryText">
-                <div v-if="ad.headline" class="content-line">
-                  <strong>{{ $t('adTable.card.headline') }}</strong> {{ truncateText(ad.headline, 40) }}
-                </div>
-                <div v-if="ad.primaryText" class="content-line">
-                  <strong>{{ $t('adTable.card.text') }}</strong> {{ truncateText(ad.primaryText, 60) }}
-                </div>
-              </div>
+            <div v-else class="media-placeholder">
+              <span>No media provided</span>
             </div>
-            
-            <a-divider style="margin: 12px 0;" />
-            
-            <!-- Actions -->
-            <a-row justify="space-between" align="middle">
-              <a-col>
-                <a-space size="small">
-                  <a-button size="small" @click="$emit('edit-ad', ad)">
-                    <template #icon>
-                      <EditOutlined />
-                    </template>
-                    {{ $t('adTable.card.edit') }}
-                  </a-button>
-                  <a-popconfirm
-                    :title="$t('adTable.card.deleteConfirm')"
-                    :ok-text="$t('adTable.card.deleteYes')"
-                    :cancel-text="$t('adTable.card.deleteNo')"
-                    @confirm="$emit('delete-ad', ad.id)"
-                  >
-                    <a-button size="small" danger>
-                      <template #icon>
-                        <DeleteOutlined />
-                      </template>
-                      {{ $t('adTable.card.delete') }}
-                    </a-button>
-                  </a-popconfirm>
-                </a-space>
-              </a-col>
-              <a-col>
-                <a-button type="primary" size="small" @click="$emit('view-details', ad)">
-                  {{ $t('adTable.card.viewDetails') }}
-                </a-button>
-              </a-col>
-            </a-row>
-          </a-card>
-        </a-col>
-      </a-row>
+          </div>
+
+          <div class="ad-card__body">
+            <p class="ad-card__name">{{ ad.name || 'Untitled ad' }}</p>
+            <div class="ad-card__meta">
+              <span class="status-pill" :data-state="ad.status">
+                {{ ad.status || 'Unknown' }}
+              </span>
+              <span v-if="ad.adType" class="type-pill">
+                {{ formatAdType(ad.adType) }}
+              </span>
+            </div>
+            <p class="ad-card__campaign">
+              {{ getCampaignName(ad.campaignId) }}
+            </p>
+            <p v-if="ad.headline" class="ad-card__text">
+              <span class="label">Headline</span>
+              {{ truncateText(ad.headline, 90) }}
+            </p>
+            <p v-if="ad.primaryText" class="ad-card__text">
+              <span class="label">Text</span>
+              {{ truncateText(ad.primaryText, 120) }}
+            </p>
+          </div>
+
+          <div class="ad-card__actions">
+            <a-button block @click="$emit('view-details', ad)">View details</a-button>
+            <a-button block type="primary" ghost @click="$emit('edit-ad', ad)">Edit ad</a-button>
+            <a-popconfirm
+              title="Delete this ad?"
+              ok-text="Delete"
+              cancel-text="Cancel"
+              @confirm="$emit('delete-ad', ad.id)"
+            >
+              <a-button block danger ghost>Delete</a-button>
+            </a-popconfirm>
+          </div>
+        </a-card>
+      </div>
     </div>
 
-    <!-- Pagination -->
-    <div v-if="totalPages > 1" class="pagination-section">
+    <div v-if="totalPages > 1" class="pagination-wrapper">
       <a-pagination
         :current="currentPage"
         :page-size="pageSize"
         :total="totalAds"
+        :show-total="renderTotal"
         :page-size-options="['12', '24', '48', '96']"
         show-size-changer
         show-quick-jumper
-        show-total
         @change="handlePageChange"
         @showSizeChange="handlePageSizeChange"
-      >
-        <template #buildOptionText="props">
-          <span>{{ $t('adTable.pagination.perPage', { value: props.value }) }}</span>
-        </template>
-      </a-pagination>
+      />
     </div>
-  </div>
+  </section>
 </template>
 
 <script>
-import { ref, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import {
-  SearchOutlined,
-  ClearOutlined,
-  TableOutlined,
-  AppstoreOutlined,
-  EyeOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  CopyOutlined,
-  ExportOutlined,
-  FileImageOutlined
-} from '@ant-design/icons-vue'
+import { ref, computed, watch } from 'vue'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import 'dayjs/locale/vi'
-import 'dayjs/locale/en'
 
 dayjs.extend(relativeTime)
 
 export default {
   name: 'AdTable',
-  components: {
-    SearchOutlined,
-    ClearOutlined,
-    TableOutlined,
-    AppstoreOutlined,
-    EyeOutlined,
-    EditOutlined,
-    DeleteOutlined,
-    CopyOutlined,
-    ExportOutlined,
-    FileImageOutlined
-  },
   props: {
     ads: {
       type: Array,
@@ -490,12 +316,17 @@ export default {
       default: 24
     }
   },
-  emits: ['view-details', 'edit-ad', 'delete-ad', 'duplicate-ad', 'export-ad', 'download-ad', 'page-change', 'page-size-change'],
-
+  emits: [
+    'view-details',
+    'edit-ad',
+    'delete-ad',
+    'duplicate-ad',
+    'export-ad',
+    'download-ad',
+    'page-change',
+    'page-size-change'
+  ],
   setup(props, { emit }) {
-    const { t, locale } = useI18n()
-
-    // Reactive data
     const searchQuery = ref('')
     const statusFilter = ref('')
     const adTypeFilter = ref('')
@@ -504,107 +335,79 @@ export default {
     const sortField = ref('createdDate')
     const sortOrder = ref('desc')
     const selectedRowKeys = ref([])
+    const internalPage = ref(props.currentPage || 1)
 
-    // Table columns configuration with i18n
-    const translatedColumns = computed(() => [
-      {
-        title: t('adTable.table.columns.adName'),
-        key: 'name',
-        dataIndex: 'name',
-        sorter: true,
-        width: 200,
-        fixed: 'left',
-        ellipsis: true
-      },
-      {
-        title: t('adTable.table.columns.campaign'),
-        key: 'campaign',
-        sorter: true,
-        width: 180,
-        ellipsis: true
-      },
-      {
-        title: t('adTable.table.columns.status'),
-        key: 'status',
-        dataIndex: 'status',
-        sorter: true,
-        width: 120,
-        filters: [
-          { text: t('adTable.table.statusFilters.active'), value: 'ACTIVE' },
-          { text: t('adTable.table.statusFilters.paused'), value: 'PAUSED' },
-          { text: t('adTable.table.statusFilters.draft'), value: 'DRAFT' },
-          { text: t('adTable.table.statusFilters.archived'), value: 'ARCHIVED' }
-        ]
-      },
-      {
-        title: t('adTable.table.columns.type'),
-        key: 'adType',
-        dataIndex: 'adType',
-        sorter: true,
-        width: 130,
-        ellipsis: true
-      },
-      {
-        title: t('adTable.table.columns.content'),
-        key: 'content',
-        width: 300,
-        ellipsis: true
-      },
-      {
-        title: t('adTable.table.columns.media'),
-        key: 'media',
-        width: 100,
-        align: 'center'
-      },
-      {
-        title: t('adTable.table.columns.createdDate'),
-        key: 'createdDate',
-        dataIndex: 'createdDate',
-        sorter: true,
-        width: 150,
-        ellipsis: true
-      },
-      {
-        title: t('adTable.table.columns.actions'),
-        key: 'actions',
-        width: 250,
-        fixed: 'right'
+    watch(
+      () => props.currentPage,
+      (value) => {
+        internalPage.value = value || 1
       }
-    ])
-    
-    // Computed properties
+    )
+
+    const statusSelectOptions = [
+      { label: 'Active', value: 'ACTIVE' },
+      { label: 'Paused', value: 'PAUSED' },
+      { label: 'Draft', value: 'DRAFT' },
+      { label: 'Archived', value: 'ARCHIVED' }
+    ]
+
+    const adTypeSelectOptions = [
+      { label: 'Image', value: 'IMAGE' },
+      { label: 'Video', value: 'VIDEO' },
+      { label: 'Carousel', value: 'CAROUSEL' },
+      { label: 'Collection', value: 'COLLECTION' }
+    ]
+
+    const campaignOptions = computed(() => {
+      if (!props.campaigns || !props.campaigns.length) {
+        return []
+      }
+
+      return props.campaigns.map((campaign) => ({
+        label: campaign.name,
+        value: campaign.id
+      }))
+    })
+
+    const viewOptions = [
+      { label: 'Table view', value: 'table' },
+      { label: 'Card view', value: 'cards' }
+    ]
+
     const totalAds = computed(() => props.totalItems || props.ads.length)
 
     const filteredAds = computed(() => {
       let filtered = [...props.ads]
 
-      // Search filter (frontend only for displayed page)
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase()
-        filtered = filtered.filter(ad =>
-          ad.name?.toLowerCase().includes(query) ||
-          ad.headline?.toLowerCase().includes(query) ||
-          ad.primaryText?.toLowerCase().includes(query) ||
-          ad.id?.toString().includes(query)
+        filtered = filtered.filter((ad) =>
+          [
+            ad.name,
+            ad.headline,
+            ad.primaryText,
+            ad.id?.toString(),
+            getCampaignName(ad.campaignId)
+          ]
+            .filter(Boolean)
+            .some((field) => field.toLowerCase().includes(query))
         )
       }
 
-      // Status filter (frontend only for displayed page)
       if (statusFilter.value) {
-        filtered = filtered.filter(ad => ad.status === statusFilter.value)
+        filtered = filtered.filter((ad) => ad.status === statusFilter.value)
       }
 
-      // Ad type filter (frontend only for displayed page)
       if (adTypeFilter.value) {
-        filtered = filtered.filter(ad => ad.adType === adTypeFilter.value)
+        filtered = filtered.filter((ad) => ad.adType === adTypeFilter.value)
       }
 
-      // Campaign filter (frontend only for displayed page)
       if (campaignFilter.value) {
-        filtered = filtered.filter(ad => ad.campaignId?.toString() === campaignFilter.value.toString())
+        filtered = filtered.filter(
+          (ad) => ad.campaignId?.toString() === campaignFilter.value.toString()
+        )
       }
 
-      // Sorting (frontend only for displayed page)
       filtered.sort((a, b) => {
         let aValue = a[sortField.value]
         let bValue = b[sortField.value]
@@ -616,128 +419,171 @@ export default {
 
         if (sortOrder.value === 'asc') {
           return aValue > bValue ? 1 : -1
-        } else {
-          return aValue < bValue ? 1 : -1
         }
+        return aValue < bValue ? 1 : -1
       })
 
       return filtered
     })
 
-    const totalPages = computed(() => Math.ceil(totalAds.value / props.pageSize))
+    const paginatedAds = computed(() => filteredAds.value)
+    const totalPages = computed(() =>
+      props.pageSize ? Math.ceil(totalAds.value / props.pageSize) : 1
+    )
 
-    const paginatedAds = computed(() => {
-      // When using server-side pagination, just return the filtered ads as they are already paginated
-      return filteredAds.value
-    })
-    
-    const hasActiveFilters = computed(() => {
-      return searchQuery.value || statusFilter.value || adTypeFilter.value || campaignFilter.value
-    })
-    
-    // Methods
+    const hasActiveFilters = computed(() =>
+      Boolean(searchQuery.value || statusFilter.value || adTypeFilter.value || campaignFilter.value)
+    )
+
+    const columns = computed(() => [
+      {
+        title: 'Ad name',
+        key: 'name',
+        dataIndex: 'name',
+        sorter: true,
+        width: 220,
+        fixed: 'left'
+      },
+      {
+        title: 'Campaign',
+        key: 'campaign',
+        width: 180
+      },
+      {
+        title: 'Status',
+        key: 'status',
+        dataIndex: 'status',
+        sorter: true,
+        width: 120,
+        filters: statusSelectOptions.map((item) => ({
+          text: item.label,
+          value: item.value
+        }))
+      },
+      {
+        title: 'Type',
+        key: 'adType',
+        dataIndex: 'adType',
+        sorter: true,
+        width: 120
+      },
+      {
+        title: 'Content',
+        key: 'content',
+        width: 320
+      },
+      {
+        title: 'Media',
+        key: 'media',
+        width: 120,
+        align: 'center'
+      },
+      {
+        title: 'Created',
+        key: 'createdDate',
+        dataIndex: 'createdDate',
+        sorter: true,
+        width: 160
+      },
+      {
+        title: 'Actions',
+        key: 'actions',
+        width: 240,
+        fixed: 'right'
+      }
+    ])
+
+    const rowSelection = computed(() => ({
+      selectedRowKeys: selectedRowKeys.value,
+      onChange: (selectedKeys) => {
+        selectedRowKeys.value = selectedKeys
+      }
+    }))
+
+    const goToFirstPage = () => {
+      internalPage.value = 1
+      emit('page-change', 1, props.pageSize)
+    }
+
     const handleSearch = () => {
-      currentPage.value = 1
+      goToFirstPage()
     }
-    
+
     const handleFilterChange = () => {
-      currentPage.value = 1
+      goToFirstPage()
     }
-    
+
     const resetFilters = () => {
       searchQuery.value = ''
       statusFilter.value = ''
       adTypeFilter.value = ''
       campaignFilter.value = ''
-      currentPage.value = 1
+      goToFirstPage()
     }
-    
-    const toggleView = () => {
-      viewMode.value = viewMode.value === 'table' ? 'cards' : 'table'
-    }
-    
+
     const handleTableChange = (pagination, filters, sorter) => {
-      if (sorter.field) {
+      if (sorter?.field) {
         sortField.value = sorter.field
         sortOrder.value = sorter.order === 'ascend' ? 'asc' : 'desc'
       }
+
+      if (filters?.status?.length) {
+        statusFilter.value = filters.status[0]
+      }
     }
-    
+
     const handlePageChange = (page, size) => {
+      internalPage.value = page
       emit('page-change', page, size)
     }
 
-    const handlePageSizeChange = (current, size) => {
-      emit('page-size-change', current, size)
+    const handlePageSizeChange = (page, size) => {
+      internalPage.value = 1
+      emit('page-size-change', page, size)
     }
-    
-    // Utility functions
-    const getStatusColor = (status) => {
-      const colors = {
-        'ACTIVE': 'green',
-        'PAUSED': 'orange',
-        'DRAFT': 'blue',
-        'ARCHIVED': 'purple',
-        'DELETED': 'red'
-      }
-      return colors[status] || 'default'
-    }
-    
-    const formatAdType = (adType) => {
-      return adType?.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
-    }
-    
-    const getCampaignName = (campaignId) => {
-      if (!campaignId) return t('adTable.cells.noCampaign')
-
-      // Check if campaigns are loaded
-      if (!props.campaigns || props.campaigns.length === 0) {
-        return t('adTable.cells.loading')
-      }
-
-      // Convert to string for comparison (handle type mismatch)
-      const campaign = props.campaigns.find(c => c.id?.toString() === campaignId?.toString())
-      return campaign?.name || t('adTable.cells.campaignNumber', { id: campaignId })
-    }
-
-    const truncateText = (text, maxLength) => {
-      if (!text) return ''
-      return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
-    }
-
-    const formatDate = (date) => {
-      // Set dayjs locale based on i18n locale
-      const dayjsLocale = locale.value === 'vi' ? 'vi' : 'en'
-      return dayjs(date).locale(dayjsLocale).format('MMM DD, YYYY')
-    }
-
-    const formatRelativeTime = (date) => {
-      // Set dayjs locale based on i18n locale
-      const dayjsLocale = locale.value === 'vi' ? 'vi' : 'en'
-      return dayjs(date).locale(dayjsLocale).fromNow()
-    }
-
-    // Bulk selection handlers
-    const rowSelection = computed(() => ({
-      selectedRowKeys: selectedRowKeys.value,
-      onChange: (selectedKeys) => {
-        selectedRowKeys.value = selectedKeys
-      },
-      getCheckboxProps: (record) => ({
-        name: record.name
-      })
-    }))
 
     const clearSelection = () => {
       selectedRowKeys.value = []
     }
 
     const handleBulkExport = () => {
-      if (selectedRowKeys.value.length === 0) {
+      if (!selectedRowKeys.value.length) {
         return
       }
-      // Emit the export-ad event with array of selected ad IDs
       emit('export-ad', selectedRowKeys.value)
+    }
+
+    const getCampaignName = (campaignId) => {
+      if (!campaignId) return 'No campaign'
+      const campaign = props.campaigns.find(
+        (entry) => entry.id?.toString() === campaignId?.toString()
+      )
+      return campaign?.name || `Campaign ${campaignId}`
+    }
+
+    const formatAdType = (adType) =>
+      adType?.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase())
+
+    const truncateText = (text, maxLength) => {
+      if (!text) return ''
+      return text.length > maxLength ? `${text.substring(0, maxLength)}…` : text
+    }
+
+    const formatDate = (date) => {
+      if (!date) return 'Not set'
+      return dayjs(date).format('MMM DD, YYYY')
+    }
+
+    const formatRelativeTime = (date) => {
+      if (!date) return 'Unavailable'
+      return dayjs(date).fromNow()
+    }
+
+    const renderTotal = (total, range) => {
+      if (!range || !range.length) {
+        return `${total} ads`
+      }
+      return `${range[0]}-${range[1]} of ${total} ads`
     }
 
     return {
@@ -746,322 +592,413 @@ export default {
       adTypeFilter,
       campaignFilter,
       viewMode,
-      sortField,
-      sortOrder,
-      selectedRowKeys,
-      rowSelection,
-      translatedColumns,
-      totalAds,
-      filteredAds,
-      totalPages,
+      columns,
       paginatedAds,
-      hasActiveFilters,
+      totalAds,
+      totalPages,
       handleSearch,
       handleFilterChange,
       resetFilters,
-      toggleView,
+      getCampaignName,
+      formatAdType,
+      truncateText,
+      formatDate,
+      formatRelativeTime,
+      hasActiveFilters,
+      selectedRowKeys,
+      rowSelection,
+      clearSelection,
+      handleBulkExport,
+      statusSelectOptions,
+      adTypeSelectOptions,
+      campaignOptions,
+      viewOptions,
       handleTableChange,
       handlePageChange,
       handlePageSizeChange,
-      clearSelection,
-      handleBulkExport,
-      getStatusColor,
-      formatAdType,
-      getCampaignName,
-      truncateText,
-      formatDate,
-      formatRelativeTime
+      currentPage: internalPage,
+      pageSize: computed(() => props.pageSize),
+      renderTotal
     }
   }
 }
 </script>
 
 <style scoped>
-.ad-table-container {
-  @apply space-y-6;
+.ad-table {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: var(--text-primary);
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --border: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --primary: #1d4ed8;
+  --primary-soft: #dbeafe;
+  --shadow: 0px 12px 30px rgba(15, 23, 42, 0.08);
 }
 
-.filters-section {
-  @apply bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
+.panel,
+.summary-card {
+  background: var(--surface);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
-.results-actions-bar {
-  @apply flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-4;
+.panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 24px;
 }
 
-.results-summary {
-  @apply flex items-center;
+.panel__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
 }
 
-.bulk-actions {
-  @apply flex items-center gap-2;
+.panel__title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
 }
 
-.table-section {
-  @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden;
+.panel__subtitle {
+  margin: 6px 0 0;
+  color: var(--text-muted);
 }
 
-.cards-section {
-  @apply min-h-[400px];
+.view-toggle {
+  min-width: 220px;
+}
+
+.filter-form {
+  margin-top: 8px;
+}
+
+.summary-card__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.summary-card__title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.summary-card__muted {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.summary-card__badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.summary-card__actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 13px;
+}
+
+.table-view {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 12px;
+}
+
+.link-button {
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.link-button:hover,
+.row-actions .ant-btn-link:hover {
+  color: #0b3b9b;
+}
+
+.cell-muted {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 12px;
+}
+
+.cell-strong {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #e2e8f0;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.status-pill[data-state='ACTIVE'] {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-pill[data-state='PAUSED'] {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.status-pill[data-state='DRAFT'] {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.status-pill[data-state='ARCHIVED'] {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.type-pill {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.content-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.content-preview .label {
+  font-weight: 600;
+  margin-right: 6px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.media-thumb {
+  width: 72px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.media-thumb img,
+.media-thumb video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-view {
+  background: transparent;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
 
 .ad-card {
-  @apply transition-all duration-200 hover:shadow-lg border border-gray-200 dark:border-gray-700;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
 }
 
-.ad-card:hover {
-  @apply transform -translate-y-1;
-}
-
-.ad-media {
-  @apply mb-4;
-}
-
-.media-container {
-  @apply relative overflow-hidden rounded-lg;
-}
-
-.ad-image, .ad-video {
-  @apply w-full h-32 object-cover;
-}
-
-.no-media-placeholder {
-  @apply flex flex-col items-center justify-center h-32 bg-gray-100 dark:bg-gray-700 rounded-lg;
-}
-
-.ad-info {
-  @apply space-y-2;
-}
-
-.ad-meta {
-  @apply flex gap-2 flex-wrap;
-}
-
-.campaign-info {
-  @apply mt-2;
-}
-
-.ad-content {
-  @apply mt-3 space-y-1;
-}
-
-.content-line {
-  @apply text-sm text-gray-600 dark:text-gray-300;
-}
-
-.ad-name-cell {
-  @apply space-y-1;
-}
-
-.campaign-cell {
-  @apply space-y-1;
-}
-
-.ad-type-cell {
-  @apply flex items-center;
-  max-width: 100%;
+.ad-card__media .media-frame {
+  border-radius: 14px;
+  border: 1px solid var(--border);
   overflow: hidden;
+  height: 160px;
+  background: var(--surface-muted);
 }
 
-.ad-type-cell .ant-tag {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.ad-card__media img,
+.ad-card__media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.content-cell {
-  @apply space-y-2;
-  max-width: 100%;
-  overflow: hidden;
+.media-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 160px;
+  border-radius: 14px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
-.content-item {
-  @apply text-sm;
+.ad-card__name {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
-.media-cell {
-  @apply flex justify-center;
+.ad-card__meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.media-thumbnail {
-  @apply w-12 h-12 object-cover rounded;
+.ad-card__campaign {
+  color: var(--text-muted);
+  margin: 8px 0;
 }
 
-.no-media {
-  @apply flex justify-center items-center w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded;
+.ad-card__text {
+  margin-bottom: 6px;
+  font-size: 14px;
 }
 
-.date-cell {
-  @apply space-y-1;
+.ad-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.pagination-section {
-  @apply flex justify-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+  background: var(--surface);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
-/* Dark mode styles */
-.dark .ad-table-container {
-  @apply text-white;
+:deep(.ant-form-item-label > label) {
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
-.dark .filters-section {
-  @apply bg-gray-800 border-gray-700;
+:deep(.ant-input),
+:deep(.ant-select-selector) {
+  border-radius: 12px;
+  border-color: var(--border);
+  padding: 8px 12px;
 }
 
-.dark .table-section {
-  @apply bg-gray-800 border-gray-700;
+:deep(.ant-input:focus),
+:deep(.ant-select-focused .ant-select-selector) {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.18);
 }
 
-.dark .ad-card {
-  @apply bg-gray-800 border-gray-700;
-}
-
-.dark .pagination-section {
-  @apply bg-gray-800 border-gray-700;
-}
-
-/* Responsive styles */
-@media (max-width: 768px) {
-  .filters-section {
-    @apply p-4;
-  }
-  
-  .ad-card {
-    @apply mb-4;
-  }
-}
-
-/* Table responsive styles */
-:deep(.ant-table-wrapper) {
-  @apply overflow-x-auto;
+:deep(.ant-table) {
+  font-size: 14px;
 }
 
 :deep(.ant-table-thead > tr > th) {
-  @apply bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600;
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
-/* Accessibility improvements */
-.sr-only {
-  @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
-  clip: rect(0, 0, 0, 0);
-}
-
-/* Focus styles for better keyboard navigation */
-:deep(.ant-btn:focus-visible),
-:deep(.ant-input:focus-visible),
-:deep(.ant-select:focus-visible) {
-  @apply outline-2 outline-blue-500 outline-offset-2;
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .ad-card {
-    @apply border-2 border-black;
-  }
-  
-  :deep(.ant-table-thead > tr > th) {
-    @apply border-2 border-black;
-  }
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  .ad-card {
-    @apply transition-none;
-  }
-  
-  .ad-card:hover {
-    @apply transform-none;
-  }
-}
-
-/* Touch target improvements for mobile */
-@media (max-width: 768px) {
-  :deep(.ant-btn) {
-    @apply min-h-[44px] min-w-[44px];
-  }
-  
-  .filters-section .ant-col {
-    @apply mb-3;
-  }
-  
-  .view-toggle {
-    @apply w-full;
-  }
-}
-
-/* Improved responsive table */
-@media (max-width: 1024px) {
-  :deep(.ant-table-wrapper) {
-    @apply text-sm;
-  }
-  
-  .media-thumbnail {
-    @apply w-8 h-8;
-  }
-}
-
-/* Better spacing for small screens */
-@media (max-width: 480px) {
-  .filters-section {
-    @apply p-3;
-  }
-  
-  .results-summary {
-    @apply text-sm;
-  }
-  
-  :deep(.ant-space-item) {
-    @apply mb-2;
-  }
-}
-
-:deep(.ant-table-tbody > tr > td) {
-  @apply border-b border-gray-100 dark:border-gray-700;
-}
-
-:deep(.ant-table-tbody > tr:hover > td) {
-  @apply bg-gray-50 dark:bg-gray-700;
-}
-
-/* Custom scrollbar */
-:deep(.ant-table-body) {
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e0 #f7fafc;
-}
-
-:deep(.ant-table-body::-webkit-scrollbar) {
-  height: 8px;
-}
-
-:deep(.ant-table-body::-webkit-scrollbar-track) {
-  @apply bg-gray-100 dark:bg-gray-700;
-}
-
-:deep(.ant-table-body::-webkit-scrollbar-thumb) {
-  @apply bg-gray-300 dark:bg-gray-500 rounded;
-}
-
-:deep(.ant-table-body::-webkit-scrollbar-thumb:hover) {
-  @apply bg-gray-400 dark:bg-gray-400;
-}
-
-/* Prevent column content overflow and overlapping */
 :deep(.ant-table-cell) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  word-wrap: break-word;
-}
-
-:deep(.ant-table-tbody > tr > td) {
   vertical-align: middle;
 }
 
-/* Ensure fixed columns don't overlap */
-:deep(.ant-table-cell-fix-left),
-:deep(.ant-table-cell-fix-right) {
-  z-index: 2;
-  background: inherit;
+:deep(.ant-segmented) {
+  border-radius: 999px;
+  background: var(--surface-muted);
+  padding: 4px;
+}
+
+:deep(.ant-segmented-item-selected) {
+  background: var(--surface);
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+:deep(.ant-btn) {
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+:deep(.ant-btn-primary) {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+:deep(.ant-btn-primary:hover) {
+  background: #153eaa;
+  border-color: #153eaa;
+}
+
+:deep(.ant-btn-link) {
+  padding-inline: 0;
+}
+
+@media (max-width: 992px) {
+  .panel__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .summary-card__content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .row-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>

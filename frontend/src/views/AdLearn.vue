@@ -114,64 +114,36 @@
                 :placeholder="$t('adLearn.step1.referenceLink.placeholder')"
               />
               <a-alert
-                v-if="extractedContent"
+                v-if="referenceSummaryText"
                 type="success"
                 :message="$t('adLearn.step1.referenceLink.previewReady')"
-                :description="referenceSummary || $t('adLearn.step1.referenceLink.fallbackSummary')"
+                :description="referenceSummaryText || $t('adLearn.step1.referenceLink.fallbackSummary')"
                 show-icon
                 style="margin-top: 8px"
               />
             </a-form-item>
 
-            <a-row :gutter="16">
-              <a-col :span="12">
-                <a-form-item>
-                  <template #label>
-                    <span>{{ $t('adLearn.step1.creativeStyle.label') }}</span>
-                    <a-tooltip>
-                      <template #title>
-                        {{ $t('adLearn.step1.creativeStyle.tooltip') }}
-                      </template>
-                      <question-circle-outlined style="margin-left: 4px; color: #999;" />
-                    </a-tooltip>
-                  </template>
-                  <a-select
-                    v-model:value="formData.adStyle"
-                    :placeholder="$t('adLearn.step1.creativeStyle.placeholder')"
-                    allow-clear
-                  >
-                    <a-select-option
-                      v-for="style in adStyleOptions"
-                      :key="style.value"
-                      :value="style.value"
-                    >
-                      <div class="style-option">
-                        <div class="style-label">{{ style.label }}</div>
-                        <div class="style-description">{{ style.description }}</div>
-                      </div>
-                    </a-select-option>
-                  </a-select>
-                </a-form-item>
-              </a-col>
-              <a-col :span="12">
-                <a-form-item :label="$t('adLearn.step1.callToAction.label')">
-                  <a-select
-                    v-model:value="formData.callToAction"
-                    :placeholder="$t('adLearn.step1.callToAction.placeholder')"
-                    show-search
-                    :filter-option="filterCTA"
-                  >
-                    <a-select-option
-                      v-for="cta in standardCTAs"
-                      :key="cta.value"
-                      :value="cta.value"
-                    >
-                      {{ cta.label }}
-                    </a-select-option>
-                  </a-select>
-                </a-form-item>
-              </a-col>
-            </a-row>
+            <a-card
+              v-if="hasReferenceInsights"
+              class="reference-intel-card"
+              size="small"
+            >
+              <a-descriptions
+                :column="1"
+                size="small"
+                :title="$t('adLearn.referenceSummary.title')"
+              >
+                <a-descriptions-item :label="$t('adLearn.referenceSummary.summary')">
+                  {{ referenceSummaryText || $t('adLearn.referenceSummary.fallback') }}
+                </a-descriptions-item>
+                <a-descriptions-item :label="$t('adLearn.referenceSummary.detectedStyle')">
+                  {{ detectedStyleLabel }}
+                </a-descriptions-item>
+                <a-descriptions-item :label="$t('adLearn.referenceSummary.detectedCTA')">
+                  {{ detectedCTALabel }}
+                </a-descriptions-item>
+              </a-descriptions>
+            </a-card>
           </a-form>
 
           <div class="step-navigation">
@@ -308,7 +280,6 @@ import { mapGetters, mapActions } from 'vuex'
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
-  QuestionCircleOutlined,
   RobotOutlined,
   FileImageOutlined,
   SaveOutlined
@@ -322,7 +293,6 @@ export default {
   components: {
     ArrowLeftOutlined,
     ArrowRightOutlined,
-    QuestionCircleOutlined,
     RobotOutlined,
     FileImageOutlined,
     SaveOutlined,
@@ -340,18 +310,22 @@ export default {
         language: 'vi',
         baseContent: '',
         referenceLink: '',
-        adStyle: null,
-        callToAction: '',
         textProvider: 'openai',
-        imageProvider: 'gemini'
+        imageProvider: 'gemini',
+        personaId: null
       },
       textProviders: [],
       imageProviders: [],
       adVariations: [],
       selectedVariations: [],
       extractedContent: '',
-      referenceSummary: '',
+      referenceContent: '',
+      referenceSummaryText: '',
+      referenceInsights: null,
+      detectedStyle: null,
+      detectedCallToAction: null,
       adId: null,
+      hasReferenceInsights: false,
       loadingCampaigns: false,
       loadingCTAs: false,
       extracting: false,
@@ -427,6 +401,19 @@ export default {
           description: this.$t('adCreate.adStyles.minimalist.description')
         }
       ]
+    },
+    detectedStyleLabel() {
+      if (!this.detectedStyle) {
+        return this.$t('adLearn.referenceSummary.notDetected')
+      }
+      const match = this.adStyleOptions.find(style => style.value === this.detectedStyle)
+      return match ? match.label : this.detectedStyle
+    },
+    detectedCTALabel() {
+      if (!this.detectedCallToAction) {
+        return this.$t('adLearn.referenceSummary.notDetected')
+      }
+      return this.getCTALabel(this.detectedCallToAction) || this.detectedCallToAction
     }
   },
   created() {
@@ -506,39 +493,66 @@ export default {
     },
     async handleNextFromStep1() {
       if (!this.validateStep1()) return
-      await this.autoExtractContent()
+      await this.analyzeReference()
       this.currentStep = 2
     },
-    async autoExtractContent() {
-      if (!this.formData.referenceLink) return
+    async analyzeReference() {
+      if (!this.formData.referenceLink) return false
       this.extracting = true
       try {
-        const response = await api.ads.extractFromLibrary({
-          adLinks: [this.formData.referenceLink.trim()]
-        })
-        let data = response.data
-        let summary = null
-        if (data && data.data) {
-          summary = data.summary
-          data = data.data
+        const payload = {
+          referenceLink: this.formData.referenceLink.trim(),
+          fallbackContent: this.formData.baseContent
         }
-        const extractions = Array.isArray(data) ? data : [data]
-        const texts = extractions
-          .map(item => item?.body || item?.snapshot?.body || item?.text || '')
-          .filter(Boolean)
-        this.extractedContent = texts.join('\n\n---\n\n')
-        this.referenceSummary = summary || ''
-        if (this.extractedContent) {
-          this.$message.success(this.$t('adLearn.messages.success.extracted'))
-        } else {
-          this.$message.warning(this.$t('adLearn.messages.warning.noContent'))
-        }
+        const response = await api.post('/ads/learn/reference', payload)
+        this.referenceContent = response.data.referenceContent || ''
+        this.extractedContent = this.referenceContent
+        this.referenceInsights = response.data.insights || null
+        this.detectedStyle = response.data.detectedStyle || null
+        this.detectedCallToAction = response.data.suggestedCallToAction || null
+        this.referenceSummaryText = this.formatInsights(this.referenceInsights, response.data.message)
+        this.hasReferenceInsights = true
+        this.$message.success(this.$t('adLearn.messages.success.extracted'))
+        return true
       } catch (error) {
-        console.error('Auto-extraction error:', error)
+        console.error('Reference analysis error:', error)
         this.$message.warning(this.$t('adLearn.messages.error.extractContentFailed'))
+        this.referenceSummaryText = ''
+        this.hasReferenceInsights = false
+        return false
       } finally {
         this.extracting = false
       }
+    },
+    formatInsights(insights, fallbackMessage) {
+      if (!insights) {
+        return fallbackMessage || this.$t('adLearn.referenceSummary.fallback')
+      }
+      const { wordCount = 0, sentenceCount = 0, containsCallToAction, containsPrice } = insights
+      return this.$t('adLearn.referenceSummary.details', {
+        words: wordCount,
+        sentences: sentenceCount,
+        cta: containsCallToAction ? this.$t('common.action.yes') : this.$t('common.action.no'),
+        price: containsPrice ? this.$t('common.action.yes') : this.$t('common.action.no')
+      })
+    },
+    determineAdType() {
+      if (this.selectedCampaign && this.selectedCampaign.websiteUrl) {
+        return 'website_conversion'
+      }
+      return 'page_post'
+    },
+    determineWebsiteUrl() {
+      return this.selectedCampaign && this.selectedCampaign.websiteUrl
+        ? this.selectedCampaign.websiteUrl
+        : null
+    },
+    determineCallToAction() {
+      return this.detectedCallToAction || null
+    },
+    determineCallToActionLabel() {
+      const cta = this.determineCallToAction()
+      return cta ? (this.getCTALabel(cta) || cta) : ''
     },
     buildPrompt() {
       const language = detectLanguage(this.formData.baseContent || '') || this.formData.language
@@ -552,14 +566,14 @@ export default {
         prompt += `\n\n${this.$t('adLearn.prompt.referenceLinkOnly', { link: this.formData.referenceLink })}`
       }
 
-      if (this.formData.adStyle) {
-        const style = this.adStyleOptions.find(s => s.value === this.formData.adStyle)
-        prompt += `\n${this.$t('adLearn.prompt.styleCue', { style: style ? style.label : this.formData.adStyle })}`
+      if (this.detectedStyle) {
+        const style = this.adStyleOptions.find(s => s.value === this.detectedStyle)
+        prompt += `\n${this.$t('adLearn.prompt.styleCue', { style: style ? style.label : this.detectedStyle })}`
       }
 
-      if (this.formData.callToAction) {
-        const ctaLabel = this.getCTALabel(this.formData.callToAction)
-        prompt += `\n${this.$t('adLearn.prompt.ctaCue', { cta: ctaLabel || this.formData.callToAction })}`
+      const ctaLabel = this.determineCallToActionLabel()
+      if (ctaLabel) {
+        prompt += `\n${this.$t('adLearn.prompt.ctaCue', { cta: ctaLabel })}`
       }
 
       prompt += `\n${this.$t('adLearn.prompt.guardrail')}`
@@ -569,24 +583,23 @@ export default {
       this.isGenerating = true
       this.generateError = null
       try {
-        const prompt = this.buildPrompt()
         const requestData = {
           campaignId: this.formData.campaignId,
-          campaign: this.selectedCampaign,
-          adType: 'website_conversion',
+          adType: this.determineAdType(),
           name: this.formData.name,
-          prompt,
-          language: this.formData.language,
-          adLinks: this.formData.referenceLink ? [this.formData.referenceLink.trim()] : [],
+          productDescription: this.formData.baseContent,
+          referenceLink: this.formData.referenceLink,
+          referenceContent: this.referenceContent || this.formData.baseContent,
           textProvider: this.formData.textProvider,
           imageProvider: this.formData.imageProvider,
           numberOfVariations: this.formData.numberOfVariations,
-          callToAction: this.formData.callToAction || null,
-          adStyle: this.formData.adStyle || null,
-          extractedContent: this.extractedContent,
-          isPreview: true
+          language: this.formData.language,
+          callToAction: this.determineCallToAction(),
+          creativeStyle: this.detectedStyle,
+          websiteUrl: this.determineWebsiteUrl(),
+          personaId: this.formData.personaId || null
         }
-        const response = await api.post('/ads/generate', requestData)
+        const response = await api.post('/ads/learn/generate', requestData)
         if (response.data.status === 'success') {
           this.adVariations = this.normalizeVariations(response.data.variations)
           this.selectedVariations = [...this.adVariations]
@@ -613,7 +626,7 @@ export default {
       try {
         const requestData = {
           campaignId: this.formData.campaignId,
-          adType: 'website_conversion',
+          adType: this.determineAdType(),
           name: this.formData.name,
           prompt: this.buildPrompt(),
           language: this.formData.language,
@@ -624,11 +637,12 @@ export default {
           selectedVariations: this.selectedVariations,
           isPreview: false,
           saveExistingContent: true,
-          adStyle: this.formData.adStyle || null,
-          callToAction: this.formData.callToAction || null,
-          extractedContent: this.extractedContent
+          adStyle: this.detectedStyle || null,
+          callToAction: this.determineCallToAction(),
+          extractedContent: this.extractedContent,
+          websiteUrl: this.determineWebsiteUrl()
         }
-        const response = await api.ads.saveExisting(requestData)
+        const response = await api.post('/ads/learn/save', requestData)
         if (response.data.status === 'success') {
           this.$message.success(this.$t('adLearn.messages.success.saved'))
           this.$router.push('/ads')
@@ -674,9 +688,6 @@ export default {
       if (this.currentStep > 1) {
         this.currentStep--
       }
-    },
-    filterCTA(input, option) {
-      return option?.children?.toLowerCase().includes(input.toLowerCase())
     },
     getProviderName(providerValue) {
       const allProviders = [...this.textProviders, ...this.imageProviders]
@@ -921,5 +932,11 @@ export default {
   border-radius: 6px;
   font-weight: 600;
   margin-top: 8px;
+}
+
+.reference-intel-card {
+  margin-top: 12px;
+  border: 1px solid #dbeafe;
+  background: #f7fbff;
 }
 </style>

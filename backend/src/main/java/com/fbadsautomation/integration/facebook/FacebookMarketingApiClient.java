@@ -183,21 +183,48 @@ public class FacebookMarketingApiClient {
     }
 
     private String mapObjective(Campaign.CampaignObjective objective) {
-        if (objective == null) return "LINK_CLICKS";
+        if (objective == null) return "OUTCOME_TRAFFIC";
         switch (objective) {
+            case BRAND_AWARENESS:
+            case REACH:
+            case STORE_TRAFFIC:
+                return "OUTCOME_AWARENESS";
             case TRAFFIC:
-                return "LINK_CLICKS";
+                return "OUTCOME_TRAFFIC";
+            case ENGAGEMENT:
+            case VIDEO_VIEWS:
+                return "OUTCOME_ENGAGEMENT";
+            case APP_INSTALLS:
+                return "OUTCOME_APP_PROMOTION";
+            case LEAD_GENERATION:
+                return "OUTCOME_LEADS";
             case CONVERSIONS:
-                return "CONVERSIONS";
+            case CATALOG_SALES:
+                return "OUTCOME_SALES";
             default:
-                return "LINK_CLICKS";
+                return "OUTCOME_TRAFFIC";
         }
     }
 
     private String mapOptimizationGoal(Campaign.CampaignObjective objective) {
         if (objective == null) return "LINK_CLICKS";
         switch (objective) {
+            case BRAND_AWARENESS:
+            case REACH:
+            case STORE_TRAFFIC:
+                return "REACH";
+            case TRAFFIC:
+                return "LINK_CLICKS";
+            case ENGAGEMENT:
+                return "POST_ENGAGEMENT";
+            case VIDEO_VIEWS:
+                return "THRUPLAY";
+            case APP_INSTALLS:
+                return "APP_INSTALLS";
+            case LEAD_GENERATION:
+                return "LEAD_GENERATION";
             case CONVERSIONS:
+            case CATALOG_SALES:
                 return "OFFSITE_CONVERSIONS";
             default:
                 return "LINK_CLICKS";

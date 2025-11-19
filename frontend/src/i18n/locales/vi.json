@@ -1691,19 +1691,19 @@
       "referenceLink": {
         "label": "Link quảng cáo tham khảo (Meta Ad Library)",
         "placeholder": "Dán 1 link Meta Ad Library",
-        "previewReady": "Đã phân tích quảng cáo tham khảo. Sẽ dùng phong cách, không sao chép nội dung.",
+        "previewReady": "Đã phân tích quảng cáo tham khảo. AI sẽ gợi ý phong cách & CTA phù hợp.",
         "fallbackSummary": "Đã phân tích quảng cáo tham khảo"
       },
-      "creativeStyle": {
-        "label": "Phong cách",
-        "tooltip": "Chọn giọng điệu để định hướng viết lại",
-        "placeholder": "Chọn phong cách"
-      },
-      "callToAction": {
-        "label": "Call to action",
-        "placeholder": "Chọn CTA (không bắt buộc)"
-      },
       "next": "Tiếp tục"
+    },
+    "referenceSummary": {
+      "title": "Thông tin từ quảng cáo tham khảo",
+      "summary": "Tổng quan",
+      "detectedStyle": "Phong cách gợi ý",
+      "detectedCTA": "CTA gợi ý",
+      "fallback": "Đã phân tích quảng cáo tham khảo",
+      "notDetected": "Chưa xác định",
+      "details": "{words} từ • {sentences} câu • CTA: {cta} • Đề cập giá: {price}"
     },
     "step2": {
       "cardTitle": "Chọn nhà cung cấp AI",

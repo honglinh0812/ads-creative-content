@@ -105,6 +105,7 @@ export default {
         match: ['/ads'],
         children: [
           { label: t('navigation.allAds'), path: '/ads' },
+          { label: t('navigation.createAd'), path: '/ad/create' },
           { label: t('navigation.adLearning'), path: '/ads/learn' }
         ]
       },

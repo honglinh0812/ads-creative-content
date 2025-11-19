@@ -1511,19 +1511,19 @@
       "referenceLink": {
         "label": "Reference ad link (Meta Ad Library)",
         "placeholder": "Paste one Meta Ad Library link",
-        "previewReady": "Reference extracted. Will use style cues, not copy text.",
+        "previewReady": "Reference analyzed. Style & CTA suggestions ready.",
         "fallbackSummary": "Reference analyzed"
       },
-      "creativeStyle": {
-        "label": "Style",
-        "tooltip": "Select a tone to guide rewriting",
-        "placeholder": "Select a style"
-      },
-      "callToAction": {
-        "label": "Call to action",
-        "placeholder": "Choose CTA (optional)"
-      },
       "next": "Next"
+    },
+    "referenceSummary": {
+      "title": "Reference insights",
+      "summary": "Summary",
+      "detectedStyle": "Detected style",
+      "detectedCTA": "Detected CTA",
+      "fallback": "Reference analyzed",
+      "notDetected": "Not detected",
+      "details": "{words} words • {sentences} sentences • CTA: {cta} • Price mention: {price}"
     },
     "step2": {
       "cardTitle": "AI provider selection",
