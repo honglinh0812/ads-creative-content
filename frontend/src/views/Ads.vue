@@ -43,7 +43,7 @@
 
           <!-- Empty State -->
           <CreativeEmptyState
-            v-if="!loading && ads.length === 0"
+            v-if="!loading && (!ads || ads.length === 0)"
             variant="no-ads"
             :action-text="$t('common.actions.createFirstAd')"
             :action-handler="() => $router.push('/ad/create')"
@@ -244,13 +244,13 @@ export default {
   },
   computed: {
     ...mapState("ad", {
-      ads: state => state.ads,
+      ads: state => Array.isArray(state.ads) ? state.ads : [],
       loading: state => state.loading,
       error: state => state.error,
       adTotalItems: state => state.totalItems
     }),
     ...mapState("campaign", {
-      campaigns: "campaigns"
+      campaigns: state => Array.isArray(state.campaigns) ? state.campaigns : []
     }),
     ...mapGetters('cta', {
       allCTAs: 'allCTAs',
@@ -272,7 +272,7 @@ export default {
 
 
     totalItems() {
-      return this.adTotalItems ?? this.ads.length
+      return this.adTotalItems ?? (Array.isArray(this.ads) ? this.ads.length : 0)
     },
 
     totalPages() {

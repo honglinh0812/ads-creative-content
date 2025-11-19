@@ -92,25 +92,30 @@ export default {
     const router = useRouter()
 
     const { t } = useI18n()
+    const translate = (key, fallback) => {
+      const value = t(key)
+      if (!value) return fallback
+      return value === key ? fallback : value
+    }
     const userName = computed(() => store.getters['auth/user']?.username || store.getters['auth/user']?.name || t('user.defaultName'))
     const userInitials = computed(() => userName.value.split(' ').map(w => w[0]).join('').toUpperCase())
     // Main menu items
     const menu = computed(() => [
-      { label: t('navigation.dashboard'), path: '/dashboard', icon: HomeOutlined, match: ['dashboard'] },
-      { label: t('navigation.campaigns'), path: '/campaigns', icon: ThunderboltOutlined, match: ['campaign', 'campaigns'] },
+      { label: translate('navigation.dashboard', 'Dashboard'), path: '/dashboard', icon: HomeOutlined, match: ['dashboard'] },
+      { label: translate('navigation.campaigns', 'Campaigns'), path: '/campaigns', icon: ThunderboltOutlined, match: ['campaign', 'campaigns'] },
       {
-        label: t('navigation.ads'),
+        label: translate('navigation.ads', 'Ads'),
         path: '/ads',
         icon: FileTextOutlined,
         match: ['/ads'],
         children: [
-          { label: t('navigation.allAds'), path: '/ads' },
-          { label: t('navigation.createAd'), path: '/ad/create' },
-          { label: t('navigation.adLearning'), path: '/ads/learn' }
+          { label: translate('navigation.allAds', 'All ads'), path: '/ads' },
+          { label: translate('navigation.createAd', 'Create ad'), path: '/ad/create' },
+          { label: translate('navigation.mimicAds', 'Mimic ads'), path: '/ads/learn' }
         ]
       },
-      { label: t('navigation.personas') || 'Personas', path: '/personas', icon: TeamOutlined, match: ['persona', 'personas'] },
-      { label: t('navigation.competitors') || 'Competitors', path: '/competitors', icon: FundOutlined, match: ['competitor', 'competitors'] }
+      { label: translate('navigation.personas', 'Personas'), path: '/personas', icon: TeamOutlined, match: ['persona', 'personas'] },
+      { label: translate('navigation.competitors', 'Competitors'), path: '/competitors', icon: FundOutlined, match: ['competitor', 'competitors'] }
     ])
     // Determine if menu item is active
     function isActive(item) {

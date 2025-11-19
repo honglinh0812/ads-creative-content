@@ -375,10 +375,12 @@ export default {
       { label: 'Card view', value: 'cards' }
     ]
 
-    const totalAds = computed(() => props.totalItems || props.ads.length)
+    const safeAds = computed(() => (Array.isArray(props.ads) ? props.ads : []))
+
+    const totalAds = computed(() => props.totalItems || safeAds.value.length)
 
     const filteredAds = computed(() => {
-      let filtered = [...props.ads]
+      let filtered = [...safeAds.value]
 
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase()
