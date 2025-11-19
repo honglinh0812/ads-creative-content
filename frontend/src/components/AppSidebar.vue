@@ -1,10 +1,8 @@
 <template>
-  <!-- Hamburger button outside sidebar, shown when sidebar is closed -->
   <button v-if="!sidebarOpen" class="sidebar-hamburger-fixed" @click="$emit('toggle')" :aria-label="$t('sidebar.openSidebar')">
     <MenuOutlined class="w-6 h-6" />
 </button>
   <aside :class="['app-sidebar', { open: sidebarOpen }]">
-    <!-- Hamburger button inside sidebar, shown when sidebar is open -->
     <button v-if="sidebarOpen" class="sidebar-hamburger" @click="$emit('toggle')" :aria-label="$t('sidebar.closeSidebar')">
       <MenuOutlined class="w-6 h-6" />
     </button>
@@ -16,16 +14,32 @@
         </router-link>
       </div>
       <nav class="sidebar-menu">
-        <router-link
+        <div
           v-for="item in menu"
           :key="item.path"
-          :to="item.path"
-          class="sidebar-link"
-          :class="{ active: isActive(item) }"
+          class="sidebar-menu-group"
         >
-          <span class="icon" v-if="item.icon"><component :is="item.icon" class="w-5 h-5 mr-2" /></span>
-          <span>{{ item.label }}</span>
-        </router-link>
+          <router-link
+            :to="item.path"
+            class="sidebar-link"
+            :class="{ active: isActive(item) }"
+          >
+            <span class="icon" v-if="item.icon"><component :is="item.icon" class="w-5 h-5 mr-2" /></span>
+            <span>{{ item.label }}</span>
+          </router-link>
+
+          <div v-if="item.children" class="sidebar-submenu">
+            <router-link
+              v-for="child in item.children"
+              :key="child.path"
+              :to="child.path"
+              class="sidebar-sublink"
+              :class="{ active: isChildActive(child) }"
+            >
+              <span>{{ child.label }}</span>
+            </router-link>
+          </div>
+        </div>
       </nav>
       <div class="sidebar-actions">
         <button v-if="!isDashboard" class="btn btn-sm btn-outline w-full mb-2" @click="goDashboard">
@@ -84,15 +98,31 @@ export default {
     const menu = computed(() => [
       { label: t('navigation.dashboard'), path: '/dashboard', icon: HomeOutlined, match: ['dashboard'] },
       { label: t('navigation.campaigns'), path: '/campaigns', icon: ThunderboltOutlined, match: ['campaign', 'campaigns'] },
-      { label: t('navigation.ads'), path: '/ads', icon: FileTextOutlined, match: ['/ads'] },
-      { label: t('navigation.adLearning'), path: '/ads/learn', icon: BulbOutlined, match: ['/ads/learn'] },
+      {
+        label: t('navigation.ads'),
+        path: '/ads',
+        icon: FileTextOutlined,
+        match: ['/ads'],
+        children: [
+          { label: t('navigation.allAds'), path: '/ads' },
+          { label: t('navigation.adLearning'), path: '/ads/learn' }
+        ]
+      },
       { label: t('navigation.personas') || 'Personas', path: '/personas', icon: TeamOutlined, match: ['persona', 'personas'] },
       { label: t('navigation.competitors') || 'Competitors', path: '/competitors', icon: FundOutlined, match: ['competitor', 'competitors'] }
     ])
     // Determine if menu item is active
     function isActive(item) {
-      if (route.path === '/ads/learn' && item.path === '/ads') return false
-      return item.match.some(m => route.path.includes(m))
+      const directMatch = item.match.some(m => route.path.includes(m))
+      if (item.children) {
+        const childMatch = item.children.some(child => route.path.startsWith(child.path))
+        return directMatch || childMatch
+      }
+      return directMatch
+    }
+
+    function isChildActive(child) {
+      return route.path.startsWith(child.path)
     }
     // Check if current page is dashboard
     const isDashboard = computed(() => route.path === '/dashboard')
@@ -106,6 +136,7 @@ export default {
       userName,
       userInitials,
       isActive,
+      isChildActive,
       isDashboard,
       goDashboard,
 
@@ -259,6 +290,27 @@ export default {
 .sidebar-link.active, .sidebar-link:hover {
   background: var(--sidebar-active-bg, #f3f4f6);
   color: var(--sidebar-active-text, #2563eb);
+}
+
+.sidebar-submenu {
+  display: flex;
+  flex-direction: column;
+  margin-left: 1.5rem;
+  border-left: 2px solid rgba(37, 99, 235, 0.1);
+  padding-left: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-sublink {
+  padding: 0.35rem 0;
+  color: #6b7280;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+
+.sidebar-sublink.active {
+  color: #2563eb;
+  font-weight: 600;
 }
 
 .icon {
