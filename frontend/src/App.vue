@@ -230,20 +230,23 @@ export default {
 
     onMenuSelect({ key }) {
       this.selectedKeys = [key]
-      // Handle menu navigation
-      if (key === 'campaigns-list') {
-        this.$router.push('/campaigns')
-      } else if (key === 'campaigns-create') {
-        this.$router.push('/campaign/create')
-      } else if (key === 'ads-list') {
-        this.$router.push('/ads')
-      } else if (key === 'ads-create') {
-        this.$router.push('/ad/create')
-      } else if (key === 'ads-learn') {
-        this.$router.push('/ads/learn')
-      } else {
-        this.$router.push(`/${key}`)
+
+      const routeMap = {
+        'dashboard': '/dashboard',
+        'campaigns-list': '/campaigns',
+        'campaigns-create': '/campaign/create',
+        'ads-list': '/ads',
+        'ads-create': '/ad/create',
+        'ads-learn': '/ads/learn',
+        'analytics': '/analytics',
+        'optimization': '/optimization',
+        'competitors': '/competitors',
+        'profile': '/profile',
+        'settings': '/settings'
       }
+
+      const target = routeMap[key] || `/${key}`
+      this.$router.push(target)
     },
     showNotifications() {
       this.showNotificationDropdown = !this.showNotificationDropdown

@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import store from '../store'
 
-// Lazy-loaded Views for better performance
+// Lazy-loaded
 const Home = () => import('../views/Home.vue')
 const Login = () => import('../views/Login.vue')
 const Dashboard = () => import('../views/Dashboard.vue')
@@ -21,7 +21,6 @@ const PrivacyPolicy = () => import('../views/legal/PrivacyPolicy.vue')
 const TermsOfService = () => import('../views/legal/TermsOfService.vue')
 const DataDeletion = () => import('../views/legal/DataDeletion.vue')
 const AuthSuccess = () => import('../views/AuthSuccess.vue')
-// NotificationPage removed as requested
 const ResetPassword = () => import('../views/ResetPassword.vue')
 const Profile = () => import('../views/Profile.vue')
 const Settings = () => import('../views/Settings.vue')
@@ -110,7 +109,7 @@ const routes = [
   {
     path: '/ads/:id/edit',
     name: 'AdEdit',
-    component: AdCreate, // Reuse create component for editing
+    component: AdCreate, 
     props: true,
     meta: { requiresAuth: true }
   },
@@ -126,7 +125,6 @@ const routes = [
     component: Competitors,
     meta: { requiresAuth: true }
   },
-  // Notifications route removed - notifications are now handled in header modal only
   {
     path: '/reset-password',
     name: 'ResetPassword',

@@ -1,136 +1,154 @@
 <template>
   <div class="profile-page">
-    <!-- Header -->
-    <div class="mobile-header">
-      <h1>Profile</h1>
-      <a-button type="text" @click="handleLogout">
-        <template #icon><logout-outlined /></template>
-      </a-button>
-    </div>
+    <header class="page-header">
+      <div>
+        <h1>Profile</h1>
+        <p>Manage your personal information and account security.</p>
+      </div>
+      <div class="header-actions">
+        <a-button @click="loadProfile" :loading="loading">
+          Reload
+        </a-button>
+        <a-button danger @click="handleLogout">
+          <template #icon><logout-outlined /></template>
+          Logout
+        </a-button>
+      </div>
+    </header>
 
-    <!-- Main Content -->
-    <div class="main-content">
-      <div class="profile-container">
-        <a-row :gutter="24">
-          <!-- Profile Information -->
-          <a-col :xs="24" :lg="16">
-            <a-card title="Profile Information" class="profile-card">
-              <a-form
-                :model="profileForm"
-                layout="vertical"
-                @finish="updateProfile"
-              >
-                <a-row :gutter="16">
-                  <a-col :span="12">
-                    <a-form-item
-                      label="First Name"
-                      name="firstName"
-                      :rules="[{ required: true, message: 'Please enter your first name' }]"
-                    >
-                      <a-input v-model:value="profileForm.firstName" placeholder="Enter first name" />
-                    </a-form-item>
-                  </a-col>
-                  <a-col :span="12">
-                    <a-form-item
-                      label="Last Name"
-                      name="lastName"
-                      :rules="[{ required: true, message: 'Please enter your last name' }]"
-                    >
-                      <a-input v-model:value="profileForm.lastName" placeholder="Enter last name" />
-                    </a-form-item>
-                  </a-col>
-                </a-row>
-
+    <a-spin :spinning="loading">
+      <div class="profile-layout">
+        <section class="profile-panel">
+          <div class="panel-header">
+            <h2>Personal Information</h2>
+            <p>These details show up inside approvals, exports, and notifications.</p>
+          </div>
+          <a-form
+            :model="profileForm"
+            layout="vertical"
+            @finish="updateProfile"
+          >
+            <div class="form-section">
+              <h3>Contact</h3>
+              <div class="form-grid">
+                <a-form-item
+                  label="First Name"
+                  name="firstName"
+                  :rules="[{ required: true, message: 'Please enter your first name' }]"
+                >
+                  <a-input v-model:value="profileForm.firstName" placeholder="Enter first name" />
+                </a-form-item>
+                <a-form-item
+                  label="Last Name"
+                  name="lastName"
+                  :rules="[{ required: true, message: 'Please enter your last name' }]"
+                >
+                  <a-input v-model:value="profileForm.lastName" placeholder="Enter last name" />
+                </a-form-item>
+              </div>
+              <div class="form-grid">
                 <a-form-item
                   label="Email"
                   name="email"
                   :rules="[{ required: true, type: 'email', message: 'Please enter a valid email' }]"
                 >
-                  <a-input v-model:value="profileForm.email" placeholder="Enter email" disabled />
+                  <a-input v-model:value="profileForm.email" disabled />
                 </a-form-item>
-
-                <a-form-item
-                  label="Phone Number"
-                  name="phoneNumber"
-                >
+                <a-form-item label="Phone Number" name="phoneNumber">
                   <a-input v-model:value="profileForm.phoneNumber" placeholder="Enter phone number" />
                 </a-form-item>
+              </div>
+            </div>
 
-                <a-form-item
-                  label="Company"
-                  name="company"
-                >
+            <div class="form-section">
+              <h3>Work Details</h3>
+              <div class="form-grid">
+                <a-form-item label="Company" name="company">
                   <a-input v-model:value="profileForm.company" placeholder="Enter company name" />
                 </a-form-item>
-
-                <a-form-item
-                  label="Job Title"
-                  name="jobTitle"
-                >
+                <a-form-item label="Job Title" name="jobTitle">
                   <a-input v-model:value="profileForm.jobTitle" placeholder="Enter job title" />
                 </a-form-item>
+              </div>
+            </div>
 
-                <a-form-item>
-                  <a-button type="primary" html-type="submit" :loading="updating">
-                    Update Profile
-                  </a-button>
+            <div class="form-section">
+              <h3>Localization</h3>
+              <div class="form-grid">
+                <a-form-item label="Language" name="language">
+                  <a-select v-model:value="profileForm.language">
+                    <a-select-option
+                      v-for="lang in languageOptions"
+                      :key="lang.value"
+                      :value="lang.value"
+                    >
+                      {{ lang.label }}
+                    </a-select-option>
+                  </a-select>
                 </a-form-item>
-              </a-form>
-            </a-card>
-          </a-col>
-
-          <!-- Account Settings -->
-          <a-col :xs="24" :lg="8">
-            <a-card title="Account Settings" class="settings-card">
-              <div class="setting-item">
-                <h4>Change Password</h4>
-                <p>Update your password to keep your account secure</p>
-                <a-button @click="showPasswordModal = true">Change Password</a-button>
+                <a-form-item label="Timezone" name="timezone">
+                  <a-select
+                    v-model:value="profileForm.timezone"
+                    show-search
+                    option-filter-prop="children"
+                  >
+                    <a-select-option
+                      v-for="tz in timezoneOptions"
+                      :key="tz.value"
+                      :value="tz.value"
+                    >
+                      {{ tz.label }}
+                    </a-select-option>
+                  </a-select>
+                </a-form-item>
               </div>
+            </div>
 
-              <a-divider />
+            <div class="panel-actions">
+              <a-space>
+                <a-button @click="resetForm" :disabled="updating">
+                  Reset
+                </a-button>
+                <a-button type="primary" html-type="submit" :loading="updating">
+                  Save Changes
+                </a-button>
+              </a-space>
+            </div>
+          </a-form>
+        </section>
 
-              <div class="setting-item">
-                <h4>Language</h4>
-                <p>Choose your preferred language</p>
-                <a-select v-model:value="profileForm.language" style="width: 100%">
-                  <a-select-option value="en">English</a-select-option>
-                  <a-select-option value="vi">Tiếng Việt</a-select-option>
-                </a-select>
-              </div>
+        <aside class="profile-aside">
+          <section class="aside-card">
+            <h3>Security</h3>
+            <p>Change your password or end the current session.</p>
+            <a-button block @click="showPasswordModal = true">
+              Change Password
+            </a-button>
+            <a-divider />
+            <h4>Current session</h4>
+            <p>{{ user?.email || profileForm.email }}</p>
+            <a-button block type="dashed" @click="handleLogout">
+              Sign Out
+            </a-button>
+          </section>
 
-              <a-divider />
-
-              <div class="setting-item">
-                <h4>Timezone</h4>
-                <p>Set your local timezone</p>
-                <a-select v-model:value="profileForm.timezone" style="width: 100%">
-                  <a-select-option value="Asia/Ho_Chi_Minh">Ho Chi Minh City (GMT+7)</a-select-option>
-                  <a-select-option value="America/New_York">New York (GMT-5)</a-select-option>
-                  <a-select-option value="Europe/London">London (GMT+0)</a-select-option>
-                  <a-select-option value="Asia/Tokyo">Tokyo (GMT+9)</a-select-option>
-                </a-select>
-              </div>
-
-              <a-divider />
-
-              <div class="setting-item danger">
-                <h4>Delete Account</h4>
-                <p>Permanently delete your account and all data</p>
-                <a-button danger @click="showDeleteModal = true">Delete Account</a-button>
-              </div>
-            </a-card>
-          </a-col>
-        </a-row>
+          <section class="aside-card danger">
+            <h3>Danger Zone</h3>
+            <p>Permanently delete your account and all underlying data.</p>
+            <a-button block danger @click="showDeleteModal = true">
+              Delete Account
+            </a-button>
+          </section>
+        </aside>
       </div>
-    </div>
+    </a-spin>
 
-    <!-- Change Password Modal -->
     <a-modal
       v-model:open="showPasswordModal"
       title="Change Password"
       @ok="changePassword"
       :confirm-loading="changingPassword"
+      @cancel="resetPasswordForm"
     >
       <a-form :model="passwordForm" layout="vertical">
         <a-form-item
@@ -159,7 +177,6 @@
       </a-form>
     </a-modal>
 
-    <!-- Delete Account Modal -->
     <a-modal
       v-model:open="showDeleteModal"
       title="Delete Account"
@@ -167,10 +184,11 @@
       :confirm-loading="deleting"
       ok-text="Delete"
       ok-type="danger"
+      @cancel="deleteConfirmation = ''"
     >
       <a-alert
         message="Warning"
-        description="This action cannot be undone. All your data will be permanently deleted."
+        description="This action cannot be undone. All data will be permanently deleted."
         type="warning"
         show-icon
         style="margin-bottom: 16px"
@@ -182,9 +200,8 @@
 </template>
 
 <script>
-import {
-  LogoutOutlined
-} from '@ant-design/icons-vue'
+import { mapGetters } from 'vuex'
+import { LogoutOutlined } from '@ant-design/icons-vue'
 import api from '@/services/api'
 
 export default {
@@ -215,8 +232,23 @@ export default {
       updating: false,
       changingPassword: false,
       deleting: false,
-      loading: true
+      loading: true,
+      initialProfile: null,
+      languageOptions: [
+        { value: 'en', label: 'English' },
+        { value: 'vi', label: 'Tiếng Việt' }
+      ],
+      timezoneOptions: [
+        { value: 'Asia/Ho_Chi_Minh', label: 'Ho Chi Minh City (GMT+7)' },
+        { value: 'America/New_York', label: 'New York (GMT-5)' },
+        { value: 'Europe/London', label: 'London (GMT+0)' },
+        { value: 'Asia/Tokyo', label: 'Tokyo (GMT+9)' },
+        { value: 'UTC', label: 'UTC' }
+      ]
     }
+  },
+  computed: {
+    ...mapGetters('auth', ['user'])
   },
   async mounted() {
     await this.loadProfile()
@@ -227,7 +259,7 @@ export default {
       try {
         const response = await api.auth.getProfile()
         if (response.data) {
-          this.profileForm = {
+          const profile = {
             firstName: response.data.firstName || '',
             lastName: response.data.lastName || '',
             email: response.data.email || '',
@@ -237,12 +269,20 @@ export default {
             language: response.data.language || 'en',
             timezone: response.data.timezone || 'Asia/Ho_Chi_Minh'
           }
+          this.profileForm = { ...profile }
+          this.initialProfile = { ...profile }
         }
       } catch (error) {
         console.error('Error loading profile:', error)
         this.$message.error('Failed to load profile information')
       } finally {
         this.loading = false
+      }
+    },
+
+    resetForm() {
+      if (this.initialProfile) {
+        this.profileForm = { ...this.initialProfile }
       }
     },
 
@@ -259,12 +299,21 @@ export default {
           timezone: this.profileForm.timezone
         }
         await api.auth.updateProfile(profileData)
+        this.initialProfile = { ...this.profileForm }
         this.$message.success('Profile updated successfully')
       } catch (error) {
         console.error('Error updating profile:', error)
         this.$message.error('Failed to update profile')
       } finally {
         this.updating = false
+      }
+    },
+
+    resetPasswordForm() {
+      this.passwordForm = {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
       }
     },
 
@@ -287,11 +336,7 @@ export default {
         })
         this.$message.success('Password changed successfully')
         this.showPasswordModal = false
-        this.passwordForm = {
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        }
+        this.resetPasswordForm()
       } catch (error) {
         console.error('Error changing password:', error)
         const errorMessage = error.response?.data?.message || 'Failed to change password'
@@ -319,6 +364,7 @@ export default {
         this.$message.error(errorMessage)
       } finally {
         this.deleting = false
+        this.deleteConfirmation = ''
       }
     },
 
@@ -332,71 +378,121 @@ export default {
 
 <style lang="scss" scoped>
 .profile-page {
-  background: #f5f5f5;
+  padding: 24px;
+  background: #f5f6fa;
   min-height: 100vh;
 }
 
-.mobile-header {
+.page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-.mobile-header h1 {
+.page-header h1 {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
 }
 
-.main-content {
-  padding: 2rem;
+.page-header p {
+  margin: 4px 0 0;
+  color: #64748b;
 }
 
-.profile-container {
-  max-width: 1200px;
-  margin: 0 auto;
+.header-actions {
+  display: flex;
+  gap: 12px;
 }
 
-.profile-card,
-.settings-card {
-  margin-bottom: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 24px;
 }
 
-.setting-item {
-  margin-bottom: 1rem;
+.profile-panel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid #edf2f7;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
-.setting-item h4 {
-  margin: 0 0 0.5rem 0;
-  font-weight: 600;
-  color: #1f2937;
+.panel-header h2 {
+  margin: 0 0 4px;
+  font-size: 22px;
 }
 
-.setting-item p {
-  margin: 0 0 1rem 0;
-  color: #6b7280;
-  font-size: 0.875rem;
+.panel-header p {
+  margin: 0 0 16px;
+  color: #64748b;
 }
 
-.setting-item.danger h4 {
-  color: #dc2626;
+.form-section {
+  margin-bottom: 24px;
 }
 
-.setting-item.danger p {
-  color: #dc2626;
+.form-section h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #1e293b;
 }
 
-@media (max-width: 768px) {
-  .main-content {
-    padding: 1rem;
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #edf2f7;
+  padding-top: 16px;
+}
+
+.profile-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.aside-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid #edf2f7;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+.aside-card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.aside-card p {
+  margin: 0 0 12px;
+  color: #475569;
+}
+
+.aside-card.danger {
+  border-color: #fecdd3;
+  background: #fff1f2;
+}
+
+@media (max-width: 1024px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

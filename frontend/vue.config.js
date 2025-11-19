@@ -60,8 +60,8 @@ module.exports = {
         '@': path.resolve(__dirname, 'src')
       }
     },
-    // Disable source maps in production to prevent config leakage and reduce bundle size
-    devtool: process.env.NODE_ENV === 'development' ? 'eval-source-map' : false
+    // Enable source maps so production errors can be mapped back to source
+    devtool: process.env.NODE_ENV === 'development' ? 'eval-source-map' : 'source-map'
   },
 
   chainWebpack: config => {
