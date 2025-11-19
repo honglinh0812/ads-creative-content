@@ -506,6 +506,9 @@
       },
       "warning": {
         "selectAdToExport": "Vui lòng chọn ít nhất một quảng cáo để xuất"
+      },
+      "info": {
+        "exportingAds": "Đang xuất quảng cáo..."
       }
     },
     "confirmations": {
@@ -1210,7 +1213,7 @@
       "step1": {
         "title": "Thông tin cơ bản",
         "description": "Cho chúng tôi biết về quảng cáo của bạn",
-        "emoji": "📝"
+        "emoji": ""
       },
       "step2": {
         "title": "Chọn nhà cung cấp AI",
@@ -1220,7 +1223,7 @@
       "step3": {
         "title": "Xem trước",
         "description": "Xem tác phẩm của bạn",
-        "emoji": "✨"
+        "emoji": ""
       }
     },
     "steps": {

@@ -29,6 +29,8 @@ public class FacebookConfig {
         properties.setPageId(environment.getProperty("facebook.page-id", ""));
         properties.setPixelId(environment.getProperty("facebook.pixel-id", ""));
         properties.setDefaultAdAccountId(environment.getProperty("facebook.default-ad-account-id", ""));
+        properties.setAdsetBudgetSharingEnabled(Boolean.parseBoolean(
+            environment.getProperty("facebook.adset-budget-sharing-enabled", "false")));
         return properties;
     }
 }

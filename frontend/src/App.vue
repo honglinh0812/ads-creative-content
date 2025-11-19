@@ -54,6 +54,7 @@
               <template #title>{{ $t('navigation.ads') }}</template>
               <a-menu-item key="ads-list">{{ $t('navigation.allAds') }}</a-menu-item>
               <a-menu-item key="ads-create">{{ $t('navigation.createAd') }}</a-menu-item>
+              <a-menu-item key="ads-learn">{{ $t('navigation.mimicAds') }}</a-menu-item>
             </a-sub-menu>
 
             <a-menu-item key="analytics">

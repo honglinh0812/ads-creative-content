@@ -26,11 +26,12 @@ export default {
     currentPage: state => state.currentPage
   },
   mutations: {
-    SET_ADS(state, data) {
-      state.ads = data.content
-      state.totalItems = data.totalElements
-      state.totalPages = data.totalPages
-      state.currentPage = data.number
+    SET_ADS(state, data = {}) {
+      const content = Array.isArray(data.content) ? data.content : []
+      state.ads = content
+      state.totalItems = typeof data.totalElements === 'number' ? data.totalElements : content.length
+      state.totalPages = typeof data.totalPages === 'number' ? data.totalPages : 0
+      state.currentPage = typeof data.number === 'number' ? data.number : 0
     },
     SET_CURRENT_AD(state, ad) {
       state.currentAd = ad
@@ -266,5 +267,4 @@ export default {
     }
   }
 }
-
 

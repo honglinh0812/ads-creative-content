@@ -100,7 +100,14 @@ public class FacebookMarketingApiClient {
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("name", campaign.getName() + " - Ad Set");
         form.add("campaign_id", campaignId);
-        form.add("daily_budget", formatBudgetForMeta(campaign.getDailyBudget()));
+        boolean adsetBudgetSharing = facebookProperties.isAdsetBudgetSharingEnabled();
+        form.add("is_adset_budget_sharing_enabled", String.valueOf(adsetBudgetSharing));
+
+        if (!adsetBudgetSharing) {
+            String dailyBudget = formatBudgetForMeta(resolveAdsetBudget(campaign));
+            form.add("daily_budget", dailyBudget);
+        }
+
         form.add("start_time", ISO_FORMATTER.format(campaign.getStartDate()));
         if (campaign.getEndDate() != null) {
             form.add("end_time", ISO_FORMATTER.format(campaign.getEndDate()));
@@ -243,6 +250,19 @@ public class FacebookMarketingApiClient {
         // convert to smallest currency unit (assume USD cents or VND unit depending on account currency)
         long smallest = Math.round(budget * 100);
         return String.valueOf(smallest);
+    }
+
+    private Double resolveAdsetBudget(Campaign campaign) {
+        if (campaign.getDailyBudget() != null && campaign.getDailyBudget() > 0) {
+            return campaign.getDailyBudget();
+        }
+        if (campaign.getBudgetType() == Campaign.BudgetType.DAILY && campaign.getBudget() != null) {
+            return campaign.getBudget();
+        }
+        if (campaign.getTotalBudget() != null) {
+            return campaign.getTotalBudget();
+        }
+        return 0.0;
     }
 
     private String buildPromotedObject(Ad ad) {

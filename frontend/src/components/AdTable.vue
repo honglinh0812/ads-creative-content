@@ -359,12 +359,14 @@ export default {
       { label: 'Collection', value: 'COLLECTION' }
     ]
 
+    const safeCampaigns = computed(() => (Array.isArray(props.campaigns) ? props.campaigns : []))
+
     const campaignOptions = computed(() => {
-      if (!props.campaigns || !props.campaigns.length) {
+      if (!safeCampaigns.value.length) {
         return []
       }
 
-      return props.campaigns.map((campaign) => ({
+      return safeCampaigns.value.map((campaign) => ({
         label: campaign.name,
         value: campaign.id
       }))
@@ -558,7 +560,7 @@ export default {
 
     const getCampaignName = (campaignId) => {
       if (!campaignId) return 'No campaign'
-      const campaign = props.campaigns.find(
+      const campaign = safeCampaigns.value.find(
         (entry) => entry.id?.toString() === campaignId?.toString()
       )
       return campaign?.name || `Campaign ${campaignId}`

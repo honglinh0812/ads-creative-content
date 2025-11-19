@@ -16,8 +16,8 @@
 
       <!-- Ad Table Component -->
       <AdTable
-        :ads="ads"
-        :campaigns="campaigns"
+        :ads="safeAds"
+        :campaigns="safeCampaigns"
         :loading="loading"
         :total-items="totalItems"
         :current-page="page + 1"
@@ -41,9 +41,9 @@
             :action-handler="loadAds"
           />
 
-          <!-- Empty State -->
-          <CreativeEmptyState
-            v-if="!loading && (!ads || ads.length === 0)"
+      <!-- Empty State -->
+      <CreativeEmptyState
+        v-if="!loading && safeAds.length === 0"
             variant="no-ads"
             :action-text="$t('common.actions.createFirstAd')"
             :action-handler="() => $router.push('/ad/create')"
@@ -244,13 +244,13 @@ export default {
   },
   computed: {
     ...mapState("ad", {
-      ads: state => Array.isArray(state.ads) ? state.ads : [],
+      ads: state => state.ads,
       loading: state => state.loading,
       error: state => state.error,
       adTotalItems: state => state.totalItems
     }),
     ...mapState("campaign", {
-      campaigns: state => Array.isArray(state.campaigns) ? state.campaigns : []
+      campaigns: state => state.campaigns
     }),
     ...mapGetters('cta', {
       allCTAs: 'allCTAs',
@@ -269,10 +269,14 @@ export default {
       return this.filteredAds
     },
 
-
-
+    safeAds() {
+      return Array.isArray(this.ads) ? this.ads : []
+    },
+    safeCampaigns() {
+      return Array.isArray(this.campaigns) ? this.campaigns : []
+    },
     totalItems() {
-      return this.adTotalItems ?? (Array.isArray(this.ads) ? this.ads.length : 0)
+      return typeof this.adTotalItems === 'number' ? this.adTotalItems : this.safeAds.length
     },
 
     totalPages() {

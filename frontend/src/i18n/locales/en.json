@@ -1474,17 +1474,17 @@
       "step1": {
         "title": "Fill info",
         "description": "Campaign, goal, reference link",
-        "emoji": "🎯"
+        "emoji": ""
       },
       "step2": {
         "title": "Choose AI",
         "description": "Pick text & image providers",
-        "emoji": "🤖"
+        "emoji": ""
       },
       "step3": {
         "title": "Preview & save",
         "description": "Review variations and save",
-        "emoji": "🎉"
+        "emoji": ""
       }
     },
     "step1": {
@@ -1668,6 +1668,9 @@
       },
       "warning": {
         "selectAdToExport": "Please select at least one ad to export"
+      },
+      "info": {
+        "exportingAds": "Exporting ads..."
       }
     },
     "imageError": {

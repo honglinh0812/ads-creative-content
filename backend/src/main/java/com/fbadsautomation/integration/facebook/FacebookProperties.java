@@ -17,6 +17,7 @@ public class FacebookProperties {
     private String pageId;
     private String pixelId;
     private String defaultAdAccountId;
+    private boolean adsetBudgetSharingEnabled;
     
     // Getter methods
     public String getApiUrl() {
@@ -58,6 +59,10 @@ public class FacebookProperties {
     public String getDefaultAdAccountId() {
         return defaultAdAccountId;
     }
+
+    public boolean isAdsetBudgetSharingEnabled() {
+        return adsetBudgetSharingEnabled;
+    }
     
     // Setter methods
     public void setApiUrl(String apiUrl) {
@@ -98,5 +103,9 @@ public class FacebookProperties {
 
     public void setDefaultAdAccountId(String defaultAdAccountId) {
         this.defaultAdAccountId = defaultAdAccountId;
+    }
+
+    public void setAdsetBudgetSharingEnabled(boolean adsetBudgetSharingEnabled) {
+        this.adsetBudgetSharingEnabled = adsetBudgetSharingEnabled;
     }
 }
