@@ -267,8 +267,8 @@
 
     <div v-if="totalPages > 1" class="pagination-wrapper">
       <a-pagination
-        :current="currentPage"
-        :page-size="pageSize"
+        :current="internalPage"
+        :page-size="pageSizeValue"
         :total="totalAds"
         :show-total="renderTotal"
         :page-size-options="['12', '24', '48', '96']"
@@ -336,6 +336,7 @@ export default {
     const sortOrder = ref('desc')
     const selectedRowKeys = ref([])
     const internalPage = ref(props.currentPage || 1)
+    const pageSizeValue = computed(() => props.pageSize)
 
     watch(
       () => props.currentPage,
@@ -616,8 +617,8 @@ export default {
       handleTableChange,
       handlePageChange,
       handlePageSizeChange,
-      currentPage: internalPage,
-      pageSize: computed(() => props.pageSize),
+      internalPage,
+      pageSizeValue,
       renderTotal
     }
   }
