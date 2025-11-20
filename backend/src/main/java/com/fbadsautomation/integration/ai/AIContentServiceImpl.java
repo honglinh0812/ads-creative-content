@@ -141,6 +141,8 @@ public class AIContentServiceImpl {
             List<AdContent> contents = aiProviderService.generateContentWithReliability(
                 enhancedPrompt, textProvider, numberOfVariations, language, adLinks, cta);
 
+            final String imageSubject = deriveImageSubject(prompt);
+
             // Handle images
             if (mediaFileUrl != null && !mediaFileUrl.isBlank()) {
                 // Use provided media file URL
@@ -170,7 +172,7 @@ public class AIContentServiceImpl {
                         log.debug("[VARIATION {}/{}] Generating image with provider: {}", i + 1, contents.size(), workingProvider);
 
                         // Issue #9: Use standardized image prompt with AdStyle
-                        String imagePrompt = buildStandardizedImagePrompt(prompt, adStyle, workingProvider);
+                        String imagePrompt = buildStandardizedImagePrompt(imageSubject, adStyle, workingProvider);
                         String imageUrl = aiProviderService.generateImageWithReliability(
                             imagePrompt, workingProvider);
 
@@ -207,7 +209,7 @@ public class AIContentServiceImpl {
                                 log.debug("[VARIATION {}/{}] Retrying with fallback provider: {}", i + 1, contents.size(), workingProvider);
 
                                 // Issue #9: Use standardized image prompt with AdStyle
-                                String imagePrompt = buildStandardizedImagePrompt(prompt, adStyle, workingProvider);
+                                String imagePrompt = buildStandardizedImagePrompt(imageSubject, adStyle, workingProvider);
                                 String imageUrl = aiProviderService.generateImageWithReliability(
                                     imagePrompt, workingProvider);
 
@@ -319,6 +321,8 @@ public class AIContentServiceImpl {
             List<AdContent> contents = aiProviderService.generateContentWithReliability(
                 enhancedPrompt, textProvider, numberOfVariations, language, adLinks, cta);
 
+            final String imageSubject = deriveImageSubject(prompt);
+
             // Handle image URL assignment
             // Priority 1: Use uploaded image from frontend (mediaFileUrl)
             // Priority 2: Generate image with AI provider (specified or default to Gemini)
@@ -349,7 +353,7 @@ public class AIContentServiceImpl {
                     try {
                         totalApiCalls++;
                         // Issue #9: Use standardized image prompt (no adStyle in deprecated method)
-                        String imagePrompt = buildStandardizedImagePrompt(prompt, null, workingProvider);
+                        String imagePrompt = buildStandardizedImagePrompt(imageSubject, null, workingProvider);
                         log.debug("[VARIATION {}/{}] Generating image with provider: {}", i + 1, contents.size(), workingProvider);
 
                         String imageUrl = aiProviderService.generateImageWithReliability(
@@ -388,7 +392,7 @@ public class AIContentServiceImpl {
                             try {
                                 totalApiCalls++;
                                 // Issue #9: Use standardized image prompt (no adStyle in deprecated method)
-                                String imagePrompt = buildStandardizedImagePrompt(prompt, null, workingProvider);
+                                String imagePrompt = buildStandardizedImagePrompt(imageSubject, null, workingProvider);
                                 log.debug("[VARIATION {}/{}] Retrying with fallback provider: {}", i + 1, contents.size(), workingProvider);
 
                                 String imageUrl = aiProviderService.generateImageWithReliability(
@@ -604,7 +608,9 @@ public class AIContentServiceImpl {
                     detectedLanguage,
                     com.fbadsautomation.model.FacebookCTA.LEARN_MORE,  // Default CTA for prompt
                     adType,
-                    1  // numberOfVariations for prompt context
+                    1,  // numberOfVariations for prompt context
+                    null,
+                    null
                 );
 
                 log.info("[Phase 3] CoT prompt built successfully with {} stages",
@@ -950,5 +956,68 @@ public class AIContentServiceImpl {
         log.warn("ImagePromptService not available, using fallback prompt");
         return "Create a single high quality image: " + userPrompt +
                ", professional advertising photography, high quality, vibrant colors, eye-catching";
+    }
+
+    private String deriveImageSubject(String prompt) {
+        final String fallback = "premium advertising product hero shot";
+        if (prompt == null || prompt.isBlank()) {
+            return fallback;
+        }
+
+        String normalized = prompt.replace("\r", "\n");
+        String[] markers = {
+            "Bạn đang tạo chiến dịch quảng cáo Facebook cho:",
+            "You are creating a Facebook ad campaign for:"
+        };
+
+        for (String marker : markers) {
+            int idx = normalized.indexOf(marker);
+            if (idx >= 0) {
+                String afterMarker = normalized.substring(idx + marker.length()).trim();
+                String candidate = extractMeaningfulLine(afterMarker);
+                if (candidate != null) {
+                    return candidate;
+                }
+            }
+        }
+
+        String fallbackCandidate = extractMeaningfulLine(normalized);
+        return fallbackCandidate != null ? fallbackCandidate : fallback;
+    }
+
+    private String extractMeaningfulLine(String text) {
+        if (text == null) {
+            return null;
+        }
+
+        String[] lines = text.split("\\n");
+        for (String rawLine : lines) {
+            String line = rawLine.trim();
+            if (line.isEmpty()) {
+                continue;
+            }
+            if (line.startsWith("Loại quảng cáo") || line.startsWith("Ad Type")) {
+                continue;
+            }
+            if (line.startsWith("Số lượng") || line.startsWith("Number of variations")) {
+                continue;
+            }
+            if (line.startsWith("Call-to-Action") || line.startsWith("Call to Action")) {
+                continue;
+            }
+            if (line.startsWith("Ngôn ngữ") || line.startsWith("Language")) {
+                continue;
+            }
+            if (line.startsWith("📏") || line.startsWith("🎯") || line.startsWith("👥")
+                || line.startsWith("🎨") || line.startsWith("🧠") || line.startsWith("✍️")
+                || line.startsWith("##")) {
+                continue;
+            }
+            if (line.length() > 140) {
+                line = line.substring(0, 140).trim();
+            }
+            return line.replaceAll("\\s+", " ");
+        }
+        return null;
     }
 }

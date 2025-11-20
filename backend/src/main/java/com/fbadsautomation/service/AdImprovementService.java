@@ -288,7 +288,7 @@ public class AdImprovementService {
                 : Language.ENGLISH;
         AdStyle adStyle = parseAdStyle(request.getCreativeStyle());
 
-        String basePrompt = chainOfThoughtPromptBuilder.buildCoTPrompt(
+        return chainOfThoughtPromptBuilder.buildCoTPrompt(
                 StringUtils.hasText(request.getProductDescription()) ? request.getProductDescription() : "N/A",
                 null,
                 adStyle,
@@ -297,31 +297,10 @@ public class AdImprovementService {
                 language,
                 request.getCallToAction(),
                 adType,
-                request.getNumberOfVariations()
+                request.getNumberOfVariations(),
+                request.getReferenceContent(),
+                request.getReferenceLink()
         );
-
-        StringBuilder promptBuilder = new StringBuilder(basePrompt);
-
-        promptBuilder.append("## REFERENCE AD - STYLE CLONE INPUT\n");
-        if (StringUtils.hasText(request.getReferenceContent())) {
-            promptBuilder.append(request.getReferenceContent()).append('\n');
-        } else {
-            promptBuilder.append("Reference content unavailable.\n");
-        }
-        promptBuilder.append("Reference Link: ")
-                .append(StringUtils.hasText(request.getReferenceLink()) ? request.getReferenceLink() : "N/A")
-                .append('\n');
-
-        promptBuilder.append("\n## CHAIN OF THOUGHT INSTRUCTIONS\n")
-                .append("Step 1 - Analyze reference ad: Extract tone, hook, sentence length, emoji usage, CTA placement.\n")
-                .append("Step 2 - Derive style guidelines: Summarize the tone + structure in bullet points.\n")
-                .append("Step 3 - Adapt to new product: Apply those guidelines to the user's product/service above.\n")
-                .append("Step 4 - Generate ")
-                .append(request.getNumberOfVariations())
-                .append(" new ads that mimic the style but keep content original. Do NOT copy text verbatim.\n")
-                .append("Step 5 - Output JSON array with fields: headline, primary_text, description, call_to_action, image_prompt.\n");
-
-        return promptBuilder.toString();
     }
 
     private AdGenerationResponse.AdVariation convertToAdVariation(AdContent content, String languageCode) {

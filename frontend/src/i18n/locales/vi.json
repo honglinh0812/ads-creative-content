@@ -159,6 +159,30 @@
       "uncategorized": "Chưa gắn",
       "empty": "Chưa có quảng cáo nào"
     },
+    "leaderboard": {
+      "title": "Hiệu suất nhanh",
+      "subtitle": "Top và mục cần chú ý",
+      "entityLabel": "Chế độ xem",
+      "metricLabel": "Chỉ số",
+      "rangeLabel": "Khoảng thời gian",
+      "entities": {
+        "ads": "Quảng cáo",
+        "campaigns": "Chiến dịch"
+      },
+      "metrics": {
+        "ctr": "CTR",
+        "cpc": "CPC"
+      },
+      "ranges": {
+        "7d": "7 ngày",
+        "30d": "30 ngày",
+        "90d": "90 ngày"
+      },
+      "topTitle": "Đang hoạt động tốt",
+      "bottomTitle": "Cần tối ưu",
+      "avgLabel": "TB {metric}",
+      "empty": "Chưa có dữ liệu hiệu suất"
+    },
     "error": {
       "title": "Không tải được dữ liệu"
     }
@@ -222,6 +246,30 @@
     },
     "error": {
       "title": "Không thể phân tích"
+    },
+    "rewrite": {
+      "title": "Phòng lab viết lại bằng AI",
+      "subtitle": "Chọn quảng cáo và tạo biến thể mới trong vài giây",
+      "selectAd": "Chọn quảng cáo",
+      "tone": "Tông giọng",
+      "length": "Độ dài",
+      "focus": "Điểm nổi bật",
+      "keywords": "Từ khóa",
+      "guidance": "Ghi chú thêm",
+      "variations": "Số biến thể",
+      "provider": "Mô hình",
+      "generate": "Sinh bản nháp",
+      "keywordsHint": "Nhập từ khóa, ngăn cách bằng dấu phẩy (không bắt buộc)",
+      "guidancePlaceholder": "Thêm bối cảnh chiến dịch hoặc ràng buộc khi viết lại",
+      "noAd": "Hãy chọn quảng cáo để viết lại",
+      "missingCampaign": "Quảng cáo này chưa gắn chiến dịch, vui lòng bổ sung trước.",
+      "empty": "Sinh bản nháp để xem kết quả AI.",
+      "resultsTitle": "Biến thể AI",
+      "copy": "Sao chép",
+      "copied": "Đã sao chép",
+      "success": "Đã sinh bản nháp",
+      "error": "Không sinh được biến thể",
+      "currentCopy": "Nội dung hiện tại"
     }
   },
   "campaign": {

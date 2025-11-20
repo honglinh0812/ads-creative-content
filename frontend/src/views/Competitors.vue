@@ -108,6 +108,98 @@
       </a-card>
     </div>
 
+    <!-- Watchlist Section -->
+    <div class="watchlist-section">
+      <a-card title="Competitor Watchlist" :bordered="false">
+        <a-form layout="vertical" @submit.prevent="handleAddWatchlist" class="watchlist-form">
+          <a-row :gutter="[12, 12]" align="bottom">
+            <a-col :xs="24" :md="10">
+              <a-form-item label="Brand">
+                <a-input v-model:value="watchlistForm.brandName" placeholder="Brand name" allow-clear />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="12" :md="4">
+              <a-form-item label="Platform">
+                <a-select v-model:value="watchlistForm.platform">
+                  <a-select-option value="facebook">Facebook</a-select-option>
+                  <a-select-option value="google">Google</a-select-option>
+                  <a-select-option value="tiktok">TikTok</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :xs="12" :md="4">
+              <a-form-item label="Region">
+                <a-input v-model:value="watchlistForm.region" placeholder="US" />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="12" :md="3">
+              <a-form-item label="Limit">
+                <a-input-number v-model:value="watchlistForm.limit" :min="1" :max="50" style="width: 100%" />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="12" :md="3">
+              <a-form-item label=" ">
+                <a-button type="primary" block @click="handleAddWatchlist">
+                  Add
+                </a-button>
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-form>
+
+        <div class="watchlist-actions">
+          <a-button type="default" @click="handleRefreshAllWatchlist" :disabled="!watchlist.length">
+            Refresh all
+          </a-button>
+        </div>
+
+        <div v-if="watchlist.length" class="watchlist-grid">
+          <div
+            v-for="item in watchlist"
+            :key="item.id"
+            class="watchlist-card"
+          >
+            <div class="watchlist-card-header">
+              <h4>{{ item.brandName }}</h4>
+              <a-tag color="blue">{{ getPlatformLabel(item.platform) }}</a-tag>
+              <a-tag v-if="item.hasNew" color="green">New</a-tag>
+            </div>
+            <p class="watchlist-meta">
+              {{ item.region }} · {{ item.lastChecked ? formatWatchlistTimestamp(item.lastChecked) : 'Never checked' }}
+            </p>
+            <p class="watchlist-count">
+              {{ item.lastResultCount ?? 0 }} ads tracked
+            </p>
+            <p class="watchlist-hint" v-if="item.lastMessage">{{ item.lastMessage }}</p>
+            <div class="watchlist-card-actions">
+              <a-button
+                size="small"
+                type="link"
+                @click="handleRefreshWatchlist(item)"
+                :loading="isEntryRefreshing(item.id)"
+              >
+                Refresh
+              </a-button>
+              <a-button size="small" type="link" danger @click="handleRemoveWatchlist(item)">
+                Remove
+              </a-button>
+            </div>
+          </div>
+        </div>
+        <a-empty v-else description="No brands in watchlist" />
+
+        <div v-if="watchlistActivity.length" class="watchlist-activity">
+          <p class="eyebrow">Recent activity</p>
+          <ul>
+            <li v-for="activity in watchlistActivity" :key="activity.id">
+              <strong>{{ activity.brandName }}</strong> · {{ activity.message }} ·
+              <span class="watchlist-time">{{ formatWatchlistTimestamp(activity.timestamp) }}</span>
+            </li>
+          </ul>
+        </div>
+      </a-card>
+    </div>
+
     <!-- Recent Platform Statuses -->
     <div v-if="recentPlatformStatuses.length" class="status-feed">
       <a-alert
@@ -528,6 +620,10 @@ export default {
     DatabaseOutlined
   },
 
+  created() {
+    this.initWatchlist()
+  },
+
   data() {
     return {
       // Platform selection
@@ -559,7 +655,15 @@ export default {
       abTestVariationCount: 3,
 
       // Ad Details
-      selectedAdForDetails: null
+      selectedAdForDetails: null,
+
+      // Watchlist
+      watchlistForm: {
+        brandName: '',
+        platform: 'facebook',
+        region: 'US',
+        limit: 5
+      }
     }
   },
 
@@ -575,13 +679,17 @@ export default {
       'searchError',
       'analysisError',
       'platformResponses',
-      'recentPlatformStatuses'
+      'recentPlatformStatuses',
+      'watchlist',
+      'watchlistActivity',
+      'watchlistRefreshing'
     ]),
 
     ...mapGetters('competitor', [
       'hasSearchResults',
       'hasSelectedAds',
-      'selectedCount'
+      'selectedCount',
+      'isWatchlistRefreshing'
     ]),
 
     platformName() {
@@ -626,7 +734,12 @@ export default {
       identifyPatternsAction: 'identifyPatterns',
       generateABTestAction: 'generateABTest',
       analyzeCompetitorAd: 'analyzeCompetitorAd',
-      clearErrors: 'clearErrors'
+      clearErrors: 'clearErrors',
+      initWatchlist: 'initWatchlist',
+      addWatchlistItemAction: 'addWatchlistItem',
+      removeWatchlistItemAction: 'removeWatchlistItem',
+      refreshWatchlistItemAction: 'refreshWatchlistItem',
+      refreshAllWatchlistAction: 'refreshAllWatchlist'
     }),
 
     getStatusMessage(status) {
@@ -848,6 +961,58 @@ export default {
     retryWithDataMode() {
       message.info('Retrying search with structured data mode...')
       this.handleSearch()
+    },
+
+    async handleAddWatchlist() {
+      if (!this.watchlistForm.brandName.trim()) {
+        message.warning('Enter a brand name')
+        return
+      }
+      try {
+        await this.addWatchlistItemAction({ ...this.watchlistForm })
+        this.watchlistForm.brandName = ''
+        message.success('Added to watchlist')
+      } catch (error) {
+        message.error(error?.message || 'Failed to add watchlist item')
+      }
+    },
+
+    async handleRefreshWatchlist(item) {
+      try {
+        await this.refreshWatchlistItemAction(item)
+        message.success(`Updated ${item.brandName}`)
+      } catch (error) {
+        message.error(error?.message || 'Failed to refresh item')
+      }
+    },
+
+    async handleRefreshAllWatchlist() {
+      if (!this.watchlist.length) return
+      try {
+        await this.refreshAllWatchlistAction()
+        message.success('Watchlist refreshed')
+      } catch (error) {
+        message.error('Unable to refresh all watchlist items')
+      }
+    },
+
+    handleRemoveWatchlist(item) {
+      this.removeWatchlistItemAction(item.id)
+      message.info(`Removed ${item.brandName}`)
+    },
+
+    formatWatchlistTimestamp(value) {
+      if (!value) return 'Never checked'
+      return new Intl.DateTimeFormat(undefined, {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(new Date(value))
+    },
+
+    isEntryRefreshing(id) {
+      return this.watchlistRefreshing.includes(id) || this.isWatchlistRefreshing(id)
     },
 
     exportResults() {
@@ -1150,6 +1315,67 @@ export default {
 
 .status-feed {
   margin-bottom: 24px;
+}
+
+.watchlist-section {
+  margin-bottom: 24px;
+}
+
+.watchlist-form {
+  margin-bottom: 12px;
+}
+
+.watchlist-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.watchlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.watchlist-card {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.watchlist-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.watchlist-card-header h4 {
+  margin: 0;
+  flex: 1;
+}
+
+.watchlist-meta,
+.watchlist-hint,
+.watchlist-time {
+  color: #8c8c8c;
+}
+
+.watchlist-count {
+  font-weight: 600;
+  margin: 8px 0;
+}
+
+.watchlist-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.watchlist-activity ul {
+  padding-left: 16px;
+  margin: 0;
 }
 
 .competitor-ad-card {

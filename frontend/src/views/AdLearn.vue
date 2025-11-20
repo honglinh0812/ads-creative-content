@@ -225,7 +225,7 @@
                 <span class="variation-title">{{ variation.headline || $t('adLearn.step3.defaultHeadline') }}</span>
                 <a-tag color="blue">{{ getProviderName(formData.textProvider) }}</a-tag>
               </div>
-              <p class="variation-body">{{ variation.body || variation.text }}</p>
+              <p class="variation-body">{{ variation.primaryText || variation.body || variation.text }}</p>
               <div v-if="variation.callToAction" class="ad-preview-cta">
                 {{ getCTALabel(variation.callToAction) }}
               </div>

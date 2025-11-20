@@ -5,12 +5,12 @@ import com.fbadsautomation.model.AdType;
 import com.fbadsautomation.model.FacebookCTA;
 import com.fbadsautomation.model.Persona;
 import com.fbadsautomation.util.ValidationMessages.Language;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
+import org.springframework.util.StringUtils;
 
 /**
  * Phase 3: Unified Chain-of-Thought (CoT) Prompt Builder
@@ -49,6 +49,8 @@ public class ChainOfThoughtPromptBuilder {
      * @param callToAction Facebook CTA
      * @param adType Ad type (PAGE_POST_AD, WEBSITE_CONVERSION_AD, LEAD_FORM_AD)
      * @param numberOfVariations Number of variations to generate
+     * @param referenceContent Raw content from reference ad (optional)
+     * @param referenceLink Reference ad link (optional)
      * @return Complete CoT prompt ready for any provider
      */
     public String buildCoTPrompt(
@@ -60,7 +62,9 @@ public class ChainOfThoughtPromptBuilder {
         Language language,
         FacebookCTA callToAction,
         AdType adType,
-        int numberOfVariations
+        int numberOfVariations,
+        String referenceContent,
+        String referenceLink
     ) {
         log.info("[Phase 3] Building CoT prompt: language={}, adType={}, variations={}, persona={}, keywords={}",
                 language, adType, numberOfVariations,
@@ -77,7 +81,7 @@ public class ChainOfThoughtPromptBuilder {
         prompt.append(buildStage2_AudienceAnalysis(persona, targetAudience, isVietnamese));
 
         // Stage 3: Creative Direction
-        prompt.append(buildStage3_CreativeDirection(adStyle, trendingKeywords, isVietnamese));
+        prompt.append(buildStage3_CreativeDirection(adStyle, trendingKeywords, referenceContent, referenceLink, isVietnamese));
 
         // Stage 4: Constraints & Requirements
         prompt.append(buildStage4_Constraints(callToAction, language, isVietnamese));
@@ -165,7 +169,11 @@ public class ChainOfThoughtPromptBuilder {
      * Stage 3: Creative Direction
      * Define style and trending keywords
      */
-    private String buildStage3_CreativeDirection(AdStyle adStyle, List<String> trendingKeywords, boolean isVietnamese) {
+    private String buildStage3_CreativeDirection(AdStyle adStyle,
+                                                 List<String> trendingKeywords,
+                                                 String referenceContent,
+                                                 String referenceLink,
+                                                 boolean isVietnamese) {
         StringBuilder stage = new StringBuilder();
 
         if (isVietnamese) {
@@ -181,6 +189,7 @@ public class ChainOfThoughtPromptBuilder {
                 trendingKeywords.forEach(keyword -> stage.append("- ").append(keyword).append("\n"));
                 stage.append("\n");
             }
+            appendReferenceSection(stage, referenceContent, referenceLink, true);
         } else {
             stage.append("🎨 CREATIVE DIRECTION\n\n");
 
@@ -194,6 +203,7 @@ public class ChainOfThoughtPromptBuilder {
                 trendingKeywords.forEach(keyword -> stage.append("- ").append(keyword).append("\n"));
                 stage.append("\n");
             }
+            appendReferenceSection(stage, referenceContent, referenceLink, false);
         }
 
         return stage.toString();
@@ -402,20 +412,20 @@ public class ChainOfThoughtPromptBuilder {
 
                 **YÊU CẦU OUTPUT QUAN TRỌNG:**
                 1. Ngôn ngữ: PHẢI 100%% tiếng Việt - không ngoại lệ
-                2. Format: Chỉ trả về JSON array hợp lệ
+                2. Format: Chỉ trả về JSON object hợp lệ cho từng biến thể
                 3. Tính độc đáo: Mỗi biến thể phải khác biệt có ý nghĩa
                 4. Tuân thủ: Mọi quảng cáo phải đáp ứng tất cả yêu cầu Facebook
 
-                JSON Format:
-                [
-                  {
-                    "headline": "Tiêu đề hấp dẫn ở đây (tối đa 40 ký tự)",
-                    "description": "Mô tả cuốn hút ở đây (tối đa 125 ký tự)",
-                    "primaryText": "Văn bản chính đầy đủ với giá trị đề xuất rõ ràng và kêu gọi hành động (tối đa 1000 ký tự)"
-                  }
-                ]
+                JSON Object:
+                {
+                  "headline": "Tiêu đề hấp dẫn ở đây (tối đa 40 ký tự)",
+                  "description": "Mô tả cuốn hút ở đây (tối đa 125 ký tự)",
+                  "primaryText": "Văn bản chính đầy đủ với giá trị đề xuất rõ ràng và kêu gọi hành động (tối đa 1000 ký tự)",
+                  "callToAction": "Phải khớp với CTA được yêu cầu ở trên",
+                  "imagePrompt": "Mô tả ngắn gọn cho ảnh minh họa phù hợp phong cách"
+                }
 
-                Tạo ngay bây giờ:
+                Tạo ngay bây giờ và CHỈ trả về JSON object hợp lệ như mẫu trên cho mỗi biến thể:
                 """, numberOfVariations);
         } else {
             return String.format("""
@@ -425,21 +435,49 @@ public class ChainOfThoughtPromptBuilder {
 
                 **CRITICAL OUTPUT REQUIREMENTS:**
                 1. Language: MUST be 100%% English - no exceptions
-                2. Format: Return ONLY a valid JSON array
+                2. Format: Return ONLY a valid JSON object per variation
                 3. Uniqueness: Each variation must be meaningfully different
                 4. Compliance: Every ad must pass all Facebook requirements
 
-                JSON Format:
-                [
-                  {
-                    "headline": "Your compelling headline here (max 40 chars)",
-                    "description": "Your engaging description here (max 125 chars)",
-                    "primaryText": "Your full primary text here with clear value proposition and call-to-action (max 1000 chars)"
-                  }
-                ]
+                JSON Object:
+                {
+                  "headline": "Compelling headline here (max 40 chars)",
+                  "description": "Engaging description here (max 125 chars)",
+                  "primaryText": "Full primary text with value proposition and CTA (max 1000 chars)",
+                  "callToAction": "Must match the CTA specified above",
+                  "imagePrompt": "Short scene description for the image generation model"
+                }
 
-                Generate now:
+                Generate now and ONLY return a valid JSON object matching the schema above for each variation:
                 """, numberOfVariations);
+        }
+    }
+
+    private void appendReferenceSection(StringBuilder stage, String referenceContent, String referenceLink, boolean isVietnamese) {
+        if (!StringUtils.hasText(referenceContent) && !StringUtils.hasText(referenceLink)) {
+            return;
+        }
+
+        if (isVietnamese) {
+            stage.append("📌 QUẢNG CÁO THAM CHIẾU\n");
+            if (StringUtils.hasText(referenceContent)) {
+                stage.append("Nội dung tham khảo (mô phỏng phong cách, KHÔNG sao chép nguyên văn):\n");
+                stage.append(referenceContent).append("\n\n");
+            }
+            if (StringUtils.hasText(referenceLink)) {
+                stage.append("Link tham khảo: ").append(referenceLink).append("\n\n");
+            }
+            stage.append("Hãy giữ nguyên bản sắc của sản phẩm hiện tại nhưng bám sát tone/nhịp/độ dài của quảng cáo tham chiếu.\n\n");
+        } else {
+            stage.append("📌 REFERENCE AD INPUT\n");
+            if (StringUtils.hasText(referenceContent)) {
+                stage.append("Reference content (mimic style, do NOT copy verbatim):\n");
+                stage.append(referenceContent).append("\n\n");
+            }
+            if (StringUtils.hasText(referenceLink)) {
+                stage.append("Reference Link: ").append(referenceLink).append("\n\n");
+            }
+            stage.append("Preserve the voice of the current product while mirroring the tone, pacing, and structure of the reference ad.\n\n");
         }
     }
 

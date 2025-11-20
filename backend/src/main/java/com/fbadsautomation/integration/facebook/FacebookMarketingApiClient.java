@@ -124,9 +124,9 @@ public class FacebookMarketingApiClient {
             payload.put("daily_budget", formatBudgetForMeta(resolveAdsetBudget(campaign)));
         }
 
-        payload.put("start_time", ISO_FORMATTER.format(campaign.getStartDate()));
+        payload.put("start_time", formatDateTime(campaign.getStartDate()));
         if (campaign.getEndDate() != null) {
-            payload.put("end_time", ISO_FORMATTER.format(campaign.getEndDate()));
+            payload.put("end_time", formatDateTime(campaign.getEndDate()));
         }
         payload.put("billing_event", "IMPRESSIONS");
         payload.put("optimization_goal", mapOptimizationGoal(campaign.getObjective()));
@@ -309,6 +309,13 @@ public class FacebookMarketingApiClient {
             return campaign.getTotalBudget();
         }
         return 0.0;
+    }
+
+    private String formatDateTime(java.time.LocalDate date) {
+        if (date == null) {
+            return null;
+        }
+        return ISO_FORMATTER.format(date.atStartOfDay());
     }
 
     private String buildPromotedObject(Ad ad) {

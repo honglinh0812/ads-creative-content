@@ -159,6 +159,30 @@
       "uncategorized": "No campaign",
       "empty": "No ads yet"
     },
+    "leaderboard": {
+      "title": "Performance snapshot",
+      "subtitle": "Top vs. bottom performers",
+      "entityLabel": "View",
+      "metricLabel": "Metric",
+      "rangeLabel": "Range",
+      "entities": {
+        "ads": "Ads",
+        "campaigns": "Campaigns"
+      },
+      "metrics": {
+        "ctr": "CTR",
+        "cpc": "CPC"
+      },
+      "ranges": {
+        "7d": "7 days",
+        "30d": "30 days",
+        "90d": "90 days"
+      },
+      "topTitle": "Top performers",
+      "bottomTitle": "Needs attention",
+      "avgLabel": "Avg {metric}",
+      "empty": "Performance data unavailable"
+    },
     "error": {
       "title": "Unable to load data"
     }
@@ -222,6 +246,30 @@
     },
     "error": {
       "title": "Unable to analyze"
+    },
+    "rewrite": {
+      "title": "AI rewrite playground",
+      "subtitle": "Pick an ad and generate new copy instantly",
+      "selectAd": "Select ad",
+      "tone": "Tone",
+      "length": "Length",
+      "focus": "Unique selling point",
+      "keywords": "Keywords",
+      "guidance": "Extra notes",
+      "variations": "Variations",
+      "provider": "Provider",
+      "generate": "Generate rewrite",
+      "keywordsHint": "Comma-separated keywords (optional)",
+      "guidancePlaceholder": "Any guardrails or campaign context for the rewrite",
+      "noAd": "Select an ad to rewrite",
+      "missingCampaign": "This ad is missing a campaign. Please assign one first.",
+      "empty": "Generate a rewrite to see AI variations.",
+      "resultsTitle": "AI variations",
+      "copy": "Copy",
+      "copied": "Copied",
+      "success": "Rewrite generated",
+      "error": "Unable to generate rewrite",
+      "currentCopy": "Current copy"
     }
   },
   "campaign": {

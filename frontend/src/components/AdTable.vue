@@ -7,12 +7,17 @@
           <h2 class="panel__title">Ad performance overview</h2>
           <p class="panel__subtitle">Use filters to focus on the assets that matter today.</p>
         </div>
-        <a-segmented
-          v-model:value="viewMode"
-          class="view-toggle"
-          :options="viewOptions"
-          size="large"
-        />
+        <div class="view-toggle-wrapper">
+          <a-segmented
+            v-model:value="viewMode"
+            class="view-toggle"
+            :options="viewOptions"
+            size="large"
+          />
+          <p v-if="isCompact" class="view-toggle__hint">
+            Card view enabled for small screens
+          </p>
+        </div>
       </header>
 
       <a-form layout="vertical" class="filter-form">
@@ -101,7 +106,7 @@
       </div>
     </a-card>
 
-    <div v-if="viewMode === 'table'" class="table-view">
+    <div v-if="isTableView" class="table-view">
       <a-table
         :columns="columns"
         :data-source="paginatedAds"
@@ -110,7 +115,7 @@
         :row-selection="rowSelection"
         row-key="id"
         size="middle"
-        :scroll="{ x: 1200 }"
+        :scroll="tableScroll"
         @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
@@ -139,21 +144,39 @@
 
           <template v-else-if="column.key === 'content'">
             <div class="content-preview">
-              <p v-if="record.headline">
+              <div v-if="record.headline" class="content-section">
                 <span class="label">Headline</span>
-                {{ truncateText(record.headline, 80) }}
-              </p>
-              <p v-if="record.primaryText">
+                <a-typography-paragraph
+                  class="content-text"
+                  :ellipsis="{ rows: 2, tooltip: record.headline }"
+                >
+                  {{ record.headline }}
+                </a-typography-paragraph>
+              </div>
+              <div v-if="record.primaryText" class="content-section">
                 <span class="label">Text</span>
-                {{ truncateText(record.primaryText, 110) }}
-              </p>
-              <p v-if="record.callToAction">
+                <a-typography-paragraph
+                  class="content-text"
+                  :ellipsis="{ rows: 2, tooltip: record.primaryText }"
+                >
+                  {{ record.primaryText }}
+                </a-typography-paragraph>
+              </div>
+              <p v-if="record.callToAction" class="content-section">
                 <span class="label">CTA</span>
                 {{ record.callToAction }}
               </p>
               <p v-if="!record.headline && !record.primaryText && !record.callToAction" class="cell-muted">
                 Content unavailable
               </p>
+              <a-button
+                type="link"
+                size="small"
+                class="content-expand"
+                @click.stop="openContentModal(record)"
+              >
+                View full content
+              </a-button>
             </div>
           </template>
 
@@ -178,25 +201,34 @@
               <a-button type="link" size="small" @click="$emit('edit-ad', record)">
                 Edit
               </a-button>
-              <a-button type="link" size="small" @click="$emit('duplicate-ad', record)">
-                Duplicate
-              </a-button>
-              <a-button type="link" size="small" @click="$emit('export-ad', record)">
-                Export
-              </a-button>
-              <a-button type="link" size="small" @click="$emit('download-ad', record)">
-                Download
-              </a-button>
-              <a-popconfirm
-                title="Delete this ad?"
-                ok-text="Delete"
-                cancel-text="Cancel"
-                @confirm="$emit('delete-ad', record.id)"
-              >
-                <a-button type="link" danger size="small">
-                  Delete
+              <a-dropdown trigger="click">
+                <a-button type="link" size="small">
+                  More
                 </a-button>
-              </a-popconfirm>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item key="duplicate" @click="handleRowAction('duplicate-ad', record)">
+                      Duplicate
+                    </a-menu-item>
+                    <a-menu-item key="export" @click="handleRowAction('export-ad', record)">
+                      Export
+                    </a-menu-item>
+                    <a-menu-item key="download" @click="handleRowAction('download-ad', record)">
+                      Download
+                    </a-menu-item>
+                    <a-menu-item key="delete">
+                      <a-popconfirm
+                        title="Delete this ad?"
+                        ok-text="Delete"
+                        cancel-text="Cancel"
+                        @confirm="handleRowAction('delete-ad', record.id)"
+                      >
+                        <span class="danger-link">Delete</span>
+                      </a-popconfirm>
+                    </a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
             </div>
           </template>
         </template>
@@ -241,12 +273,15 @@
             </p>
             <p v-if="ad.headline" class="ad-card__text">
               <span class="label">Headline</span>
-              {{ truncateText(ad.headline, 90) }}
+              {{ ad.headline }}
             </p>
             <p v-if="ad.primaryText" class="ad-card__text">
               <span class="label">Text</span>
-              {{ truncateText(ad.primaryText, 120) }}
+              {{ ad.primaryText }}
             </p>
+            <a-button type="link" size="small" class="content-expand" @click="openContentModal(ad)">
+              View full content
+            </a-button>
           </div>
 
           <div class="ad-card__actions">
@@ -278,11 +313,38 @@
         @showSizeChange="handlePageSizeChange"
       />
     </div>
+
+    <a-modal
+      v-model:visible="contentModalVisible"
+      title="Ad content"
+      :footer="null"
+      width="520px"
+      destroy-on-close
+    >
+      <div v-if="contentModalData" class="content-modal">
+        <div v-if="contentModalData.name" class="content-modal__section">
+          <p class="content-modal__label">Ad name</p>
+          <p class="content-modal__value">{{ contentModalData.name }}</p>
+        </div>
+        <div v-if="contentModalData.headline" class="content-modal__section">
+          <p class="content-modal__label">Headline</p>
+          <p class="content-modal__value">{{ contentModalData.headline }}</p>
+        </div>
+        <div v-if="contentModalData.primaryText" class="content-modal__section">
+          <p class="content-modal__label">Text</p>
+          <p class="content-modal__value">{{ contentModalData.primaryText }}</p>
+        </div>
+        <div v-if="contentModalData.callToAction" class="content-modal__section">
+          <p class="content-modal__label">CTA</p>
+          <p class="content-modal__value">{{ contentModalData.callToAction }}</p>
+        </div>
+      </div>
+    </a-modal>
   </section>
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
@@ -356,6 +418,9 @@ export default {
     const selectedRowKeys = ref([])
     const internalPage = ref(props.currentPage || 1)
     const pageSizeValue = computed(() => props.pageSize)
+    const isCompact = ref(false)
+    const contentModalVisible = ref(false)
+    const contentModalData = ref(null)
 
     watch(
       () => props.currentPage,
@@ -401,10 +466,28 @@ export default {
       }))
     })
 
-    const viewOptions = [
-      { label: 'Table view', value: 'table' },
+    const updateViewportState = () => {
+      if (typeof window === 'undefined') return
+      const compact = window.innerWidth < 992
+      isCompact.value = compact
+      if (compact) {
+        viewMode.value = 'cards'
+      }
+    }
+
+    onMounted(() => {
+      updateViewportState()
+      window.addEventListener('resize', updateViewportState)
+    })
+
+    onBeforeUnmount(() => {
+      window.removeEventListener('resize', updateViewportState)
+    })
+
+    const viewOptions = computed(() => [
+      { label: 'Table view', value: 'table', disabled: isCompact.value },
       { label: 'Card view', value: 'cards' }
-    ]
+    ])
 
     const safeAds = computed(() => (Array.isArray(props.ads) ? props.ads : []))
 
@@ -481,14 +564,16 @@ export default {
       {
         title: 'Campaign',
         key: 'campaign',
-        width: 180
+        width: 170,
+        responsive: ['md']
       },
       {
         title: 'Status',
         key: 'status',
         dataIndex: 'status',
         sorter: true,
-        width: 120,
+        width: 110,
+        responsive: ['lg'],
         filters: statusSelectOptions.value.map((item) => ({
           text: item.label,
           value: item.value
@@ -499,7 +584,8 @@ export default {
         key: 'adType',
         dataIndex: 'adType',
         sorter: true,
-        width: 140,
+        width: 130,
+        responsive: ['lg'],
         filters: adTypeSelectOptions.value.map((item) => ({
           text: item.label,
           value: item.value
@@ -508,28 +594,34 @@ export default {
       {
         title: 'Content',
         key: 'content',
-        width: 320
+        width: 360,
+        responsive: ['md']
       },
       {
         title: 'Media',
         key: 'media',
         width: 120,
-        align: 'center'
+        align: 'center',
+        responsive: ['lg']
       },
       {
         title: 'Created',
         key: 'createdDate',
         dataIndex: 'createdDate',
         sorter: true,
-        width: 160
+        width: 150,
+        responsive: ['md']
       },
       {
         title: 'Actions',
         key: 'actions',
-        width: 240,
+        width: 200,
         fixed: 'right'
       }
     ])
+
+    const isTableView = computed(() => viewMode.value === 'table' && !isCompact.value)
+    const tableScroll = computed(() => (isTableView.value ? { x: 1000 } : undefined))
 
     const rowSelection = computed(() => ({
       selectedRowKeys: selectedRowKeys.value,
@@ -609,11 +701,6 @@ export default {
     const formatStatus = (status) =>
       status?.toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase())
 
-    const truncateText = (text, maxLength) => {
-      if (!text) return ''
-      return text.length > maxLength ? `${text.substring(0, maxLength)}…` : text
-    }
-
     const formatDate = (date) => {
       if (!date) return 'Not set'
       return dayjs(date).format('MMM DD, YYYY')
@@ -631,12 +718,27 @@ export default {
       return `${range[0]}-${range[1]} of ${total} ads`
     }
 
+    const openContentModal = (record) => {
+      contentModalData.value = {
+        name: record.name || 'Untitled ad',
+        headline: record.headline,
+        primaryText: record.primaryText,
+        callToAction: record.callToAction
+      }
+      contentModalVisible.value = true
+    }
+
+    const handleRowAction = (action, payload) => {
+      emit(action, payload)
+    }
+
     return {
       searchQuery,
       statusFilter,
       adTypeFilter,
       campaignFilter,
       viewMode,
+      filteredAds,
       columns,
       paginatedAds,
       totalAds,
@@ -646,7 +748,6 @@ export default {
       resetFilters,
       getCampaignName,
       formatAdType,
-      truncateText,
       formatDate,
       formatRelativeTime,
       hasActiveFilters,
@@ -663,7 +764,14 @@ export default {
       handlePageSizeChange,
       internalPage,
       pageSizeValue,
-      renderTotal
+      renderTotal,
+      isCompact,
+      isTableView,
+      tableScroll,
+      openContentModal,
+      contentModalVisible,
+      contentModalData,
+      handleRowAction
     }
   }
 }
@@ -699,6 +807,19 @@ export default {
   align-items: flex-start;
   gap: 24px;
   margin-bottom: 24px;
+}
+
+.view-toggle-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.view-toggle__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .panel__eyebrow {
@@ -850,6 +971,12 @@ export default {
   color: var(--text-primary);
 }
 
+.content-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .content-preview .label {
   font-weight: 600;
   margin-right: 6px;
@@ -857,6 +984,15 @@ export default {
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 0.08em;
+}
+
+.content-text {
+  margin-bottom: 0;
+  color: var(--text-primary);
+}
+
+.content-expand {
+  padding-left: 0;
 }
 
 .media-thumb {
@@ -878,6 +1014,12 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  align-items: center;
+}
+
+.danger-link {
+  color: #dc2626;
+  cursor: pointer;
 }
 
 .card-view {
@@ -947,6 +1089,7 @@ export default {
 .ad-card__text {
   margin-bottom: 6px;
   font-size: 14px;
+  white-space: pre-line;
 }
 
 .ad-card__actions {
@@ -1026,6 +1169,10 @@ export default {
   border-color: #153eaa;
 }
 
+:deep(.ant-typography) {
+  margin-bottom: 0;
+}
+
 :deep(.ant-btn-link) {
   padding-inline: 0;
 }
@@ -1045,5 +1192,23 @@ export default {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+.content-modal__section + .content-modal__section {
+  margin-top: 16px;
+}
+
+.content-modal__label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.content-modal__value {
+  white-space: pre-line;
+  margin: 0;
+  color: var(--text-primary);
 }
 </style>

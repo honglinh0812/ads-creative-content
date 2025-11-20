@@ -35,6 +35,99 @@
         </div>
       </div>
 
+      <div class="lite-card panel leaderboard-panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">{{ t('analyticsLite.leaderboard.title') }}</p>
+            <h3>{{ t('analyticsLite.leaderboard.subtitle') }}</h3>
+          </div>
+          <div class="leaderboard-filters">
+            <a-select v-model:value="leaderboardEntity" size="small">
+              <a-select-option value="ads">
+                {{ t('analyticsLite.leaderboard.entities.ads') }}
+              </a-select-option>
+              <a-select-option value="campaigns">
+                {{ t('analyticsLite.leaderboard.entities.campaigns') }}
+              </a-select-option>
+            </a-select>
+            <a-select v-model:value="leaderboardMetric" size="small">
+              <a-select-option value="ctr">
+                {{ t('analyticsLite.leaderboard.metrics.ctr') }}
+              </a-select-option>
+              <a-select-option value="cpc">
+                {{ t('analyticsLite.leaderboard.metrics.cpc') }}
+              </a-select-option>
+            </a-select>
+            <a-select v-model:value="leaderboardRange" size="small">
+              <a-select-option value="7d">
+                {{ t('analyticsLite.leaderboard.ranges.7d') }}
+              </a-select-option>
+              <a-select-option value="30d">
+                {{ t('analyticsLite.leaderboard.ranges.30d') }}
+              </a-select-option>
+              <a-select-option value="90d">
+                {{ t('analyticsLite.leaderboard.ranges.90d') }}
+              </a-select-option>
+            </a-select>
+          </div>
+        </div>
+        <div class="leaderboard-body">
+          <a-spin v-if="leaderboardLoading" />
+          <template v-else>
+            <div v-if="leaderboardSnapshot.top.length" class="leaderboard-content">
+              <div class="leaderboard-meta">
+                <p>
+                  {{ t('analyticsLite.leaderboard.avgLabel', { metric: leaderboardMetricLabel }) }}
+                  · {{ formatMetricValue(leaderboardSnapshot.average) }}
+                </p>
+              </div>
+              <div class="leaderboard-columns">
+                <div class="leaderboard-column">
+                  <p class="eyebrow">{{ t('analyticsLite.leaderboard.topTitle') }}</p>
+                  <div
+                    v-for="item in leaderboardSnapshot.top"
+                    :key="`top-${item.id}`"
+                    class="leaderboard-item"
+                  >
+                    <div>
+                      <p class="item-name">{{ item.name }}</p>
+                      <p class="item-subtitle">{{ item.subtitle }}</p>
+                    </div>
+                    <div class="item-metric">
+                      <span>{{ formatMetricValue(item.value) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="leaderboard-column attention">
+                  <p class="eyebrow">{{ t('analyticsLite.leaderboard.bottomTitle') }}</p>
+                  <div
+                    v-for="item in leaderboardSnapshot.bottom"
+                    :key="`bottom-${item.id}`"
+                    class="leaderboard-item"
+                  >
+                    <div>
+                      <p class="item-name">{{ item.name }}</p>
+                      <p class="item-subtitle">{{ item.subtitle }}</p>
+                    </div>
+                    <div class="item-metric">
+                      <span>{{ formatMetricValue(item.value) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p v-else class="empty-text">{{ t('analyticsLite.leaderboard.empty') }}</p>
+          </template>
+        </div>
+      </div>
+      <a-alert
+        v-if="leaderboardError"
+        type="warning"
+        show-icon
+        :message="leaderboardError"
+        class="leaderboard-alert"
+      />
+
       <div class="insight-panels">
         <div class="lite-card panel">
           <div class="panel-header">
@@ -130,7 +223,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ReloadOutlined, AppstoreOutlined } from '@ant-design/icons-vue'
 import api from '@/services/api'
@@ -148,8 +241,34 @@ export default {
     const error = ref(null)
     const fallbackRange = '30d'
     const contentInsightsSupported = ref(true)
+    const analyticsData = ref(null)
+    const leaderboardRange = ref('30d')
+    const leaderboardMetric = ref('ctr')
+    const leaderboardEntity = ref('ads')
+    const leaderboardLoading = ref(false)
+    const leaderboardError = ref(null)
 
     const formatNumber = (value) => new Intl.NumberFormat().format(value || 0)
+    const formatDecimal = (value, digits = 2) => {
+      const numeric = Number(value) || 0
+      return new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+      }).format(numeric)
+    }
+
+    const metricConfig = {
+      ctr: {
+        key: 'ctr',
+        formatter: (value) => `${formatDecimal(value)}%`,
+        higherIsBetter: true
+      },
+      cpc: {
+        key: 'cpc',
+        formatter: (value) => formatDecimal(value, 2),
+        higherIsBetter: false
+      }
+    }
 
     const statCards = computed(() => {
       if (!insights.value?.summary) return []
@@ -213,6 +332,61 @@ export default {
 
     const recentAds = computed(() => insights.value?.recentAds || [])
 
+    const leaderboardMetricLabel = computed(() =>
+      t(`analyticsLite.leaderboard.metrics.${leaderboardMetric.value}`)
+    )
+
+    const leaderboardSnapshot = computed(() => {
+      const config = metricConfig[leaderboardMetric.value]
+      if (!analyticsData.value || !config) {
+        return { top: [], bottom: [], average: 0 }
+      }
+
+      const source = leaderboardEntity.value === 'campaigns'
+        ? analyticsData.value.campaignAnalytics || []
+        : analyticsData.value.adAnalytics || []
+
+      const mapped = source
+        .map(item => {
+          const value = Number(item?.[config.key]) || 0
+          const name = leaderboardEntity.value === 'campaigns'
+            ? (item.campaignName || '—')
+            : (item.adName || '—')
+          const subtitle = leaderboardEntity.value === 'campaigns'
+            ? (item.objective || item.status || '')
+            : (item.campaignName || t('analyticsLite.recent.uncategorized'))
+          return {
+            id: item.adId || item.campaignId || item.id || name,
+            name,
+            subtitle,
+            value
+          }
+        })
+        .filter(item => Number.isFinite(item.value))
+
+      if (!mapped.length) {
+        return { top: [], bottom: [], average: 0 }
+      }
+
+      const average = mapped.reduce((sum, entry) => sum + entry.value, 0) / mapped.length
+      const sortAsc = (a, b) => a.value - b.value
+      const sortDesc = (a, b) => b.value - a.value
+      const bestSorted = [...mapped].sort(config.higherIsBetter ? sortDesc : sortAsc)
+      const worstSorted = [...mapped].sort(config.higherIsBetter ? sortAsc : sortDesc)
+
+      return {
+        top: bestSorted.slice(0, 5),
+        bottom: worstSorted.slice(0, 5),
+        average
+      }
+    })
+
+    const formatMetricValue = (value) => {
+      const config = metricConfig[leaderboardMetric.value]
+      if (!config) return formatDecimal(value)
+      return config.formatter(value)
+    }
+
     const shouldUseFallback = (err) => {
       const status = err?.response?.status
       return status === 404 || status === 501 || status === 503
@@ -245,6 +419,7 @@ export default {
     const loadFallbackInsights = async () => {
       try {
         const { data } = await api.analyticsAPI.getDashboard(fallbackRange)
+        analyticsData.value = data.data
         insights.value = buildInsightsFromDashboard(data.data)
       } catch (dashboardErr) {
         console.error(dashboardErr)
@@ -377,8 +552,26 @@ export default {
       }).format(new Date(value))
     }
 
+    const loadLeaderboard = async () => {
+      leaderboardLoading.value = true
+      leaderboardError.value = null
+      try {
+        const { data } = await api.analyticsAPI.getDashboard(leaderboardRange.value)
+        analyticsData.value = data.data
+      } catch (err) {
+        leaderboardError.value = err?.message || 'Unable to fetch performance data'
+      } finally {
+        leaderboardLoading.value = false
+      }
+    }
+
     onMounted(() => {
       loadInsights()
+      loadLeaderboard()
+    })
+
+    watch(leaderboardRange, () => {
+      loadLeaderboard()
     })
 
     return {
@@ -391,7 +584,15 @@ export default {
       recentAds,
       loadInsights,
       formatDate,
-      t
+      t,
+      leaderboardRange,
+      leaderboardMetric,
+      leaderboardEntity,
+      leaderboardSnapshot,
+      leaderboardMetricLabel,
+      formatMetricValue,
+      leaderboardLoading,
+      leaderboardError
     }
   }
 }
@@ -490,6 +691,73 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   gap: clamp(12px, 2vw, 16px);
+}
+
+.leaderboard-panel {
+  margin-top: 16px;
+}
+
+.leaderboard-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.leaderboard-body {
+  min-height: 120px;
+}
+
+.leaderboard-meta {
+  margin-bottom: 12px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.leaderboard-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.leaderboard-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.leaderboard-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.leaderboard-item:last-child {
+  border-bottom: none;
+}
+
+.leaderboard-column.attention .leaderboard-item {
+  border-color: #ffe4e6;
+}
+
+.item-name {
+  font-weight: 600;
+  margin: 0;
+}
+
+.item-subtitle {
+  margin: 4px 0 0;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.item-metric span {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.leaderboard-alert {
+  margin-top: 8px;
 }
 
 .panel-header {
@@ -654,6 +922,10 @@ export default {
 @media (min-width: 769px) and (max-width: 1024px) {
   .insight-panels {
     grid-template-columns: 1fr;
+  }
+
+  .leaderboard-filters {
+    width: 100%;
   }
 }
 

@@ -82,6 +82,7 @@ public class ImagePromptService {
         String cleaned = userPrompt
             .replaceAll("(?i)(advertise|promote|create ad for|generate content for|quảng cáo|tạo nội dung|giới thiệu)", "")
             .replaceAll("[^\\p{L}\\p{N}\\s\\-,.]", "") // Remove special chars except basic punctuation
+            .replaceAll("\\s+", " ")
             .trim();
 
         // Get first sentence or limit to 100 chars

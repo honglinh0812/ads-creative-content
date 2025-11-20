@@ -176,6 +176,43 @@ const buildDefaultIframeUrl = (platform, brandName, region) => {
   return builder ? builder(brandName, region) : null
 }
 
+const WATCHLIST_STORAGE_KEY = 'competitorWatchlist'
+
+const readWatchlistFromStorage = () => {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(WATCHLIST_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch (err) {
+    console.error('Failed to read watchlist from storage', err)
+    return []
+  }
+}
+
+const persistWatchlist = (watchlist) => {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(watchlist || []))
+  } catch (err) {
+    console.error('Failed to persist watchlist', err)
+  }
+}
+
+const fetchWatchlistSnapshot = async (platform, params) => {
+  let response
+  if (platform === 'google') {
+    response = await api.competitors.searchGoogle(params.brandName, params.region, params.limit)
+  } else if (platform === 'tiktok') {
+    response = await api.competitors.searchTikTok(params.brandName, params.region, params.limit)
+  } else {
+    response = await api.competitors.search(params.brandName, params.region, params.limit)
+  }
+
+  return platform === 'facebook'
+    ? normalizeFacebookResponse(response.data, params)
+    : normalizeProviderResponse(platform, response.data, params)
+}
+
 const state = {
   // Search results
   searchResults: [],
@@ -187,6 +224,9 @@ const state = {
     tiktok: createPlatformResponse({ platform: 'tiktok', mode: 'empty' })
   },
   recentPlatformStatuses: [],
+  watchlist: [],
+  watchlistActivity: [],
+  watchlistRefreshing: [],
 
   // AI Analysis results
   aiSuggestion: null,
@@ -226,6 +266,10 @@ const getters = {
   brandSuggestions: state => state.brandSuggestions,
   platformResponses: state => state.platformResponses,
   recentPlatformStatuses: state => state.recentPlatformStatuses,
+  watchlist: state => state.watchlist,
+  watchlistActivity: state => state.watchlistActivity,
+  watchlistRefreshing: state => state.watchlistRefreshing,
+  isWatchlistRefreshing: state => (id) => state.watchlistRefreshing.includes(id),
 
   hasSearchResults: state => state.searchResults.length > 0,
   hasSelectedAds: state => state.selectedCompetitorAds.length > 0,
@@ -387,6 +431,41 @@ const mutations = {
     state.lastSearchBrand = brand
     state.lastSearchRegion = region
     state.lastSearchLimit = limit
+  },
+
+  SET_WATCHLIST(state, items) {
+    state.watchlist = Array.isArray(items) ? items : []
+  },
+
+  ADD_WATCHLIST_ITEM(state, item) {
+    state.watchlist = [item, ...state.watchlist]
+  },
+
+  UPDATE_WATCHLIST_ITEM(state, { id, changes }) {
+    state.watchlist = state.watchlist.map(item =>
+      item.id === id ? { ...item, ...changes } : item
+    )
+  },
+
+  REMOVE_WATCHLIST_ITEM(state, id) {
+    state.watchlist = state.watchlist.filter(item => item.id !== id)
+  },
+
+  SET_WATCHLIST_REFRESHING(state, id) {
+    if (!id) return
+    if (!state.watchlistRefreshing.includes(id)) {
+      state.watchlistRefreshing = [...state.watchlistRefreshing, id]
+    }
+  },
+
+  REMOVE_WATCHLIST_REFRESHING(state, id) {
+    state.watchlistRefreshing = state.watchlistRefreshing.filter(current => current !== id)
+  },
+
+  PUSH_WATCHLIST_ACTIVITY(state, activity) {
+    if (!activity) return
+    const next = [activity, ...state.watchlistActivity]
+    state.watchlistActivity = next.slice(0, 8)
   }
 }
 
@@ -674,6 +753,104 @@ const actions = {
       throw error
     } finally {
       commit('SET_ANALYZING', false)
+    }
+  },
+
+  initWatchlist({ commit }) {
+    const stored = readWatchlistFromStorage()
+    commit('SET_WATCHLIST', stored)
+  },
+
+  addWatchlistItem({ commit, state }, payload) {
+    const item = {
+      id: `watch-${Date.now()}`,
+      brandName: (payload.brandName || '').trim(),
+      platform: payload.platform || 'facebook',
+      region: payload.region || 'US',
+      limit: payload.limit || 5,
+      lastChecked: null,
+      lastResultCount: null,
+      hasNew: false,
+      lastMessage: null
+    }
+    if (!item.brandName) {
+      throw new Error('Brand name is required')
+    }
+
+    commit('ADD_WATCHLIST_ITEM', item)
+    persistWatchlist(state.watchlist)
+    return item
+  },
+
+  removeWatchlistItem({ commit, state }, id) {
+    commit('REMOVE_WATCHLIST_ITEM', id)
+    persistWatchlist(state.watchlist)
+  },
+
+  async refreshWatchlistItem({ commit, state }, entry) {
+    if (!entry) return null
+    commit('SET_WATCHLIST_REFRESHING', entry.id)
+    try {
+      const params = {
+        brandName: entry.brandName,
+        region: entry.region,
+        limit: entry.limit
+      }
+      const snapshot = await fetchWatchlistSnapshot(entry.platform, params)
+      const resultCount = snapshot.ads?.length ?? snapshot.totalResults ?? 0
+      const hasNew = typeof entry.lastResultCount === 'number'
+        ? resultCount > entry.lastResultCount
+        : resultCount > 0
+
+      commit('UPDATE_WATCHLIST_ITEM', {
+        id: entry.id,
+        changes: {
+          lastChecked: snapshot.timestamp || new Date().toISOString(),
+          lastResultCount: resultCount,
+          hasNew,
+          lastMessage: snapshot.userMessage
+        }
+      })
+
+      commit('PUSH_WATCHLIST_ACTIVITY', {
+        id: `${entry.id}-${Date.now()}`,
+        brandName: entry.brandName,
+        platform: entry.platform,
+        region: entry.region,
+        count: resultCount,
+        hasNew,
+        message: snapshot.userMessage,
+        timestamp: snapshot.timestamp || new Date().toISOString()
+      })
+
+      persistWatchlist(state.watchlist)
+      return snapshot
+    } catch (error) {
+      commit('PUSH_WATCHLIST_ACTIVITY', {
+        id: `${entry.id}-${Date.now()}`,
+        brandName: entry.brandName,
+        platform: entry.platform,
+        region: entry.region,
+        count: entry.lastResultCount || 0,
+        hasNew: false,
+        message: error.message || 'Failed to refresh watchlist item',
+        timestamp: new Date().toISOString(),
+        error: true
+      })
+      throw error
+    } finally {
+      commit('REMOVE_WATCHLIST_REFRESHING', entry.id)
+    }
+  },
+
+  async refreshAllWatchlist({ state, dispatch }) {
+    const entries = state.watchlist || []
+    for (const entry of entries) {
+      try {
+        await dispatch('refreshWatchlistItem', entry)
+      } catch (error) {
+        console.error('Watchlist refresh failed', error)
+      }
     }
   },
 

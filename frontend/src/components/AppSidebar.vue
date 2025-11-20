@@ -308,10 +308,15 @@ export default {
 }
 
 .sidebar-sublink {
-  padding: 0.35rem 0;
+  padding: 0.35rem 0.25rem;
   color: #6b7280;
   font-size: 0.92rem;
   text-decoration: none;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .sidebar-sublink.active {
