@@ -41,6 +41,8 @@ public class AdImprovementRequest {
     @Size(max = 10000, message = "Nội dung tham chiếu không được vượt quá 10.000 ký tự")
     private String referenceContent;
 
+    private ReferenceAdData referenceAdData;
+
     private String referenceAccessToken;
 
     @NotBlank(message = "Text provider là bắt buộc")

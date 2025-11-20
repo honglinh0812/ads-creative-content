@@ -31,6 +31,8 @@ public class FacebookConfig {
         properties.setDefaultAdAccountId(environment.getProperty("facebook.default-ad-account-id", ""));
         properties.setAdsetBudgetSharingEnabled(Boolean.parseBoolean(
             environment.getProperty("facebook.adset-budget-sharing-enabled", "false")));
+        properties.setDebugPayloads(Boolean.parseBoolean(
+            environment.getProperty("facebook.debug-payloads", "false")));
         return properties;
     }
 }

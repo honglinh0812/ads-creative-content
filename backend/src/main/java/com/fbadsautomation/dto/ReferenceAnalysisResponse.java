@@ -1,6 +1,7 @@
 package com.fbadsautomation.dto;
 
 import com.fbadsautomation.model.FacebookCTA;
+import com.fbadsautomation.model.FacebookCTA;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Value;
@@ -18,6 +19,7 @@ public class ReferenceAnalysisResponse {
     String message;
     String detectedStyle;
     FacebookCTA suggestedCallToAction;
+    ReferenceAdData referenceAdData;
     ReferenceInsights insights;
 
     @Value

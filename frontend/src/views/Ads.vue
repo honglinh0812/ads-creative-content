@@ -691,9 +691,12 @@ export default {
       await this.autoUploadSelectedAds()
     },
 
-    async duplicateAd(adId) {
+    async duplicateAd(adOrRecord) {
       try {
-        const adToDuplicate = this.ads.find(ad => ad.id === adId)
+        const adId = typeof adOrRecord === 'object' && adOrRecord !== null ? adOrRecord.id : adOrRecord
+        const adToDuplicate = typeof adOrRecord === 'object' && adOrRecord !== null
+          ? adOrRecord
+          : this.ads.find(ad => ad.id === adId)
         if (!adToDuplicate) {
           message.error(this.$t('ads.messages.error.adNotFound'))
           return

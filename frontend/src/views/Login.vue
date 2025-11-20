@@ -305,8 +305,29 @@ export default {
       }
     }
   },
+  mounted() {
+    this.resetSocialLoginLoading()
+    window.addEventListener('pageshow', this.handlePageShow)
+    document.addEventListener('visibilitychange', this.handleVisibilityChange)
+  },
+  beforeUnmount() {
+    window.removeEventListener('pageshow', this.handlePageShow)
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+  },
   methods: {
     ...mapActions('toast', ['showSuccess', 'showError', 'showInfo']),
+    resetSocialLoginLoading() {
+      this.loadingFacebook = false
+      this.loadingGoogle = false
+    },
+    handlePageShow() {
+      this.resetSocialLoginLoading()
+    },
+    handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        this.resetSocialLoginLoading()
+      }
+    },
     startOAuthLogin(provider, loadingKey) {
       this[loadingKey] = true
       const redirectPath = this.$route.query.redirect || '/dashboard'

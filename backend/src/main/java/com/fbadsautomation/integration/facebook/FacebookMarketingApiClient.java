@@ -33,6 +33,21 @@ import java.util.Map;
 public class FacebookMarketingApiClient {
 
     private static final Logger log = LoggerFactory.getLogger(FacebookMarketingApiClient.class);
+    // TODO: Keep these field lists in sync with Facebook Marketing API docs for the current version.
+    private static final java.util.Set<String> CAMPAIGN_ALLOWED_FIELDS = java.util.Set.of(
+        "name", "objective", "status", "special_ad_categories", "is_adset_budget_sharing_enabled", "access_token"
+    );
+    private static final java.util.Set<String> ADSET_ALLOWED_FIELDS = java.util.Set.of(
+        "name", "campaign_id", "is_adset_budget_sharing_enabled", "daily_budget", "start_time",
+        "end_time", "billing_event", "optimization_goal", "status", "promoted_object", "targeting",
+        "access_token"
+    );
+    private static final java.util.Set<String> CREATIVE_ALLOWED_FIELDS = java.util.Set.of(
+        "name", "object_story_spec", "access_token"
+    );
+    private static final java.util.Set<String> AD_ALLOWED_FIELDS = java.util.Set.of(
+        "name", "adset_id", "creative", "status", "access_token"
+    );
 
     private final RestTemplate restTemplate;
     private final FacebookProperties facebookProperties;
@@ -82,15 +97,16 @@ public class FacebookMarketingApiClient {
         String url = String.format("%s/v%s/%s/campaigns",
             facebookProperties.getApiUrl(), facebookProperties.getApiVersion(), adAccountId);
 
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("name", campaign.getName());
-        form.add("objective", mapObjective(campaign.getObjective()));
-        form.add("status", "PAUSED"); // create in paused state for safety
-        form.add("special_ad_categories", "[]");
-        form.add("is_adset_budget_sharing_enabled", String.valueOf(facebookProperties.isAdsetBudgetSharingEnabled()));
-        form.add("access_token", accessToken);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("name", campaign.getName());
+        payload.put("objective", mapObjective(campaign.getObjective()));
+        payload.put("status", "PAUSED");
+        payload.put("special_ad_categories", "[]");
+        payload.put("is_adset_budget_sharing_enabled", facebookProperties.isAdsetBudgetSharingEnabled());
+        payload.put("access_token", accessToken);
+        logPayload("campaign", payload, CAMPAIGN_ALLOWED_FIELDS);
 
-        Map<String, Object> response = postForm(url, form);
+        Map<String, Object> response = postForm(url, convertToForm(payload));
         return extractIdOrThrow(response, "campaign");
     }
 
@@ -98,29 +114,29 @@ public class FacebookMarketingApiClient {
         String url = String.format("%s/v%s/%s/adsets",
             facebookProperties.getApiUrl(), facebookProperties.getApiVersion(), adAccountId);
 
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("name", campaign.getName() + " - Ad Set");
-        form.add("campaign_id", campaignId);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("name", campaign.getName() + " - Ad Set");
+        payload.put("campaign_id", campaignId);
         boolean adsetBudgetSharing = facebookProperties.isAdsetBudgetSharingEnabled();
-        form.add("is_adset_budget_sharing_enabled", String.valueOf(adsetBudgetSharing));
+        payload.put("is_adset_budget_sharing_enabled", adsetBudgetSharing);
 
         if (!adsetBudgetSharing) {
-            String dailyBudget = formatBudgetForMeta(resolveAdsetBudget(campaign));
-            form.add("daily_budget", dailyBudget);
+            payload.put("daily_budget", formatBudgetForMeta(resolveAdsetBudget(campaign)));
         }
 
-        form.add("start_time", ISO_FORMATTER.format(campaign.getStartDate()));
+        payload.put("start_time", ISO_FORMATTER.format(campaign.getStartDate()));
         if (campaign.getEndDate() != null) {
-            form.add("end_time", ISO_FORMATTER.format(campaign.getEndDate()));
+            payload.put("end_time", ISO_FORMATTER.format(campaign.getEndDate()));
         }
-        form.add("billing_event", "IMPRESSIONS");
-        form.add("optimization_goal", mapOptimizationGoal(campaign.getObjective()));
-        form.add("status", "PAUSED");
-        form.add("promoted_object", buildPromotedObject(ad));
-        form.add("targeting", buildTargeting(campaign));
-        form.add("access_token", accessToken);
+        payload.put("billing_event", "IMPRESSIONS");
+        payload.put("optimization_goal", mapOptimizationGoal(campaign.getObjective()));
+        payload.put("status", "PAUSED");
+        payload.put("promoted_object", buildPromotedObject(ad));
+        payload.put("targeting", buildTargeting(campaign));
+        payload.put("access_token", accessToken);
+        logPayload("adset", payload, ADSET_ALLOWED_FIELDS);
 
-        Map<String, Object> response = postForm(url, form);
+        Map<String, Object> response = postForm(url, convertToForm(payload));
         return extractIdOrThrow(response, "ad set");
     }
 
@@ -144,12 +160,13 @@ public class FacebookMarketingApiClient {
         objectStorySpec.put("page_id", facebookProperties.getPageId()); // optional if you have a page
         objectStorySpec.put("link_data", linkData);
 
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("name", ad.getName());
-        form.add("object_story_spec", JsonUtils.toJson(objectStorySpec));
-        form.add("access_token", accessToken);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("name", ad.getName());
+        payload.put("object_story_spec", JsonUtils.toJson(objectStorySpec));
+        payload.put("access_token", accessToken);
+        logPayload("creative", payload, CREATIVE_ALLOWED_FIELDS);
 
-        Map<String, Object> response = postForm(url, form);
+        Map<String, Object> response = postForm(url, convertToForm(payload));
         return extractIdOrThrow(response, "creative");
     }
 
@@ -157,14 +174,15 @@ public class FacebookMarketingApiClient {
         String url = String.format("%s/v%s/%s/ads",
             facebookProperties.getApiUrl(), facebookProperties.getApiVersion(), adAccountId);
 
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("name", ad.getName());
-        form.add("adset_id", adSetId);
-        form.add("creative", String.format("{\"creative_id\":\"%s\"}", creativeId));
-        form.add("status", "PAUSED");
-        form.add("access_token", accessToken);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("name", ad.getName());
+        payload.put("adset_id", adSetId);
+        payload.put("creative", String.format("{\"creative_id\":\"%s\"}", creativeId));
+        payload.put("status", "PAUSED");
+        payload.put("access_token", accessToken);
+        logPayload("ad", payload, AD_ALLOWED_FIELDS);
 
-        Map<String, Object> response = postForm(url, form);
+        Map<String, Object> response = postForm(url, convertToForm(payload));
         return extractIdOrThrow(response, "ad");
     }
 
@@ -188,6 +206,33 @@ public class FacebookMarketingApiClient {
                 "Facebook API did not return " + entityName + " id: " + response);
         }
         return id.toString();
+    }
+
+    private MultiValueMap<String, String> convertToForm(Map<String, Object> payload) {
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        payload.forEach((key, value) -> {
+            if (value != null) {
+                form.add(key, value.toString());
+            }
+        });
+        return form;
+    }
+
+    private void logPayload(String entityType, Map<String, Object> payload, java.util.Set<String> allowedFields) {
+        if (!facebookProperties.isDebugPayloads()) {
+            return;
+        }
+        try {
+            String json = JsonUtils.toJson(payload);
+            java.util.Set<String> unknown = new java.util.HashSet<>(payload.keySet());
+            unknown.removeAll(allowedFields);
+            log.info("[FB Export][{}] Payload sent: {}", entityType, json);
+            if (!unknown.isEmpty()) {
+                log.warn("[FB Export][{}] Unknown/unsupported fields detected: {}. Allowed fields: {}", entityType, unknown, allowedFields);
+            }
+        } catch (Exception e) {
+            log.warn("[FB Export][{}] Failed to log payload: {}", entityType, e.getMessage());
+        }
     }
 
     private String mapObjective(Campaign.CampaignObjective objective) {

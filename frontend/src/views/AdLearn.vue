@@ -322,6 +322,7 @@ export default {
       referenceContent: '',
       referenceSummaryText: '',
       referenceInsights: null,
+      referenceAdData: null,
       detectedStyle: null,
       detectedCallToAction: null,
       adId: null,
@@ -508,6 +509,7 @@ export default {
         this.referenceContent = response.data.referenceContent || ''
         this.extractedContent = this.referenceContent
         this.referenceInsights = response.data.insights || null
+        this.referenceAdData = response.data.referenceAdData || null
         this.detectedStyle = response.data.detectedStyle || null
         this.detectedCallToAction = response.data.suggestedCallToAction || null
         this.referenceSummaryText = this.formatInsights(this.referenceInsights, response.data.message)
@@ -590,6 +592,7 @@ export default {
           productDescription: this.formData.baseContent,
           referenceLink: this.formData.referenceLink,
           referenceContent: this.referenceContent || this.formData.baseContent,
+          referenceAdData: this.referenceAdData,
           textProvider: this.formData.textProvider,
           imageProvider: this.formData.imageProvider,
           numberOfVariations: this.formData.numberOfVariations,
