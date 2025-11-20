@@ -15,77 +15,21 @@
     
     <!-- Layout chính cho người dùng đã đăng nhập -->
     <template v-else-if="isAuthenticated">
-      <a-layout class="main-layout">
-        <!-- Sidebar -->
-        <a-layout-sider 
-          v-model:collapsed="collapsed" 
-          :trigger="null" 
-          collapsible
-          class="sidebar"
-          :width="240"
-          theme="light"
-        >
-          <div class="logo">
-            <img src="/logo.svg" alt="Logo" class="logo-img" />
-            <span v-if="!collapsed" class="logo-text">Ads Creative</span>
-          </div>
-          
-          <a-menu
-            mode="inline"
-            :selected-keys="selectedKeys"
-            :open-keys="openKeys"
-            @select="onMenuSelect"
-            class="sidebar-menu"
-          >
-            <a-menu-item key="dashboard">
-              <template #icon><font-awesome-icon icon="gauge" /></template>
-              <span>{{ $t('navigation.dashboard') }}</span>
-            </a-menu-item>
+      <div class="main-layout">
+        <AppSidebar :sidebarOpen="sidebarOpen" @toggle="toggleSidebar" />
 
-            <a-sub-menu key="campaigns">
-              <template #icon><font-awesome-icon icon="bullhorn" /></template>
-              <template #title>{{ $t('navigation.campaigns') }}</template>
-              <a-menu-item key="campaigns-list">{{ $t('navigation.allCampaigns') }}</a-menu-item>
-              <a-menu-item key="campaigns-create">{{ $t('navigation.createCampaign') }}</a-menu-item>
-            </a-sub-menu>
-
-            <a-sub-menu key="ads">
-              <template #icon><font-awesome-icon icon="image" /></template>
-              <template #title>{{ $t('navigation.ads') }}</template>
-              <a-menu-item key="ads-list">{{ $t('navigation.allAds') }}</a-menu-item>
-              <a-menu-item key="ads-create">{{ $t('navigation.createAd') }}</a-menu-item>
-              <a-menu-item key="ads-learn">{{ $t('navigation.mimicAds') }}</a-menu-item>
-            </a-sub-menu>
-
-            <a-menu-item key="analytics">
-              <template #icon><font-awesome-icon icon="chart-line" /></template>
-              <span>{{ $t('navigation.analytics') }}</span>
-            </a-menu-item>
-
-            <a-menu-item key="optimization">
-              <template #icon><font-awesome-icon icon="rocket" /></template>
-              <span>{{ $t('navigation.optimization') }}</span>
-            </a-menu-item>
-
-            <a-menu-item key="competitors">
-              <template #icon><font-awesome-icon icon="chart-simple" /></template>
-              <span>{{ $t('navigation.competitors') }}</span>
-            </a-menu-item>
-          </a-menu>
-        </a-layout-sider>
-        
         <!-- Main content -->
-        <a-layout>
+        <a-layout class="content-layout" :class="{ 'sidebar-open': sidebarOpen }">
           <!-- Header -->
           <a-layout-header class="header">
             <div class="header-left">
               <a-button
                 type="text"
-                @click="collapsed = !collapsed"
+                @click="toggleSidebar"
                 class="trigger"
               >
                 <template #icon>
-                  <font-awesome-icon :icon="collapsed ? 'xmark' : 'bars'" />
+                  <font-awesome-icon :icon="sidebarOpen ? 'xmark' : 'bars'" />
                 </template>
               </a-button>
               
@@ -168,7 +112,7 @@
             </div>
           </a-layout-content>
         </a-layout>
-      </a-layout>
+      </div>
     </template>
 
     <!-- Layout cho người dùng chưa đăng nhập -->
@@ -190,18 +134,19 @@
 import { mapGetters } from 'vuex'
 import ToastNotifications from './components/ToastNotifications.vue'
 import LanguageSwitcher from './components/LanguageSwitcher.vue'
+import AppSidebar from './components/AppSidebar.vue'
 
 export default {
   name: 'App',
   components: {
     ToastNotifications,
-    LanguageSwitcher
+    LanguageSwitcher,
+    AppSidebar
   },
   data() {
     return {
-      collapsed: false,
-      selectedKeys: ['dashboard'],
-      openKeys: [],
+      sidebarOpen: true,
+      isMobile: false,
       breadcrumbs: [
         { name: 'Dashboard', path: '/dashboard' }
       ],
@@ -227,26 +172,18 @@ export default {
     }
   },
   methods: {
-
-    onMenuSelect({ key }) {
-      this.selectedKeys = [key]
-
-      const routeMap = {
-        'dashboard': '/dashboard',
-        'campaigns-list': '/campaigns',
-        'campaigns-create': '/campaign/create',
-        'ads-list': '/ads',
-        'ads-create': '/ad/create',
-        'ads-learn': '/ads/learn',
-        'analytics': '/analytics',
-        'optimization': '/optimization',
-        'competitors': '/competitors',
-        'profile': '/profile',
-        'settings': '/settings'
+    toggleSidebar() {
+      this.sidebarOpen = !this.sidebarOpen
+    },
+    handleResize() {
+      if (typeof window === 'undefined') return
+      const previousIsMobile = this.isMobile
+      this.isMobile = window.innerWidth <= 900
+      if (this.isMobile) {
+        this.sidebarOpen = false
+      } else if (previousIsMobile) {
+        this.sidebarOpen = true
       }
-
-      const target = routeMap[key] || `/${key}`
-      this.$router.push(target)
     },
     showNotifications() {
       this.showNotificationDropdown = !this.showNotificationDropdown
@@ -278,11 +215,17 @@ export default {
       } else if (key === 'settings') {
         this.$router.push('/settings')
       }
-    },
-    toggleMobileMenu() {
-      if (this.$refs.sidebar) {
-        this.$refs.sidebar.toggleMobileMenu()
-      }
+    }
+  },
+  mounted() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', this.handleResize)
+      this.handleResize()
+    }
+  },
+  beforeUnmount() {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.handleResize)
     }
   },
   async created() {
@@ -358,79 +301,16 @@ export default {
   min-height: 100vh;
 }
 
-.main-layout > .ant-layout {
-  margin-left: 240px;
+.content-layout {
+  min-height: 100vh;
+  margin-left: 0;
   transition: margin-left 0.2s ease;
 }
 
-.sidebar.ant-layout-sider-collapsed + .ant-layout {
-  margin-left: 80px;
-}
-
-.sidebar {
-  position: fixed !important;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  height: 100vh;
-  overflow-y: auto;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-}
-
-/* Sidebar collapsed state - hiển thị icon rõ ràng */
-.sidebar.ant-layout-sider-collapsed .ant-menu-item,
-.sidebar.ant-layout-sider-collapsed .ant-menu-submenu {
-  padding: 0 !important;
-  text-align: center;
-}
-
-.sidebar.ant-layout-sider-collapsed .ant-menu-item-icon,
-.sidebar.ant-layout-sider-collapsed .ant-menu-submenu-title .ant-menu-item-icon {
-  font-size: 20px !important;
-  margin: 0 auto !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Font Awesome icon trong menu */
-.sidebar .ant-menu-item-icon svg,
-.sidebar .ant-menu-submenu-title svg {
-  width: 18px;
-  height: 18px;
-  vertical-align: middle;
-}
-
-.sidebar.ant-layout-sider-collapsed .ant-menu-item-icon svg,
-.sidebar.ant-layout-sider-collapsed .ant-menu-submenu-title svg {
-  width: 20px;
-  height: 20px;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.logo-img {
-  width: 32px;
-  height: 32px;
-}
-
-.logo-text {
-  margin-left: 12px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1890ff;
-}
-
-.sidebar-menu {
-  border-right: none;
+@media (min-width: 900px) {
+  .content-layout.sidebar-open {
+    margin-left: 240px;
+  }
 }
 
 .header {
@@ -702,26 +582,6 @@ export default {
   
   .content-wrapper {
     padding: 16px;
-  }
-  
-  .main-layout > .ant-layout {
-    margin-left: 0 !important;
-  }
-
-  .sidebar {
-    position: fixed !important;
-    left: -240px;
-    height: 100vh;
-    z-index: 1000;
-    transition: left 0.3s ease;
-  }
-
-  .sidebar:not(.ant-layout-sider-collapsed) {
-    left: 0;
-  }
-  
-  .logo-text {
-    display: none;
   }
 }
 
