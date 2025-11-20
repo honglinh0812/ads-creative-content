@@ -74,7 +74,7 @@ public class CampaignController {
         Long userId = Long.valueOf(authentication.getName());
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
 
-        // Use new method that includes totalAds and createdDate (Issue #7 fix)
+        // Lấy tất cả các campaign trong hệ thống
         Page<CampaignDTO> dtos = campaignService.getAllCampaignsWithStatsByUserPaginated(userId, pageable);
         return ResponseEntity.ok(dtos);
     }

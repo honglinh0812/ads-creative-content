@@ -1,53 +1,45 @@
 <template>
-  <div class="ad-create-page">
-    <div class="ad-create-content">
-      <a-page-header :title="$t('adLearn.pageHeader.title')" :sub-title="$t('adLearn.pageHeader.subtitle')">
+  <div class="ad-learn-layout">
+    <div class="ad-learn-inner">
+      <a-page-header
+        class="page-header"
+        :title="$t('adLearn.pageHeader.title')"
+        :sub-title="$t('adLearn.pageHeader.subtitle')"
+      >
         <template #extra>
-          <a-button @click="$router.push('/ads')">
-            <template #icon><arrow-left-outlined /></template>
+          <a-button type="default" @click="$router.push('/ads')">
             {{ $t('adLearn.pageHeader.backToAds') }}
           </a-button>
         </template>
       </a-page-header>
 
-      <div class="creative-progress-container">
-        <div class="progress-header">
-          <h2 class="progress-title">{{ $t('adLearn.progress.headerTitle') }}</h2>
-          <div class="progress-subtitle">{{ $t('adLearn.progress.stepOf', { step: currentStep, total: 3 }) }}</div>
-        </div>
-
-        <div class="creative-progress-tracker">
-          <div class="progress-line">
-            <div class="progress-fill" :style="{ width: (currentStep / 3 * 100) + '%' }"></div>
+      <a-card class="progress-card surface-card" :bordered="false">
+        <div class="progress-heading">
+          <div>
+            <div class="progress-title">{{ $t('adLearn.progress.headerTitle') }}</div>
+            <div class="progress-subtitle">{{ $t('adLearn.progress.stepOf', { step: currentStep, total: 3 }) }}</div>
           </div>
-          <div class="progress-steps">
-            <div
-              v-for="(step, index) in progressSteps"
-              :key="index"
-              class="progress-step"
-              :class="{
-                active: currentStep === index + 1,
-                completed: currentStep > index + 1,
-                current: currentStep === index + 1
-              }"
-            >
-              <div class="step-circle">
-                <div v-if="currentStep > index + 1" class="step-check">✓</div>
-                <div v-else class="step-number">{{ index + 1 }}</div>
-              </div>
-              <div class="step-content">
-                <div class="step-title">{{ step.title }}</div>
-                <div class="step-desc">{{ step.description }}</div>
-                <div v-if="currentStep === index + 1" class="step-emoji">{{ step.emoji }}</div>
-              </div>
-            </div>
-          </div>
+          <span class="progress-tag">Step {{ currentStep }} / 3</span>
         </div>
-      </div>
+        <a-steps :current="currentStep - 1" size="small" responsive>
+          <a-step
+            v-for="(step, index) in progressSteps"
+            :key="index"
+            :title="step.title"
+            :description="step.description"
+          />
+        </a-steps>
+      </a-card>
 
-      <div v-if="currentStep === 1" class="step-content">
-        <a-card :title="$t('adLearn.step1.cardTitle')" class="enhanced-card">
-          <a-form layout="vertical">
+      <div v-if="currentStep === 1" class="step-wrapper">
+        <a-card class="surface-card" :bordered="false">
+          <div class="section-heading">
+            <a-typography-title :level="4">{{ $t('adLearn.step1.cardTitle') }}</a-typography-title>
+            <p class="section-description">
+              {{ $t('adLearn.progressSteps.step1.description') }}
+            </p>
+          </div>
+          <a-form layout="vertical" class="clean-form">
             <a-form-item :label="$t('adLearn.step1.campaign.label')" required>
               <a-select
                 v-model:value="formData.campaignId"
@@ -77,18 +69,18 @@
               />
             </a-form-item>
 
-            <a-row :gutter="16">
-              <a-col :span="12">
+            <a-row :gutter="[16, 16]">
+              <a-col :xs="24" :md="12">
                 <a-form-item :label="$t('adLearn.step1.variations.label')">
                   <a-input-number
                     v-model:value="formData.numberOfVariations"
                     :min="1"
                     :max="5"
-                    style="width: 100%"
+                    class="full-width-input"
                   />
                 </a-form-item>
               </a-col>
-              <a-col :span="12">
+              <a-col :xs="24" :md="12">
                 <a-form-item :label="$t('adLearn.step1.language.label')">
                   <a-select v-model:value="formData.language">
                     <a-select-option value="vi">{{ $t('adLearn.step1.language.vietnamese') }}</a-select-option>
@@ -119,7 +111,7 @@
                 :message="$t('adLearn.step1.referenceLink.previewReady')"
                 :description="referenceSummaryText || $t('adLearn.step1.referenceLink.fallbackSummary')"
                 show-icon
-                style="margin-top: 8px"
+                class="inline-alert"
               />
             </a-form-item>
 
@@ -127,6 +119,7 @@
               v-if="hasReferenceInsights"
               class="reference-intel-card"
               size="small"
+              :bordered="false"
             >
               <a-descriptions
                 :column="1"
@@ -146,7 +139,7 @@
             </a-card>
           </a-form>
 
-          <div class="step-navigation">
+          <div class="form-actions">
             <a-button
               type="primary"
               size="large"
@@ -155,61 +148,46 @@
               @click="handleNextFromStep1"
             >
               {{ $t('adLearn.step1.next') }}
-              <template #icon><arrow-right-outlined /></template>
             </a-button>
           </div>
         </a-card>
       </div>
 
-      <div v-if="currentStep === 2" class="step-content">
-        <a-card :title="$t('adLearn.step2.cardTitle')" class="enhanced-card">
-          <div class="ai-config-container">
-            <div class="ai-section-header">
-              <h2 class="section-title-magic">{{ $t('adLearn.step2.sectionTitle') }}</h2>
-              <p class="section-subtitle-magic">{{ $t('adLearn.step2.sectionSubtitle') }}</p>
+      <div v-if="currentStep === 2" class="step-wrapper">
+        <a-card class="surface-card" :bordered="false">
+          <div class="section-heading">
+            <a-typography-title :level="4">{{ $t('adLearn.step2.cardTitle') }}</a-typography-title>
+            <p class="section-description">{{ $t('adLearn.step2.sectionSubtitle') }}</p>
+          </div>
+          <div class="provider-grid">
+            <div class="provider-panel">
+              <div class="provider-label">{{ $t('adLearn.step2.textProvider') }}</div>
+              <a-select v-model:value="formData.textProvider" class="full-width-input">
+                <a-select-option
+                  v-for="provider in textProviders"
+                  :key="provider.value"
+                  :value="provider.value"
+                >
+                  {{ provider.name }}
+                </a-select-option>
+              </a-select>
             </div>
-
-            <a-row :gutter="16">
-              <a-col :span="12">
-                <a-card size="small" class="provider-card">
-                  <div class="provider-header">
-                    <robot-outlined />
-                    <span class="provider-title">{{ $t('adLearn.step2.textProvider') }}</span>
-                  </div>
-                  <a-select v-model:value="formData.textProvider" style="width: 100%">
-                    <a-select-option
-                      v-for="provider in textProviders"
-                      :key="provider.value"
-                      :value="provider.value"
-                    >
-                      {{ provider.name }}
-                    </a-select-option>
-                  </a-select>
-                </a-card>
-              </a-col>
-              <a-col :span="12">
-                <a-card size="small" class="provider-card">
-                  <div class="provider-header">
-                    <file-image-outlined />
-                    <span class="provider-title">{{ $t('adLearn.step2.imageProvider') }}</span>
-                  </div>
-                  <a-select v-model:value="formData.imageProvider" style="width: 100%">
-                    <a-select-option
-                      v-for="provider in imageProviders"
-                      :key="provider.value"
-                      :value="provider.value"
-                    >
-                      {{ provider.name }}
-                    </a-select-option>
-                  </a-select>
-                </a-card>
-              </a-col>
-            </a-row>
+            <div class="provider-panel">
+              <div class="provider-label">{{ $t('adLearn.step2.imageProvider') }}</div>
+              <a-select v-model:value="formData.imageProvider" class="full-width-input">
+                <a-select-option
+                  v-for="provider in imageProviders"
+                  :key="provider.value"
+                  :value="provider.value"
+                >
+                  {{ provider.name }}
+                </a-select-option>
+              </a-select>
+            </div>
           </div>
 
-          <div class="step-navigation spaced">
-            <a-button @click="prevStep" size="large">
-              <template #icon><arrow-left-outlined /></template>
+          <div class="form-actions dual">
+            <a-button size="large" @click="prevStep">
               {{ $t('adLearn.navigation.back') }}
             </a-button>
             <a-button
@@ -219,22 +197,26 @@
               :loading="isGenerating"
               :disabled="!validateStep2()"
             >
-              <robot-outlined />
               {{ $t('adLearn.step2.generate') }}
             </a-button>
           </div>
         </a-card>
       </div>
 
-      <div v-if="currentStep === 3" class="step-content">
-        <a-card :title="$t('adLearn.step3.cardTitle')" class="enhanced-card">
+      <div v-if="currentStep === 3" class="step-wrapper">
+        <a-card class="surface-card" :bordered="false">
+          <div class="section-heading">
+            <a-typography-title :level="4">{{ $t('adLearn.step3.cardTitle') }}</a-typography-title>
+            <p class="section-description">{{ $t('adLearn.progressSteps.step3.description') }}</p>
+          </div>
           <FieldError :error="generateError" />
           <a-empty v-if="!adVariations.length" :description="$t('adLearn.step3.empty')" />
           <div v-else class="variation-grid">
             <a-card
               v-for="variation in adVariations"
               :key="getVariationIdentifier(variation)"
-              class="variation-card"
+              class="variation-card surface-card"
+              :bordered="false"
               :class="{ selected: isVariationSelected(variation) }"
               @click="selectVariation(variation)"
               hoverable
@@ -253,9 +235,8 @@
             </a-card>
           </div>
 
-          <div class="step-navigation spaced">
-            <a-button @click="prevStep" size="large">
-              <template #icon><arrow-left-outlined /></template>
+          <div class="form-actions dual">
+            <a-button size="large" @click="prevStep">
               {{ $t('adLearn.navigation.back') }}
             </a-button>
             <a-button
@@ -265,7 +246,6 @@
               :loading="isSaving"
               @click="saveAd"
             >
-              <save-outlined />
               {{ $t('adLearn.step3.save') }}
             </a-button>
           </div>
@@ -277,13 +257,6 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import {
-  ArrowLeftOutlined,
-  ArrowRightOutlined,
-  RobotOutlined,
-  FileImageOutlined,
-  SaveOutlined
-} from '@ant-design/icons-vue'
 import api from '@/services/api'
 import FieldError from '@/components/FieldError.vue'
 import { detectLanguage, i18nTemplates } from '@/utils/languageDetector'
@@ -291,11 +264,6 @@ import { detectLanguage, i18nTemplates } from '@/utils/languageDetector'
 export default {
   name: 'AdLearn',
   components: {
-    ArrowLeftOutlined,
-    ArrowRightOutlined,
-    RobotOutlined,
-    FileImageOutlined,
-    SaveOutlined,
     FieldError
   },
   data() {
@@ -322,7 +290,6 @@ export default {
       referenceContent: '',
       referenceSummaryText: '',
       referenceInsights: null,
-      referenceAdData: null,
       detectedStyle: null,
       detectedCallToAction: null,
       adId: null,
@@ -509,7 +476,6 @@ export default {
         this.referenceContent = response.data.referenceContent || ''
         this.extractedContent = this.referenceContent
         this.referenceInsights = response.data.insights || null
-        this.referenceAdData = response.data.referenceAdData || null
         this.detectedStyle = response.data.detectedStyle || null
         this.detectedCallToAction = response.data.suggestedCallToAction || null
         this.referenceSummaryText = this.formatInsights(this.referenceInsights, response.data.message)
@@ -592,7 +558,6 @@ export default {
           productDescription: this.formData.baseContent,
           referenceLink: this.formData.referenceLink,
           referenceContent: this.referenceContent || this.formData.baseContent,
-          referenceAdData: this.referenceAdData,
           textProvider: this.formData.textProvider,
           imageProvider: this.formData.imageProvider,
           numberOfVariations: this.formData.numberOfVariations,
@@ -702,207 +667,140 @@ export default {
 </script>
 
 <style scoped>
-.ad-create-page {
-  padding: 24px;
-  background: #f5f7fa;
+.ad-learn-layout {
   min-height: 100vh;
+  background: #f4f7fb;
+  padding: 24px 16px 48px;
 }
 
-.ad-create-content {
+.ad-learn-inner {
   max-width: 1100px;
   margin: 0 auto;
 }
 
-.creative-progress-container {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+.page-header {
+  padding: 0;
+  margin-bottom: 16px;
 }
 
-.progress-header {
+.surface-card {
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.progress-card {
+  margin-bottom: 20px;
+  padding: 20px;
+}
+
+.progress-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .progress-title {
-  margin: 0;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .progress-subtitle {
-  color: #8c8c8c;
+  color: #64748b;
+  font-size: 14px;
 }
 
-.creative-progress-tracker {
-  margin-top: 10px;
-}
-
-.progress-line {
-  height: 6px;
-  background: #f0f0f0;
-  border-radius: 999px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #1890ff 0%, #52c41a 100%);
-  transition: width 0.3s ease;
-}
-
-.progress-steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.progress-step {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  border-radius: 10px;
-  background: #fafafa;
-  border: 1px solid #f0f0f0;
-  transition: all 0.2s ease;
-}
-
-.progress-step.current {
-  background: #e6f7ff;
-  border-color: #91d5ff;
-}
-
-.progress-step.completed {
-  background: #f6ffed;
-  border-color: #b7eb8f;
-}
-
-.step-circle {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #fff;
-  border: 2px solid #d9d9d9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 10px;
-  font-weight: 700;
-}
-
-.progress-step.current .step-circle {
-  border-color: #1890ff;
-  color: #1890ff;
-}
-
-.progress-step.completed .step-circle {
-  background: #52c41a;
-  border-color: #52c41a;
-  color: #fff;
-}
-
-.step-title {
+.progress-tag {
+  color: #0f172a;
   font-weight: 600;
 }
 
-.step-desc {
-  color: #8c8c8c;
-  font-size: 12px;
-}
-
-.step-emoji {
-  margin-top: 4px;
-}
-
-.step-content {
+.step-wrapper {
   margin-bottom: 24px;
 }
 
-.enhanced-card {
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+.section-heading {
+  margin-bottom: 24px;
 }
 
-.step-navigation {
+.section-description {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.clean-form :deep(.ant-form-item-label > label) {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.full-width-input {
+  width: 100%;
+}
+
+.inline-alert {
+  margin-top: 12px;
+}
+
+.reference-intel-card {
+  margin-top: 12px;
+  background: #f8fbff;
+  border: 1px solid #e0edff;
+}
+
+.form-actions {
+  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
+  gap: 12px;
 }
 
-.step-navigation.spaced {
+.form-actions.dual {
   justify-content: space-between;
 }
 
-.style-option {
-  display: flex;
-  flex-direction: column;
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
 }
 
-.style-label {
+.provider-panel {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fdfefe;
+}
+
+.provider-label {
   font-weight: 600;
-}
-
-.style-description {
-  font-size: 12px;
-  color: #8c8c8c;
-}
-
-.ai-config-container {
-  display: flex;
-  flex-direction: column;
-}
-
-.ai-section-header {
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-.section-title-magic {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.section-subtitle-magic {
-  margin: 0;
-  color: #8c8c8c;
-}
-
-.provider-card {
-  height: 100%;
-}
-
-.provider-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   margin-bottom: 8px;
-  font-weight: 600;
-}
-
-.provider-title {
-  font-size: 14px;
+  color: #0f172a;
 }
 
 .variation-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .variation-card {
   cursor: pointer;
-  transition: all 0.2s ease;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+}
+
+.variation-card:hover {
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
 }
 
 .variation-card.selected {
-  border-color: #1890ff;
-  box-shadow: 0 10px 30px rgba(24, 144, 255, 0.15);
+  border-color: #2563eb;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.18);
 }
 
 .variation-header {
@@ -913,33 +811,43 @@ export default {
 }
 
 .variation-title {
-  font-weight: 700;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .variation-body {
   white-space: pre-wrap;
-  min-height: 60px;
+  color: #1f2937;
+  min-height: 72px;
 }
 
 .variation-image img {
   width: 100%;
-  border-radius: 8px;
+  border-radius: 10px;
   margin-top: 8px;
 }
 
 .ad-preview-cta {
-  display: inline-block;
-  background: #e6f7ff;
-  color: #1890ff;
-  padding: 6px 10px;
-  border-radius: 6px;
+  display: inline-flex;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 6px 12px;
+  border-radius: 999px;
   font-weight: 600;
   margin-top: 8px;
 }
 
-.reference-intel-card {
-  margin-top: 12px;
-  border: 1px solid #dbeafe;
-  background: #f7fbff;
+@media (max-width: 768px) {
+  .ad-learn-layout {
+    padding: 16px 12px 32px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions.dual {
+    gap: 12px;
+  }
 }
 </style>

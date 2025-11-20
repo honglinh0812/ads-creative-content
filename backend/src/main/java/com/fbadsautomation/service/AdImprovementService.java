@@ -1,6 +1,5 @@
 package com.fbadsautomation.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fbadsautomation.dto.AdGenerationRequest;
 import com.fbadsautomation.dto.AdGenerationResponse;
@@ -11,7 +10,10 @@ import com.fbadsautomation.dto.ReferenceAnalysisResponse;
 import com.fbadsautomation.exception.ApiException;
 import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.AdContent;
+import com.fbadsautomation.model.AdStyle;
+import com.fbadsautomation.model.AdType;
 import com.fbadsautomation.model.FacebookCTA;
+import com.fbadsautomation.util.ValidationMessages.Language;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -31,7 +33,8 @@ import java.util.regex.Pattern;
 @Slf4j
 public class AdImprovementService {
 
-    private final MetaAdLibraryApiService metaAdLibraryApiService;
+    private final MetaAdLibraryService metaAdLibraryService;
+    private final ChainOfThoughtPromptBuilder chainOfThoughtPromptBuilder;
     private final AdService adService;
     private final ObjectMapper objectMapper;
 
@@ -64,11 +67,11 @@ public class AdImprovementService {
      * Kiểm tra link quảng cáo tham chiếu và lấy nội dung nếu có access token.
      */
     public ReferenceAnalysisResponse analyzeReference(ReferenceAnalysisRequest request) {
-        if (!metaAdLibraryApiService.isValidAdLibraryUrl(request.getReferenceLink())) {
+        if (!metaAdLibraryService.isValidAdLibraryUrl(request.getReferenceLink())) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "URL Meta Ad Library không hợp lệ");
         }
 
-        String adId = metaAdLibraryApiService.extractAdIdFromUrl(request.getReferenceLink());
+        String adId = metaAdLibraryService.extractAdIdFromUrl(request.getReferenceLink());
         if (!StringUtils.hasText(adId)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Không thể trích xuất Ad ID từ URL");
         }
@@ -78,19 +81,26 @@ public class AdImprovementService {
         ReferenceAdData referenceAdData = null;
 
         if (StringUtils.hasText(request.getAccessToken())) {
-            try {
-                metadata = metaAdLibraryApiService.extractAdContent(adId, request.getAccessToken());
-                referenceAdData = extractReferenceAdData(metadata);
-                referenceContent = buildReferenceSummary(referenceAdData, metadata);
-            } catch (JsonProcessingException e) {
-                log.warn("Không thể chuyển metadata quảng cáo sang JSON: {}", e.getMessage());
-                referenceContent = metadata.toString();
-            } catch (Exception e) {
-                log.error("Không thể lấy nội dung tham chiếu từ Meta API: {}", e.getMessage());
-                throw new ApiException(HttpStatus.BAD_GATEWAY, "Không thể lấy nội dung từ Meta Ad Library");
+            Map<String, Object> apiResult = metaAdLibraryService.extractOfficialAdContent(adId, request.getAccessToken());
+            if (Boolean.TRUE.equals(apiResult.get("success"))) {
+                //noinspection unchecked
+                metadata = (Map<String, Object>) apiResult.getOrDefault("content", Collections.emptyMap());
+                referenceAdData = metaAdLibraryService.buildReferenceAdData(metadata);
+                referenceContent = metaAdLibraryService.summarizeReferenceAd(referenceAdData, metadata);
+            } else {
+                log.warn("Meta API fallback failed: {}", apiResult.get("message"));
             }
-        } else {
-            referenceAdData = extractReferenceAdData(metadata);
+        }
+
+        if (referenceAdData == null) {
+            List<Map<String, Object>> scraped = metaAdLibraryService.extractAdTextAndImages(List.of(request.getReferenceLink()));
+            if (!scraped.isEmpty()) {
+                String text = (String) scraped.get(0).get("text");
+                referenceAdData = ReferenceAdData.builder()
+                        .primaryText(text)
+                        .build();
+                referenceContent = text;
+            }
         }
 
         ReferenceAnalysisResponse.ReferenceInsights insights = buildInsights(referenceContent);
@@ -272,65 +282,44 @@ public class AdImprovementService {
     }
 
     private String buildPromptFromRequest(AdImprovementRequest request) {
-        StringBuilder promptBuilder = new StringBuilder();
+        AdType adType = adService.mapFrontendAdTypeToEnum(request.getAdType());
+        Language language = "vi".equalsIgnoreCase(request.getLanguage())
+                ? Language.VIETNAMESE
+                : Language.ENGLISH;
+        AdStyle adStyle = parseAdStyle(request.getCreativeStyle());
 
-        promptBuilder.append("## USER CAMPAIGN CONTEXT\n")
-                .append("- Campaign ID: ").append(request.getCampaignId()).append('\n')
-                .append("- Ad Name: ").append(request.getName()).append('\n')
-                .append("- Product/Service: ").append(
-                        StringUtils.hasText(request.getProductDescription())
-                                ? request.getProductDescription()
-                                : "N/A").append('\n')
-                .append("- Desired Language: ").append(
-                        StringUtils.hasText(request.getLanguage()) ? request.getLanguage() : "vi").append('\n')
-                .append("- Target Call To Action: ").append(
-                        request.getCallToAction() != null ? request.getCallToAction().name() : "N/A").append('\n')
-                .append("- Number of variations: ").append(request.getNumberOfVariations()).append('\n');
+        String basePrompt = chainOfThoughtPromptBuilder.buildCoTPrompt(
+                StringUtils.hasText(request.getProductDescription()) ? request.getProductDescription() : "N/A",
+                null,
+                adStyle,
+                null,
+                request.getTrendingKeywords(),
+                language,
+                request.getCallToAction(),
+                adType,
+                request.getNumberOfVariations()
+        );
 
-        if (StringUtils.hasText(request.getCreativeStyle())) {
-            promptBuilder.append("- Preferred tone/style: ").append(request.getCreativeStyle()).append('\n');
-        }
+        StringBuilder promptBuilder = new StringBuilder(basePrompt);
 
-        promptBuilder.append("\n## REFERENCE AD FROM META AD LIBRARY\n");
-        ReferenceAdData referenceData = request.getReferenceAdData();
-        if (referenceData != null) {
-            if (StringUtils.hasText(referenceData.getHeadline())) {
-                promptBuilder.append("Headline: ").append(referenceData.getHeadline()).append('\n');
-            }
-            if (StringUtils.hasText(referenceData.getPrimaryText())) {
-                promptBuilder.append("Primary Text: ").append(referenceData.getPrimaryText()).append('\n');
-            }
-            if (StringUtils.hasText(referenceData.getDescription())) {
-                promptBuilder.append("Description: ").append(referenceData.getDescription()).append('\n');
-            }
-            if (StringUtils.hasText(referenceData.getCallToAction())) {
-                promptBuilder.append("CTA: ").append(referenceData.getCallToAction()).append('\n');
-            }
-            if (referenceData.getToneHints() != null && !referenceData.getToneHints().isEmpty()) {
-                promptBuilder.append("Tone keywords: ").append(String.join(", ", referenceData.getToneHints())).append('\n');
-            }
-        } else if (StringUtils.hasText(request.getReferenceContent())) {
+        promptBuilder.append("## REFERENCE AD - STYLE CLONE INPUT\n");
+        if (StringUtils.hasText(request.getReferenceContent())) {
             promptBuilder.append(request.getReferenceContent()).append('\n');
         } else {
-            promptBuilder.append("No structured reference content available.").append('\n');
+            promptBuilder.append("Reference content unavailable.\n");
         }
-        promptBuilder.append("Reference Link: ").append(
-                StringUtils.hasText(request.getReferenceLink()) ? request.getReferenceLink() : "N/A").append('\n');
+        promptBuilder.append("Reference Link: ")
+                .append(StringUtils.hasText(request.getReferenceLink()) ? request.getReferenceLink() : "N/A")
+                .append('\n');
 
-        promptBuilder.append("\n## INSTRUCTIONS\n")
-                .append("1. Analyze the reference ad's style, tone, sentence structure, hook, and emotional angle.\n")
-                .append("2. Generate new ads in the SAME style/theme but focusing on the user's product/service above.\n")
-                .append("3. Do NOT copy text verbatim. Adapt the copy so it is unique but clearly inspired by the reference.\n")
-                .append("4. Keep the CTA restricted to the requested value if provided.\n")
-                .append("5. Return exactly ").append(request.getNumberOfVariations()).append(" variations.\n");
-
-        promptBuilder.append("\n## OUTPUT FORMAT\n")
-                .append("Return a JSON array where each item contains:\n")
-                .append("- headline\n")
-                .append("- primary_text\n")
-                .append("- description\n")
-                .append("- call_to_action\n")
-                .append("- image_prompt (a short visual brief matching the style)\n");
+        promptBuilder.append("\n## CHAIN OF THOUGHT INSTRUCTIONS\n")
+                .append("Step 1 - Analyze reference ad: Extract tone, hook, sentence length, emoji usage, CTA placement.\n")
+                .append("Step 2 - Derive style guidelines: Summarize the tone + structure in bullet points.\n")
+                .append("Step 3 - Adapt to new product: Apply those guidelines to the user's product/service above.\n")
+                .append("Step 4 - Generate ")
+                .append(request.getNumberOfVariations())
+                .append(" new ads that mimic the style but keep content original. Do NOT copy text verbatim.\n")
+                .append("Step 5 - Output JSON array with fields: headline, primary_text, description, call_to_action, image_prompt.\n");
 
         return promptBuilder.toString();
     }
@@ -457,66 +446,15 @@ public class AdImprovementService {
         return score;
     }
 
-    private ReferenceAdData extractReferenceAdData(Map<String, Object> metadata) {
-        if (metadata == null || metadata.isEmpty()) {
+    private AdStyle parseAdStyle(String adStyle) {
+        if (!StringUtils.hasText(adStyle)) {
             return null;
         }
-
         try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> creative = (Map<String, Object>) metadata.get("ad_creative");
-            if (creative == null) {
-                return null;
-            }
-
-            String body = asString(creative.get("body"));
-            String title = asString(creative.get("title"));
-            String description = asString(creative.get("description"));
-            String cta = asString(creative.get("call_to_action_type"));
-            String image = asString(creative.get("image_url"));
-
-            return ReferenceAdData.builder()
-                    .primaryText(body)
-                    .headline(title)
-                    .description(description)
-                    .callToAction(cta)
-                    .mediaUrl(image)
-                    .build();
-        } catch (Exception e) {
-            log.warn("Unable to parse structured reference ad data: {}", e.getMessage());
-            // TODO: Map additional Meta API fields (e.g., snapshot) when available
+            return AdStyle.valueOf(adStyle.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid ad style provided: {}", adStyle);
             return null;
         }
-    }
-
-    private String asString(Object value) {
-        return value != null ? value.toString() : null;
-    }
-
-    private String buildReferenceSummary(ReferenceAdData data, Map<String, Object> metadata) {
-        if (data == null && (metadata == null || metadata.isEmpty())) {
-            return "";
-        }
-        if (data == null) {
-            return metadata.toString();
-        }
-
-        StringBuilder builder = new StringBuilder();
-        if (StringUtils.hasText(data.getHeadline())) {
-            builder.append("Headline: ").append(data.getHeadline()).append('\n');
-        }
-        if (StringUtils.hasText(data.getPrimaryText())) {
-            builder.append("Primary Text: ").append(data.getPrimaryText()).append('\n');
-        }
-        if (StringUtils.hasText(data.getDescription())) {
-            builder.append("Description: ").append(data.getDescription()).append('\n');
-        }
-        if (StringUtils.hasText(data.getCallToAction())) {
-            builder.append("CTA: ").append(data.getCallToAction()).append('\n');
-        }
-        if (StringUtils.hasText(data.getMediaUrl())) {
-            builder.append("Media URL: ").append(data.getMediaUrl()).append('\n');
-        }
-        return builder.toString();
     }
 }

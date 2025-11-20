@@ -1,6 +1,6 @@
 package com.fbadsautomation.controller;
 
-import com.fbadsautomation.service.MetaAdLibraryApiService;
+import com.fbadsautomation.service.MetaAdLibraryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class MetaAdLibraryController {
 
     private static final Logger log = LoggerFactory.getLogger(MetaAdLibraryController.class);
-    private final MetaAdLibraryApiService metaAdLibraryApiService;
+    private final MetaAdLibraryService metaAdLibraryService;
 
     @Operation(summary = "Extract ad content", description = "Extract ad content from Meta Ad Library URL")
     @ApiResponses(value = {
@@ -39,17 +39,17 @@ public class MetaAdLibraryController {
         log.info("Extracting ad content from URL: {}", url);
         
         try {
-            if (!metaAdLibraryApiService.isValidAdLibraryUrl(url)) {
+            if (!metaAdLibraryService.isValidAdLibraryUrl(url)) {
                 return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", "URL không hợp lệ"));
             }
-            String adId = metaAdLibraryApiService.extractAdIdFromUrl(url);
+            String adId = metaAdLibraryService.extractAdIdFromUrl(url);
             if (adId == null) {
                 return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", "Không thể trích xuất Ad ID từ URL"));
             }
             if (accessToken != null && !accessToken.trim().isEmpty()) {
-                Map<String, Object> result = metaAdLibraryApiService.extractAdContent(adId, accessToken);
+                Map<String, Object> result = metaAdLibraryService.extractOfficialAdContent(adId, accessToken);
                 return ResponseEntity.ok(result);
             } else {
                 return ResponseEntity.ok(Map.of(
@@ -75,8 +75,8 @@ public class MetaAdLibraryController {
     @PostMapping("/validate-url")
     public ResponseEntity<Map<String, Object>> validateUrl(
             @Parameter(description = "Meta Ad Library URL to validate") @RequestParam String url) {
-        boolean isValid = metaAdLibraryApiService.isValidAdLibraryUrl(url);
-        String adId = isValid ? metaAdLibraryApiService.extractAdIdFromUrl(url) : null;
+        boolean isValid = metaAdLibraryService.isValidAdLibraryUrl(url);
+        String adId = isValid ? metaAdLibraryService.extractAdIdFromUrl(url) : null;
         
         return ResponseEntity.ok(Map.of(
             "isValid", isValid,
