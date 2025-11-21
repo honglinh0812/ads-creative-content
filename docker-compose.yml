@@ -146,6 +146,8 @@ services:
       # MinIO Public URL Base
       STORAGE_MINIO_PUBLIC_URL_BASE: ${STORAGE_MINIO_PUBLIC_URL_BASE:-https://linhnh.site/api/images}
 
+      FACEBOOK_DEFAULT_LINK_URL: ${FACEBOOK_DEFAULT_LINK_URL:-https://linhnh.site}
+
       # Server Configuration
       SERVER_PORT: 8080
 

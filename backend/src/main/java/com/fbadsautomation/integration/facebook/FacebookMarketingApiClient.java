@@ -171,14 +171,10 @@ public class FacebookMarketingApiClient {
         String url = String.format("%s/v%s/%s/adcreatives",
             facebookProperties.getApiUrl(), facebookProperties.getApiVersion(), adAccountId);
 
-        if (!StringUtils.hasText(ad.getWebsiteUrl())) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Website URL is required for Facebook auto upload");
-        }
-
         Map<String, Object> linkData = new HashMap<>();
         linkData.put("name", ad.getHeadline());
         linkData.put("message", ad.getPrimaryText());
-        linkData.put("link", ad.getWebsiteUrl());
+        linkData.put("link", resolveWebsiteUrl(ad));
         linkData.put("description", ad.getDescription());
         String resolvedImageUrl = resolveAbsoluteImageUrl(ad.getImageUrl());
         String imageHash = uploadImageToAdAccount(adAccountId, resolvedImageUrl, accessToken);
@@ -528,6 +524,18 @@ public class FacebookMarketingApiClient {
             log.warn("Error downloading image {}: {}", url, e.getMessage());
         }
         return null;
+    }
+
+    private String resolveWebsiteUrl(Ad ad) {
+        if (StringUtils.hasText(ad.getWebsiteUrl())) {
+            return ad.getWebsiteUrl();
+        }
+        if (StringUtils.hasText(facebookProperties.getDefaultLinkUrl())) {
+            log.warn("Ad {} missing websiteUrl. Falling back to facebook.default-link-url.", ad.getId());
+            return facebookProperties.getDefaultLinkUrl();
+        }
+        throw new ApiException(HttpStatus.BAD_REQUEST,
+            "Website URL is required for Facebook auto upload");
     }
 
     @Data
