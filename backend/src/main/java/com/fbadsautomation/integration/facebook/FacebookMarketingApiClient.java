@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -419,12 +420,7 @@ public class FacebookMarketingApiClient {
 
             MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
             form.add("access_token", accessToken);
-            form.add("bytes", new ByteArrayResource(bytes) {
-                @Override
-                public String getFilename() {
-                    return "creative.jpg";
-                }
-            });
+            form.add("bytes", new ByteArrayResource(bytes));
 
             Map<String, Object> response = postMultipart(url, form);
             Object imagesObj = response.get("images");
