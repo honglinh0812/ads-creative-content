@@ -399,7 +399,12 @@ public class FacebookMarketingApiClient {
                 facebookProperties.getApiUrl(), facebookProperties.getApiVersion(), adAccountId);
 
             MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-            form.add("copy_from", String.format("{\"url\":\"%s\"}", imageUrl));
+            String copyFromPayload = String.format(
+                "{\"url\":\"%s\",\"source_account_id\":\"%s\"}",
+                imageUrl,
+                adAccountId
+            );
+            form.add("copy_from", copyFromPayload);
             form.add("access_token", accessToken);
 
             Map<String, Object> response = postForm(url, form);
