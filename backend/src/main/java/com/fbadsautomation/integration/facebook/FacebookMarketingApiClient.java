@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -27,6 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.Base64;
 import org.springframework.util.StringUtils;
 
 /**
@@ -171,6 +171,10 @@ public class FacebookMarketingApiClient {
         String url = String.format("%s/v%s/%s/adcreatives",
             facebookProperties.getApiUrl(), facebookProperties.getApiVersion(), adAccountId);
 
+        if (!StringUtils.hasText(ad.getWebsiteUrl())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Website URL is required for Facebook auto upload");
+        }
+
         Map<String, Object> linkData = new HashMap<>();
         linkData.put("name", ad.getHeadline());
         linkData.put("message", ad.getPrimaryText());
@@ -232,18 +236,6 @@ public class FacebookMarketingApiClient {
         return response.getBody();
     }
 
-    private Map<String, Object> postMultipart(String url, MultiValueMap<String, Object> form) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(form, headers);
-
-        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
-        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-            throw new ApiException(HttpStatus.BAD_REQUEST,
-                "Facebook API error: " + response.getStatusCode());
-        }
-        return response.getBody();
-    }
 
     private String extractIdOrThrow(Map<String, Object> response, String entityName) {
         Object id = response.get("id");
@@ -418,11 +410,11 @@ public class FacebookMarketingApiClient {
             String url = String.format("%s/v%s/%s/adimages",
                 facebookProperties.getApiUrl(), facebookProperties.getApiVersion(), adAccountId);
 
-            MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
+            MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
             form.add("access_token", accessToken);
-            form.add("bytes", new ByteArrayResource(bytes));
+            form.add("bytes", Base64.getEncoder().encodeToString(bytes));
 
-            Map<String, Object> response = postMultipart(url, form);
+            Map<String, Object> response = postForm(url, form);
             Object imagesObj = response.get("images");
             if (imagesObj instanceof Map) {
                 Object hash = ((Map<?, ?>) imagesObj).get("hash");

@@ -159,6 +159,8 @@ export default {
   box-shadow: 2px 0 20px rgba(15, 23, 42, 0.08);
   transform: translateX(0);
   transition: transform 0.3s ease;
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
 }
 
 .app-sidebar:not(.open) {
@@ -226,6 +228,7 @@ export default {
   font-size: 12px;
   color: #94a3b8;
   margin: 0 0 12px;
+  font-weight: 600;
 }
 
 .sidebar-menu-group {
@@ -241,7 +244,8 @@ export default {
   border-radius: 12px;
   color: #0f172a;
   text-decoration: none;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   transition: background 0.2s ease, color 0.2s ease;
 }
 
@@ -268,6 +272,8 @@ export default {
 .sidebar-sublink {
   margin-left: 34px;
   font-size: 14px;
+  font-weight: 500;
+  color: #475569;
 }
 
 .sidebar-actions {
@@ -286,6 +292,7 @@ export default {
   gap: 8px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 15px;
 }
 
 .btn {
@@ -331,6 +338,7 @@ export default {
 .user-name {
   font-weight: 600;
   color: #0f172a;
+  font-size: 15px;
 }
 
 .sidebar-overlay {
