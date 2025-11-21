@@ -173,12 +173,15 @@ public class FacebookMarketingApiClient {
         linkData.put("message", ad.getPrimaryText());
         linkData.put("link", ad.getWebsiteUrl());
         linkData.put("description", ad.getDescription());
+        String imageHash = uploadImageToAdAccount(adAccountId, ad.getImageUrl(), accessToken);
+        if (StringUtils.hasText(imageHash)) {
+            linkData.put("image_hash", imageHash);
+        } else if (StringUtils.hasText(ad.getImageUrl())) {
+            linkData.put("picture", ad.getImageUrl());
+        }
         Map<String, Object> ctaMap = new HashMap<>();
         ctaMap.put("type", mapCallToAction(ad.getCallToAction()));
         linkData.put("call_to_action", ctaMap);
-        if (ad.getImageUrl() != null) {
-            linkData.put("image_url", ad.getImageUrl());
-        }
 
         Map<String, Object> objectStorySpec = new HashMap<>();
         if (StringUtils.hasText(facebookProperties.getPageId())) {
@@ -352,6 +355,25 @@ public class FacebookMarketingApiClient {
         if (smallest <= 0) {
             return null;
         }
+        // TODO: allow overriding this calculation when we support bid strategies per campaign.
+        return Math.max(smallest, 100L);
+    }
+
+    private Long resolveBidAmount(Campaign campaign) {
+        Double source = resolveAdsetBudget(campaign);
+        if (source == null || source <= 0) {
+            source = campaign.getDailyBudget();
+        }
+        if (source == null || source <= 0) {
+            source = campaign.getTotalBudget();
+        }
+        if (source == null || source <= 0) {
+            return null;
+        }
+        long smallest = Math.round(source * 100);
+        if (smallest <= 0) {
+            return null;
+        }
         // TODO: Allow users to override default bid amount per campaign.
         return Math.max(smallest, 100L);
     }
@@ -381,6 +403,40 @@ public class FacebookMarketingApiClient {
         geo.put("countries", getCountries(campaign));
         targeting.put("geo_locations", geo);
         return JsonUtils.toJson(targeting);
+    }
+
+    private String uploadImageToAdAccount(String adAccountId, String imageUrl, String accessToken) {
+        if (!StringUtils.hasText(imageUrl)) {
+            return null;
+        }
+
+        try {
+            String url = String.format("%s/v%s/%s/adimages",
+                facebookProperties.getApiUrl(), facebookProperties.getApiVersion(), adAccountId);
+
+            MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+            form.add("copy_from", imageUrl);
+            form.add("access_token", accessToken);
+
+            Map<String, Object> response = postForm(url, form);
+            Object imagesObj = response.get("images");
+            if (imagesObj instanceof Map) {
+                Object hash = ((Map<?, ?>) imagesObj).get("hash");
+                return hash != null ? hash.toString() : null;
+            }
+            if (imagesObj instanceof List) {
+                List<?> list = (List<?>) imagesObj;
+                if (!list.isEmpty() && list.get(0) instanceof Map) {
+                    Object hash = ((Map<?, ?>) list.get(0)).get("hash");
+                    return hash != null ? hash.toString() : null;
+                }
+            }
+            log.warn("Unexpected response from adimages endpoint: {}", response);
+            return null;
+        } catch (Exception e) {
+            log.warn("Failed to upload image for ad account {}: {}", adAccountId, e.getMessage());
+            return null;
+        }
     }
 
     /**
