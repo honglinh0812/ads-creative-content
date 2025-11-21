@@ -231,6 +231,19 @@ public class FacebookMarketingApiClient {
         return response.getBody();
     }
 
+    private Map<String, Object> postMultipart(String url, MultiValueMap<String, Object> form) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(form, headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                "Facebook API error: " + response.getStatusCode());
+        }
+        return response.getBody();
+    }
+
     private String extractIdOrThrow(Map<String, Object> response, String entityName) {
         Object id = response.get("id");
         if (id == null) {
@@ -395,19 +408,25 @@ public class FacebookMarketingApiClient {
         }
 
         try {
+            byte[] bytes = downloadImageBytes(imageUrl);
+            if (bytes == null || bytes.length == 0) {
+                log.warn("Image download failed for {}", imageUrl);
+                return null;
+            }
+
             String url = String.format("%s/v%s/%s/adimages",
                 facebookProperties.getApiUrl(), facebookProperties.getApiVersion(), adAccountId);
 
-            MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-            String copyFromPayload = String.format(
-                "{\"url\":\"%s\",\"source_account_id\":\"%s\"}",
-                imageUrl,
-                adAccountId
-            );
-            form.add("copy_from", copyFromPayload);
+            MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
             form.add("access_token", accessToken);
+            form.add("bytes", new ByteArrayResource(bytes) {
+                @Override
+                public String getFilename() {
+                    return "creative.jpg";
+                }
+            });
 
-            Map<String, Object> response = postForm(url, form);
+            Map<String, Object> response = postMultipart(url, form);
             Object imagesObj = response.get("images");
             if (imagesObj instanceof Map) {
                 Object hash = ((Map<?, ?>) imagesObj).get("hash");
@@ -508,6 +527,19 @@ public class FacebookMarketingApiClient {
             return upper;
         }
         return COUNTRY_CODE_ALIASES.getOrDefault(upper, null);
+    }
+
+    private byte[] downloadImageBytes(String url) {
+        try {
+            ResponseEntity<byte[]> response = restTemplate.getForEntity(url, byte[].class);
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return response.getBody();
+            }
+            log.warn("Failed to download image {} status {}", url, response.getStatusCode());
+        } catch (Exception e) {
+            log.warn("Error downloading image {}: {}", url, e.getMessage());
+        }
+        return null;
     }
 
     @Data
