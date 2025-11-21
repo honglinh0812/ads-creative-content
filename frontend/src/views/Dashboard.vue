@@ -282,9 +282,7 @@ import {
   PlusOutlined,
   EyeOutlined,
   PictureOutlined,
-  PlayCircleOutlined,
-  BarChartOutlined,
-  RocketOutlined
+  PlayCircleOutlined
 } from '@ant-design/icons-vue'
 import MobileHeader from '@/components/MobileHeader.vue'
 
@@ -295,8 +293,6 @@ export default {
     EyeOutlined,
     PictureOutlined,
     PlayCircleOutlined,
-    BarChartOutlined,
-    RocketOutlined,
     MobileHeader
   },
   data() {

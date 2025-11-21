@@ -128,8 +128,7 @@ export default {
   name: "CampaignPage",
   components: {
     PlusOutlined,
-    CampaignTable,
-    CreativeEmptyState
+    CampaignTable
   },
   data() {
     return {

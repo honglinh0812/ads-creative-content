@@ -600,7 +600,7 @@ export default {
       this.autoUploadSelectedAds()
     },
 
-    handleExportSuccess(result) {
+    handleExportSuccess() {
       message.success(this.$t('ads.messages.success.exportSuccess', { count: this.selectedAdIds.length }))
 
       const format = this.$store.state.fbExport.format
