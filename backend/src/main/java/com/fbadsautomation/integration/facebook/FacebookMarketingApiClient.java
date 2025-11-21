@@ -359,25 +359,6 @@ public class FacebookMarketingApiClient {
         return Math.max(smallest, 100L);
     }
 
-    private Long resolveBidAmount(Campaign campaign) {
-        Double source = resolveAdsetBudget(campaign);
-        if (source == null || source <= 0) {
-            source = campaign.getDailyBudget();
-        }
-        if (source == null || source <= 0) {
-            source = campaign.getTotalBudget();
-        }
-        if (source == null || source <= 0) {
-            return null;
-        }
-        long smallest = Math.round(source * 100);
-        if (smallest <= 0) {
-            return null;
-        }
-        // TODO: Allow users to override default bid amount per campaign.
-        return Math.max(smallest, 100L);
-    }
-
     private String formatDateTime(java.time.LocalDate date) {
         if (date == null) {
             return null;
