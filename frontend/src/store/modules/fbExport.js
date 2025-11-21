@@ -9,6 +9,8 @@
 
 import api from '../../services/api'
 
+const ADS_MANAGER_URL = 'https://business.facebook.com/adsmanager/manage/ads'
+
 const state = {
   selectedAdIds: [],
   previewData: null,
@@ -210,43 +212,32 @@ const actions = {
   },
 
   /**
-   * Complete export flow: download file and redirect to Facebook
+   * Automatically upload ads to Facebook and return redirect metadata.
    */
-  async exportToFacebook({ state, dispatch, commit }) {
+  async exportToFacebook({ state, commit }, { adAccountId } = {}) {
+    if (state.selectedAdIds.length === 0) {
+      commit('SET_ERROR', 'Please select at least one ad to export')
+      throw new Error('No ads selected')
+    }
+
+    commit('SET_EXPORTING', true)
+    commit('CLEAR_ERROR')
+
     try {
-      commit('SET_EXPORTING', true)
+      const response = await api.facebookExport.uploadToFacebook(state.selectedAdIds, adAccountId)
+      const data = response.data || {}
+      const redirectUrl = data.adsManagerUrl || ADS_MANAGER_URL
+      commit('CLEAR_PREVIEW_DATA')
+      commit('CLEAR_SELECTED_ADS')
 
-      // 1. Download file
-      const blob = await dispatch('downloadExport')
-
-      // 2. Trigger download
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-
-      const timestamp = Date.now()
-      const extension = state.format === 'excel' ? 'xlsx' : 'csv'
-      link.download = `facebook_ads_${timestamp}.${extension}`
-
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-
-      // 3. Redirect to Facebook Ads Manager
-      const facebookAdsManagerUrl = 'https://business.facebook.com/adsmanager/manage/ads'
-      window.open(facebookAdsManagerUrl, '_blank', 'noopener,noreferrer')
-
-      // 4. Show instructions modal
-      commit('SHOW_INSTRUCTIONS_MODAL', true)
-
-      // 5. Clear selection after successful export
-      setTimeout(() => {
-        dispatch('clearSelection')
-      }, 2000)
-
-      return true
+      return {
+        redirectUrl,
+        results: data.results || [],
+        payloads: data.payloads || []
+      }
     } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to upload ads'
+      commit('SET_ERROR', errorMessage)
       console.error('Export to Facebook error:', error)
       throw error
     } finally {
@@ -284,31 +275,10 @@ const actions = {
   },
 
   /**
-   * Upload directly via Marketing API (requires server token & ad account id)
+   * Upload directly via Marketing API (alias for exportToFacebook for backwards compatibility)
    */
-  async uploadDirect({ state, commit }) {
-    if (state.selectedAdIds.length === 0) {
-      commit('SET_ERROR', 'Please select at least one ad to export')
-      throw new Error('No ads selected')
-    }
-
-    commit('SET_EXPORTING', true)
-    commit('CLEAR_ERROR')
-
-    try {
-      const response = await api.facebookExport.uploadToFacebook(
-        state.selectedAdIds,
-        null
-      )
-      return response.data
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to upload ads'
-      commit('SET_ERROR', errorMessage)
-      console.error('Upload to Facebook error:', error)
-      throw error
-    } finally {
-      commit('SET_EXPORTING', false)
-    }
+  async uploadDirect({ dispatch }, payload) {
+    return dispatch('exportToFacebook', payload)
   },
 
   /**

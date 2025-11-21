@@ -30,7 +30,7 @@
         :loading="exporting"
         :disabled="!canExport"
       >
-        Download & Open Ads Manager
+        Upload & Open Ads Manager
       </a-button>
     </template>
 
@@ -203,9 +203,9 @@
           </template>
           <template #description>
             <ol class="list-decimal list-inside text-sm space-y-1 mt-2">
-              <li>Your ad data will be downloaded as a {{ selectedFormat.toUpperCase() }} file</li>
-              <li>Facebook Ads Manager will open in a new tab</li>
-              <li>Follow the instructions to upload and publish your ads</li>
+              <li>Your selected ads will be sent to Facebook via the Marketing API</li>
+              <li>Facebook Ads Manager will open in a new tab using your ad account</li>
+              <li>Review the imported ads and publish them when ready</li>
             </ol>
           </template>
         </a-alert>
@@ -415,10 +415,12 @@ export default {
       try {
         this.exportProgress = 0
         this.simulateProgress()
-        await this.exportToFacebook()
+        const result = await this.exportToFacebook()
         this.exportProgress = 100
-        this.$message.success('Ads exported successfully!')
-        this.$emit('success')
+        const redirectUrl = result?.redirectUrl || 'https://business.facebook.com/adsmanager/manage/ads'
+        window.open(redirectUrl, '_blank', 'noopener,noreferrer')
+        this.$message.success('Ads uploaded to Facebook!')
+        this.$emit('success', result)
         this.handleClose()
       } catch (error) {
         this.exportProgress = 0
@@ -447,11 +449,12 @@ export default {
       try {
         this.exportProgress = 0
         this.simulateProgress()
-        await this.uploadDirect()
+        const result = await this.uploadDirect()
         this.exportProgress = 100
+        const redirectUrl = result?.redirectUrl || 'https://business.facebook.com/adsmanager/manage/ads'
+        window.open(redirectUrl, '_blank', 'noopener,noreferrer')
         this.$message.success('Uploaded to Facebook via Marketing API!')
-        window.open('https://business.facebook.com/adsmanager/manage/ads', '_blank', 'noopener,noreferrer')
-        this.$emit('success')
+        this.$emit('success', result)
         this.handleClose()
       } catch (error) {
         this.exportProgress = 0

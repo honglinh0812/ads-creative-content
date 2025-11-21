@@ -18,26 +18,9 @@
         </router-link>
       </div>
     </div>
-
-    <!-- Creative Error State -->
-    <CreativeEmptyState
-      v-if="error"
-      variant="loading-failed"
-      :custom-message="error"
-      action-text="Try Again"
-      :action-handler="loadCampaigns"
-    />
-
-    <!-- Creative Empty State -->
-    <CreativeEmptyState
-      v-else-if="campaigns.length === 0 && !loading"
-      variant="no-campaigns"
-      action-text="Create First Campaign"
-      :action-handler="() => $router.push('/campaign/create')"
-    />
-
+    
     <!-- Campaign Table with Advanced Filtering -->
-    <div v-else>
+    <div>
       <CampaignTable
         :campaigns="campaigns"
         :loading="loading"
@@ -140,7 +123,6 @@ import {
 import { Modal } from 'ant-design-vue'
 
 import CampaignTable from '@/components/CampaignTable.vue'
-import CreativeEmptyState from '@/components/ui/CreativeEmptyState.vue'
 
 export default {
   name: "CampaignPage",

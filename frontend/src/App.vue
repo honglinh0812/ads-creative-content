@@ -23,16 +23,6 @@
           <!-- Header -->
           <a-layout-header class="header">
             <div class="header-left">
-              <a-button
-                type="text"
-                @click="toggleSidebar"
-                class="trigger"
-              >
-                <template #icon>
-                  <font-awesome-icon :icon="sidebarOpen ? 'xmark' : 'bars'" />
-                </template>
-              </a-button>
-              
               <a-breadcrumb class="breadcrumb">
                 <a-breadcrumb-item v-for="item in breadcrumbs" :key="item.path">
                   <router-link v-if="item.path" :to="item.path">{{ item.name }}</router-link>

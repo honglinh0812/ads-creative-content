@@ -81,7 +81,7 @@ public class ChainOfThoughtPromptBuilder {
         prompt.append(buildStage2_AudienceAnalysis(persona, targetAudience, isVietnamese));
 
         // Stage 3: Creative Direction
-        prompt.append(buildStage3_CreativeDirection(adStyle, trendingKeywords, referenceContent, referenceLink, isVietnamese));
+        prompt.append(buildStage3_CreativeDirection(adStyle, trendingKeywords, referenceContent, referenceLink, userPrompt, isVietnamese));
 
         // Stage 4: Constraints & Requirements
         prompt.append(buildStage4_Constraints(callToAction, language, isVietnamese));
@@ -173,6 +173,7 @@ public class ChainOfThoughtPromptBuilder {
                                                  List<String> trendingKeywords,
                                                  String referenceContent,
                                                  String referenceLink,
+                                                 String baseDescription,
                                                  boolean isVietnamese) {
         StringBuilder stage = new StringBuilder();
 
@@ -189,7 +190,7 @@ public class ChainOfThoughtPromptBuilder {
                 trendingKeywords.forEach(keyword -> stage.append("- ").append(keyword).append("\n"));
                 stage.append("\n");
             }
-            appendReferenceSection(stage, referenceContent, referenceLink, true);
+            appendReferenceSection(stage, referenceContent, referenceLink, baseDescription, true);
         } else {
             stage.append("🎨 CREATIVE DIRECTION\n\n");
 
@@ -203,7 +204,7 @@ public class ChainOfThoughtPromptBuilder {
                 trendingKeywords.forEach(keyword -> stage.append("- ").append(keyword).append("\n"));
                 stage.append("\n");
             }
-            appendReferenceSection(stage, referenceContent, referenceLink, false);
+            appendReferenceSection(stage, referenceContent, referenceLink, baseDescription, false);
         }
 
         return stage.toString();
@@ -453,9 +454,20 @@ public class ChainOfThoughtPromptBuilder {
         }
     }
 
-    private void appendReferenceSection(StringBuilder stage, String referenceContent, String referenceLink, boolean isVietnamese) {
+    private void appendReferenceSection(StringBuilder stage,
+                                        String referenceContent,
+                                        String referenceLink,
+                                        String baseDescription,
+                                        boolean isVietnamese) {
         if (!StringUtils.hasText(referenceContent) && !StringUtils.hasText(referenceLink)) {
             return;
+        }
+
+        String productCue;
+        if (StringUtils.hasText(baseDescription)) {
+            productCue = baseDescription.trim();
+        } else {
+            productCue = isVietnamese ? "sản phẩm/dịch vụ bạn đang quảng cáo" : "the product/service you are advertising";
         }
 
         if (isVietnamese) {
@@ -467,7 +479,8 @@ public class ChainOfThoughtPromptBuilder {
             if (StringUtils.hasText(referenceLink)) {
                 stage.append("Link tham khảo: ").append(referenceLink).append("\n\n");
             }
-            stage.append("Hãy giữ nguyên bản sắc của sản phẩm hiện tại nhưng bám sát tone/nhịp/độ dài của quảng cáo tham chiếu.\n\n");
+            stage.append("⚠️ CHỈ sử dụng phần tham khảo để lấy tone & cấu trúc. TUYỆT ĐỐI không nhắc lại thương hiệu/địa điểm/ưu đãi trong nội dung tham khảo.\n");
+            stage.append("Luôn thay thế bằng thông tin sản phẩm của bạn: ").append(productCue).append("\n\n");
         } else {
             stage.append("📌 REFERENCE AD INPUT\n");
             if (StringUtils.hasText(referenceContent)) {
@@ -477,7 +490,8 @@ public class ChainOfThoughtPromptBuilder {
             if (StringUtils.hasText(referenceLink)) {
                 stage.append("Reference Link: ").append(referenceLink).append("\n\n");
             }
-            stage.append("Preserve the voice of the current product while mirroring the tone, pacing, and structure of the reference ad.\n\n");
+            stage.append("⚠️ Use the reference ONLY for tone & structure. NEVER mention the brands/locations/promotions from the reference text.\n");
+            stage.append("Always replace them with details about your product: ").append(productCue).append("\n\n");
         }
     }
 

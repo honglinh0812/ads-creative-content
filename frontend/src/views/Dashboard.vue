@@ -1,397 +1,204 @@
 <template>
-  <div class="dashboard-container">
-    <!-- Mobile Header -->
-    <MobileHeader 
-      v-if="isMobile" 
-      @toggle-mobile-menu="toggleMobileMenu"
-    />
-    
-    <!-- Desktop Page Header -->
-    <div v-if="!isMobile" class="page-header">
-      <a-page-header
-        :title="$t('dashboard.title')"
-        :sub-title="$t('dashboard.subtitle')"
-      >
-        <template #extra>
-          <a-space>
-            <router-link to="/campaign/create">
-              <a-button type="primary" size="large">
-                <template #icon>
-                  <plus-outlined />
-                </template>
-                {{ $t('dashboard.newCampaign') }}
-              </a-button>
-            </router-link>
-            <router-link to="/ad/create">
-              <a-button type="primary" size="large" style="background: #52c41a; border-color: #52c41a;">
-                <template #icon>
-                  <plus-outlined />
-                </template>
-                {{ $t('dashboard.newAd') }}
-              </a-button>
-            </router-link>
-          </a-space>
-        </template>
-      </a-page-header>
-    </div>
+  <div class="dashboard-view">
+    <MobileHeader v-if="isMobile" @toggle-mobile-menu="toggleMobileMenu" />
 
-    <!-- Loading State -->
-    <div v-if="dashboardLoading" class="loading-container">
-      <LoadingSkeleton v-if="isMobile" type="card" :rows="3" />
-      <a-row v-else :gutter="[16, 16]">
-        <a-col :span="6" v-for="i in 4" :key="i">
-          <a-skeleton active>
-            <a-skeleton-input style="width: 100%; height: 180px;" active />
-          </a-skeleton>
-        </a-col>
-      </a-row>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="dashboardError" class="error-container">
-      <a-alert
-        :message="$t('dashboard.errorLoading')"
-        :description="dashboardError"
-        type="error"
-        show-icon
-        closable
-      >
-        <template #action>
-          <a-button size="small" @click="loadDashboardData">
-            {{ $t('dashboard.tryAgain') }}
-          </a-button>
-        </template>
-      </a-alert>
-    </div>
-
-    <!-- Dashboard Content -->
-    <div v-else-if="hasDashboardData">
-      <!-- Mobile Dashboard Stats -->
-      <MobileDashboardStats 
-        v-if="isMobile"
-        :stats="mobileStats"
-        :quick-actions="quickActions"
-        :recent-activity="recentActivity"
-        @view-all-activity="navigateToActivity"
-      />
-      
-      <!-- What's Next Section -->
-      <DashboardNextSteps v-if="!isMobile" :stats="stats" />
-
-      <!-- Creative Asymmetric Stats Layout -->
-      <div v-else class="creative-stats-container">
-        <!-- Main Featured Stat (Creative Asymmetric Position) - Clickable -->
-        <router-link to="/campaigns" class="featured-stat-link">
-          <div class="stat-card-creative primary-stat">
-            <div class="stat-visual">
-              <folder-outlined class="stat-icon primary-icon" />
-              <div class="stat-pattern"></div>
-            </div>
-            <div class="stat-content">
-              <div class="stat-label">{{ $t('dashboard.totalCampaigns') }}</div>
-              <div class="stat-number primary-number">{{ stats.totalCampaigns || 0 }}</div>
-              <div class="stat-growth">{{ stats.totalCampaigns > 0 ? $t('dashboard.growthThisMonth', { percent: 12 }) : $t('dashboard.startCreating') }}</div>
-              <div class="stat-action">{{ $t('dashboard.viewAll') }} →</div>
-            </div>
-          </div>
-        </router-link>
-
-        <!-- Secondary Stats Grid (Breaking Standard Grid) -->
-        <div class="secondary-stats">
-          <router-link to="/ads" class="stat-card-link">
-            <div class="stat-card-creative secondary-stat success">
-              <file-text-outlined class="stat-icon" />
-              <div class="stat-info">
-                <div class="stat-number">{{ stats.totalAds || 0 }}</div>
-                <div class="stat-label">{{ $t('dashboard.totalAds') }}</div>
-              </div>
-              <div class="stat-accent"></div>
-            </div>
+    <section class="hero-card surface-card">
+      <div class="hero-text">
+        <p class="eyebrow">{{ $t('dashboard.title') }}</p>
+        <h1>{{ $t('dashboard.subtitle') }}</h1>
+        <p class="hero-description">
+          {{ $t('dashboard.readyToCreate') }}
+        </p>
+        <div class="hero-actions">
+          <router-link to="/campaign/create">
+            <a-button type="primary" size="large">
+              <template #icon>
+                <plus-outlined />
+              </template>
+              {{ $t('dashboard.newCampaign') }}
+            </a-button>
           </router-link>
-
-          <router-link to="/campaigns" class="stat-card-link">
-            <div class="stat-card-creative secondary-stat warning">
-              <thunderbolt-outlined class="stat-icon" />
-              <div class="stat-info">
-                <div class="stat-number">{{ stats.activeCampaigns || 0 }}</div>
-                <div class="stat-label">{{ $t('dashboard.activeCampaigns') }}</div>
-              </div>
-              <div class="stat-accent"></div>
-            </div>
+          <router-link to="/ad/create">
+            <a-button size="large">
+              {{ $t('dashboard.newAd') }}
+            </a-button>
           </router-link>
-
-          <router-link to="/ads" class="stat-card-link">
-            <div class="stat-card-creative secondary-stat danger">
-              <eye-outlined class="stat-icon" />
-              <div class="stat-info">
-                <div class="stat-number">{{ stats.activeAds || 0 }}</div>
-                <div class="stat-label">{{ $t('dashboard.activeAds') }}</div>
-              </div>
-              <div class="stat-accent"></div>
-            </div>
-          </router-link>
-        </div>
-
-        <!-- Creative Quick Insight Box -->
-        <div class="insight-card">
-          <div class="insight-content">
-            <div class="insight-emoji">🎯</div>
-            <div class="insight-text">
-              <div class="insight-title">{{ $t('dashboard.proTip') }}</div>
-              <div class="insight-message">{{ getContextualInsight() }}</div>
-            </div>
-          </div>
         </div>
       </div>
-
-      <!-- Creative Quick Actions -->
-      <div class="creative-actions-section">
-        <div class="section-header-creative">
-          <div class="header-content">
-            <h2 class="section-title-creative">{{ $t('dashboard.readyToCreate') }}</h2>
-            <p class="section-subtitle">{{ $t('dashboard.jumpIntoNext') }}</p>
-          </div>
-          <div class="header-decoration">✨</div>
+      <div class="hero-meta">
+        <div class="hero-stat">
+          <p class="hero-stat-label">{{ $t('dashboard.totalCampaigns') }}</p>
+          <p class="hero-stat-value">{{ stats?.totalCampaigns || 0 }}</p>
         </div>
+        <div class="hero-stat">
+          <p class="hero-stat-label">{{ $t('dashboard.activeAds') }}</p>
+          <p class="hero-stat-value">{{ stats?.activeAds || 0 }}</p>
+        </div>
+      </div>
+    </section>
 
-        <div class="actions-grid-creative">
-          <!-- Primary Action - Create Campaign (Featured) -->
-          <router-link :to="quickActions[0].link" class="action-card-primary">
-            <div class="action-primary-content">
-              <div class="action-visual">
-                <folder-outlined class="action-main-icon" />
-                <div class="action-glow"></div>
-              </div>
-              <div class="action-text">
-                <h3 class="action-title">{{ quickActions[0].name }}</h3>
-                <p class="action-desc">{{ quickActions[0].description }}</p>
-                <div class="action-cta">
-                  <span>{{ $t('dashboard.letsGo') }}</span>
-                  <div class="arrow-icon">→</div>
-                </div>
-              </div>
+    <a-alert
+      v-if="dashboardError"
+      type="error"
+      show-icon
+      :message="$t('dashboard.errorLoading')"
+      :description="dashboardError"
+      class="surface-card state-card"
+    >
+      <template #action>
+        <a-button size="small" @click="loadDashboardData">
+          {{ $t('dashboard.tryAgain') }}
+        </a-button>
+      </template>
+    </a-alert>
+
+    <div v-if="dashboardLoading" class="surface-card state-card">
+      <a-skeleton active :paragraph="{ rows: 4 }" />
+    </div>
+
+    <template v-else>
+      <section class="stat-grid" v-if="hasDashboardData">
+        <div
+          v-for="stat in overviewStats"
+          :key="stat.key"
+          class="stat-card surface-card"
+        >
+          <p class="stat-label">{{ stat.label }}</p>
+          <p class="stat-value">{{ stat.value }}</p>
+          <span class="stat-note">{{ stat.note }}</span>
+        </div>
+      </section>
+
+      <div class="insight-grid">
+        <a-card class="surface-card actions-card" :bordered="false">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">{{ $t('dashboard.readyToCreate') }}</p>
+              <h2>{{ $t('dashboard.jumpIntoNext') }}</h2>
             </div>
-          </router-link>
-
-          <!-- Secondary Actions - Creative Mini Cards -->
-          <div class="actions-secondary">
+          </div>
+          <div class="action-list">
             <router-link
-              v-for="(action, index) in quickActions.slice(1)"
+              v-for="action in quickActions"
               :key="action.name"
               :to="action.link"
-              class="action-card-mini"
-              :class="`action-${index + 1}`"
+              class="action-item"
             >
-              <component :is="action.icon" class="mini-icon" />
-              <div class="mini-content">
-                <div class="mini-title">{{ action.name.replace(' ', '\n') }}</div>
-                <div class="mini-arrow">↗</div>
+              <div class="action-content">
+                <p class="action-title">{{ action.name }}</p>
+                <p class="action-desc">{{ action.description }}</p>
               </div>
+              <span class="action-link">{{ $t('dashboard.view') }}</span>
             </router-link>
           </div>
+        </a-card>
 
-          <!-- Fun Motivational Card -->
-          <div class="motivation-card">
-            <div class="motivation-content">
-              <div class="motivation-icon">{{ getMoodEmoji() }}</div>
-              <div class="motivation-text">
-                <div class="motivation-title">{{ $t('dashboard.youDoingGreat') }}</div>
-                <div class="motivation-message">{{ getMotivationalMessage() }}</div>
-              </div>
+        <a-card class="surface-card insight-panel" :bordered="false">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">{{ $t('dashboard.proTip') }}</p>
+              <h2>{{ $t('dashboard.youDoingGreat') }}</h2>
             </div>
           </div>
-        </div>
+          <p class="insight-message">
+            {{ getContextualInsight() }}
+          </p>
+          <div class="activity-list" v-if="recentActivity.length">
+            <div v-for="activity in recentActivity" :key="activity.id" class="activity-item">
+              <div>
+                <p class="activity-title">{{ activity.title }}</p>
+                <p class="activity-desc">{{ activity.description }}</p>
+              </div>
+              <span class="activity-time">{{ formatDate(activity.timestamp) }}</span>
+            </div>
+          </div>
+          <a-empty v-else :description="$t('dashboard.noData')" />
+        </a-card>
       </div>
 
-      <!-- Recent Campaigns -->
-      <div class="section" style="margin-bottom: 32px;">
-        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <section class="surface-card section-card">
+        <div class="section-heading">
           <div>
-            <a-typography-title :level="2" style="margin-bottom: 8px;">{{ $t('dashboard.recentCampaigns') }}</a-typography-title>
-            <a-typography-text type="secondary">{{ $t('dashboard.recentCampaignsDesc') }}</a-typography-text>
+            <h2>{{ $t('dashboard.recentCampaigns') }}</h2>
+            <p class="section-subtitle">{{ $t('dashboard.recentCampaignsDesc') }}</p>
           </div>
           <router-link to="/campaigns">
             <a-button>{{ $t('dashboard.viewAll') }}</a-button>
           </router-link>
         </div>
-
-        <div v-if="campaigns.length === 0">
-          <a-empty :description="$t('dashboard.noCampaignsYet')">
-            <template #image>
-              <folder-outlined style="font-size: 48px; color: #d9d9d9;" />
-            </template>
-            <router-link to="/campaign/create">
-              <a-button type="primary">{{ $t('dashboard.createFirstCampaign') }}</a-button>
-            </router-link>
-          </a-empty>
+        <a-empty v-if="!campaigns.length" :description="$t('dashboard.noCampaignsYet')" />
+        <div v-else class="card-grid">
+          <article v-for="campaign in campaigns" :key="campaign.id" class="summary-card">
+            <div class="summary-header">
+              <p class="summary-title">{{ campaign.name }}</p>
+              <a-tag :color="getStatusColor(campaign.status)">{{ campaign.status }}</a-tag>
+            </div>
+            <p class="summary-text">{{ campaign.objective }}</p>
+            <div class="summary-meta">
+              <div>
+                <p class="meta-label">{{ $t('dashboard.budget') }}</p>
+                <p class="meta-value">${{ campaign.budget }}</p>
+              </div>
+              <div>
+                <p class="meta-label">{{ $t('dashboard.ads') }}</p>
+                <p class="meta-value">{{ campaign.adCount }}</p>
+              </div>
+            </div>
+            <div class="summary-footer">
+              <span>{{ formatDate(campaign.createdDate) }}</span>
+              <router-link :to="`/campaigns/${campaign.id}`">
+                <a-button type="link" size="small">
+                  {{ $t('dashboard.viewDetails') }}
+                </a-button>
+              </router-link>
+            </div>
+          </article>
         </div>
+      </section>
 
-        <a-row :gutter="[16, 16]" v-else>
-          <a-col :xs="24" :sm="12" :md="8" :lg="6" v-for="campaign in campaigns" :key="campaign.id">
-            <a-card class="campaign-card" hoverable>
-              <div class="campaign-header">
-                <a-typography-title :level="4" style="margin-bottom: 4px;">{{ campaign.name }}</a-typography-title>
-                <a-tag :color="getStatusColor(campaign.status)">{{ campaign.status }}</a-tag>
-              </div>
-              <a-typography-text type="secondary" style="display: block; margin-bottom: 12px;">{{ campaign.objective }}</a-typography-text>
-              
-              <a-row :gutter="16" style="margin-bottom: 12px;">
-                <a-col :span="12">
-                  <a-typography-text type="secondary" style="font-size: 12px;">{{ $t('dashboard.budget') }}</a-typography-text>
-                  <div style="font-weight: 500;">${{ campaign.budget }}</div>
-                </a-col>
-                <a-col :span="12">
-                  <a-typography-text type="secondary" style="font-size: 12px;">{{ $t('dashboard.ads') }}</a-typography-text>
-                  <div style="font-weight: 500;">{{ campaign.adCount }}</div>
-                </a-col>
-              </a-row>
-
-              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #f0f0f0;">
-                <a-typography-text type="secondary" style="font-size: 12px;">{{ formatDate(campaign.createdDate) }}</a-typography-text>
-                <router-link :to="`/campaigns/${campaign.id}`">
-                  <a-button size="small" type="primary">{{ $t('dashboard.viewDetails') }}</a-button>
-                </router-link>
-              </div>
-            </a-card>
-          </a-col>
-        </a-row>
-      </div>
-
-      <!-- Recent Ads -->
-      <div class="section">
-        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <section class="surface-card section-card">
+        <div class="section-heading">
           <div>
-            <a-typography-title :level="2" style="margin-bottom: 8px;">{{ $t('dashboard.recentAds') }}</a-typography-title>
-            <a-typography-text type="secondary">{{ $t('dashboard.recentAdsDesc') }}</a-typography-text>
+            <h2>{{ $t('dashboard.recentAds') }}</h2>
+            <p class="section-subtitle">{{ $t('dashboard.recentAdsDesc') }}</p>
           </div>
           <router-link to="/ads">
             <a-button>{{ $t('dashboard.viewAll') }}</a-button>
           </router-link>
         </div>
 
-        <!-- Loading State for Recent Ads -->
-        <div v-if="loading">
-          <a-row :gutter="[12, 12]">
-            <a-col :xs="24" :sm="12" :md="8" :lg="6" v-for="i in 8" :key="i">
-              <a-card class="ad-card">
-                <a-skeleton active>
-                  <template #avatar>
-                    <div style="width: 100px; height: 100px; background: #f0f0f0; border-radius: 8px; margin: 0 auto 12px;"></div>
-                  </template>
-                  <template #title>
-                    <div style="height: 16px; background: #f0f0f0; border-radius: 4px; margin-bottom: 8px;"></div>
-                  </template>
-                  <template #paragraph>
-                    <div style="height: 12px; background: #f0f0f0; border-radius: 4px; margin-bottom: 8px; width: 60%;"></div>
-                    <div style="height: 12px; background: #f0f0f0; border-radius: 4px; margin-bottom: 8px; width: 80%;"></div>
-                    <div style="height: 12px; background: #f0f0f0; border-radius: 4px; width: 40%;"></div>
-                  </template>
-                </a-skeleton>
-              </a-card>
-            </a-col>
-          </a-row>
+        <a-empty v-if="!recentAds.length" :description="$t('dashboard.noAdsYet')" />
+        <div v-else class="card-grid">
+          <article
+            v-for="ad in recentAds"
+            :key="ad.id"
+            class="summary-card ad-summary"
+            @click="viewAdDetail(ad)"
+          >
+            <div class="summary-header">
+              <p class="summary-title">{{ ad.name }}</p>
+              <a-tag :color="getStatusColor(ad.status)">{{ ad.status }}</a-tag>
+            </div>
+            <p class="summary-text">{{ ad.campaignName || $t('dashboard.noCampaign') }}</p>
+            <div class="summary-body">
+              <p v-if="ad.headline" class="summary-pill">
+                {{ ad.headline }}
+              </p>
+              <p v-if="ad.primaryText" class="summary-pill">
+                {{ ad.primaryText }}
+              </p>
+            </div>
+            <div class="summary-footer">
+              <span>{{ formatDate(ad.createdDate) }}</span>
+              <a-button type="link" size="small" @click.stop="viewAdDetail(ad)">
+                {{ $t('dashboard.view') }}
+              </a-button>
+            </div>
+          </article>
         </div>
+      </section>
+    </template>
 
-        <!-- Empty State -->
-        <div v-else-if="recentAds.length === 0">
-          <a-empty :description="$t('dashboard.noAdsYet')">
-            <template #image>
-              <file-text-outlined style="font-size: 48px; color: #d9d9d9;" />
-            </template>
-            <router-link to="/ad/create">
-              <a-button type="primary">{{ $t('dashboard.createFirstAd') }}</a-button>
-            </router-link>
-          </a-empty>
-        </div>
-
-        <!-- Ads Grid -->
-        <a-row :gutter="[12, 12]" v-else>
-          <a-col :xs="24" :sm="12" :md="8" :lg="6" :xl="4" v-for="ad in recentAds" :key="ad.id">
-            <a-card class="ad-card" hoverable @click="viewAdDetail(ad)">
-              <!-- Ad Image Preview -->
-              <div class="ad-image relative" style="margin-bottom: 12px; text-align: center;">
-                <!-- Status Badge -->
-                <a-tag :color="getStatusColor(ad.status)" class="absolute top-2 right-2 z-10 text-xs">
-                  {{ ad.status }}
-                </a-tag>
-                
-                <!-- Image with Error Handling -->
-                <div class="relative group">
-                  <img 
-                    v-if="ad.imageUrl || ad.mediaFileUrl"
-                    :src="ad.imageUrl || ad.mediaFileUrl" 
-                    :alt="ad.name"
-                    class="w-full h-24 sm:h-28 object-cover rounded-lg border border-gray-200 cursor-pointer"
-                    @error="handleImageError($event, ad.id)"
-                    :key="ad.id + '-image'"
-                    loading="lazy"
-                  />
-                  <div v-else class="w-full h-24 sm:h-28 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600 font-semibold text-lg border border-primary-200">
-                    {{ ad.name ? ad.name.charAt(0).toUpperCase() : 'A' }}
-                  </div>
-                  
-                  <!-- Overlay on hover -->
-                  <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Ad Header -->
-              <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
-                <div class="flex-1 min-w-0">
-                  <h3 class="font-semibold text-sm sm:text-base text-gray-800 truncate mb-1" :title="ad.name">{{ ad.name }}</h3>
-                  <p class="text-xs text-gray-500 truncate" :title="ad.campaignName">{{ ad.campaignName || $t('dashboard.noCampaign') }}</p>
-                </div>
-              </div>
-              
-              <!-- Ad Type Badge -->
-              <div class="mb-3">
-                <a-tag size="small" class="text-xs">
-                  <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                  </svg>
-                  {{ ad.adType?.replace('_', ' ') || 'Unknown' }}
-                </a-tag>
-              </div>
-              
-              <!-- Ad Content Preview -->
-              <div v-if="ad.headline || ad.description || ad.primaryText" class="bg-gray-50 p-2 sm:p-3 rounded-lg mb-3">
-                <div v-if="ad.headline" class="mb-2">
-                  <p class="text-xs font-medium text-gray-600 mb-1">{{ $t('dashboard.headline') }}</p>
-                  <p class="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-1" :title="ad.headline">{{ ad.headline }}</p>
-                </div>
-                <div v-if="ad.description" class="mb-2">
-                  <p class="text-xs font-medium text-gray-600 mb-1">{{ $t('dashboard.description') }}</p>
-                  <p class="text-xs sm:text-sm text-gray-700 line-clamp-2" :title="ad.description">{{ ad.description }}</p>
-                </div>
-                <div v-if="ad.primaryText">
-                  <p class="text-xs font-medium text-gray-600 mb-1">{{ $t('dashboard.primaryText') }}</p>
-                  <p class="text-xs sm:text-sm text-gray-700 line-clamp-2" :title="ad.primaryText">{{ ad.primaryText }}</p>
-                </div>
-              </div>
-
-              <!-- Footer -->
-              <div class="flex justify-between items-center pt-3 border-t border-gray-100">
-                <p class="text-xs text-gray-500">{{ formatDate(ad.createdDate) }}</p>
-                <a-button size="small" type="primary" class="text-xs" @click.stop="viewAdDetail(ad)">
-                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                  </svg>
-                  {{ $t('dashboard.view') }}
-                </a-button>
-              </div>
-            </a-card>
-          </a-col>
-        </a-row>
-      </div>
-    </div>
-
-    <!-- Ad Detail Modal -->
     <a-modal
       v-model:visible="showDetailModal"
       :title="$t('dashboard.adDetails')"
@@ -473,9 +280,6 @@
 import { mapState, mapActions, mapGetters } from 'vuex'
 import {
   PlusOutlined,
-  FolderOutlined,
-  FileTextOutlined,
-  ThunderboltOutlined,
   EyeOutlined,
   PictureOutlined,
   PlayCircleOutlined,
@@ -483,26 +287,17 @@ import {
   RocketOutlined
 } from '@ant-design/icons-vue'
 import MobileHeader from '@/components/MobileHeader.vue'
-import MobileDashboardStats from '@/components/MobileDashboardStats.vue'
-import LoadingSkeleton from '@/components/LoadingSkeleton.vue'
-import DashboardNextSteps from '@/components/DashboardNextSteps.vue'
 
 export default {
   name: 'Dashboard',
   components: {
     PlusOutlined,
-    FolderOutlined,
-    FileTextOutlined,
-    ThunderboltOutlined,
     EyeOutlined,
     PictureOutlined,
     PlayCircleOutlined,
     BarChartOutlined,
     RocketOutlined,
-    MobileHeader,
-    MobileDashboardStats,
-    LoadingSkeleton,
-    DashboardNextSteps
+    MobileHeader
   },
   data() {
     return {
@@ -583,43 +378,36 @@ export default {
       return this.stats && this.campaigns && this.recentAds
     },
     
-    mobileStats() {
+    overviewStats() {
+      const totals = this.stats || {}
       return [
         {
           key: 'campaigns',
-          label: 'Total Campaigns',
-          value: this.stats?.totalCampaigns || 0,
-          icon: 'pi pi-briefcase',
-          variant: 'primary',
-          change: 12
-        },
-        {
-          key: 'ads',
-          label: 'Active Ads',
-          value: this.stats?.activeAds || 0,
-          icon: 'pi pi-megaphone',
-          variant: 'success',
-          change: 8
-        },
-        {
-          key: 'totalAds',
-          label: 'Total Ads',
-          value: this.stats?.totalAds || 0,
-          icon: 'pi pi-file',
-          variant: 'info',
-          change: -3
+          label: this.$t('dashboard.totalCampaigns'),
+          value: totals.totalCampaigns || 0,
+          note: this.$t('dashboard.viewAll')
         },
         {
           key: 'activeCampaigns',
-          label: 'Active Campaigns',
-          value: this.stats?.activeCampaigns || 0,
-          icon: 'pi pi-bolt',
-          variant: 'warning',
-          change: 5
+          label: this.$t('dashboard.activeCampaigns'),
+          value: totals.activeCampaigns || 0,
+          note: this.$t('dashboard.readyToCreate')
+        },
+        {
+          key: 'ads',
+          label: this.$t('dashboard.totalAds'),
+          value: totals.totalAds || 0,
+          note: this.$t('dashboard.recentAds')
+        },
+        {
+          key: 'activeAds',
+          label: this.$t('dashboard.activeAds'),
+          value: totals.activeAds || 0,
+          note: this.$t('dashboard.jumpIntoNext')
         }
       ]
     },
-    
+
     recentActivity() {
       const activities = []
       
@@ -740,15 +528,6 @@ export default {
     toggleMobileMenu() {
       this.$emit('toggle-mobile-menu')
     },
-    
-    onThemeChanged(theme) {
-      console.log('Theme changed to:', theme)
-    },
-    
-    navigateToActivity() {
-      this.$router.push('/notifications')
-    },
-
     getRandomTip() {
       const tips = [
         "Try A/B testing different ad creatives for better performance!",
@@ -760,23 +539,6 @@ export default {
         "Keep your ad copy concise and impactful"
       ]
       return tips[Math.floor(Math.random() * tips.length)]
-    },
-
-    getMoodEmoji() {
-      const emojis = ['🚀', '💪', '🎉', '⭐', '🔥', '💎', '🎯', '✨']
-      return emojis[Math.floor(Math.random() * emojis.length)]
-    },
-
-    getMotivationalMessage() {
-      const messages = [
-        "Every expert was once a beginner",
-        "Great ads start with great ideas",
-        "Your creativity is your superpower",
-        "Small steps lead to big results",
-        "Perfect is the enemy of done",
-        "Innovation comes from experimentation"
-      ]
-      return messages[Math.floor(Math.random() * messages.length)]
     },
 
     getContextualInsight() {
@@ -798,557 +560,320 @@ export default {
 </script>
 
 <style scoped>
-.dashboard-container {
-  padding: 18px 22px 30px;
-  max-width: 1400px;
+.dashboard-view {
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 24px 16px 48px;
 }
 
-.page-header {
-  margin-bottom: 26px;
+.surface-card {
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
 }
 
-.loading-container,
-.error-container {
-  margin-bottom: 24px;
-}
-
-/* Creative Asymmetric Stats Layout */
-.creative-stats-container {
-  display: grid;
-  grid-template-columns: 2fr 1.2fr 0.8fr;
-  grid-template-rows: auto auto;
-  gap: 18px 22px;
-  margin-bottom: 34px;
-}
-
-.featured-stat-link {
-  grid-row: span 2;
-  text-decoration: none;
-  display: block;
-  transition: transform 0.3s ease;
-}
-
-.featured-stat-link:hover {
-  transform: translateY(-2px);
-}
-
-.stat-card-link {
-  text-decoration: none;
-  display: block;
-  transition: transform 0.3s ease;
-}
-
-.stat-card-link:hover {
-  transform: translateY(-2px);
-}
-
-.stat-card-creative.primary-stat {
-  background: linear-gradient(135deg, #2d5aa0 0%, #1e3a6f 100%);
-  border-radius: 18px;
-  padding: 26px;
-  color: white;
-  position: relative;
-  overflow: hidden;
-  height: 200px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.featured-stat-link:hover .stat-card-creative.primary-stat {
-  box-shadow: 0 12px 32px rgba(45, 90, 160, 0.3);
-}
-
-.stat-visual {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.stat-icon.primary-icon {
-  font-size: 42px;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.stat-pattern {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  opacity: 0.6;
-}
-
-.stat-content .stat-label {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 6px;
-}
-
-.stat-number.primary-number {
-  font-size: 36px;
-  font-weight: 700;
-  line-height: 1;
-  margin-bottom: 8px;
-}
-
-.stat-growth {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.15);
-  padding: 4px 10px;
-  border-radius: 12px;
-  display: inline-block;
-}
-
-.stat-action {
-  font-size: 14px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
-  margin-top: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: gap 0.2s ease;
-}
-
-.featured-stat-link:hover .stat-action {
-  gap: 8px;
-}
-
-.secondary-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.stat-card-creative.secondary-stat {
-  background: #ffffff;
-  border: 1px solid #f0f2f5;
-  border-radius: 14px;
-  padding: 18px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  transition: all 0.3s ease;
-  height: 82px;
-  cursor: pointer;
-}
-
-.stat-card-link:hover .stat-card-creative.secondary-stat {
-  border-color: #d9d9d9;
-  box-shadow: 0 6px 20px rgba(45, 90, 160, 0.12);
-}
-
-.stat-card-creative.secondary-stat .stat-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.stat-card-creative.secondary-stat.success .stat-icon {
-  color: #16a085;
-}
-
-.stat-card-creative.secondary-stat.warning .stat-icon {
-  color: #f4a261;
-}
-
-.stat-card-creative.secondary-stat.danger .stat-icon {
-  color: #e76f51;
-}
-
-.stat-info .stat-number {
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.2;
-  color: #262626;
-}
-
-.stat-info .stat-label {
-  font-size: 12px;
-  color: #8c8c8c;
-  margin-top: 2px;
-}
-
-.stat-accent {
-  position: absolute;
-  right: 12px;
-  top: 12px;
-  width: 4px;
-  height: 20px;
-  border-radius: 2px;
-}
-
-.secondary-stat.success .stat-accent {
-  background: #16a085;
-}
-
-.secondary-stat.warning .stat-accent {
-  background: #f4a261;
-}
-
-.secondary-stat.danger .stat-accent {
-  background: #e76f51;
-}
-
-.insight-card {
-  background: #fff8e1;
-  border: 1px solid #f4a261;
-  border-radius: 14px;
-  padding: 18px;
-  position: relative;
-}
-
-.insight-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.insight-emoji {
-  font-size: 20px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.insight-title {
-  font-weight: 600;
-  color: #d46b08;
-  font-size: 13px;
-  margin-bottom: 4px;
-}
-
-.insight-message {
-  font-size: 12px;
-  color: #7a4f01;
-  line-height: 1.4;
-}
-
-/* Creative Quick Actions */
-.creative-actions-section {
-  margin-bottom: 36px;
-}
-
-.section-header-creative {
+.hero-card {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  gap: 32px;
+  padding: 32px;
   margin-bottom: 24px;
 }
 
-.section-title-creative {
-  font-size: 26px;
-  font-weight: 700;
-  color: #262626;
-  margin: 0 0 6px 0;
-  line-height: 1.2;
+.hero-text h1 {
+  margin: 8px 0 12px;
+  font-size: 28px;
+  color: #0f172a;
 }
 
-.section-subtitle {
-  font-size: 14px;
-  color: #8c8c8c;
+.eyebrow {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #64748b;
   margin: 0;
 }
 
-.header-decoration {
-  font-size: 24px;
-  opacity: 0.8;
+.hero-description {
+  margin: 0 0 20px;
+  color: #475569;
 }
 
-.actions-grid-creative {
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-meta {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 0.6fr;
-  grid-template-rows: auto auto;
-  gap: 18px;
+  gap: 16px;
 }
 
-.action-card-primary {
-  grid-row: span 2;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
-  border: 2px solid #91d5ff;
-  border-radius: 18px;
-  padding: 28px;
-  text-decoration: none;
-  display: block;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.4s ease;
+.hero-stat {
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: #f1f5f9;
 }
 
-.action-card-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(24, 144, 255, 0.15);
-  border-color: #40a9ff;
+.hero-stat-label {
+  margin: 0;
+  font-size: 13px;
+  color: #475569;
 }
 
-.action-primary-content {
+.hero-stat-value {
+  margin: 4px 0 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.state-card {
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  padding: 20px;
+}
+
+.stat-label {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.stat-value {
+  font-size: 30px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 8px 0;
+}
+
+.stat-note {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.section-heading h2 {
+  margin: 4px 0 0;
+  font-size: 20px;
+  color: #0f172a;
+}
+
+.section-subtitle {
+  margin: 4px 0 0;
+  color: #64748b;
+}
+
+.action-list {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 160px;
+  gap: 12px;
 }
 
-.action-visual {
-  position: relative;
-  margin-bottom: 20px;
+.action-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
-.action-main-icon {
-  font-size: 36px;
-  color: #1890ff;
-}
-
-.action-glow {
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  right: -8px;
-  bottom: -8px;
-  background: radial-gradient(circle, rgba(24, 144, 255, 0.2) 0%, transparent 70%);
-  border-radius: 50%;
-  z-index: -1;
+.action-item:hover {
+  border-color: #94a3b8;
+  transform: translateY(-2px);
 }
 
 .action-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #262626;
-  margin: 0 0 8px 0;
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .action-desc {
+  margin: 0;
+  color: #475569;
   font-size: 14px;
-  color: #595959;
-  line-height: 1.4;
-  margin-bottom: auto;
 }
 
-.action-cta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.action-link {
   font-weight: 600;
-  color: #1890ff;
-  margin-top: 20px;
+  color: #1d4ed8;
 }
 
-.arrow-icon {
-  font-size: 16px;
-  transition: transform 0.3s ease;
+.insight-panel {
+  padding: 24px;
 }
 
-.action-card-primary:hover .arrow-icon {
-  transform: translateX(4px);
+.insight-message {
+  margin: 0 0 16px;
+  color: #0f172a;
+  font-weight: 500;
 }
 
-.actions-secondary {
+.activity-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
-.action-card-mini {
-  background: #ffffff;
-  border: 1px solid #f0f2f5;
-  border-radius: 12px;
+.activity-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-title {
+  margin: 0;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.activity-desc {
+  margin: 2px 0 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+.activity-time {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.section-card {
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.summary-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
   padding: 16px;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  transition: all 0.3s ease;
-  height: 70px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.action-card-mini:hover {
-  border-color: #d9d9d9;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
+.summary-card:hover {
+  border-color: #cbd5f5;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
 }
 
-.action-card-mini.action-1 {
-  border-left: 4px solid #16a085;
-}
-
-.action-card-mini.action-2 {
-  border-left: 4px solid #8e44ad;
-}
-
-.action-card-mini.action-3 {
-  border-left: 4px solid #f4a261;
-}
-
-.mini-icon {
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.action-1 .mini-icon {
-  color: #16a085;
-}
-
-.action-2 .mini-icon {
-  color: #8e44ad;
-}
-
-.action-3 .mini-icon {
-  color: #f4a261;
-}
-
-.mini-content {
-  flex: 1;
+.summary-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.mini-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #262626;
-  white-space: pre-line;
-  line-height: 1.2;
-}
-
-.mini-arrow {
-  font-size: 14px;
-  color: #8c8c8c;
-  transition: all 0.3s ease;
-}
-
-.action-card-mini:hover .mini-arrow {
-  color: #262626;
-  transform: translate(2px, -2px);
-}
-
-.motivation-card {
-  background: linear-gradient(135deg, #fff1f0 0%, #fff7e6 100%);
-  border: 1px solid #ffadd2;
-  border-radius: 14px;
-  padding: 18px;
-  display: flex;
-  align-items: center;
-}
-
-.motivation-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  width: 100%;
-}
-
-.motivation-icon {
-  font-size: 22px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.motivation-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #cf1322;
-  margin-bottom: 4px;
-}
-
-.motivation-message {
-  font-size: 11px;
-  color: #a8071a;
-  line-height: 1.3;
-}
-
-/* Existing styles for other sections */
-.campaign-card,
-.ad-card {
-  height: 100%;
-  transition: all 0.3s ease;
-}
-
-.campaign-card:hover,
-.ad-card:hover {
-  border-color: #dae4eb;
-  box-shadow: 0 2px 8px rgba(45, 90, 160, 0.08);
-}
-
-.campaign-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
-.ad-card {
-  cursor: pointer;
+.summary-title {
+  margin: 0;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.summary-text {
+  margin: 0 0 12px;
+  color: #475569;
+  font-size: 14px;
+}
+
+.summary-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.meta-label {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.meta-value {
+  margin: 4px 0 0;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.summary-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.summary-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.summary-pill {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 13px;
 }
 
 @media (max-width: 768px) {
-  .dashboard-container {
-    padding: 16px;
-  }
-
-  .creative-stats-container {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    gap: 16px;
-  }
-
-  .featured-stat {
-    grid-row: span 1;
-  }
-
-  .stat-card-creative.primary-stat {
-    height: 140px;
-    padding: 20px;
-    flex-direction: row;
-  }
-
-  .secondary-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .actions-grid-creative {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .action-card-primary {
-    grid-row: span 1;
-  }
-
-  .actions-secondary {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .section-title-creative {
-    font-size: 22px;
-  }
-
-  .section-header {
+  .hero-card {
     flex-direction: column;
-    align-items: flex-start !important;
-    gap: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .secondary-stats {
-    grid-template-columns: 1fr;
+    padding: 24px;
   }
 
-  .actions-secondary {
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .stat-grid,
+  .card-grid {
     grid-template-columns: 1fr;
   }
 }
 </style>
-
-
-    
-

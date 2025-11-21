@@ -488,18 +488,26 @@ public class AIContentServiceImpl {
         boolean hasAdLinks = (adLinks != null && !adLinks.isEmpty());
         boolean hasOriginalPrompt = (originalPrompt != null && !originalPrompt.trim().isEmpty());
         
+        if (hasOriginalPrompt) {
+            finalPrompt.append("YÊU CẦU TỪ NGƯỜI DÙNG:\n")
+                .append(originalPrompt.trim())
+                .append("\n");
+        }
+
+        boolean promptHasReferenceSection = hasOriginalPrompt &&
+            (originalPrompt.contains("📌 QUẢNG CÁO THAM CHIẾU") ||
+             originalPrompt.contains("📌 REFERENCE AD INPUT"));
+
         if (hasExtractedContent) {
-            // Use extracted content from Meta Ad Library
             log.info("Using extracted content from Meta Ad Library");
-            if (hasOriginalPrompt) {
-                // Both prompt and extracted content available
+            if (hasOriginalPrompt && promptHasReferenceSection) {
+                appendReferenceBlock(finalPrompt, extractedContent);
+            } else if (hasOriginalPrompt) {
                 log.info("Combining original prompt with extracted content");
-                finalPrompt.append("Yêu cầu từ người dùng: ").append(originalPrompt).append("\n\n");
-                finalPrompt.append(extractedContent);
+                finalPrompt.append("DỮ LIỆU BỔ TRỢ:\n").append(extractedContent.trim()).append("\n");
             } else {
-                // Only extracted content available
-                log.info("Using only extracted content as prompt is empty");
-                finalPrompt.append(extractedContent);
+                log.info("Prompt empty, using extracted content directly");
+                finalPrompt.append(extractedContent.trim());
             }
         } else if (hasAdLinks) {
             // Extract content from ad links
@@ -518,37 +526,43 @@ public class AIContentServiceImpl {
             }
             String adLinkContent = adLinkContentBuilder.toString().trim();
             boolean hasAdLinkContent = (adLinkContent != null && !adLinkContent.isEmpty());
-            if (hasOriginalPrompt) {
-                if (hasAdLinkContent) {
-                    // Both prompt and ad links are available - combine them
+            if (hasAdLinkContent) {
+                if (hasOriginalPrompt && promptHasReferenceSection) {
+                    log.info("Appending ad link content as style reference");
+                    appendReferenceBlock(finalPrompt, adLinkContent);
+                } else if (hasOriginalPrompt) {
                     log.info("Combining original prompt with ad link content");
-                    finalPrompt.append("Yêu cầu từ người dùng: ").append(originalPrompt).append("\n\n");
                     finalPrompt.append("Nội dung tham khảo từ quảng cáo:\n").append(adLinkContent);
                 } else {
-                    // Ad links provided but no content extracted - use original prompt only
-                    log.info("Ad links provided but no content extracted, using original prompt only");
-                    finalPrompt.append(originalPrompt);
-                }
-            } else {
-                if (hasAdLinkContent) {
-                    // Only ad links available - use extracted content
-                    log.info("Using only ad link content as prompt is empty");
+                    log.info("Using ad link content as standalone prompt");
                     finalPrompt.append(adLinkContent);
-                } else {
-                    // Neither prompt nor ad link content available - throw error
-                    log.error("No prompt and no content extracted from ad links");
-                    throw new ApiException(HttpStatus.BAD_REQUEST, 
-                        "Could not generate content: Please provide a valid prompt or ad link");
                 }
+            } else if (!hasOriginalPrompt) {
+                log.error("No prompt and no content extracted from ad links");
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Could not generate content: Please provide a valid prompt or ad link");
             }
-        } else {
-            // Only original prompt available
-            log.info("Using only original prompt as no ad links or extracted content provided");
-            finalPrompt.append(originalPrompt);
+        } else if (!hasOriginalPrompt) {
+            log.error("No prompt provided and no fallback content available");
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                "Could not generate content: Prompt is required when no reference content is available");
         }
         
         log.info("Final prompt built: {}", finalPrompt.toString());
         return finalPrompt.toString();
+    }
+
+    private void appendReferenceBlock(StringBuilder finalPrompt, String referenceContent) {
+        if (referenceContent == null || referenceContent.trim().isEmpty()) {
+            return;
+        }
+        finalPrompt.append("\n=== REFERENCE STYLE (DO NOT COPY) ===\n")
+            .append("Use the block below ONLY for tone/structure. Never reuse brand names, locations, offers or numbers from it.\n")
+            .append("Always replace them with the user's product/service information.\n")
+            .append("Chỉ dùng đoạn sau để học tone/nhịp. Tuyệt đối thay mọi thương hiệu, địa điểm, ưu đãi bằng thông tin sản phẩm của khách hàng.\n")
+            .append("Luôn tạo nội dung mới cho sản phẩm hiện tại, không nhắc lại thương hiệu trong phần tham khảo.\n")
+            .append(referenceContent.trim())
+            .append("\n=== END REFERENCE STYLE ===\n");
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.fbadsautomation.controller;
 
+import com.fbadsautomation.dto.FacebookAutoExportResponse;
 import com.fbadsautomation.service.FacebookExportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -88,10 +89,10 @@ public class FacebookExportController {
     })
     @PostMapping("/ads/bulk/upload")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<com.fbadsautomation.integration.facebook.FacebookMarketingApiClient.UploadResult>> uploadAds(
+    public ResponseEntity<FacebookAutoExportResponse> uploadAds(
             @RequestBody @Valid UploadRequest request) {
         log.info("Uploading {} ads to ad account {}", request.getAdIds().size(), request.getAdAccountId());
-        var result = facebookExportService.uploadAdsToFacebook(request.getAdIds(), request.getAdAccountId());
+        var result = facebookExportService.autoExportAds(request.getAdIds(), request.getAdAccountId());
         return ResponseEntity.ok(result);
     }
 

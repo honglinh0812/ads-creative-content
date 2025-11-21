@@ -67,19 +67,12 @@
             {{ activity.status }}
           </div>
         </div>
-        
-        <CreativeEmptyState
-          v-if="!recentActivity.length"
-          variant="no-activity"
-          :show-signature="false"
-        />
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import CreativeEmptyState from './ui/CreativeEmptyState.vue'
 
 export default {
   name: 'MobileDashboardStats',
@@ -157,7 +150,6 @@ export default {
   },
   
   components: {
-    CreativeEmptyState
   },
 
   emits: ['action', 'view-all-activity'],

@@ -13,7 +13,8 @@
           <span class="logo-text">Ads Creative</span>
         </router-link>
       </div>
-      <nav class="sidebar-menu">
+      <nav class="sidebar-menu" aria-label="Main navigation">
+        <p class="menu-label">Workspace</p>
         <div
           v-for="item in menu"
           :key="item.path"
@@ -42,7 +43,7 @@
         </div>
       </nav>
       <div class="sidebar-actions">
-        <button v-if="!isDashboard" class="btn btn-sm btn-outline w-full mb-2" @click="goDashboard">
+        <button v-if="!isDashboard" class="sidebar-back" @click="goDashboard">
           <ArrowLeftOutlined class="w-4 h-4 mr-1" />
           {{ $t('navigation.backToDashboard') }}
         </button>
@@ -65,7 +66,7 @@ import { computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { HomeOutlined, ThunderboltOutlined, FileTextOutlined, MenuOutlined, ArrowLeftOutlined, TeamOutlined, FundOutlined, BulbOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, ThunderboltOutlined, FileTextOutlined, MenuOutlined, ArrowLeftOutlined, TeamOutlined, FundOutlined, BulbOutlined, BarChartOutlined } from '@ant-design/icons-vue'
 
 export default {
   name: 'AppSidebar',
@@ -77,7 +78,8 @@ export default {
     ArrowLeftOutlined,
     TeamOutlined,
     FundOutlined,
-    BulbOutlined
+    BulbOutlined,
+    BarChartOutlined
   },
   props: {
     sidebarOpen: {
@@ -114,6 +116,8 @@ export default {
           { label: translate('navigation.mimicAds', 'Mimic ads'), path: '/ads/learn' }
         ]
       },
+      { label: translate('navigation.analytics', 'Analytics'), path: '/analytics', icon: BarChartOutlined, match: ['analytics'] },
+      { label: translate('navigation.optimization', 'Optimization'), path: '/optimization', icon: BulbOutlined, match: ['optimization'] },
       { label: translate('navigation.personas', 'Personas'), path: '/personas', icon: TeamOutlined, match: ['persona', 'personas'] },
       { label: translate('navigation.competitors', 'Competitors'), path: '/competitors', icon: FundOutlined, match: ['competitor', 'competitors'] }
     ])
@@ -153,9 +157,9 @@ export default {
 
 <style scoped>
 .app-sidebar {
-  width: 240px;
-  background: var(--sidebar-bg, #fff);
-  color: var(--sidebar-text, #222);
+  width: 248px;
+  background: #f8fafc;
+  color: #0f172a;
   height: 100vh;
   position: fixed;
   left: 0;
@@ -164,280 +168,192 @@ export default {
   z-index: 100;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 8px rgb(0 0 0 / 4%);
-  transition: transform 0.2s cubic-bezier(.4,0,.2,1);
-  overflow-y: auto;
+  box-shadow: 2px 0 20px rgba(15, 23, 42, 0.08);
+  transform: translateX(0);
+  transition: transform 0.3s ease;
 }
 
 .app-sidebar:not(.open) {
   transform: translateX(-100%);
 }
 
-.sidebar-hamburger-fixed {
-  position: fixed;
-  top: 0.75rem;
-  left: 1rem;
+.sidebar-hamburger-fixed,
+.sidebar-hamburger {
+  border: none;
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 12px;
   width: 44px;
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
   cursor: pointer;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
-  transition: all 0.2s ease;
+  color: #0f172a;
 }
 
-.sidebar-hamburger-fixed:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-  box-shadow: 0 6px 16px rgb(0 0 0 / 18%);
-}
-
-.dark .sidebar-hamburger-fixed {
-  background: #1f2937;
-  border-color: #374151;
-  color: #e5e7eb;
-}
-
-.dark .sidebar-hamburger-fixed:hover {
-  background: #374151;
-  border-color: #4b5563;
+.sidebar-hamburger-fixed {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 200;
 }
 
 .sidebar-hamburger {
-  position: absolute;
-  top: 0.75rem;
-  left: 1rem;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 110;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
-  transition: all 0.2s ease;
-}
-
-.sidebar-hamburger:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-  box-shadow: 0 6px 16px rgb(0 0 0 / 18%);
-}
-
-.dark .sidebar-hamburger {
-  background: #1f2937;
-  border-color: #374151;
-  color: #e5e7eb;
-}
-
-.dark .sidebar-hamburger:hover {
-  background: #374151;
-  border-color: #4b5563;
+  margin-bottom: 16px;
 }
 
 .sidebar-content {
-  margin-top: 56px;
+  padding: 24px;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 56px);
 }
 
 .sidebar-header {
-  display: flex;
-  align-items: center;
-  padding: 1.5rem 1rem 1rem;
-  border-bottom: 1px solid #eee;
+  margin-bottom: 24px;
 }
 
 .logo {
   display: flex;
   align-items: center;
+  gap: 12px;
   text-decoration: none;
 }
 
-.logo-img {
-  width: 32px;
-  height: 32px;
-  margin-right: 0.5rem;
-}
-
 .logo-text {
-  font-weight: bold;
-  font-size: 1.2rem;
-  color: var(--sidebar-text, #222);
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .sidebar-menu {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 1rem 0;
+  overflow-y: auto;
 }
 
-.sidebar-link {
+.menu-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0 0 12px;
+}
+
+.sidebar-menu-group {
+  margin-bottom: 8px;
+}
+
+.sidebar-link,
+.sidebar-sublink {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1.5rem;
-  color: inherit;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: #0f172a;
   text-decoration: none;
-  border-radius: 6px;
-  margin-bottom: 0.25rem;
-  transition: background 0.15s;
-}
-
-.sidebar-link.active, .sidebar-link:hover {
-  background: var(--sidebar-active-bg, #f3f4f6);
-  color: var(--sidebar-active-text, #2563eb);
-}
-
-.sidebar-submenu {
-  display: flex;
-  flex-direction: column;
-  margin-left: 1.5rem;
-  border-left: 2px solid rgba(37, 99, 235, 0.1);
-  padding-left: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.sidebar-sublink {
-  padding: 0.35rem 0.25rem;
-  color: #6b7280;
-  font-size: 0.92rem;
-  text-decoration: none;
-  display: flex;
-  justify-content: center;
-  text-align: center;
-  white-space: normal;
-  word-break: break-word;
-}
-
-.sidebar-sublink.active {
-  color: #2563eb;
-  font-weight: 600;
+  font-weight: 500;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .icon {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.sidebar-link:hover,
+.sidebar-sublink:hover {
+  background: #e4ecff;
+  color: #1d4ed8;
+}
+
+.sidebar-link.active,
+.sidebar-sublink.active {
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.sidebar-sublink {
+  margin-left: 34px;
+  font-size: 14px;
 }
 
 .sidebar-actions {
-  padding: 0 1rem 1rem;
+  margin-top: 16px;
+}
+
+.sidebar-back {
+  width: 100%;
+  border: 1px solid #cbd5f5;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: transparent;
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: transparent;
+  color: #0f172a;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-outline {
+  border: 1px solid #cbd5f5;
 }
 
 .sidebar-footer {
-  padding: 1rem;
-  border-top: 1px solid #eee;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
   margin-top: auto;
-}
-
-.theme-toggle-section {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #eee;
-}
-
-.dark .theme-toggle-section {
-  border-bottom-color: #374151;
-}
-
-.dark .sidebar-footer {
-  border-top-color: #374151;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  margin-bottom: 0.5rem;
+  gap: 12px;
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
-  background: #2563eb;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #1d4ed8;
   color: #fff;
-  border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  margin-right: 0.5rem;
+  font-weight: 600;
 }
 
 .user-name {
-  font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .sidebar-overlay {
-  display: none;
-}
-
-@media (width <= 900px) {
-  .app-sidebar {
-    transform: translateX(-100%);
-    position: fixed;
-    z-index: 200;
-    width: 240px;
-  }
-
-  .app-sidebar.open {
-    transform: translateX(0);
-  }
-
-  .sidebar-hamburger-fixed {
-    position: fixed;
-    top: 1rem;
-    left: 1rem;
-    z-index: 210;
-  }
-
-  .sidebar-hamburger {
-    display: block;
-  }
-
-  .sidebar-overlay {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgb(0 0 0 / 10%);
-    z-index: 99;
-  }
-}
-
-.logout-dialog {
   position: fixed;
   inset: 0;
-  background: rgb(0 0 0 / 20%);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: rgba(15, 23, 42, 0.4);
 }
 
-.logout-dialog-content {
-  background: #fff;
-  border-radius: 12px;
-  padding: 2rem 2.5rem;
-  box-shadow: 0 4px 32px rgb(0 0 0 / 12%);
-  min-width: 300px;
-  text-align: center;
+@media (max-width: 992px) {
+  .app-sidebar {
+    width: 100%;
+  }
 }
+</style>
 </style>

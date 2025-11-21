@@ -36,24 +36,6 @@
         @page-size-change="onPageSizeChange"
       />
 
-      <!-- Error State -->
-      <CreativeEmptyState
-        v-if="error"
-        variant="loading-failed"
-        :custom-message="error"
-        :action-text="$t('common.actions.tryAgain')"
-        :action-handler="loadAds"
-        class="mt-6"
-      />
-
-      <!-- Empty State -->
-      <CreativeEmptyState
-        v-else-if="!loading && safeAds.length === 0"
-        variant="no-ads"
-        :action-text="$t('common.actions.createFirstAd')"
-        :action-handler="() => $router.push('/ad/create')"
-        class="mt-6"
-      />
       <!-- Ad Detail Modal -->
       <a-modal v-model:open="showDetailModal" :title="$t('ads.detailModal.title')" width="90vw" style="max-width: 1200px">
         <div v-if="selectedAd">
@@ -206,7 +188,6 @@ import { Modal, Input, Select, Button, message } from "ant-design-vue"
 import { PlusOutlined } from "@ant-design/icons-vue"
 
 import AdTable from '@/components/AdTable.vue'
-import CreativeEmptyState from '@/components/ui/CreativeEmptyState.vue'
 import ExportToFacebookModal from '@/components/ExportToFacebookModal.vue'
 import FacebookInstructionsModal from '@/components/FacebookInstructionsModal.vue'
 
@@ -222,7 +203,6 @@ export default {
     PlusOutlined,
 
     AdTable,
-    CreativeEmptyState,
     ExportToFacebookModal,
     FacebookInstructionsModal
   },
@@ -620,19 +600,17 @@ export default {
       this.autoUploadSelectedAds()
     },
 
-    handleExportSuccess() {
+    handleExportSuccess(result) {
       message.success(this.$t('ads.messages.success.exportSuccess', { count: this.selectedAdIds.length }))
 
-      // Get export format from store
       const format = this.$store.state.fbExport.format
       this.exportFormat = format
 
-      // Show instructions modal
       setTimeout(() => {
         this.showInstructionsModal = true
       }, 500)
 
-      // Clear selection
+      this.exportTimestamp = Date.now()
       this.selectedAdIds = []
     },
 
@@ -673,9 +651,10 @@ export default {
       }
       const hide = message.loading(this.$t('ads.messages.info.exportingAds') || 'Đang upload quảng cáo...', 0)
       try {
-        await this.uploadAfterPreview()
+        const result = await this.uploadAfterPreview()
         message.success(this.$t('ads.messages.success.uploadedToFacebook') || 'Đã upload quảng cáo lên Facebook')
-        window.open('https://business.facebook.com/adsmanager/manage/ads', '_blank', 'noopener,noreferrer')
+        const redirectUrl = result?.redirectUrl || 'https://business.facebook.com/adsmanager/manage/ads'
+        window.open(redirectUrl, '_blank', 'noopener,noreferrer')
         this.clearSelection()
       } catch (error) {
         const errMsg = error.response?.data?.message || error.message || 'Upload failed'
@@ -702,6 +681,8 @@ export default {
           return
         }
 
+        const campaignId = adToDuplicate.campaignId || adToDuplicate.campaign?.id
+
         const duplicatedAdData = {
           name: `${adToDuplicate.name} (Copy)`,
           headline: adToDuplicate.headline,
@@ -710,7 +691,8 @@ export default {
           callToAction: adToDuplicate.callToAction,
           imageUrl: adToDuplicate.imageUrl,
           videoUrl: adToDuplicate.videoUrl,
-          campaignId: adToDuplicate.campaignId || adToDuplicate.campaign?.id,
+          campaignId,
+          campaign: campaignId ? { id: campaignId } : undefined,
           adType: adToDuplicate.adType,
           status: 'DRAFT'
         }

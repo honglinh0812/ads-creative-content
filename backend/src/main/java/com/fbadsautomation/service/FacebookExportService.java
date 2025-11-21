@@ -1,5 +1,7 @@
 package com.fbadsautomation.service;
 
+import com.fbadsautomation.dto.FacebookAdPayload;
+import com.fbadsautomation.dto.FacebookAutoExportResponse;
 import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.Campaign;
 import com.fbadsautomation.model.AdType;
@@ -36,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.regex.Pattern;
 
 @Service
@@ -118,6 +121,8 @@ public class FacebookExportService {
         "Call to Action",
         "Marketing Message Primary Text"
     };
+
+    private static final String ADS_MANAGER_BASE_URL = "https://business.facebook.com/adsmanager/manage/ads";
     
     /**
      * Validate ad content for Facebook export
@@ -1284,18 +1289,23 @@ public class FacebookExportService {
     }
 
     /**
-     * Upload ads directly to Facebook Marketing API (best effort).
-     * Requires facebook.marketing.access-token and ad account id (act_...)
+     * Prepare normalized payloads for requested ads without writing files to disk.
+     * This keeps Facebook export logic focused on in-memory objects that can be sent to either CSV writers or the Marketing API.
      */
-    public List<com.fbadsautomation.integration.facebook.FacebookMarketingApiClient.UploadResult> uploadAdsToFacebook(
-        List<Long> adIds,
-        String adAccountId
-    ) {
+    public List<FacebookAdPayload> prepareAdPayloads(List<Long> adIds) {
+        return loadPreparedAds(adIds).stream()
+            .map(PreparedAdExport::getPayload)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Upload ads directly to Facebook Marketing API (best effort) and return redirect metadata.
+     * Requires facebook.marketing.access-token and ad account id (act_...).
+     */
+    public FacebookAutoExportResponse autoExportAds(List<Long> adIds, String adAccountId) {
         String resolvedAdAccountId = StringUtils.hasText(adAccountId)
             ? adAccountId
             : facebookProperties.getDefaultAdAccountId();
-
-        log.info("Uploading {} ads to Facebook ad account {}", adIds.size(), resolvedAdAccountId);
 
         if (!StringUtils.hasText(facebookProperties.getMarketingAccessToken())) {
             throw new ApiException(HttpStatus.BAD_REQUEST,
@@ -1305,6 +1315,30 @@ public class FacebookExportService {
             throw new ApiException(HttpStatus.BAD_REQUEST,
                 "Ad account id is required. Provide act_... or set FACEBOOK_DEFAULT_AD_ACCOUNT_ID env.");
         }
+
+        List<PreparedAdExport> preparedAds = loadPreparedAds(adIds);
+        List<com.fbadsautomation.integration.facebook.FacebookMarketingApiClient.UploadResult> results = new ArrayList<>();
+
+        // TODO: Confirm if Facebook Marketing API supports importing ads from files for this use case.
+
+        for (PreparedAdExport prepared : preparedAds) {
+            var result = marketingApiClient.uploadAdToAccount(
+                prepared.getAd(),
+                resolvedAdAccountId,
+                facebookProperties.getMarketingAccessToken()
+            );
+            results.add(result);
+            markCampaignAsExportedForAd(prepared.getAd());
+        }
+
+        return FacebookAutoExportResponse.builder()
+            .payloads(preparedAds.stream().map(PreparedAdExport::getPayload).collect(Collectors.toList()))
+            .results(results)
+            .adsManagerUrl(buildAdsManagerUrl(resolvedAdAccountId))
+            .build();
+    }
+
+    private List<PreparedAdExport> loadPreparedAds(List<Long> adIds) {
         if (adIds == null || adIds.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Ad IDs list cannot be empty");
         }
@@ -1314,16 +1348,76 @@ public class FacebookExportService {
             throw new ApiException(HttpStatus.NOT_FOUND, "No ads found with provided IDs");
         }
 
-        List<com.fbadsautomation.integration.facebook.FacebookMarketingApiClient.UploadResult> results = new ArrayList<>();
-
+        List<PreparedAdExport> prepared = new ArrayList<>();
         for (Ad ad : ads) {
             validateAdContentForFacebook(ad);
-            var result = marketingApiClient.uploadAdToAccount(ad, resolvedAdAccountId, facebookProperties.getMarketingAccessToken());
-            results.add(result);
-            markCampaignAsExportedForAd(ad);
+            prepared.add(new PreparedAdExport(ad, buildPayloadForAd(ad)));
         }
 
-        return results;
+        return prepared;
+    }
+
+    private FacebookAdPayload buildPayloadForAd(Ad ad) {
+        Campaign campaign = ad.getCampaign();
+
+        return FacebookAdPayload.builder()
+            .campaign(FacebookAdPayload.CampaignPayload.builder()
+                .name(campaign.getName())
+                .status("ACTIVE")
+                .objective(mapCampaignObjective(campaign.getObjective()))
+                .buyingType("AUCTION")
+                .dailyBudget(formatBudgetForFacebook(campaign.getDailyBudget()))
+                .lifetimeBudget(formatBudgetForFacebook(campaign.getTotalBudget()))
+                .startTime(formatDateTime(campaign.getStartDate()))
+                .endTime(formatDateTime(campaign.getEndDate()))
+                .build())
+            .adSet(FacebookAdPayload.AdSetPayload.builder()
+                .name(campaign.getName() + " - Ad Set")
+                .status("ACTIVE")
+                .startTime(formatDateTime(campaign.getStartDate()))
+                .endTime(formatDateTime(campaign.getEndDate()))
+                .link(ad.getWebsiteUrl())
+                .countries(extractCountriesFromAudience(campaign.getTargetAudience()))
+                .gender(extractGenderFromAudience(campaign.getTargetAudience()))
+                .ageMin(extractAgeMinFromAudience(campaign.getTargetAudience()))
+                .ageMax(extractAgeMaxFromAudience(campaign.getTargetAudience()))
+                .publisherPlatforms("facebook,instagram")
+                .facebookPositions("feed")
+                .instagramPositions("stream")
+                .optimizationGoal(mapOptimizationGoal(campaign.getObjective()))
+                .billingEvent("IMPRESSIONS")
+                .build())
+            .creative(FacebookAdPayload.CreativePayload.builder()
+                .type(mapCreativeType(ad.getAdType(), ad.getImageUrl(), ad.getVideoUrl()))
+                .headline(ad.getHeadline())
+                .body(ad.getPrimaryText())
+                .description(ad.getDescription())
+                .displayLink(ad.getWebsiteUrl())
+                .imageUrl(getImageUrlForFacebook(ad.getImageUrl()))
+                .callToAction(mapCallToAction(ad.getCallToAction()))
+                .marketingMessage(ad.getPrimaryText())
+                .build())
+            .ad(FacebookAdPayload.AdPayload.builder()
+                .adId(ad.getId())
+                .name(ad.getName())
+                .status("ACTIVE")
+                .websiteUrl(ad.getWebsiteUrl())
+                .build())
+            .build();
+    }
+
+    private String buildAdsManagerUrl(String adAccountId) {
+        if (!StringUtils.hasText(adAccountId)) {
+            return ADS_MANAGER_BASE_URL;
+        }
+        return ADS_MANAGER_BASE_URL + "?act=" + normalizeAdAccountId(adAccountId);
+    }
+
+    private String normalizeAdAccountId(String adAccountId) {
+        if (!StringUtils.hasText(adAccountId)) {
+            return "";
+        }
+        return adAccountId.startsWith("act_") ? adAccountId.substring(4) : adAccountId;
     }
 
     /**
@@ -1583,4 +1677,21 @@ public class FacebookExportService {
         }
     }
 
+    private static class PreparedAdExport {
+        private final Ad ad;
+        private final FacebookAdPayload payload;
+
+        PreparedAdExport(Ad ad, FacebookAdPayload payload) {
+            this.ad = ad;
+            this.payload = payload;
+        }
+
+        public Ad getAd() {
+            return ad;
+        }
+
+        public FacebookAdPayload getPayload() {
+            return payload;
+        }
+    }
 }
