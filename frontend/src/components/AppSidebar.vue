@@ -7,12 +7,6 @@
       <MenuOutlined class="w-6 h-6" />
     </button>
     <div v-if="sidebarOpen" class="sidebar-content">
-      <div class="sidebar-header">
-        <router-link to="/dashboard" class="logo">
-          <img src="/logo.svg" alt="Logo" class="logo-img" />
-          <span class="logo-text">Ads Creative</span>
-        </router-link>
-      </div>
       <nav class="sidebar-menu" aria-label="Main navigation">
         <p class="menu-label">Workspace</p>
         <div
@@ -194,13 +188,14 @@ export default {
 
 .sidebar-hamburger-fixed {
   position: fixed;
-  top: 16px;
-  left: 16px;
-  z-index: 200;
+  top: 88px;
+  left: 24px;
+  z-index: 1200;
 }
 
 .sidebar-hamburger {
-  margin-bottom: 16px;
+  margin: 24px 0 16px 24px;
+  align-self: flex-start;
 }
 
 .sidebar-content {

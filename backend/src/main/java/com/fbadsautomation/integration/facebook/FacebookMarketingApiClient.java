@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.util.StringUtils;
 
 /**
  * Lightweight Facebook Marketing API client to create campaign/adset/ad for a given ad account.
@@ -157,7 +158,9 @@ public class FacebookMarketingApiClient {
         }
 
         Map<String, Object> objectStorySpec = new HashMap<>();
-        objectStorySpec.put("page_id", facebookProperties.getPageId()); // optional if you have a page
+        if (StringUtils.hasText(facebookProperties.getPageId())) {
+            objectStorySpec.put("page_id", facebookProperties.getPageId()); // optional if you have a page
+        }
         objectStorySpec.put("link_data", linkData);
 
         Map<String, Object> payload = new HashMap<>();
@@ -320,9 +323,13 @@ public class FacebookMarketingApiClient {
 
     private String buildPromotedObject(Ad ad) {
         Map<String, Object> promoted = new HashMap<>();
-        promoted.put("page_id", facebookProperties.getPageId());
+        if (StringUtils.hasText(facebookProperties.getPageId())) {
+            promoted.put("page_id", facebookProperties.getPageId());
+        }
         promoted.put("custom_event_type", "OTHER");
-        promoted.put("pixel_id", facebookProperties.getPixelId());
+        if (StringUtils.hasText(facebookProperties.getPixelId())) {
+            promoted.put("pixel_id", facebookProperties.getPixelId());
+        }
         return JsonUtils.toJson(promoted);
     }
 
