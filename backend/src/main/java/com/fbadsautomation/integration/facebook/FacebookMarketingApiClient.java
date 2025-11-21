@@ -4,6 +4,7 @@ import com.fbadsautomation.exception.ApiException;
 import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.Campaign;
 import com.fbadsautomation.model.FacebookCTA;
+import com.fbadsautomation.service.MinIOStorageService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -55,6 +56,7 @@ public class FacebookMarketingApiClient {
 
     private final RestTemplate restTemplate;
     private final FacebookProperties facebookProperties;
+    private final MinIOStorageService minIOStorageService;
 
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
     private static final Map<String, String> COUNTRY_CODE_ALIASES = Map.ofEntries(
@@ -173,11 +175,12 @@ public class FacebookMarketingApiClient {
         linkData.put("message", ad.getPrimaryText());
         linkData.put("link", ad.getWebsiteUrl());
         linkData.put("description", ad.getDescription());
-        String imageHash = uploadImageToAdAccount(adAccountId, ad.getImageUrl(), accessToken);
+        String resolvedImageUrl = resolveAbsoluteImageUrl(ad.getImageUrl());
+        String imageHash = uploadImageToAdAccount(adAccountId, resolvedImageUrl, accessToken);
         if (StringUtils.hasText(imageHash)) {
             linkData.put("image_hash", imageHash);
-        } else if (StringUtils.hasText(ad.getImageUrl())) {
-            linkData.put("picture", ad.getImageUrl());
+        } else if (StringUtils.hasText(resolvedImageUrl)) {
+            linkData.put("picture", resolvedImageUrl);
         }
         Map<String, Object> ctaMap = new HashMap<>();
         ctaMap.put("type", mapCallToAction(ad.getCallToAction()));
@@ -418,6 +421,35 @@ public class FacebookMarketingApiClient {
             log.warn("Failed to upload image for ad account {}: {}", adAccountId, e.getMessage());
             return null;
         }
+    }
+
+    private String resolveAbsoluteImageUrl(String imageUrl) {
+        if (!StringUtils.hasText(imageUrl)) {
+            return null;
+        }
+        String trimmed = imageUrl.trim();
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            return trimmed;
+        }
+        if (trimmed.startsWith("/api/images/")) {
+            String filename = trimmed.substring("/api/images/".length());
+            try {
+                return minIOStorageService.getPublicUrl(filename);
+            } catch (Exception e) {
+                log.warn("Failed to get public URL for {}: {}", filename, e.getMessage());
+                return null;
+            }
+        }
+        if (trimmed.startsWith("uploads/")) {
+            try {
+                return minIOStorageService.getPublicUrl(trimmed.substring("uploads/".length()));
+            } catch (Exception e) {
+                log.warn("Failed to map uploads path {}: {}", trimmed, e.getMessage());
+                return null;
+            }
+        }
+        // TODO: handle other storage schemes if needed (e.g., relative paths or base64)
+        return trimmed;
     }
 
     /**
