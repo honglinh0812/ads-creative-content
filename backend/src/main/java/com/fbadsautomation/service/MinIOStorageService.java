@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
@@ -35,6 +36,9 @@ public class MinIOStorageService {
 
     @Value("${minio.endpoint}")
     private String endpoint;
+
+    @Value("${storage.minio.public-url-base:}")
+    private String publicUrlBase;
 
     public void initializeBucket() {
         try {
@@ -180,7 +184,19 @@ public class MinIOStorageService {
      */
     public String getPublicUrl(String filename) throws Exception {
         try {
-            // Generate presigned URL valid for 7 days (Facebook's import window)
+            if (StringUtils.hasText(publicUrlBase)) {
+                String normalizedBase = publicUrlBase.endsWith("/")
+                        ? publicUrlBase.substring(0, publicUrlBase.length() - 1)
+                        : publicUrlBase;
+                String normalizedFilename = filename.startsWith("/")
+                        ? filename.substring(1)
+                        : filename;
+                String finalUrl = normalizedBase + "/" + normalizedFilename;
+                log.debug("Using configured public URL for file: {} -> {}", filename, finalUrl);
+                return finalUrl;
+            }
+
+            // Default: Generate presigned URL valid for 7 days (Facebook's import window)
             String presignedUrl = minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .bucket(bucketName)

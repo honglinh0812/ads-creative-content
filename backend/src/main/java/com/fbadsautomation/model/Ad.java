@@ -1,6 +1,7 @@
 package com.fbadsautomation.model;
 
 import com.fbadsautomation.model.FacebookCTA;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import javax.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,11 +29,13 @@ public class Ad {
     
     @ManyToOne
     @JoinColumn(name = "campaign_id")
+    @JsonIgnoreProperties({"user", "ads"})
     private Campaign campaign;
     
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"campaigns", "ads", "adContents"})
     private User user;
     
     @Enumerated(EnumType.STRING)

@@ -143,6 +143,9 @@ services:
       APIFY_TIKTOK_COOKIE: ${APIFY_TIKTOK_COOKIE:-}
       APIFY_TIKTOK_COOKIE_FILE: ${APIFY_TIKTOK_COOKIE_FILE:-}
 
+      # MinIO Public URL Base
+      STORAGE_MINIO_PUBLIC_URL_BASE: ${STORAGE_MINIO_PUBLIC_URL_BASE:-https://linhnh.site/api/images}
+
       # Server Configuration
       SERVER_PORT: 8080
 
