@@ -2,6 +2,7 @@ package com.fbadsautomation.service;
 
 import com.fbadsautomation.dto.FacebookAdPayload;
 import com.fbadsautomation.dto.FacebookAutoExportResponse;
+import com.fbadsautomation.dto.FacebookExportResponse;
 import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.Campaign;
 import com.fbadsautomation.model.AdType;
@@ -36,7 +37,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.regex.Pattern;
@@ -51,8 +51,8 @@ public class FacebookExportService {
     private final CampaignService campaignService;
     private final MinIOStorageService minioStorageService;
     private final com.fbadsautomation.util.AdContentValidator adContentValidator;
-    private final com.fbadsautomation.integration.facebook.FacebookMarketingApiClient marketingApiClient;
-    private final com.fbadsautomation.integration.facebook.FacebookProperties facebookProperties;
+    private final FacebookAdPayloadBuilder payloadBuilder;
+    private final FacebookAutoUploadService facebookAutoUploadService;
     
     // Enhanced URL pattern supporting:
     // - HTTP/HTTPS protocols (case-insensitive)
@@ -122,8 +122,6 @@ public class FacebookExportService {
         "Marketing Message Primary Text"
     };
 
-    private static final String ADS_MANAGER_BASE_URL = "https://business.facebook.com/adsmanager/manage/ads";
-    
     /**
      * Validate ad content for Facebook export
      */
@@ -629,65 +627,6 @@ public class FacebookExportService {
         return escaped;
     }
     
-    private String formatBudget(Double budget) {
-        return budget != null ? String.valueOf(budget) : "";
-    }
-
-    private String mapCampaignObjective(Campaign.CampaignObjective objective) {
-        if (objective == null) return "Traffic";
-
-        switch (objective) {
-            case BRAND_AWARENESS: return "Brand Awareness";
-            case REACH: return "Reach";
-            case TRAFFIC: return "Traffic";
-            case ENGAGEMENT: return "Post Engagement";
-            case APP_INSTALLS: return "App Installs";
-            case VIDEO_VIEWS: return "Video Views";
-            case LEAD_GENERATION: return "Lead Generation";
-            case CONVERSIONS: return "Conversions";
-            case CATALOG_SALES: return "Catalog Sales";
-            case STORE_TRAFFIC: return "Store Traffic";
-            default: return "Traffic";
-        }
-    }
-    
-    private String mapBudgetType(Campaign.BudgetType budgetType) {
-        if (budgetType == null) return "DAILY";
-        
-        switch (budgetType) {
-            case DAILY: return "DAILY";
-            case LIFETIME: return "LIFETIME";
-            default: return "DAILY";
-        }
-    }
-    
-    private String mapAdType(AdType adType) {
-        if (adType == null) return "SINGLE_IMAGE";
-        
-        switch (adType) {
-            case PAGE_POST_AD: return "SINGLE_IMAGE";
-            case LEAD_FORM_AD: return "LEAD_GENERATION";
-            case WEBSITE_CONVERSION_AD: return "SINGLE_IMAGE";
-            default: return "SINGLE_IMAGE";
-        }
-    }
-    
-    private String mapCallToAction(com.fbadsautomation.model.FacebookCTA cta) {
-        if (cta == null) return "LEARN_MORE";
-        
-        switch (cta) {
-            case LEARN_MORE: return "LEARN_MORE";
-            case SHOP_NOW: return "SHOP_NOW";
-            case SIGN_UP: return "SIGN_UP";
-            case DOWNLOAD: return "DOWNLOAD";
-            case BOOK_NOW: return "BOOK_TRAVEL";
-            case CONTACT_US: return "CONTACT_US";
-            case APPLY_NOW: return "APPLY_NOW";
-            case GET_OFFER: return "GET_QUOTE";
-            case SUBSCRIBE: return "SUBSCRIBE";
-            default: return "LEARN_MORE";
-        }
-    }
     
     /**
      * Preview Facebook format for ad before export
@@ -701,43 +640,41 @@ public class FacebookExportService {
         }
         
         Ad ad = adOpt.get();
-        Campaign campaign = ad.getCampaign();
-        
         // Validate ad content for Facebook (this will throw exceptions if invalid)
         validateAdContentForFacebook(ad);
+        FacebookAdPayload payload = payloadBuilder.buildPayload(ad);
         
         // Create preview data structure
         Map<String, Object> preview = new HashMap<>();
         
         // Campaign information
         Map<String, Object> campaignInfo = new HashMap<>();
-        campaignInfo.put("name", campaign.getName());
-        campaignInfo.put("objective", mapCampaignObjective(campaign.getObjective()));
-        campaignInfo.put("budgetType", mapBudgetType(campaign.getBudgetType()));
-        campaignInfo.put("dailyBudget", formatBudget(campaign.getDailyBudget()));
-        campaignInfo.put("lifetimeBudget", formatBudget(campaign.getTotalBudget()));
-        campaignInfo.put("startDate", formatDateTime(campaign.getStartDate()));
-        campaignInfo.put("endDate", formatDateTime(campaign.getEndDate()));
-        campaignInfo.put("targetAudience", campaign.getTargetAudience());
+        campaignInfo.put("name", payload.getCampaign().getName());
+        campaignInfo.put("objective", payload.getCampaign().getObjective());
+        campaignInfo.put("dailyBudget", payload.getCampaign().getDailyBudget());
+        campaignInfo.put("lifetimeBudget", payload.getCampaign().getLifetimeBudget());
+        campaignInfo.put("startDate", payload.getCampaign().getStartTime());
+        campaignInfo.put("endDate", payload.getCampaign().getEndTime());
+        campaignInfo.put("targetAudience", payload.getAdSet().getCountries());
         preview.put("campaign", campaignInfo);
         
         // Ad Set information (using campaign data as base)
         Map<String, Object> adSetInfo = new HashMap<>();
-        adSetInfo.put("name", campaign.getName() + " - Ad Set");
-        adSetInfo.put("budget", formatBudget(campaign.getDailyBudget()));
-        adSetInfo.put("targetAudience", campaign.getTargetAudience());
+        adSetInfo.put("name", payload.getAdSet().getName());
+        adSetInfo.put("budget", payload.getCampaign().getDailyBudget());
+        adSetInfo.put("targetAudience", payload.getAdSet().getCountries());
         preview.put("adSet", adSetInfo);
         
         // Ad information
         Map<String, Object> adInfo = new HashMap<>();
-        adInfo.put("name", ad.getName());
-        adInfo.put("type", mapAdType(ad.getAdType()));
-        adInfo.put("headline", ad.getHeadline());
-        adInfo.put("primaryText", ad.getPrimaryText());
-        adInfo.put("description", ad.getDescription());
-        adInfo.put("callToAction", mapCallToAction(ad.getCallToAction()));
-        adInfo.put("websiteUrl", ad.getWebsiteUrl());
-        adInfo.put("imageUrl", ad.getImageUrl());
+        adInfo.put("name", payload.getAd().getName());
+        adInfo.put("type", payload.getCreative().getType());
+        adInfo.put("headline", payload.getCreative().getHeadline());
+        adInfo.put("primaryText", payload.getCreative().getBody());
+        adInfo.put("description", payload.getCreative().getDescription());
+        adInfo.put("callToAction", payload.getCreative().getCallToAction());
+        adInfo.put("websiteUrl", payload.getCreative().getDisplayLink());
+        adInfo.put("imageUrl", payload.getCreative().getImageUrl());
         adInfo.put("videoUrl", ad.getVideoUrl());
         adInfo.put("status", "Active");
         preview.put("ad", adInfo);
@@ -757,42 +694,42 @@ public class FacebookExportService {
         // Facebook format preview (as it would appear in CSV)
         List<String> csvRow = Arrays.asList(
             // Campaign Level (8 fields)
-            campaign.getName(),
-            "ACTIVE",
-            mapCampaignObjective(campaign.getObjective()),
-            "AUCTION",
-            formatBudgetForFacebook(campaign.getDailyBudget()),     // UPDATED
-            formatBudgetForFacebook(campaign.getTotalBudget()),     // UPDATED
-            formatDateTime(campaign.getStartDate()),
-            formatDateTime(campaign.getEndDate()),
+            payload.getCampaign().getName(),
+            payload.getCampaign().getStatus(),
+            payload.getCampaign().getObjective(),
+            payload.getCampaign().getBuyingType(),
+            payload.getCampaign().getDailyBudget(),
+            payload.getCampaign().getLifetimeBudget(),
+            payload.getCampaign().getStartTime(),
+            payload.getCampaign().getEndTime(),
 
             // Ad Set Level (12 fields - Ad Set budgets REMOVED)
-            campaign.getName() + " - Ad Set",
-            "ACTIVE",
-            formatDateTime(campaign.getStartDate()),
-            formatDateTime(campaign.getEndDate()),
-            ad.getWebsiteUrl(),
-            extractCountriesFromAudience(campaign.getTargetAudience()),
-            extractGenderFromAudience(campaign.getTargetAudience()),
-            extractAgeMinFromAudience(campaign.getTargetAudience()),
-            extractAgeMaxFromAudience(campaign.getTargetAudience()),
-            "facebook,instagram",
-            "feed",
-            "stream",
-            mapOptimizationGoal(campaign.getObjective()),
-            "IMPRESSIONS",
+            payload.getAdSet().getName(),
+            payload.getAdSet().getStatus(),
+            payload.getAdSet().getStartTime(),
+            payload.getAdSet().getEndTime(),
+            payload.getAdSet().getLink(),
+            payload.getAdSet().getCountries(),
+            payload.getAdSet().getGender(),
+            payload.getAdSet().getAgeMin(),
+            payload.getAdSet().getAgeMax(),
+            payload.getAdSet().getPublisherPlatforms(),
+            payload.getAdSet().getFacebookPositions(),
+            payload.getAdSet().getInstagramPositions(),
+            payload.getAdSet().getOptimizationGoal(),
+            payload.getAdSet().getBillingEvent(),
 
             // Ad Level (9 fields)
-            ad.getName(),
-            "ACTIVE",
-            mapCreativeType(ad.getAdType(), ad.getImageUrl(), ad.getVideoUrl()),  // NEW
-            ad.getHeadline(),
-            ad.getPrimaryText(),
-            ad.getDescription(),
-            ad.getWebsiteUrl(),
-            getImageUrlForFacebook(ad.getImageUrl()),                            // UPDATED
-            mapCallToAction(ad.getCallToAction()),
-            ad.getPrimaryText()
+            payload.getAd().getName(),
+            payload.getAd().getStatus(),
+            payload.getCreative().getType(),
+            payload.getCreative().getHeadline(),
+            payload.getCreative().getBody(),
+            payload.getCreative().getDescription(),
+            payload.getCreative().getDisplayLink(),
+            payload.getCreative().getImageUrl(),
+            payload.getCreative().getCallToAction(),
+            payload.getCreative().getMarketingMessage()
         );
         preview.put("csvPreview", csvRow);
         preview.put("csvHeaders", Arrays.asList(CSV_HEADERS));
@@ -814,65 +751,64 @@ public class FacebookExportService {
             if (!adOpt.isPresent()) {
                 throw new ApiException(HttpStatus.NOT_FOUND, "Ad not found: " + adId);
             }
-            
+
             Ad ad = adOpt.get();
-            Campaign campaign = ad.getCampaign();
-            
-            // Validate each ad
+
             validateAdContentForFacebook(ad);
-            
+            FacebookAdPayload payload = payloadBuilder.buildPayload(ad);
+
             // Create individual preview
             Map<String, Object> adPreview = new HashMap<>();
             adPreview.put("adId", adId);
-            adPreview.put("adName", ad.getName());
-            adPreview.put("campaignName", campaign.getName());
-            adPreview.put("headline", ad.getHeadline());
-            adPreview.put("primaryText", ad.getPrimaryText());
+            adPreview.put("adName", payload.getAd().getName());
+            adPreview.put("campaignName", payload.getCampaign().getName());
+            adPreview.put("headline", payload.getCreative().getHeadline());
+            adPreview.put("primaryText", payload.getCreative().getBody());
             adPreview.put("validation", Map.of(
-                "headlineLength", ad.getHeadline().length(),
-                "primaryTextLength", ad.getPrimaryText().length()
+                "headlineLength", payload.getCreative().getHeadline() != null ? payload.getCreative().getHeadline().length() : 0,
+                "primaryTextLength", payload.getCreative().getBody() != null ? payload.getCreative().getBody().length() : 0
             ));
             adPreviews.add(adPreview);
             
             // Create CSV row
             List<String> csvRow = Arrays.asList(
                 // Campaign Level (8 fields)
-                campaign.getName(),
-                "ACTIVE",
-                mapCampaignObjective(campaign.getObjective()),
-                "AUCTION",
-                formatBudgetForFacebook(campaign.getDailyBudget()),     // UPDATED
-                formatBudgetForFacebook(campaign.getTotalBudget()),     // UPDATED
-                formatDateTime(campaign.getStartDate()),
-                formatDateTime(campaign.getEndDate()),
+                payload.getCampaign().getName(),
+                payload.getCampaign().getStatus(),
+                payload.getCampaign().getObjective(),
+                payload.getCampaign().getBuyingType(),
+                payload.getCampaign().getDailyBudget(),
+                payload.getCampaign().getLifetimeBudget(),
+                payload.getCampaign().getStartTime(),
+                payload.getCampaign().getEndTime(),
 
-                // Ad Set Level (12 fields - Ad Set budgets REMOVED)
-                campaign.getName() + " - Ad Set",
-                "ACTIVE",
-                formatDateTime(campaign.getStartDate()),
-                formatDateTime(campaign.getEndDate()),
-                ad.getWebsiteUrl(),
-                extractCountriesFromAudience(campaign.getTargetAudience()),
-                extractGenderFromAudience(campaign.getTargetAudience()),
-                extractAgeMinFromAudience(campaign.getTargetAudience()),
-                extractAgeMaxFromAudience(campaign.getTargetAudience()),
-                "facebook,instagram",
-                "feed",
-                "stream",
-                mapOptimizationGoal(campaign.getObjective()),
-                "IMPRESSIONS",
+                // Ad Set Level (12 fields)
+                payload.getAdSet().getName(),
+                payload.getAdSet().getStatus(),
+                payload.getAdSet().getStartTime(),
+                payload.getAdSet().getEndTime(),
+                payload.getAdSet().getLink(),
+                payload.getAdSet().getCountries(),
+                payload.getAdSet().getGender(),
+                payload.getAdSet().getAgeMin(),
+                payload.getAdSet().getAgeMax(),
+                payload.getAdSet().getPublisherPlatforms(),
+                payload.getAdSet().getFacebookPositions(),
+                payload.getAdSet().getInstagramPositions(),
+                payload.getAdSet().getOptimizationGoal(),
+                payload.getAdSet().getBillingEvent(),
 
                 // Ad Level (9 fields)
-                ad.getName(),
-                "ACTIVE",
-                mapCreativeType(ad.getAdType(), ad.getImageUrl(), ad.getVideoUrl()),  // NEW
-                ad.getHeadline(),
-                ad.getPrimaryText(),
-                ad.getDescription(),
-                ad.getWebsiteUrl(),
-                getImageUrlForFacebook(ad.getImageUrl()),                            // UPDATED
-                mapCallToAction(ad.getCallToAction()),
-                ad.getPrimaryText()
+                payload.getAd().getName(),
+                payload.getAd().getStatus(),
+                payload.getCreative().getType(),
+                payload.getCreative().getHeadline(),
+                payload.getCreative().getBody(),
+                payload.getCreative().getDescription(),
+                payload.getCreative().getDisplayLink(),
+                payload.getCreative().getImageUrl(),
+                payload.getCreative().getCallToAction(),
+                payload.getCreative().getMarketingMessage()
             );
             csvRows.add(csvRow);
         }
@@ -892,19 +828,12 @@ public class FacebookExportService {
     public ResponseEntity<byte[]> exportAdToFacebookTemplate(Long adId) {
         try {
             log.info("Exporting ad {} to Facebook template", adId);
-            
-            Optional<Ad> adOptional = adRepository.findById(adId);
-            if (!adOptional.isPresent()) {
-                throw new ApiException(HttpStatus.NOT_FOUND, "Không tìm thấy quảng cáo với ID: " + adId);
-            }
-            
-            Ad ad = adOptional.get();
-            
-            // Validate ad before export
-            validateAdContentForFacebook(ad);
-            
+
+            List<PreparedAdExport> prepared = prepareAds(Collections.singletonList(adId));
+            PreparedAdExport preparedAd = prepared.get(0);
+
             // Generate CSV content
-            String csvContent = generateFacebookCsvContent(Arrays.asList(ad));
+            String csvContent = generateFacebookCsvContent(prepared);
             byte[] csvBytes = csvContent.getBytes(StandardCharsets.UTF_8);
             
             // Create response headers
@@ -914,7 +843,7 @@ public class FacebookExportService {
             headers.setContentLength(csvBytes.length);
 
             // Mark campaign as EXPORTED (Issue #7)
-            markCampaignAsExportedForAd(ad);
+            markCampaignAsExportedForAd(preparedAd.getAd());
 
             return new ResponseEntity<>(csvBytes, headers, HttpStatus.OK);
 
@@ -935,18 +864,10 @@ public class FacebookExportService {
                 throw new ApiException(HttpStatus.BAD_REQUEST, "Danh sách ID quảng cáo không được để trống");
             }
             
-            List<Ad> ads = adRepository.findAllById(adIds);
-            if (ads.isEmpty()) {
-                throw new ApiException(HttpStatus.NOT_FOUND, "Không tìm thấy quảng cáo nào với các ID đã cung cấp");
-            }
-            
-            // Validate all ads before export
-            for (Ad ad : ads) {
-                validateAdContentForFacebook(ad);
-            }
+            List<PreparedAdExport> prepared = prepareAds(adIds);
             
             // Generate CSV content
-            String csvContent = generateFacebookCsvContent(ads);
+            String csvContent = generateFacebookCsvContent(prepared);
             byte[] csvBytes = csvContent.getBytes(StandardCharsets.UTF_8);
             
             // Create response headers
@@ -956,8 +877,8 @@ public class FacebookExportService {
             headers.setContentLength(csvBytes.length);
 
             // Mark campaigns as EXPORTED (Issue #7)
-            for (Ad ad : ads) {
-                markCampaignAsExportedForAd(ad);
+            for (PreparedAdExport preparedAd : prepared) {
+                markCampaignAsExportedForAd(preparedAd.getAd());
             }
 
             return new ResponseEntity<>(csvBytes, headers, HttpStatus.OK);
@@ -973,7 +894,7 @@ public class FacebookExportService {
      * Maps ad data to Facebook's official import template format
      * Includes UTF-8 BOM for Excel compatibility
      */
-    private String generateFacebookCsvContent(List<Ad> ads) {
+    private String generateFacebookCsvContent(List<PreparedAdExport> preparedAds) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              OutputStreamWriter writer = new OutputStreamWriter(baos, StandardCharsets.UTF_8)) {
 
@@ -987,48 +908,51 @@ public class FacebookExportService {
             writer.write(String.join(",", CSV_HEADERS) + "\n");
 
             // Write data for each ad
-            for (Ad ad : ads) {
-                Campaign campaign = ad.getCampaign();
+            for (PreparedAdExport prepared : preparedAds) {
+                FacebookAdPayload payload = prepared.getPayload();
+                var campaign = payload.getCampaign();
+                var adSet = payload.getAdSet();
+                var creative = payload.getCreative();
+                var adInfo = payload.getAd();
 
                 List<String> csvRow = Arrays.asList(
                     // Campaign Level Fields (8 fields)
                     escapeCsvValue(campaign.getName()),
-                    escapeCsvValue("ACTIVE"),
-                    escapeCsvValue(mapCampaignObjective(campaign.getObjective())),
-                    escapeCsvValue("AUCTION"),
-                    escapeCsvValue(formatBudgetForFacebook(campaign.getDailyBudget())),     // UPDATED: Format for FB
-                    escapeCsvValue(formatBudgetForFacebook(campaign.getTotalBudget())),     // UPDATED: Format for FB
-                    escapeCsvValue(formatDateTime(campaign.getStartDate())),
-                    escapeCsvValue(formatDateTime(campaign.getEndDate())),
+                    escapeCsvValue(campaign.getStatus()),
+                    escapeCsvValue(campaign.getObjective()),
+                    escapeCsvValue(campaign.getBuyingType()),
+                    escapeCsvValue(campaign.getDailyBudget()),
+                    escapeCsvValue(campaign.getLifetimeBudget()),
+                    escapeCsvValue(campaign.getStartTime()),
+                    escapeCsvValue(campaign.getEndTime()),
 
-                    // Ad Set Level Fields (12 fields - Ad Set budgets REMOVED)
-                    escapeCsvValue(campaign.getName() + " - Ad Set"),
-                    escapeCsvValue("ACTIVE"),
-                    escapeCsvValue(formatDateTime(campaign.getStartDate())),
-                    escapeCsvValue(formatDateTime(campaign.getEndDate())),
-                    // NO Ad Set budgets - Facebook doesn't allow both campaign and ad set budgets
-                    escapeCsvValue(ad.getWebsiteUrl()),
-                    escapeCsvValue(extractCountriesFromAudience(campaign.getTargetAudience())),
-                    escapeCsvValue(extractGenderFromAudience(campaign.getTargetAudience())),
-                    escapeCsvValue(extractAgeMinFromAudience(campaign.getTargetAudience())),
-                    escapeCsvValue(extractAgeMaxFromAudience(campaign.getTargetAudience())),
-                    escapeCsvValue("facebook,instagram"),
-                    escapeCsvValue("feed"),
-                    escapeCsvValue("stream"),
-                    escapeCsvValue(mapOptimizationGoal(campaign.getObjective())),
-                    escapeCsvValue("IMPRESSIONS"),
+                    // Ad Set Level Fields
+                    escapeCsvValue(adSet.getName()),
+                    escapeCsvValue(adSet.getStatus()),
+                    escapeCsvValue(adSet.getStartTime()),
+                    escapeCsvValue(adSet.getEndTime()),
+                    escapeCsvValue(adSet.getLink()),
+                    escapeCsvValue(adSet.getCountries()),
+                    escapeCsvValue(adSet.getGender()),
+                    escapeCsvValue(adSet.getAgeMin()),
+                    escapeCsvValue(adSet.getAgeMax()),
+                    escapeCsvValue(adSet.getPublisherPlatforms()),
+                    escapeCsvValue(adSet.getFacebookPositions()),
+                    escapeCsvValue(adSet.getInstagramPositions()),
+                    escapeCsvValue(adSet.getOptimizationGoal()),
+                    escapeCsvValue(adSet.getBillingEvent()),
 
-                    // Ad Level Fields (9 fields)
-                    escapeCsvValue(ad.getName()),
-                    escapeCsvValue("ACTIVE"),
-                    escapeCsvValue(mapCreativeType(ad.getAdType(), ad.getImageUrl(), ad.getVideoUrl())),  // NEW: Creative Type
-                    escapeCsvValue(ad.getHeadline()),                                                      // Title
-                    escapeCsvValue(ad.getPrimaryText()),                                                   // Body
-                    escapeCsvValue(ad.getDescription()),                                                   // Link Description
-                    escapeCsvValue(ad.getWebsiteUrl()),                                                    // Display Link
-                    escapeCsvValue(getImageUrlForFacebook(ad.getImageUrl())),                            // UPDATED: Public URL
-                    escapeCsvValue(mapCallToAction(ad.getCallToAction())),
-                    escapeCsvValue(ad.getPrimaryText())                                                    // Marketing Message
+                    // Ad Level Fields
+                    escapeCsvValue(adInfo.getName()),
+                    escapeCsvValue(adInfo.getStatus()),
+                    escapeCsvValue(creative.getType()),
+                    escapeCsvValue(creative.getHeadline()),
+                    escapeCsvValue(creative.getBody()),
+                    escapeCsvValue(creative.getDescription()),
+                    escapeCsvValue(creative.getDisplayLink()),
+                    escapeCsvValue(creative.getImageUrl()),
+                    escapeCsvValue(creative.getCallToAction()),
+                    escapeCsvValue(creative.getMarketingMessage())
                 );
 
                 writer.write(String.join(",", csvRow) + "\n");
@@ -1043,192 +967,6 @@ public class FacebookExportService {
         }
     }
 
-    /**
-     * Format date-time for Facebook import (format: MM/DD/YYYY HH:mm)
-     */
-    private String formatDateTime(java.time.LocalDate date) {
-        if (date == null) return "";
-        return date.format(DateTimeFormatter.ofPattern("MM/dd/yyyy")) + " 00:00";
-    }
-
-    /**
-     * Extract country codes from target audience string
-     * Example: "US,UK,VN" or defaults to "US"
-     */
-    private String extractCountriesFromAudience(String targetAudience) {
-        if (!StringUtils.hasText(targetAudience)) {
-            return "US";
-        }
-        // Simple extraction - can be enhanced based on actual audience format
-        if (targetAudience.contains("Vietnam") || targetAudience.contains("VN")) {
-            return "VN";
-        }
-        return "US";
-    }
-
-    /**
-     * Extract gender from target audience
-     * Returns: "All", "Male", or "Female"
-     */
-    private String extractGenderFromAudience(String targetAudience) {
-        if (!StringUtils.hasText(targetAudience)) {
-            return "All";
-        }
-        String lower = targetAudience.toLowerCase();
-        if (lower.contains("male") && !lower.contains("female")) {
-            return "Male";
-        } else if (lower.contains("female")) {
-            return "Female";
-        }
-        return "All";
-    }
-
-    /**
-     * Extract minimum age from target audience (default: 18)
-     */
-    private String extractAgeMinFromAudience(String targetAudience) {
-        if (!StringUtils.hasText(targetAudience)) {
-            return "18";
-        }
-        // Try to extract age range like "18-65" or "25+"
-        if (targetAudience.matches(".*\\b(\\d{2})\\s*-\\s*\\d{2}.*")) {
-            String age = targetAudience.replaceAll(".*\\b(\\d{2})\\s*-\\s*\\d{2}.*", "$1");
-            return age;
-        }
-        return "18";
-    }
-
-    /**
-     * Extract maximum age from target audience (default: 65)
-     */
-    private String extractAgeMaxFromAudience(String targetAudience) {
-        if (!StringUtils.hasText(targetAudience)) {
-            return "65";
-        }
-        // Try to extract age range like "18-65"
-        if (targetAudience.matches(".*\\b\\d{2}\\s*-\\s*(\\d{2}).*")) {
-            String age = targetAudience.replaceAll(".*\\b\\d{2}\\s*-\\s*(\\d{2}).*", "$1");
-            return age;
-        }
-        return "65";
-    }
-
-    /**
-     * Map campaign objective to Facebook optimization goal
-     */
-    private String mapOptimizationGoal(Campaign.CampaignObjective objective) {
-        if (objective == null) return "LINK_CLICKS";
-
-        switch (objective) {
-            case CONVERSIONS: return "CONVERSIONS";
-            case LEAD_GENERATION: return "LEAD_GENERATION";
-            case TRAFFIC: return "LINK_CLICKS";
-            case ENGAGEMENT: return "POST_ENGAGEMENT";
-            case VIDEO_VIEWS: return "VIDEO_VIEWS";
-            case APP_INSTALLS: return "APP_INSTALLS";
-            case REACH: return "REACH";
-            case BRAND_AWARENESS: return "BRAND_AWARENESS";
-            default: return "LINK_CLICKS";
-        }
-    }
-
-    /**
-     * Get publicly accessible image URL for Facebook import
-     * Facebook will download the image from this URL during import
-     *
-     * @param imageUrl Internal image URL/path from database
-     * @return Public URL that Facebook can access, or empty string if unavailable
-     */
-    private String getImageUrlForFacebook(String imageUrl) {
-        if (!StringUtils.hasText(imageUrl)) {
-            return "";
-        }
-
-        // Handle API URLs - convert to public MinIO URL
-        if (imageUrl.startsWith("/api/images/")) {
-            String filename = imageUrl.substring("/api/images/".length());
-            try {
-                // Get presigned URL valid for 7 days (Facebook import window)
-                String publicUrl = minioStorageService.getPublicUrl(filename);
-                log.debug("Converted API image URL to public URL: {} -> {}", imageUrl, publicUrl);
-                return publicUrl;
-            } catch (Exception e) {
-                log.error("Failed to get public URL for image: {}", filename, e);
-                return "";
-            }
-        }
-
-        // Already a full URL - return as-is (external CDN, etc.)
-        if (isValidUrl(imageUrl)) {
-            return imageUrl;
-        }
-
-        // Local file path - cannot be used for Facebook import
-        log.warn("Cannot export local file path to Facebook (not accessible): {}", imageUrl);
-        return "";
-    }
-
-    /**
-     * Map internal ad type to Facebook Creative Type
-     * Facebook requires this field to determine how to process the ad creative
-     *
-     * @param adType Internal ad type from database
-     * @param imageUrl Image URL (to detect image-based ads)
-     * @param videoUrl Video URL (to detect video-based ads)
-     * @return Facebook Creative Type value
-     */
-    private String mapCreativeType(AdType adType, String imageUrl, String videoUrl) {
-        // Check for video content
-        boolean hasVideo = StringUtils.hasText(videoUrl);
-
-        // Lead form ads have specific creative type
-        if (adType == AdType.LEAD_FORM_AD) {
-            return "Lead Ad";
-        }
-
-        // Video ads (prioritize video if both image and video exist)
-        if (hasVideo) {
-            return "Video Page Post Ad";
-        }
-
-        // Default to standard image ad (most common)
-        // This covers PAGE_POST_AD, WEBSITE_CONVERSION_AD, etc.
-        return "Page Post Ad";
-    }
-
-    /**
-     * Format budget amount for Facebook import
-     * Facebook expects budget in smallest currency unit (cents for USD, đồng for VND)
-     *
-     * @param budget Budget amount in local currency (e.g., 10.00 USD or 100000 VND)
-     * @return Budget as string in smallest currency unit, or empty string if null/invalid
-     */
-    private String formatBudgetForFacebook(Double budget) {
-        if (budget == null || budget <= 0) {
-            return "";
-        }
-
-        // Convert to smallest currency unit
-        // USD: multiply by 100 (10.00 USD -> "1000" cents)
-        // VND: multiply by 1 (100000 VND -> "100000" đồng)
-        // Note: budgetMultiplier is injected from application.properties
-        long budgetInSmallestUnit = Math.round(budget * getBudgetMultiplier());
-
-        return String.valueOf(budgetInSmallestUnit);
-    }
-
-    /**
-     * Get budget multiplier for currency conversion
-     * USD: 100 (convert dollars to cents)
-     * VND: 1 (already in smallest unit)
-     *
-     * @return Multiplier value
-     */
-    private int getBudgetMultiplier() {
-        // Default to 100 for USD (cents conversion)
-        // Can be overridden in application.properties: facebook.ads.budget.multiplier
-        return 100;
-    }
     
     /**
      * Export ads to Excel format (.xlsx) with proper formatting and UTF-8 support
@@ -1249,19 +987,10 @@ public class FacebookExportService {
         }
 
         try {
-            // Fetch and validate ads
-            List<Ad> ads = adRepository.findAllById(adIds);
-            if (ads.isEmpty()) {
-                throw new ApiException(HttpStatus.NOT_FOUND, "No ads found with provided IDs");
-            }
-
-            // Validate all ads before export
-            for (Ad ad : ads) {
-                validateAdContentForFacebook(ad);
-            }
+            List<PreparedAdExport> prepared = prepareAds(adIds);
 
             // Generate Excel file
-            byte[] excelBytes = generateExcelContent(ads);
+            byte[] excelBytes = generateExcelContent(prepared);
 
             // Create response headers with proper content disposition
             HttpHeaders headers = new HttpHeaders();
@@ -1269,14 +998,14 @@ public class FacebookExportService {
             headers.setContentDispositionFormData("attachment",
                 "facebook_ads_" + System.currentTimeMillis() + ".xlsx");
             headers.setContentLength(excelBytes.length);
-            headers.set("X-Export-Count", String.valueOf(ads.size()));
+            headers.set("X-Export-Count", String.valueOf(prepared.size()));
 
             // Mark campaigns as EXPORTED (Issue #7)
-            for (Ad ad : ads) {
-                markCampaignAsExportedForAd(ad);
+            for (PreparedAdExport preparedAd : prepared) {
+                markCampaignAsExportedForAd(preparedAd.getAd());
             }
 
-            log.info("Successfully exported {} ads to Excel", ads.size());
+            log.info("Successfully exported {} ads to Excel", prepared.size());
             return new ResponseEntity<>(excelBytes, headers, HttpStatus.OK);
 
         } catch (ApiException e) {
@@ -1288,57 +1017,7 @@ public class FacebookExportService {
         }
     }
 
-    /**
-     * Prepare normalized payloads for requested ads without writing files to disk.
-     * This keeps Facebook export logic focused on in-memory objects that can be sent to either CSV writers or the Marketing API.
-     */
-    public List<FacebookAdPayload> prepareAdPayloads(List<Long> adIds) {
-        return loadPreparedAds(adIds).stream()
-            .map(PreparedAdExport::getPayload)
-            .collect(Collectors.toList());
-    }
-
-    /**
-     * Upload ads directly to Facebook Marketing API (best effort) and return redirect metadata.
-     * Requires facebook.marketing.access-token and ad account id (act_...).
-     */
-    public FacebookAutoExportResponse autoExportAds(List<Long> adIds, String adAccountId) {
-        String resolvedAdAccountId = StringUtils.hasText(adAccountId)
-            ? adAccountId
-            : facebookProperties.getDefaultAdAccountId();
-
-        if (!StringUtils.hasText(facebookProperties.getMarketingAccessToken())) {
-            throw new ApiException(HttpStatus.BAD_REQUEST,
-                "Facebook Marketing access token is missing. Set FACEBOOK_MARKETING_ACCESS_TOKEN env.");
-        }
-        if (!StringUtils.hasText(resolvedAdAccountId)) {
-            throw new ApiException(HttpStatus.BAD_REQUEST,
-                "Ad account id is required. Provide act_... or set FACEBOOK_DEFAULT_AD_ACCOUNT_ID env.");
-        }
-
-        List<PreparedAdExport> preparedAds = loadPreparedAds(adIds);
-        List<com.fbadsautomation.integration.facebook.FacebookMarketingApiClient.UploadResult> results = new ArrayList<>();
-
-        // TODO: Confirm if Facebook Marketing API supports importing ads from files for this use case.
-
-        for (PreparedAdExport prepared : preparedAds) {
-            var result = marketingApiClient.uploadAdToAccount(
-                prepared.getAd(),
-                resolvedAdAccountId,
-                facebookProperties.getMarketingAccessToken()
-            );
-            results.add(result);
-            markCampaignAsExportedForAd(prepared.getAd());
-        }
-
-        return FacebookAutoExportResponse.builder()
-            .payloads(preparedAds.stream().map(PreparedAdExport::getPayload).collect(Collectors.toList()))
-            .results(results)
-            .adsManagerUrl(buildAdsManagerUrl(resolvedAdAccountId))
-            .build();
-    }
-
-    private List<PreparedAdExport> loadPreparedAds(List<Long> adIds) {
+    private List<PreparedAdExport> prepareAds(List<Long> adIds) {
         if (adIds == null || adIds.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Ad IDs list cannot be empty");
         }
@@ -1351,80 +1030,17 @@ public class FacebookExportService {
         List<PreparedAdExport> prepared = new ArrayList<>();
         for (Ad ad : ads) {
             validateAdContentForFacebook(ad);
-            prepared.add(new PreparedAdExport(ad, buildPayloadForAd(ad)));
+            prepared.add(new PreparedAdExport(ad, payloadBuilder.buildPayload(ad)));
         }
 
         return prepared;
-    }
-
-    private FacebookAdPayload buildPayloadForAd(Ad ad) {
-        Campaign campaign = ad.getCampaign();
-
-        return FacebookAdPayload.builder()
-            .campaign(FacebookAdPayload.CampaignPayload.builder()
-                .name(campaign.getName())
-                .status("ACTIVE")
-                .objective(mapCampaignObjective(campaign.getObjective()))
-                .buyingType("AUCTION")
-                .dailyBudget(formatBudgetForFacebook(campaign.getDailyBudget()))
-                .lifetimeBudget(formatBudgetForFacebook(campaign.getTotalBudget()))
-                .startTime(formatDateTime(campaign.getStartDate()))
-                .endTime(formatDateTime(campaign.getEndDate()))
-                .build())
-            .adSet(FacebookAdPayload.AdSetPayload.builder()
-                .name(campaign.getName() + " - Ad Set")
-                .status("ACTIVE")
-                .startTime(formatDateTime(campaign.getStartDate()))
-                .endTime(formatDateTime(campaign.getEndDate()))
-                .link(ad.getWebsiteUrl())
-                .countries(extractCountriesFromAudience(campaign.getTargetAudience()))
-                .gender(extractGenderFromAudience(campaign.getTargetAudience()))
-                .ageMin(extractAgeMinFromAudience(campaign.getTargetAudience()))
-                .ageMax(extractAgeMaxFromAudience(campaign.getTargetAudience()))
-                .publisherPlatforms("facebook,instagram")
-                .facebookPositions("feed")
-                .instagramPositions("stream")
-                .optimizationGoal(mapOptimizationGoal(campaign.getObjective()))
-                .billingEvent("IMPRESSIONS")
-                .build())
-            .creative(FacebookAdPayload.CreativePayload.builder()
-                .type(mapCreativeType(ad.getAdType(), ad.getImageUrl(), ad.getVideoUrl()))
-                .headline(ad.getHeadline())
-                .body(ad.getPrimaryText())
-                .description(ad.getDescription())
-                .displayLink(ad.getWebsiteUrl())
-                .imageUrl(getImageUrlForFacebook(ad.getImageUrl()))
-                .callToAction(mapCallToAction(ad.getCallToAction()))
-                .marketingMessage(ad.getPrimaryText())
-                .build())
-            .ad(FacebookAdPayload.AdPayload.builder()
-                .adId(ad.getId())
-                .name(ad.getName())
-                .status("ACTIVE")
-                .websiteUrl(ad.getWebsiteUrl())
-                .build())
-            .build();
-    }
-
-    private String buildAdsManagerUrl(String adAccountId) {
-        if (!StringUtils.hasText(adAccountId)) {
-            return ADS_MANAGER_BASE_URL;
-        }
-        return ADS_MANAGER_BASE_URL + "?act=" + normalizeAdAccountId(adAccountId);
-    }
-
-    private String normalizeAdAccountId(String adAccountId) {
-        if (!StringUtils.hasText(adAccountId)) {
-            return "";
-        }
-        return adAccountId.startsWith("act_") ? adAccountId.substring(4) : adAccountId;
     }
 
     /**
      * Generate Excel content with proper formatting
      * Implements SOLID principles: Single responsibility, proper resource management
      */
-    private byte[] generateExcelContent(List<Ad> ads) throws IOException {
+    private byte[] generateExcelContent(List<PreparedAdExport> preparedAds) throws IOException {
         // Using try-with-resources for proper resource cleanup
         try (XSSFWorkbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -1446,50 +1062,53 @@ public class FacebookExportService {
 
             // Populate data rows
             int rowNum = 1;
-            for (Ad ad : ads) {
-                Campaign campaign = ad.getCampaign();
+            for (PreparedAdExport prepared : preparedAds) {
+                FacebookAdPayload payload = prepared.getPayload();
+                var campaign = payload.getCampaign();
+                var adSet = payload.getAdSet();
+                var creative = payload.getCreative();
+                var ad = payload.getAd();
                 Row row = sheet.createRow(rowNum++);
 
                 int colNum = 0;
 
                 // Campaign Level Fields (8 fields)
                 createCell(row, colNum++, campaign.getName(), dataStyle);
-                createCell(row, colNum++, "ACTIVE", dataStyle);
-                createCell(row, colNum++, mapCampaignObjective(campaign.getObjective()), dataStyle);
-                createCell(row, colNum++, "AUCTION", dataStyle);
-                createCell(row, colNum++, formatBudgetForFacebook(campaign.getDailyBudget()), dataStyle);     // UPDATED: Format for FB
-                createCell(row, colNum++, formatBudgetForFacebook(campaign.getTotalBudget()), dataStyle);     // UPDATED: Format for FB
-                createCell(row, colNum++, formatDateTime(campaign.getStartDate()), dataStyle);
-                createCell(row, colNum++, formatDateTime(campaign.getEndDate()), dataStyle);
+                createCell(row, colNum++, campaign.getStatus(), dataStyle);
+                createCell(row, colNum++, campaign.getObjective(), dataStyle);
+                createCell(row, colNum++, campaign.getBuyingType(), dataStyle);
+                createCell(row, colNum++, campaign.getDailyBudget(), dataStyle);
+                createCell(row, colNum++, campaign.getLifetimeBudget(), dataStyle);
+                createCell(row, colNum++, campaign.getStartTime(), dataStyle);
+                createCell(row, colNum++, campaign.getEndTime(), dataStyle);
 
                 // Ad Set Level Fields (12 fields - Ad Set budgets REMOVED)
-                createCell(row, colNum++, campaign.getName() + " - Ad Set", dataStyle);
-                createCell(row, colNum++, "ACTIVE", dataStyle);
-                createCell(row, colNum++, formatDateTime(campaign.getStartDate()), dataStyle);
-                createCell(row, colNum++, formatDateTime(campaign.getEndDate()), dataStyle);
-                // NO Ad Set budgets - Facebook doesn't allow both campaign and ad set budgets
-                createCell(row, colNum++, ad.getWebsiteUrl(), urlStyle);
-                createCell(row, colNum++, extractCountriesFromAudience(campaign.getTargetAudience()), dataStyle);
-                createCell(row, colNum++, extractGenderFromAudience(campaign.getTargetAudience()), dataStyle);
-                createCell(row, colNum++, extractAgeMinFromAudience(campaign.getTargetAudience()), dataStyle);
-                createCell(row, colNum++, extractAgeMaxFromAudience(campaign.getTargetAudience()), dataStyle);
-                createCell(row, colNum++, "facebook,instagram", dataStyle);
-                createCell(row, colNum++, "feed", dataStyle);
-                createCell(row, colNum++, "stream", dataStyle);
-                createCell(row, colNum++, mapOptimizationGoal(campaign.getObjective()), dataStyle);
-                createCell(row, colNum++, "IMPRESSIONS", dataStyle);
+                createCell(row, colNum++, adSet.getName(), dataStyle);
+                createCell(row, colNum++, adSet.getStatus(), dataStyle);
+                createCell(row, colNum++, adSet.getStartTime(), dataStyle);
+                createCell(row, colNum++, adSet.getEndTime(), dataStyle);
+                createCell(row, colNum++, adSet.getLink(), urlStyle);
+                createCell(row, colNum++, adSet.getCountries(), dataStyle);
+                createCell(row, colNum++, adSet.getGender(), dataStyle);
+                createCell(row, colNum++, adSet.getAgeMin(), dataStyle);
+                createCell(row, colNum++, adSet.getAgeMax(), dataStyle);
+                createCell(row, colNum++, adSet.getPublisherPlatforms(), dataStyle);
+                createCell(row, colNum++, adSet.getFacebookPositions(), dataStyle);
+                createCell(row, colNum++, adSet.getInstagramPositions(), dataStyle);
+                createCell(row, colNum++, adSet.getOptimizationGoal(), dataStyle);
+                createCell(row, colNum++, adSet.getBillingEvent(), dataStyle);
 
                 // Ad Level Fields (9 fields)
                 createCell(row, colNum++, ad.getName(), dataStyle);
-                createCell(row, colNum++, "ACTIVE", dataStyle);
-                createCell(row, colNum++, mapCreativeType(ad.getAdType(), ad.getImageUrl(), ad.getVideoUrl()), dataStyle);  // NEW: Creative Type
-                createCell(row, colNum++, ad.getHeadline(), dataStyle);                                                      // Title
-                createCell(row, colNum++, ad.getPrimaryText(), dataStyle);                                                   // Body
-                createCell(row, colNum++, ad.getDescription(), dataStyle);                                                   // Link Description
-                createCell(row, colNum++, ad.getWebsiteUrl(), urlStyle);                                                    // Display Link
-                createCell(row, colNum++, getImageUrlForFacebook(ad.getImageUrl()), urlStyle);                             // UPDATED: Public URL
-                createCell(row, colNum++, mapCallToAction(ad.getCallToAction()), dataStyle);
-                createCell(row, colNum++, ad.getPrimaryText(), dataStyle);                                                   // Marketing Message
+                createCell(row, colNum++, ad.getStatus(), dataStyle);
+                createCell(row, colNum++, creative.getType(), dataStyle);
+                createCell(row, colNum++, creative.getHeadline(), dataStyle);
+                createCell(row, colNum++, creative.getBody(), dataStyle);
+                createCell(row, colNum++, creative.getDescription(), dataStyle);
+                createCell(row, colNum++, creative.getDisplayLink(), urlStyle);
+                createCell(row, colNum++, creative.getImageUrl(), urlStyle);
+                createCell(row, colNum++, creative.getCallToAction(), dataStyle);
+                createCell(row, colNum++, creative.getMarketingMessage(), dataStyle);
             }
 
             // Optimize column widths for better readability
@@ -1619,31 +1238,53 @@ public class FacebookExportService {
     }
 
     /**
-     * Unified export method supporting both CSV and Excel formats
-     * API Stability: Maintains backward compatibility while extending functionality
+     * Unified export method supporting both CSV and Excel formats with optional auto-upload.
      */
-    public ResponseEntity<byte[]> exportAdsBulk(List<Long> adIds, String format) {
-        log.info("Bulk export requested for {} ads in format: {}", adIds.size(), format);
+    public FacebookExportResponse exportAdsBulk(List<Long> adIds, String format, boolean autoUpload, String adAccountId) {
+        log.info("Bulk export requested for {} ads in format: {} (autoUpload={})", adIds.size(), format, autoUpload);
 
-        // Input validation
-        if (format == null || format.trim().isEmpty()) {
-            format = "csv"; // Default to CSV for backward compatibility
+        if (!StringUtils.hasText(format)) {
+            format = "csv";
         }
-
-        format = format.toLowerCase().trim();
-
-        // Security: Whitelist validation for format parameter
-        if (!format.equals("csv") && !format.equals("excel") && !format.equals("xlsx")) {
+        String normalizedFormat = format.toLowerCase().trim();
+        if (!normalizedFormat.equals("csv") && !normalizedFormat.equals("excel") && !normalizedFormat.equals("xlsx")) {
             throw new ApiException(HttpStatus.BAD_REQUEST,
                 "Invalid export format. Supported formats: csv, excel, xlsx");
         }
 
-        // Route to appropriate export method
-        if (format.equals("excel") || format.equals("xlsx")) {
-            return exportAdsToExcel(adIds);
+        List<PreparedAdExport> prepared = prepareAds(adIds);
+        byte[] fileContent;
+        String filename;
+        if (normalizedFormat.equals("excel") || normalizedFormat.equals("xlsx")) {
+            try {
+                fileContent = generateExcelContent(prepared);
+            } catch (IOException e) {
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to export ads to Excel: " + e.getMessage());
+            }
+            filename = "facebook_ads_" + System.currentTimeMillis() + ".xlsx";
         } else {
-            return exportMultipleAdsToFacebookTemplate(adIds);
+            String csvContent = generateFacebookCsvContent(prepared);
+            fileContent = csvContent.getBytes(StandardCharsets.UTF_8);
+            filename = "facebook_ads_" + System.currentTimeMillis() + ".csv";
         }
+
+        FacebookAutoExportResponse autoUploadResponse = autoUpload
+            ? facebookAutoUploadService.autoUpload(
+                prepared.stream().map(PreparedAdExport::getAd).collect(Collectors.toList()),
+                adAccountId
+            )
+            : facebookAutoUploadService.skipped("Auto upload disabled");
+
+        prepared.forEach(preparedAd -> markCampaignAsExportedForAd(preparedAd.getAd()));
+
+        return FacebookExportResponse.builder()
+            .filename(filename)
+            .format(normalizedFormat)
+            .fileContent(fileContent)
+            .payloads(prepared.stream().map(PreparedAdExport::getPayload).collect(Collectors.toList()))
+            .autoUpload(autoUploadResponse)
+            .build();
     }
 
     /**

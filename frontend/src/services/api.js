@@ -142,15 +142,11 @@ export default {
       params: { format },
       responseType: 'blob'
     }),
-    exportMultipleAds: (adIds, format = 'csv') => apiClient.post('/facebook-export/ads/bulk/export', {
+    exportMultipleAds: (adIds, format = 'csv', options = {}) => apiClient.post('/facebook-export/ads/bulk/export', {
       adIds,
-      format
-    }, {
-      responseType: 'blob'
-    }),
-    uploadToFacebook: (adIds, adAccountId) => apiClient.post('/facebook-export/ads/bulk/upload', {
-      adIds,
-      adAccountId
+      format,
+      autoUpload: options.autoUpload || false,
+      adAccountId: options.adAccountId || null
     }),
     previewAd: (adId) => apiClient.get(`/facebook-export/preview/ad/${adId}`),
     previewMultipleAds: (adIds) => apiClient.post('/facebook-export/preview/ads/bulk', adIds)

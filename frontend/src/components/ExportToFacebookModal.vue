@@ -398,8 +398,7 @@ export default {
       'exportToFacebook',
       'downloadOnly',
       'clearError',
-      'clearSelection',
-      'uploadDirect'
+      'clearSelection'
     ]),
 
     async initializeExport() {
@@ -417,9 +416,15 @@ export default {
         this.simulateProgress()
         const result = await this.exportToFacebook()
         this.exportProgress = 100
+        const status = result?.autoUpload?.status
         const redirectUrl = result?.redirectUrl || 'https://business.facebook.com/adsmanager/manage/ads'
         window.open(redirectUrl, '_blank', 'noopener,noreferrer')
-        this.$message.success('Ads uploaded to Facebook!')
+        if (status === 'UPLOADED') {
+          this.$message.success('Ads uploaded to Facebook!')
+        } else {
+          const reason = result?.autoUpload?.message || 'Auto upload unavailable. Downloaded file instead.'
+          this.$message.info(reason)
+        }
         this.$emit('success', result)
         this.handleClose()
       } catch (error) {
@@ -449,11 +454,17 @@ export default {
       try {
         this.exportProgress = 0
         this.simulateProgress()
-        const result = await this.uploadDirect()
+        const result = await this.exportToFacebook()
         this.exportProgress = 100
+        const status = result?.autoUpload?.status
         const redirectUrl = result?.redirectUrl || 'https://business.facebook.com/adsmanager/manage/ads'
         window.open(redirectUrl, '_blank', 'noopener,noreferrer')
-        this.$message.success('Uploaded to Facebook via Marketing API!')
+        if (status === 'UPLOADED') {
+          this.$message.success('Uploaded to Facebook via Marketing API!')
+        } else {
+          const reason = result?.autoUpload?.message || 'Auto upload unavailable. Downloaded file instead.'
+          this.$message.info(reason)
+        }
         this.$emit('success', result)
         this.handleClose()
       } catch (error) {

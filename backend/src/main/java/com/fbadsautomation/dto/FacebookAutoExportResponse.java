@@ -8,12 +8,19 @@ import java.util.List;
 
 /**
  * Response returned after automatically exporting ads to Facebook.
- * Includes the structured payload that was sent, API upload results, and the redirect URL for Ads Manager.
+ * Captures status, message, API upload results, and the redirect URL for Ads Manager.
  */
 @Value
 @Builder
 public class FacebookAutoExportResponse {
-    List<FacebookAdPayload> payloads;
+    AutoUploadStatus status;
+    String message;
     List<FacebookMarketingApiClient.UploadResult> results;
     String adsManagerUrl;
+
+    public enum AutoUploadStatus {
+        SKIPPED,
+        UPLOADED,
+        FAILED
+    }
 }

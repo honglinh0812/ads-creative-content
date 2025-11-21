@@ -1,6 +1,6 @@
 package com.fbadsautomation.controller;
 
-import com.fbadsautomation.dto.FacebookAutoExportResponse;
+import com.fbadsautomation.dto.FacebookExportResponse;
 import com.fbadsautomation.service.FacebookExportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -73,27 +73,17 @@ public class FacebookExportController {
     })
     @PostMapping("/ads/bulk/export")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<byte[]> bulkExportAds(
+    public ResponseEntity<FacebookExportResponse> bulkExportAds(
             @Parameter(description = "Export request with ad IDs and format", required = true)
             @RequestBody @Valid BulkExportRequest request) {
         log.info("Bulk exporting {} ads in format: {}", request.getAdIds().size(), request.getFormat());
-        return facebookExportService.exportAdsBulk(request.getAdIds(), request.getFormat());
-    }
-
-    @Operation(summary = "Upload ads directly to Facebook via Marketing API (dev mode)",
-               description = "Best effort upload. Requires marketing access token configured on server and an ad account id (act_...).")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Ads uploaded to Facebook"),
-        @ApiResponse(responseCode = "400", description = "Invalid request or missing token"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
-    @PostMapping("/ads/bulk/upload")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<FacebookAutoExportResponse> uploadAds(
-            @RequestBody @Valid UploadRequest request) {
-        log.info("Uploading {} ads to ad account {}", request.getAdIds().size(), request.getAdAccountId());
-        var result = facebookExportService.autoExportAds(request.getAdIds(), request.getAdAccountId());
-        return ResponseEntity.ok(result);
+        var response = facebookExportService.exportAdsBulk(
+            request.getAdIds(),
+            request.getFormat(),
+            Boolean.TRUE.equals(request.getAutoUpload()),
+            request.getAdAccountId()
+        );
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Preview Facebook format for single ad",
@@ -144,16 +134,8 @@ public class FacebookExportController {
         @NotNull(message = "Export format cannot be null")
         @Parameter(description = "Export format: csv, excel, or xlsx", example = "excel")
         private String format;
-    }
 
-    @lombok.Data
-    @lombok.NoArgsConstructor
-    @lombok.AllArgsConstructor
-    public static class UploadRequest {
-        @NotNull(message = "Ad IDs list cannot be null")
-        @Size(min = 1, max = 1000, message = "Must upload between 1 and 1000 ads")
-        private List<Long> adIds;
-
+        private Boolean autoUpload = Boolean.FALSE;
         @Parameter(description = "Ad account id in format act_<id>. If omitted, server default will be used.")
         private String adAccountId;
     }

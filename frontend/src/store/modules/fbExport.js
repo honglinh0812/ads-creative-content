@@ -10,6 +10,53 @@
 import api from '../../services/api'
 
 const ADS_MANAGER_URL = 'https://business.facebook.com/adsmanager/manage/ads'
+const MIME_TYPES = {
+  csv: 'text/csv;charset=utf-8;',
+  excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+}
+
+function base64ToBlob(base64Data, contentType) {
+  if (!base64Data) return null
+  const sliceSize = 512
+  const byteCharacters = atob(base64Data)
+  const byteArrays = []
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize)
+    const byteNumbers = new Array(slice.length)
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i)
+    }
+    const byteArray = new Uint8Array(byteNumbers)
+    byteArrays.push(byteArray)
+  }
+
+  return new Blob(byteArrays, { type: contentType })
+}
+
+function triggerFileDownload(responseData) {
+  if (!responseData || !responseData.fileContent) {
+    return null
+  }
+
+  const format = (responseData.format || 'csv').toLowerCase()
+  const mimeType = MIME_TYPES[format] || MIME_TYPES.csv
+  const blob = base64ToBlob(responseData.fileContent, mimeType)
+  if (!blob) return null
+
+  const extension = format === 'excel' || format === 'xlsx' ? 'xlsx' : 'csv'
+  const filename = responseData.filename || `facebook_ads_${Date.now()}.${extension}`
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(url)
+  return { blob, filename }
+}
 
 const state = {
   selectedAdIds: [],
@@ -197,9 +244,11 @@ const actions = {
     try {
       const response = await api.facebookExport.exportMultipleAds(
         state.selectedAdIds,
-        state.format
+        state.format,
+        { autoUpload: false }
       )
 
+      triggerFileDownload(response.data)
       return response.data
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Failed to export ads'
@@ -224,16 +273,27 @@ const actions = {
     commit('CLEAR_ERROR')
 
     try {
-      const response = await api.facebookExport.uploadToFacebook(state.selectedAdIds, adAccountId)
+      const response = await api.facebookExport.exportMultipleAds(
+        state.selectedAdIds,
+        state.format,
+        { autoUpload: true, adAccountId }
+      )
       const data = response.data || {}
-      const redirectUrl = data.adsManagerUrl || ADS_MANAGER_URL
-      commit('CLEAR_PREVIEW_DATA')
-      commit('CLEAR_SELECTED_ADS')
+      const autoUpload = data.autoUpload || {}
+      const redirectUrl = autoUpload.adsManagerUrl || ADS_MANAGER_URL
+
+      if (!autoUpload.status || autoUpload.status !== 'UPLOADED') {
+        triggerFileDownload(data)
+        commit('CLEAR_SELECTED_ADS')
+        commit('CLEAR_PREVIEW_DATA')
+      } else {
+        commit('CLEAR_PREVIEW_DATA')
+        commit('CLEAR_SELECTED_ADS')
+      }
 
       return {
         redirectUrl,
-        results: data.results || [],
-        payloads: data.payloads || []
+        autoUpload
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Failed to upload ads'
@@ -248,37 +308,14 @@ const actions = {
   /**
    * Download only (no redirect)
    */
-  async downloadOnly({ state, dispatch }) {
+  async downloadOnly({ dispatch }) {
     try {
-      // Download file
-      const blob = await dispatch('downloadExport')
-
-      // Trigger download
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-
-      const timestamp = Date.now()
-      const extension = state.format === 'excel' ? 'xlsx' : 'csv'
-      link.download = `facebook_ads_${timestamp}.${extension}`
-
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-
+      await dispatch('downloadExport')
       return true
     } catch (error) {
       console.error('Download only error:', error)
       throw error
     }
-  },
-
-  /**
-   * Upload directly via Marketing API (alias for exportToFacebook for backwards compatibility)
-   */
-  async uploadDirect({ dispatch }, payload) {
-    return dispatch('exportToFacebook', payload)
   },
 
   /**
@@ -308,9 +345,9 @@ const actions = {
     commit('CLEAR_ERROR')
   },
 
-  async uploadAfterPreview({ dispatch }) {
+  async uploadAfterPreview({ dispatch }, payload) {
     await dispatch('previewExport')
-    return dispatch('uploadDirect')
+    return dispatch('exportToFacebook', payload)
   }
 }
 

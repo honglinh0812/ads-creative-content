@@ -652,10 +652,16 @@ export default {
       const hide = message.loading(this.$t('ads.messages.info.exportingAds') || 'Đang upload quảng cáo...', 0)
       try {
         const result = await this.uploadAfterPreview()
-        message.success(this.$t('ads.messages.success.uploadedToFacebook') || 'Đã upload quảng cáo lên Facebook')
+        const status = result?.autoUpload?.status
         const redirectUrl = result?.redirectUrl || 'https://business.facebook.com/adsmanager/manage/ads'
         window.open(redirectUrl, '_blank', 'noopener,noreferrer')
-        this.clearSelection()
+        if (status === 'UPLOADED') {
+          message.success(this.$t('ads.messages.success.uploadedToFacebook') || 'Đã upload quảng cáo lên Facebook')
+          this.clearSelection()
+        } else {
+          const reason = result?.autoUpload?.message || 'Auto upload unavailable. File downloaded instead.'
+          message.info(reason)
+        }
       } catch (error) {
         const errMsg = error.response?.data?.message || error.message || 'Upload failed'
         message.error(errMsg)

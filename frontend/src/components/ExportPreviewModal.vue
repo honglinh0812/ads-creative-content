@@ -115,6 +115,31 @@ import { message } from 'ant-design-vue'
 import { FileTextOutlined, FileExcelOutlined, DownloadOutlined } from '@ant-design/icons-vue'
 import api from '@/services/api'
 
+const MIME_TYPES = {
+  csv: 'text/csv;charset=utf-8;',
+  excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+}
+
+function base64ToBlob(base64Data, contentType) {
+  if (!base64Data) return null
+  const sliceSize = 512
+  const byteCharacters = atob(base64Data)
+  const byteArrays = []
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize)
+    const byteNumbers = new Array(slice.length)
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i)
+    }
+    const byteArray = new Uint8Array(byteNumbers)
+    byteArrays.push(byteArray)
+  }
+
+  return new Blob(byteArrays, { type: contentType })
+}
+
 export default {
   name: 'ExportPreviewModal',
   components: {
@@ -235,17 +260,25 @@ export default {
           }
         }, 200)
 
-        const response = await api.facebookExport.exportMultipleAds(adIds, selectedFormat.value)
+        const response = await api.facebookExport.exportMultipleAds(
+          adIds,
+          selectedFormat.value,
+          { autoUpload: false }
+        )
 
         clearInterval(progressInterval)
         exportProgress.value = 100
         exportStatusMessage.value = 'Export complete!'
 
         // Download file
-        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const data = response.data || {}
+        const format = (data.format || selectedFormat.value).toLowerCase()
+        const mimeType = MIME_TYPES[format] || MIME_TYPES.csv
+        const blob = base64ToBlob(data.fileContent, mimeType)
+        const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
-        const extension = selectedFormat.value === 'excel' ? 'xlsx' : 'csv'
+        const extension = format === 'excel' || format === 'xlsx' ? 'xlsx' : 'csv'
         link.setAttribute('download', `ads_export_${Date.now()}.${extension}`)
         document.body.appendChild(link)
         link.click()

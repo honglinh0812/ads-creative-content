@@ -20,8 +20,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.util.StringUtils;
 
 /**
@@ -35,18 +38,18 @@ public class FacebookMarketingApiClient {
 
     private static final Logger log = LoggerFactory.getLogger(FacebookMarketingApiClient.class);
     // TODO: Keep these field lists in sync with Facebook Marketing API docs for the current version.
-    private static final java.util.Set<String> CAMPAIGN_ALLOWED_FIELDS = java.util.Set.of(
+    private static final Set<String> CAMPAIGN_ALLOWED_FIELDS = Set.of(
         "name", "objective", "status", "special_ad_categories", "is_adset_budget_sharing_enabled", "access_token"
     );
-    private static final java.util.Set<String> ADSET_ALLOWED_FIELDS = java.util.Set.of(
+    private static final Set<String> ADSET_ALLOWED_FIELDS = Set.of(
         "name", "campaign_id", "is_adset_budget_sharing_enabled", "daily_budget", "start_time",
         "end_time", "billing_event", "optimization_goal", "status", "promoted_object", "targeting",
         "access_token"
     );
-    private static final java.util.Set<String> CREATIVE_ALLOWED_FIELDS = java.util.Set.of(
+    private static final Set<String> CREATIVE_ALLOWED_FIELDS = Set.of(
         "name", "object_story_spec", "access_token"
     );
-    private static final java.util.Set<String> AD_ALLOWED_FIELDS = java.util.Set.of(
+    private static final Set<String> AD_ALLOWED_FIELDS = Set.of(
         "name", "adset_id", "creative", "status", "access_token"
     );
 
@@ -54,6 +57,22 @@ public class FacebookMarketingApiClient {
     private final FacebookProperties facebookProperties;
 
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
+    private static final Map<String, String> COUNTRY_CODE_ALIASES = Map.ofEntries(
+        Map.entry("UNITED STATES", "US"),
+        Map.entry("USA", "US"),
+        Map.entry("US", "US"),
+        Map.entry("VIETNAM", "VN"),
+        Map.entry("VIỆT NAM", "VN"),
+        Map.entry("VN", "VN"),
+        Map.entry("SINGAPORE", "SG"),
+        Map.entry("SG", "SG"),
+        Map.entry("THAILAND", "TH"),
+        Map.entry("TH", "TH"),
+        Map.entry("INDONESIA", "ID"),
+        Map.entry("ID", "ID"),
+        Map.entry("PHILIPPINES", "PH"),
+        Map.entry("PH", "PH")
+    );
 
     public UploadResult uploadAdToAccount(Ad ad, String adAccountId, String accessToken) {
         validateInputs(adAccountId, accessToken);
@@ -221,13 +240,13 @@ public class FacebookMarketingApiClient {
         return form;
     }
 
-    private void logPayload(String entityType, Map<String, Object> payload, java.util.Set<String> allowedFields) {
+    private void logPayload(String entityType, Map<String, Object> payload, Set<String> allowedFields) {
         if (!facebookProperties.isDebugPayloads()) {
             return;
         }
         try {
             String json = JsonUtils.toJson(payload);
-            java.util.Set<String> unknown = new java.util.HashSet<>(payload.keySet());
+            Set<String> unknown = new HashSet<>(payload.keySet());
             unknown.removeAll(allowedFields);
             log.info("[FB Export][{}] Payload sent: {}", entityType, json);
             if (!unknown.isEmpty()) {
@@ -346,42 +365,52 @@ public class FacebookMarketingApiClient {
      * Accepts JSON array (["US","VN"]) or comma/semicolon separated text.
      */
     private List<String> getCountries(Campaign campaign) {
-        if (campaign == null || campaign.getTargetAudience() == null || campaign.getTargetAudience().isBlank()) {
-            return List.of("VN");
+        if (campaign == null || !StringUtils.hasText(campaign.getTargetAudience())) {
+            return List.of("US");
         }
 
         String targetAudience = campaign.getTargetAudience();
         ObjectMapper mapper = new ObjectMapper();
+        List<String> codes = new ArrayList<>();
 
         try {
             JsonNode node = mapper.readTree(targetAudience);
             if (node.isArray()) {
-                List<String> countries = new ArrayList<>();
                 node.forEach(item -> {
                     if (item.isTextual()) {
-                        String code = item.asText().trim();
-                        if (!code.isEmpty()) {
-                            countries.add(code.toUpperCase());
+                        String code = resolveCountryCode(item.asText());
+                        if (code != null) {
+                            codes.add(code);
                         }
                     }
                 });
-                if (!countries.isEmpty()) {
-                    return countries;
-                }
             }
         } catch (JsonProcessingException ignored) {
-            
+            // Fall back to parsing as delimited string
         }
 
-        List<String> countries = new ArrayList<>();
-        for (String part : targetAudience.split("[,;]")) {
-            String code = part.trim();
-            if (!code.isEmpty()) {
-                countries.add(code.toUpperCase());
+        if (codes.isEmpty()) {
+            for (String part : targetAudience.split("[,;\\n]")) {
+                String code = resolveCountryCode(part);
+                if (code != null && !codes.contains(code)) {
+                    codes.add(code);
+                }
             }
         }
 
-        return countries.isEmpty() ? List.of("US") : countries;
+        return codes.isEmpty() ? List.of("US") : codes;
+    }
+
+    private String resolveCountryCode(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        String upper = trimmed.toUpperCase(Locale.ROOT);
+        if (upper.matches("^[A-Z]{2}$")) {
+            return upper;
+        }
+        return COUNTRY_CODE_ALIASES.getOrDefault(upper, null);
     }
 
     @Data

@@ -42,12 +42,6 @@
           {{ $t('navigation.backToDashboard') }}
         </button>
       </div>
-      <div class="sidebar-footer">
-        <div class="user-info">
-          <span class="user-avatar">{{ userInitials }}</span>
-          <span class="user-name">{{ userName }}</span>
-        </div>
-      </div>
     </div>
     <!-- Overlay when sidebar is closed on mobile/tablet -->
     <div v-if="!sidebarOpen" class="sidebar-overlay" @click="$emit('toggle')"></div>
@@ -188,7 +182,7 @@ export default {
 
 .sidebar-hamburger-fixed {
   position: fixed;
-  top: 88px;
+  top: 24px;
   left: 24px;
   z-index: 1200;
 }
