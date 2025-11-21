@@ -14,16 +14,6 @@
         Download Only
       </a-button>
       <a-button
-        v-if="showAutoUpload"
-        key="upload"
-        type="default"
-        @click="handleUploadDirect"
-        :loading="exporting"
-        :disabled="!canUploadDirect"
-      >
-        Auto Upload to Facebook
-      </a-button>
-      <a-button
         key="export"
         type="primary"
         @click="handleExportAndRedirect"
@@ -203,9 +193,9 @@
           </template>
           <template #description>
             <ol class="list-decimal list-inside text-sm space-y-1 mt-2">
-              <li>Your selected ads will be sent to Facebook via the Marketing API</li>
-              <li>Facebook Ads Manager will open in a new tab using your ad account</li>
-              <li>Review the imported ads and publish them when ready</li>
+              <li>Your selected ads will be uploaded to Facebook via the Marketing API (if configured)</li>
+              <li>Facebook Ads Manager opens in a new tab so you can review/publish</li>
+              <li>If auto-upload isn’t available, we automatically download the CSV so you can import it manually</li>
             </ol>
           </template>
         </a-alert>
@@ -414,7 +404,7 @@ export default {
       try {
         this.exportProgress = 0
         this.simulateProgress()
-        const result = await this.exportToFacebook()
+        const result = await this.exportToFacebook({ autoUpload: true })
         this.exportProgress = 100
         const status = result?.autoUpload?.status
         const redirectUrl = result?.redirectUrl || 'https://business.facebook.com/adsmanager/manage/ads'
@@ -446,30 +436,6 @@ export default {
       } catch (error) {
         this.exportProgress = 0
         this.$message.error('Download failed: ' + error.message)
-        this.$emit('error', error)
-      }
-    },
-
-    async handleUploadDirect() {
-      try {
-        this.exportProgress = 0
-        this.simulateProgress()
-        const result = await this.exportToFacebook()
-        this.exportProgress = 100
-        const status = result?.autoUpload?.status
-        const redirectUrl = result?.redirectUrl || 'https://business.facebook.com/adsmanager/manage/ads'
-        window.open(redirectUrl, '_blank', 'noopener,noreferrer')
-        if (status === 'UPLOADED') {
-          this.$message.success('Uploaded to Facebook via Marketing API!')
-        } else {
-          const reason = result?.autoUpload?.message || 'Auto upload unavailable. Downloaded file instead.'
-          this.$message.info(reason)
-        }
-        this.$emit('success', result)
-        this.handleClose()
-      } catch (error) {
-        this.exportProgress = 0
-        this.$message.error('Upload failed: ' + (error.message || 'Unknown error'))
         this.$emit('error', error)
       }
     },

@@ -651,17 +651,17 @@ export default {
       }
       const hide = message.loading(this.$t('ads.messages.info.exportingAds') || 'Đang upload quảng cáo...', 0)
       try {
-        const result = await this.uploadAfterPreview()
+        const result = await this.uploadAfterPreview({ autoUpload: true })
         const status = result?.autoUpload?.status
         const redirectUrl = result?.redirectUrl || 'https://business.facebook.com/adsmanager/manage/ads'
         window.open(redirectUrl, '_blank', 'noopener,noreferrer')
         if (status === 'UPLOADED') {
           message.success(this.$t('ads.messages.success.uploadedToFacebook') || 'Đã upload quảng cáo lên Facebook')
-          this.clearSelection()
         } else {
-          const reason = result?.autoUpload?.message || 'Auto upload unavailable. File downloaded instead.'
-          message.info(reason)
+          const reason = result?.autoUpload?.message || this.$t('ads.messages.success.exportSuccess', { count: this.selectedAdIds.length }) || 'Đã tải xuống file export.'
+          message.success(reason)
         }
+        this.clearSelection()
       } catch (error) {
         const errMsg = error.response?.data?.message || error.message || 'Upload failed'
         message.error(errMsg)

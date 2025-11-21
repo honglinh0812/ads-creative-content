@@ -143,6 +143,10 @@ public class FacebookMarketingApiClient {
         if (!adsetBudgetSharing) {
             payload.put("daily_budget", formatBudgetForMeta(resolveAdsetBudget(campaign)));
         }
+        Long bidAmount = resolveBidAmount(campaign);
+        if (bidAmount != null && bidAmount > 0) {
+            payload.put("bid_amount", bidAmount.toString());
+        }
 
         payload.put("start_time", formatDateTime(campaign.getStartDate()));
         if (campaign.getEndDate() != null) {
@@ -331,6 +335,25 @@ public class FacebookMarketingApiClient {
             return campaign.getTotalBudget();
         }
         return 0.0;
+    }
+
+    private Long resolveBidAmount(Campaign campaign) {
+        Double source = resolveAdsetBudget(campaign);
+        if (source == null || source <= 0) {
+            source = campaign.getDailyBudget();
+        }
+        if (source == null || source <= 0) {
+            source = campaign.getTotalBudget();
+        }
+        if (source == null || source <= 0) {
+            return null;
+        }
+        long smallest = Math.round(source * 100);
+        if (smallest <= 0) {
+            return null;
+        }
+        // TODO: Allow users to override default bid amount per campaign.
+        return Math.max(smallest, 100L);
     }
 
     private String formatDateTime(java.time.LocalDate date) {

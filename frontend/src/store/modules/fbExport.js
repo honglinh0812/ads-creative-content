@@ -261,9 +261,9 @@ const actions = {
   },
 
   /**
-   * Automatically upload ads to Facebook and return redirect metadata.
+   * Export ads and optionally auto-upload to Facebook.
    */
-  async exportToFacebook({ state, commit }, { adAccountId } = {}) {
+  async exportToFacebook({ state, commit }, { adAccountId, autoUpload = true } = {}) {
     if (state.selectedAdIds.length === 0) {
       commit('SET_ERROR', 'Please select at least one ad to export')
       throw new Error('No ads selected')
@@ -276,13 +276,13 @@ const actions = {
       const response = await api.facebookExport.exportMultipleAds(
         state.selectedAdIds,
         state.format,
-        { autoUpload: true, adAccountId }
+        { autoUpload, adAccountId }
       )
       const data = response.data || {}
-      const autoUpload = data.autoUpload || {}
-      const redirectUrl = autoUpload.adsManagerUrl || ADS_MANAGER_URL
+      const autoUploadResult = data.autoUpload || {}
+      const redirectUrl = autoUploadResult.adsManagerUrl || ADS_MANAGER_URL
 
-      if (!autoUpload.status || autoUpload.status !== 'UPLOADED') {
+      if (!autoUploadResult.status || autoUploadResult.status !== 'UPLOADED') {
         triggerFileDownload(data)
         commit('CLEAR_SELECTED_ADS')
         commit('CLEAR_PREVIEW_DATA')
@@ -293,7 +293,7 @@ const actions = {
 
       return {
         redirectUrl,
-        autoUpload
+        autoUpload: autoUploadResult
       }
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Failed to upload ads'
