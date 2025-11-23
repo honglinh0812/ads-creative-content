@@ -60,8 +60,8 @@ module.exports = {
         '@': path.resolve(__dirname, 'src')
       }
     },
-    // Enable source maps so production errors can be mapped back to source
-    devtool: process.env.NODE_ENV === 'development' ? 'eval-source-map' : 'false'
+    // Enable source maps in dev, disable them entirely in prod
+    devtool: process.env.NODE_ENV === 'development' ? 'eval-source-map' : false
   },
 
   chainWebpack: config => {
