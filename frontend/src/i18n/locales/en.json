@@ -1467,6 +1467,48 @@
       "needsReview": "Needs Review - Content truncated to meet Facebook limits",
       "navigation": {
         "saveAd": "Save Ad"
+      },
+      "helpDialog": {
+        "tooltip": "How is this score calculated?",
+        "title": "How Ad Quality Score Works",
+        "intro": "Each variation is evaluated across four weighted pillars. Use this breakdown to understand what to improve.",
+        "criteria": {
+          "compliance": {
+            "title": "Compliance (30 pts)",
+            "description": "Checks Meta/Facebook limits and policy words so your ad can be published without surprises.",
+            "headlineLimit": "Headline ≤ 40 characters for full visibility.",
+            "descriptionLimit": "Description ≤ 125 characters to avoid truncation.",
+            "primaryTextLimit": "Primary text ≤ 1,000 characters (Meta hard limit).",
+            "prohibitedWords": "Penalties if banned or spammy phrases (e.g., 'free', 'click here') appear."
+          },
+          "linguistic": {
+            "title": "Linguistic Quality (30 pts)",
+            "description": "Rewards clear structure and natural language regardless of English or Vietnamese.",
+            "keywordDensity": "Balanced keyword density (15-35%) shows topical focus without stuffing.",
+            "readability": "Short sentences (10-20 words) and 4-6 character words keep content digestible.",
+            "grammar": "Consistent capitalization, punctuation, and no excessive symbols."
+          },
+          "persuasiveness": {
+            "title": "Persuasiveness (20 pts)",
+            "description": "Measures whether the ad motivates action with clear value.",
+            "cta": "+10 pts when an approved Call-To-Action button is set.",
+            "powerWords": "Power words (exclusive, premium, proven, etc.) boost urgency and credibility."
+          },
+          "completeness": {
+            "title": "Completeness (20 pts)",
+            "description": "Ensures all core fields are filled with meaningful copy.",
+            "headline": "Headline: at least 10 characters for context.",
+            "descriptionField": "Description: at least 20 characters to describe the offer.",
+            "primaryText": "Primary text: at least 50 characters for story + benefits."
+          }
+        },
+        "usage": {
+          "title": "How to use this score",
+          "compare": "Compare variations by total score and badge to pick the strongest one.",
+          "focus": "Use the suggestions chip to fix the lowest pillar first, then regenerate if needed.",
+          "language": "Regenerate in the language shown in the header to keep tone consistent."
+        },
+        "languageNote": "Quality score details follow your selected language (English or Vietnamese)."
       }
     },
     "modals": {
@@ -1650,6 +1692,11 @@
         "previewReady": "Reference analyzed. Style & CTA suggestions ready.",
         "fallbackSummary": "Reference analyzed"
       },
+      "websiteUrl": {
+        "label": "Website URL (optional)",
+        "placeholder": "https://your-landing-page.com",
+        "helper": "Provide the final destination URL if it's different from the campaign's website."
+      },
       "next": "Next"
     },
     "referenceSummary": {
@@ -1667,7 +1714,11 @@
       "sectionSubtitle": "Choose the engines that will rewrite and illustrate your ads",
       "textProvider": "Text provider",
       "imageProvider": "Image provider",
-      "generate": "Generate previews"
+      "generate": "Generate previews",
+      "allowUnlimitedLength": {
+        "label": "Allow AI to ignore character limits",
+        "description": "Disable Facebook headline/primary text/description limits when you want long-form explorations."
+      }
     },
     "step3": {
       "cardTitle": "Ad preview",
@@ -1687,7 +1738,9 @@
       "warning": {
         "loadProvidersFailed": "Could not load providers. Using defaults.",
         "noContent": "No content found in the reference link",
-        "selectVariations": "Please select at least one variation to save"
+        "selectVariations": "Please select at least one variation to save",
+        "asyncUnavailable": "Async service unavailable, using standard mode.",
+        "asyncJobLimit": "You already have a job running. Falling back to synchronous mode."
       },
       "error": {
         "loadCampaignsFailed": "Failed to load campaigns",
@@ -1703,6 +1756,18 @@
       "styleCue": "Apply this tone/style: {style}.",
       "ctaCue": "Use this call-to-action: {cta}.",
       "guardrail": "Do not copy the reference text exactly; create fresh, original copy suitable for the requested product/service."
+    },
+    "async": {
+      "modalTitle": "Generating improved ads",
+      "initializing": "Initializing AI copilots…",
+      "hint": "This may take from 30 seconds to a few minutes depending on complexity and variation count.",
+      "jobId": "Job ID",
+      "cancel": "Cancel generation",
+      "started": "Started async generation. Keep this tab open to see results.",
+      "timeout": "Job is taking longer than expected. Please try again later.",
+      "statusFailed": "Failed to fetch async status. Job may continue running in the background.",
+      "cancelled": "Generation cancelled",
+      "cancelFailed": "Unable to cancel generation. Please try again."
     }
   },
   "ads": {
@@ -1992,7 +2057,17 @@
       "completenessMax": "/20"
     },
     "suggestions": {
-      "title": "💡 Suggestions for Improvement"
+      "title": "💡 Suggestions for Improvement",
+      "headlineTooLong": "Headline uses {current} characters (max {max}). Shorten it to avoid truncation.",
+      "descriptionTooLong": "Description uses {current} characters (max {max}). Trim text for better delivery.",
+      "primaryTextTooLong": "Primary text uses {current} characters (max {max}). Remove filler sentences.",
+      "prohibitedWord": "Remove or rephrase the word \"{word}\" to comply with ad policies.",
+      "improveReadability": "Improve readability with shorter sentences and concrete benefits.",
+      "addCTA": "Add a clear Call-To-Action button to guide users.",
+      "usePowerWords": "Add credible power words (exclusive, premium, proven, etc.).",
+      "addHeadline": "Provide a descriptive headline so the ad feels complete.",
+      "addDescription": "Add a description (>= 20 characters) to support the offer.",
+      "addPrimaryText": "Add primary text (>= 50 characters) outlining the problem, solution, or offer."
     }
   },
   "components": {

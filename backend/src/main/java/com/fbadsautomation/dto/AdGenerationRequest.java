@@ -71,6 +71,12 @@ public class AdGenerationRequest {
     // New fields for ad type specific data
     @Pattern(regexp = "^https?://.*", message = "Invalid website URL format")
     private String websiteUrl; // For WEBSITE_CONVERSION_AD
+    
+    /**
+     * When true, prompts skip strict Facebook headline/body/description character limits.
+     * Defaults to false to preserve historic behavior.
+     */
+    private Boolean allowUnlimitedLength;
 
     @Valid
     @Size(max = 20, message = "Cannot exceed 20 lead form questions")
@@ -226,6 +232,9 @@ public class AdGenerationRequest {
     
     public String getWebsiteUrl() { return websiteUrl; }
     public void setWebsiteUrl(String websiteUrl) { this.websiteUrl = websiteUrl; }
+
+    public Boolean getAllowUnlimitedLength() { return allowUnlimitedLength; }
+    public void setAllowUnlimitedLength(Boolean allowUnlimitedLength) { this.allowUnlimitedLength = allowUnlimitedLength; }
     
     public List<LeadFormQuestion> getLeadFormQuestions() { return leadFormQuestions; }
     public void setLeadFormQuestions(List<LeadFormQuestion> leadFormQuestions) { this.leadFormQuestions = leadFormQuestions; }

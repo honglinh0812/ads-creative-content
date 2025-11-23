@@ -30,13 +30,14 @@ public class TrendingKeywordsController {
     public ResponseEntity<List<TrendingKeyword>> getTrends(
             @RequestParam String query,
             @RequestParam(defaultValue = "US") String region,
+            @RequestParam(defaultValue = "en") String language,
             Authentication authentication) {
 
         // Authentication is optional - will be null for unauthenticated requests
         String username = authentication != null ? authentication.getName() : "anonymous";
-        log.info("User {} searching trends for query: {} in region: {}", username, query, region);
+        log.info("User {} searching trends for query: {} in region: {} (language={})", username, query, region, language);
 
-        List<TrendingKeyword> trends = trendingKeywordsService.fetchTrends(query, region);
+        List<TrendingKeyword> trends = trendingKeywordsService.fetchTrends(query, region, language);
 
         return ResponseEntity.ok(trends);
     }
@@ -47,6 +48,7 @@ public class TrendingKeywordsController {
     public ResponseEntity<String> clearCache(
             @RequestParam String query,
             @RequestParam(defaultValue = "US") String region,
+            @RequestParam(defaultValue = "en") String language,
             Authentication authentication) {
 
         // Cache clearing requires authentication
@@ -56,10 +58,10 @@ public class TrendingKeywordsController {
                     .body("Authentication required to clear cache");
         }
 
-        log.info("User {} clearing trend cache for query: {} in region: {}",
-                authentication.getName(), query, region);
+        log.info("User {} clearing trend cache for query: {} in region: {} (language={})",
+                authentication.getName(), query, region, language);
 
-        trendingKeywordsService.clearTrendCache(query, region);
+        trendingKeywordsService.clearTrendCache(query, region, language);
 
         return ResponseEntity.ok("Cache cleared successfully");
     }

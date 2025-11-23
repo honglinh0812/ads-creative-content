@@ -12,6 +12,7 @@ import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.AdContent;
 import com.fbadsautomation.model.AdStyle;
 import com.fbadsautomation.model.AdType;
+import com.fbadsautomation.model.AsyncJobStatus;
 import com.fbadsautomation.model.FacebookCTA;
 import com.fbadsautomation.util.ValidationMessages.Language;
 import java.util.ArrayList;
@@ -36,6 +37,8 @@ public class AdImprovementService {
     private final MetaAdLibraryService metaAdLibraryService;
     private final ChainOfThoughtPromptBuilder chainOfThoughtPromptBuilder;
     private final AdService adService;
+    private final AsyncJobService asyncJobService;
+    private final AsyncAIContentService asyncAIContentService;
     private final ObjectMapper objectMapper;
 
     private static final Map<String, List<String>> STYLE_KEYWORDS = Map.of(
@@ -175,6 +178,88 @@ public class AdImprovementService {
                 .build();
     }
 
+    private int calculateTotalSteps(AdImprovementRequest request, String resolvedImageProvider) {
+        int steps = 10;
+        if (StringUtils.hasText(resolvedImageProvider)) {
+            steps += request.getNumberOfVariations() != null ? request.getNumberOfVariations() : 3;
+        }
+        return steps;
+    }
+
+    private AdContent.ContentType mapFrontendContentTypeToEnum(String frontendType) {
+        if (!StringUtils.hasText(frontendType)) {
+            return AdContent.ContentType.COMBINED;
+        }
+        return switch (frontendType.toLowerCase()) {
+            case "page_post_ad", "page_post" -> AdContent.ContentType.PAGE_POST;
+            case "website_conversion_ad", "lead_form_ad", "combined" -> AdContent.ContentType.COMBINED;
+            default -> AdContent.ContentType.COMBINED;
+        };
+    }
+
+    /**
+     * Khởi tạo job async cho luồng học tập quảng cáo nhằm tái sử dụng cùng cơ chế polling.
+     */
+    public Map<String, Object> generateImprovedAdsAsync(AdImprovementRequest request, Long userId) {
+        validateImprovementRequest(request);
+
+        if (!asyncJobService.canCreateJob(userId)) {
+            throw new ApiException(HttpStatus.TOO_MANY_REQUESTS,
+                    "Bạn đang có quá nhiều tác vụ đang chạy. Vui lòng chờ hoàn tất trước khi tạo mới.");
+        }
+
+        String prompt = buildPromptFromRequest(request);
+        List<String> adLinks = new ArrayList<>();
+        if (StringUtils.hasText(request.getReferenceLink())) {
+            adLinks.add(request.getReferenceLink().trim());
+        }
+
+        AdContent.ContentType contentType = mapFrontendContentTypeToEnum(request.getAdType());
+        FacebookCTA callToAction = request.getCallToAction() != null
+                ? request.getCallToAction()
+                : FacebookCTA.LEARN_MORE;
+        String textProvider = determineTextProvider(request);
+        String imageProvider = determineImageProvider(request);
+        String safeLanguage = StringUtils.hasText(request.getLanguage()) ? request.getLanguage() : "vi";
+        String extractedReference = StringUtils.hasText(request.getReferenceContent())
+                ? request.getReferenceContent()
+                : (StringUtils.hasText(request.getProductDescription()) ? request.getProductDescription() : "");
+
+        int totalSteps = calculateTotalSteps(request, imageProvider);
+        String jobId = asyncJobService.createJob(userId,
+                AsyncJobStatus.JobType.AD_CONTENT_GENERATION,
+                totalSteps);
+
+        asyncAIContentService.generateContentAsync(
+                jobId,
+                userId,
+                request.getCampaignId(),
+                prompt,
+                contentType,
+                textProvider,
+                imageProvider,
+                request.getNumberOfVariations(),
+                safeLanguage,
+                adLinks,
+                extractedReference,
+                callToAction,
+                request.getMediaFileUrl(),
+                request.getWebsiteUrl(),
+                request.getLeadFormQuestions(),
+                request.getAudienceSegment(),
+                request.getPersonaId(),
+                request.getTrendingKeywords(),
+                request.getCreativeStyle(),
+                request.getVariations()
+        );
+
+        return Map.of(
+                "jobId", jobId,
+                "status", "accepted",
+                "message", "Async ad improvement started. Use the job ID to monitor progress."
+        );
+    }
+
     /**
      * Lưu các biến thể đã chọn dựa trên logic createAdWithExistingContent có sẵn.
      */
@@ -287,6 +372,7 @@ public class AdImprovementService {
                 ? Language.VIETNAMESE
                 : Language.ENGLISH;
         AdStyle adStyle = parseAdStyle(request.getCreativeStyle());
+        boolean enforceCharacterLimits = !Boolean.TRUE.equals(request.getAllowUnlimitedLength());
 
         return chainOfThoughtPromptBuilder.buildCoTPrompt(
                 StringUtils.hasText(request.getProductDescription()) ? request.getProductDescription() : "N/A",
@@ -299,7 +385,8 @@ public class AdImprovementService {
                 adType,
                 request.getNumberOfVariations(),
                 request.getReferenceContent(),
-                request.getReferenceLink()
+                request.getReferenceLink(),
+                enforceCharacterLimits
         );
     }
 

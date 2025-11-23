@@ -61,7 +61,7 @@ module.exports = {
       }
     },
     // Enable source maps so production errors can be mapped back to source
-    devtool: process.env.NODE_ENV === 'development' ? 'eval-source-map' : 'source-map'
+    devtool: process.env.NODE_ENV === 'development' ? 'eval-source-map' : 'false'
   },
 
   chainWebpack: config => {

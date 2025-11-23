@@ -12,6 +12,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,9 +43,10 @@ public class GoogleTrendsApiService {
      *
      * @param query Search query
      * @param region Target region (e.g., US, VN, UK)
+     * @param language Preferred language code (e.g., en, vi)
      * @return List of trending keywords
      */
-    public List<TrendingKeyword> fetchTrendsFromApi(String query, String region) {
+    public List<TrendingKeyword> fetchTrendsFromApi(String query, String region, String language) {
         // Check if API key is configured
         if (serpApiKey == null || serpApiKey.isEmpty()) {
             log.warn("SerpApi key not configured. Using mock data fallback.");
@@ -52,16 +54,26 @@ public class GoogleTrendsApiService {
         }
 
         try {
-            // Build SerpApi request URL
-            String url = String.format(
-                "%s?engine=google_trends&q=%s&geo=%s&api_key=%s",
-                SERPAPI_BASE_URL,
-                query,
-                region,
-                serpApiKey
-            );
+            String normalizedRegion = sanitizeRegion(region);
+            String normalizedLanguage = sanitizeLanguage(language);
 
-            log.info("Fetching Google Trends data from SerpApi: query={}, region={}", query, region);
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder
+                .fromHttpUrl(SERPAPI_BASE_URL)
+                .queryParam("engine", "google_trends")
+                .queryParam("q", query)
+                .queryParam("geo", normalizedRegion)
+                .queryParam("hl", normalizedLanguage)
+                .queryParam("gl", normalizedRegion)
+                .queryParam("api_key", serpApiKey);
+
+            if (normalizedLanguage != null && !normalizedLanguage.isBlank() && !"en".equals(normalizedLanguage)) {
+                uriBuilder.queryParam("lr", "lang_" + normalizedLanguage);
+            }
+
+            String url = uriBuilder.encode().toUriString();
+
+            log.info("Fetching Google Trends data from SerpApi: query={}, region={}, language={}",
+                query, normalizedRegion, normalizedLanguage);
 
             // Make API request
             HttpHeaders headers = new HttpHeaders();
@@ -162,5 +174,13 @@ public class GoogleTrendsApiService {
      */
     public boolean isApiAvailable() {
         return serpApiKey != null && !serpApiKey.isEmpty();
+    }
+
+    private String sanitizeLanguage(String language) {
+        return (language == null || language.isBlank()) ? "en" : language.trim().toLowerCase();
+    }
+
+    private String sanitizeRegion(String region) {
+        return (region == null || region.isBlank()) ? "US" : region.trim().toUpperCase();
     }
 }

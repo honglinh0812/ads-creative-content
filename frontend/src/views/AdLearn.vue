@@ -115,6 +115,16 @@
               />
             </a-form-item>
 
+            <a-form-item :label="$t('adLearn.step1.websiteUrl.label')">
+              <a-input
+                v-model:value="formData.websiteUrl"
+                :placeholder="$t('adLearn.step1.websiteUrl.placeholder')"
+              />
+              <div class="field-hint">
+                {{ $t('adLearn.step1.websiteUrl.helper') }}
+              </div>
+            </a-form-item>
+
             <a-card
               v-if="hasReferenceInsights"
               class="reference-intel-card"
@@ -186,6 +196,15 @@
             </div>
           </div>
 
+          <div class="character-limit-toggle">
+            <a-checkbox v-model:checked="formData.allowUnlimitedLength">
+              {{ $t('adLearn.step2.allowUnlimitedLength.label') }}
+            </a-checkbox>
+            <div class="toggle-hint">
+              {{ $t('adLearn.step2.allowUnlimitedLength.description') }}
+            </div>
+          </div>
+
           <div class="form-actions dual">
             <a-button size="large" @click="prevStep">
               {{ $t('adLearn.navigation.back') }}
@@ -252,6 +271,40 @@
         </a-card>
       </div>
     </div>
+
+    <a-modal
+      v-model:visible="showAsyncProgressModal"
+      :title="$t('adLearn.async.modalTitle')"
+      :closable="false"
+      :footer="null"
+      :maskClosable="false"
+      :width="480"
+    >
+      <div class="async-progress-container">
+        <div class="progress-icon">
+          <a-spin size="large" />
+        </div>
+        <div class="progress-info">
+          <h3>{{ asyncJobCurrentStep || $t('adLearn.async.initializing') }}</h3>
+          <a-progress
+            :percent="asyncJobProgress"
+            :status="asyncJobStatus === 'FAILED' ? 'exception' : 'active'"
+            :show-info="true"
+          />
+          <p class="progress-details">
+            {{ $t('adLearn.async.hint') }}
+          </p>
+          <p class="progress-jobid">
+            {{ $t('adLearn.async.jobId') }}: {{ asyncJobId }}
+          </p>
+        </div>
+        <div class="progress-actions">
+          <a-button @click="cancelAsyncJob" danger>
+            {{ $t('adLearn.async.cancel') }}
+          </a-button>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -280,7 +333,9 @@ export default {
         referenceLink: '',
         textProvider: 'openai',
         imageProvider: 'gemini',
-        personaId: null
+        personaId: null,
+        websiteUrl: '',
+        allowUnlimitedLength: false
       },
       textProviders: [],
       imageProviders: [],
@@ -299,7 +354,15 @@ export default {
       extracting: false,
       isGenerating: false,
       isSaving: false,
-      generateError: null
+      generateError: null,
+      showAsyncProgressModal: false,
+      asyncJobId: null,
+      asyncJobStatus: null,
+      asyncJobProgress: 0,
+      asyncJobCurrentStep: '',
+      pollingInterval: null,
+      pollingStartTime: null,
+      pollingRetryCount: 0
     }
   },
   computed: {
@@ -386,6 +449,9 @@ export default {
   },
   created() {
     this.loadData()
+  },
+  beforeUnmount() {
+    this.stopJobPolling()
   },
   watch: {
     'formData.language'() {
@@ -511,6 +577,10 @@ export default {
       return 'page_post'
     },
     determineWebsiteUrl() {
+      const manualUrl = this.formData.websiteUrl ? this.formData.websiteUrl.trim() : ''
+      if (manualUrl) {
+        return manualUrl
+      }
       return this.selectedCampaign && this.selectedCampaign.websiteUrl
         ? this.selectedCampaign.websiteUrl
         : null
@@ -565,18 +635,16 @@ export default {
           callToAction: this.determineCallToAction(),
           creativeStyle: this.detectedStyle,
           websiteUrl: this.determineWebsiteUrl(),
-          personaId: this.formData.personaId || null
+          personaId: this.formData.personaId || null,
+          allowUnlimitedLength: this.formData.allowUnlimitedLength
         }
-        const response = await api.post('/ads/learn/generate', requestData)
-        if (response.data.status === 'success') {
-          this.adVariations = this.normalizeVariations(response.data.variations)
-          this.selectedVariations = [...this.adVariations]
-          this.adId = response.data.adId
-          this.currentStep = 3
-          this.$message.success(this.$t('adLearn.messages.success.generated'))
-        } else {
-          throw new Error(response.data.message)
+
+        const startedAsync = await this.startAsyncGeneration(requestData)
+        if (startedAsync) {
+          return
         }
+
+        await this.generateAdSync(requestData)
       } catch (error) {
         console.error('Generate ad error:', error)
         this.generateError = error
@@ -608,7 +676,8 @@ export default {
           adStyle: this.detectedStyle || null,
           callToAction: this.determineCallToAction(),
           extractedContent: this.extractedContent,
-          websiteUrl: this.determineWebsiteUrl()
+          websiteUrl: this.determineWebsiteUrl(),
+          allowUnlimitedLength: this.formData.allowUnlimitedLength
         }
         const response = await api.post('/ads/learn/save', requestData)
         if (response.data.status === 'success') {
@@ -622,6 +691,132 @@ export default {
         this.$message.error(error.message || this.$t('adLearn.messages.error.saveAdFailed'))
       } finally {
         this.isSaving = false
+      }
+    },
+    async startAsyncGeneration(requestData) {
+      try {
+        const response = await api.post('/ads/learn/async/generate', requestData)
+        if (!response.data || !response.data.jobId) {
+          return false
+        }
+        this.asyncJobId = response.data.jobId
+        this.asyncJobStatus = 'PENDING'
+        this.asyncJobProgress = 0
+        this.asyncJobCurrentStep = ''
+        this.showAsyncProgressModal = true
+        this.startJobPolling()
+        this.$message.info(this.$t('adLearn.async.started'))
+        return true
+      } catch (error) {
+        const status = error.response?.status
+        if (status === 429) {
+          this.$message.warning(error.response?.data?.error || this.$t('adLearn.messages.warning.asyncJobLimit'))
+        } else {
+          console.warn('Async generation unavailable, falling back to sync.', error)
+          this.$message.warning(this.$t('adLearn.messages.warning.asyncUnavailable'))
+        }
+        return false
+      }
+    },
+    async generateAdSync(requestData) {
+      const response = await api.post('/ads/learn/generate', requestData)
+      if (response.data.status === 'success') {
+        this.adVariations = this.normalizeVariations(response.data.variations)
+        this.selectedVariations = [...this.adVariations]
+        this.adId = response.data.adId
+        this.currentStep = 3
+        this.$message.success(this.$t('adLearn.messages.success.generated'))
+      } else {
+        throw new Error(response.data.message)
+      }
+    },
+    startJobPolling() {
+      this.stopJobPolling()
+      this.pollingRetryCount = 0
+      this.pollingStartTime = Date.now()
+      this.pollingInterval = setInterval(() => {
+        this.checkJobStatus()
+      }, 2000)
+      this.checkJobStatus()
+    },
+    async checkJobStatus() {
+      if (!this.asyncJobId) return
+
+      const maxDuration = 10 * 60 * 1000
+      if (this.pollingStartTime && Date.now() - this.pollingStartTime > maxDuration) {
+        this.handleJobFailed(this.$t('adLearn.async.timeout'))
+        return
+      }
+
+      try {
+        const response = await api.ads.getJobStatus(this.asyncJobId)
+        const job = response.data
+        this.asyncJobStatus = job.status
+        this.asyncJobProgress = job.progress || 0
+        this.asyncJobCurrentStep = job.currentStep || ''
+
+        if (job.status === 'COMPLETED') {
+          await this.handleJobCompleted()
+        } else if (job.status === 'FAILED') {
+          this.handleJobFailed(job.errorMessage)
+        } else if (job.status === 'CANCELLED') {
+          this.handleJobCancelled()
+        }
+
+        this.pollingRetryCount = 0
+      } catch (error) {
+        console.error('Error checking async job status:', error)
+        this.pollingRetryCount++
+        if (this.pollingRetryCount > 3) {
+          this.handleJobFailed(this.$t('adLearn.async.statusFailed'))
+        }
+      }
+    },
+    async handleJobCompleted() {
+      this.stopJobPolling()
+      try {
+        const response = await api.ads.getJobResult(this.asyncJobId)
+        const result = response.data?.result || []
+        this.adVariations = this.normalizeVariations(result)
+        this.selectedVariations = [...this.adVariations]
+        this.currentStep = 3
+        this.showAsyncProgressModal = false
+        this.asyncJobId = null
+        this.$message.success(this.$t('adLearn.messages.success.generated'))
+      } catch (error) {
+        console.error('Failed to fetch async job result:', error)
+        this.handleJobFailed(error.message || this.$t('adLearn.async.statusFailed'))
+      }
+    },
+    handleJobFailed(message) {
+      this.stopJobPolling()
+      this.showAsyncProgressModal = false
+      this.asyncJobStatus = 'FAILED'
+      this.asyncJobId = null
+      this.$message.error(message || this.$t('adLearn.messages.error.generateAdFailed'))
+    },
+    handleJobCancelled() {
+      this.stopJobPolling()
+      this.showAsyncProgressModal = false
+      this.asyncJobStatus = 'CANCELLED'
+      this.asyncJobId = null
+      this.$message.info(this.$t('adLearn.async.cancelled'))
+    },
+    stopJobPolling() {
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval)
+        this.pollingInterval = null
+      }
+    },
+    async cancelAsyncJob() {
+      if (!this.asyncJobId) return
+      try {
+        this.asyncJobStatus = 'CANCELLING'
+        await api.ads.cancelJob(this.asyncJobId)
+        this.handleJobCancelled()
+      } catch (error) {
+        console.error('Failed to cancel async job', error)
+        this.$message.error(this.$t('adLearn.async.cancelFailed'))
       }
     },
     normalizeVariations(variations = []) {
@@ -745,6 +940,12 @@ export default {
   margin-top: 12px;
 }
 
+.field-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
 .reference-intel-card {
   margin-top: 12px;
   background: #f8fbff;
@@ -760,6 +961,20 @@ export default {
 
 .form-actions.dual {
   justify-content: space-between;
+}
+
+.character-limit-toggle {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.toggle-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
 }
 
 .provider-grid {
@@ -835,6 +1050,31 @@ export default {
   border-radius: 999px;
   font-weight: 600;
   margin-top: 8px;
+}
+
+.async-progress-container {
+  text-align: center;
+}
+
+.async-progress-container .progress-icon {
+  margin-bottom: 20px;
+}
+
+.async-progress-container .progress-info h3 {
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #1d4ed8;
+}
+
+.async-progress-container .progress-details,
+.async-progress-container .progress-jobid {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.async-progress-container .progress-actions {
+  margin-top: 20px;
 }
 
 @media (max-width: 768px) {

@@ -574,7 +574,17 @@
         <a-card :title="$t('adCreate.step3.cardTitle')" class="enhanced-card">
           <div v-if="adVariations.length > 0" class="ad-preview-container">
             <p class="preview-instruction">
-              {{ $t('adCreate.step3.instruction') }}
+              <span>{{ $t('adCreate.step3.instruction') }}</span>
+              <a-tooltip :title="$t('adCreate.step3.helpDialog.tooltip')">
+                <a-button
+                  type="text"
+                  size="small"
+                  class="instruction-help-btn"
+                  @click="showQualityHelp = true"
+                >
+                  <template #icon><question-circle-outlined /></template>
+                </a-button>
+              </a-tooltip>
             </p>
 
             <!-- Quality Score Summary Card -->
@@ -844,6 +854,69 @@
             </div>
           </div>
         </div>
+      </div>
+    </a-modal>
+
+    <!-- Quality Score Help Dialog -->
+    <a-modal
+      v-model:open="showQualityHelp"
+      :title="$t('adCreate.step3.helpDialog.title')"
+      :footer="null"
+      width="720px"
+    >
+      <div class="quality-help-content">
+        <p class="help-intro">{{ $t('adCreate.step3.helpDialog.intro') }}</p>
+
+        <div class="help-section">
+          <h3>{{ $t('adCreate.step3.helpDialog.criteria.compliance.title') }}</h3>
+          <p>{{ $t('adCreate.step3.helpDialog.criteria.compliance.description') }}</p>
+          <ul>
+            <li>{{ $t('adCreate.step3.helpDialog.criteria.compliance.headlineLimit') }}</li>
+            <li>{{ $t('adCreate.step3.helpDialog.criteria.compliance.descriptionLimit') }}</li>
+            <li>{{ $t('adCreate.step3.helpDialog.criteria.compliance.primaryTextLimit') }}</li>
+            <li>{{ $t('adCreate.step3.helpDialog.criteria.compliance.prohibitedWords') }}</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>{{ $t('adCreate.step3.helpDialog.criteria.linguistic.title') }}</h3>
+          <p>{{ $t('adCreate.step3.helpDialog.criteria.linguistic.description') }}</p>
+          <ul>
+            <li>{{ $t('adCreate.step3.helpDialog.criteria.linguistic.keywordDensity') }}</li>
+            <li>{{ $t('adCreate.step3.helpDialog.criteria.linguistic.readability') }}</li>
+            <li>{{ $t('adCreate.step3.helpDialog.criteria.linguistic.grammar') }}</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>{{ $t('adCreate.step3.helpDialog.criteria.persuasiveness.title') }}</h3>
+          <p>{{ $t('adCreate.step3.helpDialog.criteria.persuasiveness.description') }}</p>
+          <ul>
+            <li>{{ $t('adCreate.step3.helpDialog.criteria.persuasiveness.cta') }}</li>
+            <li>{{ $t('adCreate.step3.helpDialog.criteria.persuasiveness.powerWords') }}</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>{{ $t('adCreate.step3.helpDialog.criteria.completeness.title') }}</h3>
+          <p>{{ $t('adCreate.step3.helpDialog.criteria.completeness.description') }}</p>
+          <ul>
+            <li>{{ $t('adCreate.step3.helpDialog.criteria.completeness.headline') }}</li>
+            <li>{{ $t('adCreate.step3.helpDialog.criteria.completeness.descriptionField') }}</li>
+            <li>{{ $t('adCreate.step3.helpDialog.criteria.completeness.primaryText') }}</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>{{ $t('adCreate.step3.helpDialog.usage.title') }}</h3>
+          <ul>
+            <li>{{ $t('adCreate.step3.helpDialog.usage.compare') }}</li>
+            <li>{{ $t('adCreate.step3.helpDialog.usage.focus') }}</li>
+            <li>{{ $t('adCreate.step3.helpDialog.usage.language') }}</li>
+          </ul>
+        </div>
+
+        <p class="help-footnote">{{ $t('adCreate.step3.helpDialog.languageNote') }}</p>
       </div>
     </a-modal>
 
@@ -1127,6 +1200,7 @@ export default {
       showMediaModal: false,
       showAdTypeHelp: false,
       showHelpDialog: false,
+      showQualityHelp: false,
       showExtractPreviewModal: false,
 
       // Other states
@@ -3424,6 +3498,23 @@ export default {
   color: #666;
   margin-bottom: 1.5rem;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.instruction-help-btn {
+  color: #1890ff;
+  padding: 0;
+  min-width: auto;
+  height: 28px;
+}
+
+.instruction-help-btn:hover,
+.instruction-help-btn:focus {
+  color: #40a9ff;
 }
 
 .unsaved-tip {
@@ -3663,6 +3754,34 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.quality-help-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.help-intro {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.quality-help-content ul {
+  margin: 0.5rem 0 0 1.25rem;
+  padding: 0;
+  color: #4b5563;
+}
+
+.quality-help-content li {
+  margin-bottom: 0.25rem;
+}
+
+.help-footnote {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin-top: -0.5rem;
 }
 
 .help-title {

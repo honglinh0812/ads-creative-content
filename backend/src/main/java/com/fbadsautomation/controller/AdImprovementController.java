@@ -14,8 +14,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -62,6 +64,18 @@ public class AdImprovementController {
         Long userId = Long.parseLong(authentication.getName());
         log.info("Generating improved ads for user {} from reference {}", userId, request.getReferenceLink());
         return ResponseEntity.ok(adImprovementService.generateImprovedAds(request, userId));
+    }
+
+    @Operation(summary = "Sinh quảng cáo cải thiện (async)",
+            description = "Tạo job async để sinh quảng cáo dựa trên phong cách tham chiếu")
+    @PostMapping("/async/generate")
+    public ResponseEntity<Map<String, Object>> generateImprovedAdsAsync(
+            @Valid @RequestBody AdImprovementRequest request,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        log.info("Starting async improved ad generation for user {} from reference {}", userId, request.getReferenceLink());
+        Map<String, Object> response = adImprovementService.generateImprovedAdsAsync(request, userId);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
     @Operation(summary = "Lưu quảng cáo cải thiện đã chọn",

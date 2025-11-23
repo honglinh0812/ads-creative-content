@@ -624,7 +624,8 @@ public class AIContentServiceImpl {
                     adType,
                     1,  // numberOfVariations for prompt context
                     null,
-                    null
+                    null,
+                    true
                 );
 
                 log.info("[Phase 3] CoT prompt built successfully with {} stages",

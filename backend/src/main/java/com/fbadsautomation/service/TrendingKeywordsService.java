@@ -50,8 +50,10 @@ public class TrendingKeywordsService {
     /**
      * Build deterministic Redis cache key (also used by SpEL)
      */
-    public static String buildCacheKey(String query, String region) {
-        return sanitizeQuery(query).toLowerCase() + "_" + sanitizeRegion(region);
+    public static String buildCacheKey(String query, String region, String language) {
+        return sanitizeQuery(query).toLowerCase()
+            + "_" + sanitizeRegion(region)
+            + "_" + sanitizeLanguage(language);
     }
 
     /**
@@ -64,16 +66,18 @@ public class TrendingKeywordsService {
      */
     @Cacheable(
         value = "trends",
-        key = "T(com.fbadsautomation.service.TrendingKeywordsService).buildCacheKey(#query, #region)",
+        key = "T(com.fbadsautomation.service.TrendingKeywordsService).buildCacheKey(#query, #region, #language)",
         unless = "#result == null"
     )
-    public List<TrendingKeyword> fetchTrends(String query, String region) {
+    public List<TrendingKeyword> fetchTrends(String query, String region, String language) {
         String normalizedQuery = sanitizeQuery(query);
         String normalizedRegion = sanitizeRegion(region);
+        String normalizedLanguage = sanitizeLanguage(language);
 
-        log.info("Fetching trends for query: {} in region: {}", normalizedQuery, normalizedRegion);
+        log.info("Fetching trends for query: {} in region: {} (language={})",
+            normalizedQuery, normalizedRegion, normalizedLanguage);
 
-        String cacheKey = "trends:" + buildCacheKey(query, region);
+        String cacheKey = "trends:" + buildCacheKey(query, region, language);
         @SuppressWarnings("unchecked")
         List<TrendingKeyword> cachedTrends = (List<TrendingKeyword>) redisTemplate.opsForValue().get(cacheKey);
 
@@ -82,16 +86,16 @@ public class TrendingKeywordsService {
             return cachedTrends;
         }
 
-        List<TrendingKeyword> googleTrends = fetchFromGoogleTrends(normalizedQuery, normalizedRegion);
+        List<TrendingKeyword> googleTrends = fetchFromGoogleTrends(normalizedQuery, normalizedRegion, normalizedLanguage);
         List<TrendingKeyword> tiktokTrends = extractTikTokTrends(normalizedQuery, normalizedRegion);
 
         List<TrendingKeyword> mergedTrends = mergeTrendSources(googleTrends, tiktokTrends);
 
         if (mergedTrends == null || mergedTrends.isEmpty()) {
             log.info("Using mock trends data (API not available or failed)");
-            mergedTrends = generateMockTrends(normalizedQuery, normalizedRegion);
+            mergedTrends = generateMockTrends(normalizedQuery, normalizedRegion, normalizedLanguage);
         } else if (mergedTrends.size() < 5) {
-            mergedTrends = enrichWithFallbacks(mergedTrends, normalizedQuery, normalizedRegion);
+            mergedTrends = enrichWithFallbacks(mergedTrends, normalizedQuery, normalizedRegion, normalizedLanguage);
         }
 
         redisTemplate.opsForValue().set(cacheKey, mergedTrends, 60, TimeUnit.MINUTES);
@@ -100,14 +104,14 @@ public class TrendingKeywordsService {
         return mergedTrends;
     }
 
-    private List<TrendingKeyword> fetchFromGoogleTrends(String query, String region) {
+    private List<TrendingKeyword> fetchFromGoogleTrends(String query, String region, String language) {
         if (googleTrendsApiService == null || !googleTrendsApiService.isApiAvailable()) {
             log.debug("Google Trends API not configured. Skipping real-time data.");
             return Collections.emptyList();
         }
 
         try {
-            List<TrendingKeyword> results = googleTrendsApiService.fetchTrendsFromApi(query, region);
+            List<TrendingKeyword> results = googleTrendsApiService.fetchTrendsFromApi(query, region, language);
             return results != null ? results : Collections.emptyList();
         } catch (Exception e) {
             log.error("Error fetching Google Trends data: {}", e.getMessage(), e);
@@ -116,6 +120,7 @@ public class TrendingKeywordsService {
     }
 
     private List<TrendingKeyword> extractTikTokTrends(String query, String region) {
+        // TODO: TikTok (Apify) integration only supports region filtering today. Add language-aware filtering once upstream supports it.
         if (apifyService == null || !apifyService.isAvailable()) {
             log.debug("Apify/TikTok integration not configured. Skipping TikTok trends.");
             return Collections.emptyList();
@@ -208,9 +213,9 @@ public class TrendingKeywordsService {
         return growthScore + volumeScore;
     }
 
-    private List<TrendingKeyword> enrichWithFallbacks(List<TrendingKeyword> base, String query, String region) {
+    private List<TrendingKeyword> enrichWithFallbacks(List<TrendingKeyword> base, String query, String region, String language) {
         List<TrendingKeyword> enriched = new ArrayList<>(base);
-        List<TrendingKeyword> fallback = generateMockTrends(query, region);
+        List<TrendingKeyword> fallback = generateMockTrends(query, region, language);
 
         for (TrendingKeyword keyword : fallback) {
             if (keyword.getKeyword() == null) continue;
@@ -231,9 +236,14 @@ public class TrendingKeywordsService {
     /**
      * Generate mock trending keywords used as a safety net when real sources fail
      */
-    private List<TrendingKeyword> generateMockTrends(String query, String region) {
+    private List<TrendingKeyword> generateMockTrends(String query, String region, String language) {
         List<TrendingKeyword> trends = new ArrayList<>();
         String lowerQuery = query.toLowerCase();
+        boolean prefersVietnamese = "VN".equalsIgnoreCase(region) || "vi".equalsIgnoreCase(language);
+
+        if (prefersVietnamese) {
+            return generateVietnameseFallbackTrends(query, region);
+        }
 
         if (lowerQuery.contains("tech") || lowerQuery.contains("gadget") || lowerQuery.contains("phone")) {
             trends.add(TrendingKeyword.builder()
@@ -356,11 +366,115 @@ public class TrendingKeywordsService {
         return trends;
     }
 
+    private List<TrendingKeyword> generateVietnameseFallbackTrends(String query, String region) {
+        List<TrendingKeyword> trends = new ArrayList<>();
+        String normalizedQuery = query == null ? "" : query.trim();
+        String topic = normalizedQuery.isEmpty() ? "sản phẩm" : normalizedQuery;
+        String regionCode = sanitizeRegion(region);
+
+        trends.add(TrendingKeyword.builder()
+            .keyword("xu hướng " + topic)
+            .growth(82)
+            .region(regionCode)
+            .searchVolume(95000L)
+            .category("Bản địa hóa")
+            .source("System Fallback (vi)")
+            .build());
+        trends.add(TrendingKeyword.builder()
+            .keyword(topic + " giá tốt")
+            .growth(77)
+            .region(regionCode)
+            .searchVolume(88000L)
+            .category("Bản địa hóa")
+            .source("System Fallback (vi)")
+            .build());
+        trends.add(TrendingKeyword.builder()
+            .keyword(topic + " khuyến mãi")
+            .growth(74)
+            .region(regionCode)
+            .searchVolume(82000L)
+            .category("Bản địa hóa")
+            .source("System Fallback (vi)")
+            .build());
+        trends.add(TrendingKeyword.builder()
+            .keyword("mẫu " + topic + " hot")
+            .growth(69)
+            .region(regionCode)
+            .searchVolume(76000L)
+            .category("Bản địa hóa")
+            .source("System Fallback (vi)")
+            .build());
+        trends.add(TrendingKeyword.builder()
+            .keyword(topic + " chính hãng")
+            .growth(64)
+            .region(regionCode)
+            .searchVolume(69000L)
+            .category("Bản địa hóa")
+            .source("System Fallback (vi)")
+            .build());
+
+        String lower = topic.toLowerCase();
+        if (lower.contains("tech") || lower.contains("gadget") || lower.contains("phone")) {
+            trends.add(TrendingKeyword.builder()
+                .keyword("điện thoại AI mới")
+                .growth(90)
+                .region(regionCode)
+                .searchVolume(120000L)
+                .category("Công nghệ")
+                .source("System Fallback (vi)")
+                .build());
+            trends.add(TrendingKeyword.builder()
+                .keyword("kết nối 5G Việt Nam")
+                .growth(76)
+                .region(regionCode)
+                .searchVolume(91000L)
+                .category("Công nghệ")
+                .source("System Fallback (vi)")
+                .build());
+        } else if (lower.contains("fashion") || lower.contains("clothing") || lower.contains("apparel")) {
+            trends.add(TrendingKeyword.builder()
+                .keyword("thời trang bền vững")
+                .growth(88)
+                .region(regionCode)
+                .searchVolume(105000L)
+                .category("Thời trang")
+                .source("System Fallback (vi)")
+                .build());
+            trends.add(TrendingKeyword.builder()
+                .keyword("phong cách vintage")
+                .growth(72)
+                .region(regionCode)
+                .searchVolume(87000L)
+                .category("Thời trang")
+                .source("System Fallback (vi)")
+                .build());
+        } else if (lower.contains("food") || lower.contains("restaurant") || lower.contains("cooking")) {
+            trends.add(TrendingKeyword.builder()
+                .keyword("ẩm thực healthy")
+                .growth(86)
+                .region(regionCode)
+                .searchVolume(99000L)
+                .category("Ẩm thực")
+                .source("System Fallback (vi)")
+                .build());
+            trends.add(TrendingKeyword.builder()
+                .keyword("thực đơn eat clean")
+                .growth(70)
+                .region(regionCode)
+                .searchVolume(91000L)
+                .category("Ẩm thực")
+                .source("System Fallback (vi)")
+                .build());
+        }
+
+        return trends;
+    }
+
     /**
      * Clear trend cache for a specific query and region
      */
-    public void clearTrendCache(String query, String region) {
-        String cacheKey = "trends:" + buildCacheKey(query, region);
+    public void clearTrendCache(String query, String region, String language) {
+        String cacheKey = "trends:" + buildCacheKey(query, region, language);
         redisTemplate.delete(cacheKey);
         log.info("Cleared trend cache for {}", cacheKey);
     }
@@ -371,6 +485,10 @@ public class TrendingKeywordsService {
 
     private static String sanitizeRegion(String region) {
         return (region == null || region.isBlank()) ? "US" : region.trim().toUpperCase();
+    }
+
+    private static String sanitizeLanguage(String language) {
+        return (language == null || language.isBlank()) ? "en" : language.trim().toLowerCase();
     }
 
     private List<KeywordCandidate> extractKeywordCandidates(CompetitorAdDTO ad) {

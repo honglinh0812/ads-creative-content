@@ -63,6 +63,12 @@ public class AdImprovementRequest {
 
     private String websiteUrl;
 
+    /**
+     * When true, prompt builder skips Facebook character limit instructions.
+     * Defaults to false for backward compatibility.
+     */
+    private Boolean allowUnlimitedLength;
+
     @Valid
     private List<LeadFormQuestion> leadFormQuestions;
 

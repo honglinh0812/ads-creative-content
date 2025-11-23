@@ -64,7 +64,8 @@ public class ChainOfThoughtPromptBuilder {
         AdType adType,
         int numberOfVariations,
         String referenceContent,
-        String referenceLink
+        String referenceLink,
+        boolean enforceCharacterLimits
     ) {
         log.info("[Phase 3] Building CoT prompt: language={}, adType={}, variations={}, persona={}, keywords={}",
                 language, adType, numberOfVariations,
@@ -84,13 +85,13 @@ public class ChainOfThoughtPromptBuilder {
         prompt.append(buildStage3_CreativeDirection(adStyle, trendingKeywords, referenceContent, referenceLink, userPrompt, isVietnamese));
 
         // Stage 4: Constraints & Requirements
-        prompt.append(buildStage4_Constraints(callToAction, language, isVietnamese));
+        prompt.append(buildStage4_Constraints(callToAction, language, isVietnamese, enforceCharacterLimits));
 
         // Stage 5: Reasoning Process
-        prompt.append(buildStage5_ReasoningProcess(persona, adStyle, isVietnamese));
+        prompt.append(buildStage5_ReasoningProcess(persona, adStyle, isVietnamese, enforceCharacterLimits));
 
         // Stage 6: Generation Instruction
-        prompt.append(buildStage6_GenerationInstruction(numberOfVariations, language, isVietnamese));
+        prompt.append(buildStage6_GenerationInstruction(numberOfVariations, language, isVietnamese, enforceCharacterLimits));
 
         log.debug("[Phase 3] CoT prompt built successfully (length: {} chars)", prompt.length());
         return prompt.toString();
@@ -214,15 +215,22 @@ public class ChainOfThoughtPromptBuilder {
      * Stage 4: Constraints & Requirements
      * Strict Facebook requirements and language enforcement
      */
-    private String buildStage4_Constraints(FacebookCTA callToAction, Language language, boolean isVietnamese) {
+    private String buildStage4_Constraints(FacebookCTA callToAction,
+                                           Language language,
+                                           boolean isVietnamese,
+                                           boolean enforceCharacterLimits) {
         String ctaDisplay = callToAction != null
             ? (isVietnamese ? callToAction.getDisplayNameVietnamese() : callToAction.name())
             : (isVietnamese ? "Không xác định" : "Not specified");
 
         if (isVietnamese) {
-            return String.format("""
+            StringBuilder stage = new StringBuilder("""
                 📏 YÊU CẦU FACEBOOK (NGHIÊM NGẶT - BẮT BUỘC TUÂN THỦ)
 
+                """);
+
+            if (enforceCharacterLimits) {
+                stage.append("""
                 ⚠️ GIỚI HẠN KÝ TỰ - TUYỆT ĐỐI KHÔNG ĐƯỢC VƯỢT QUÁ:
                 - Tiêu đề (headline): NGHIÊM NGẶT 40 ký tự
                   * Đếm TỪNG ký tự kể cả dấu cách và dấu câu
@@ -233,6 +241,10 @@ public class ChainOfThoughtPromptBuilder {
                 - Mô tả (description): NGHIÊM NGẶT 125 ký tự
                 - Văn bản chính (primaryText): NGHIÊM NGẶT 1000 ký tự
 
+                """);
+            }
+
+            stage.append(String.format("""
                 Tuân thủ chính sách:
                 - Không dùng từ cấm: "miễn phí", "đảm bảo", "kỳ diệu", "click vào đây", "mua ngay", "gây sốc"
                 - Không cường điệu, phóng đại
@@ -242,11 +254,16 @@ public class ChainOfThoughtPromptBuilder {
                 Call-to-Action: %s
                 Ngôn ngữ: TIẾNG VIỆT ← QUAN TRỌNG: Output PHẢI 100%% tiếng Việt, KHÔNG được lẫn tiếng Anh
 
-                """, ctaDisplay);
+                """, ctaDisplay));
+            return stage.toString();
         } else {
-            return String.format("""
+            StringBuilder stage = new StringBuilder("""
                 📏 FACEBOOK REQUIREMENTS (STRICT - MANDATORY COMPLIANCE)
 
+                """);
+
+            if (enforceCharacterLimits) {
+                stage.append("""
                 ⚠️ CHARACTER LIMITS - ABSOLUTELY MUST NOT EXCEED:
                 - Headline: STRICTLY 40 characters
                   * Count EVERY character including spaces and punctuation
@@ -257,6 +274,10 @@ public class ChainOfThoughtPromptBuilder {
                 - Description: STRICTLY 125 characters
                 - Primary Text: STRICTLY 1000 characters
 
+                """);
+            }
+
+            stage.append(String.format("""
                 Policy Compliance:
                 - No prohibited words: "free", "guaranteed", "miracle", "click here", "buy now", "shocking"
                 - No exaggerated claims
@@ -266,7 +287,8 @@ public class ChainOfThoughtPromptBuilder {
                 Call-to-Action: %s
                 Language: ENGLISH ← CRITICAL: Output MUST be 100%% English, NO Vietnamese mixed in
 
-                """, ctaDisplay);
+                """, ctaDisplay));
+            return stage.toString();
         }
     }
 
@@ -274,7 +296,10 @@ public class ChainOfThoughtPromptBuilder {
      * Stage 5: Reasoning Process
      * Guide the AI through step-by-step thinking
      */
-    private String buildStage5_ReasoningProcess(Persona persona, AdStyle adStyle, boolean isVietnamese) {
+    private String buildStage5_ReasoningProcess(Persona persona,
+                                                AdStyle adStyle,
+                                                boolean isVietnamese,
+                                                boolean enforceCharacterLimits) {
         if (isVietnamese) {
             StringBuilder stage = new StringBuilder("""
                 🧠 QUY TRÌNH SUY LUẬN
@@ -323,7 +348,13 @@ public class ChainOfThoughtPromptBuilder {
                    - Tone/ngôn ngữ nào phù hợp nhất?
 
                 4. ĐẢM BẢO TUÂN THỦ
-                   - Có tuân thủ giới hạn ký tự không?
+                """);
+
+            if (enforceCharacterLimits) {
+                stage.append("                   - Có tuân thủ giới hạn ký tự không?\n");
+            }
+
+            stage.append("""
                    - Có tránh từ cấm không?
                    - Có 100% tiếng Việt không?
                    - Call-to-action có rõ ràng không?
@@ -384,7 +415,13 @@ public class ChainOfThoughtPromptBuilder {
                    - What tone/language best suits the audience?
 
                 4. ENSURE COMPLIANCE
-                   - Are character limits respected?
+                """);
+
+            if (enforceCharacterLimits) {
+                stage.append("                   - Are character limits respected?\n");
+            }
+
+            stage.append("""
                    - Are prohibited words avoided?
                    - Is the language 100% English?
                    - Is the call-to-action clear?
@@ -404,7 +441,26 @@ public class ChainOfThoughtPromptBuilder {
      * Stage 6: Generation Instruction
      * Final instruction with strict format requirements
      */
-    private String buildStage6_GenerationInstruction(int numberOfVariations, Language language, boolean isVietnamese) {
+    private String buildStage6_GenerationInstruction(int numberOfVariations,
+                                                     Language language,
+                                                     boolean isVietnamese,
+                                                     boolean enforceCharacterLimits) {
+        String headlineConstraint = "";
+        String descriptionConstraint = "";
+        String primaryConstraint = "";
+
+        if (enforceCharacterLimits) {
+            if (isVietnamese) {
+                headlineConstraint = " (tối đa 40 ký tự)";
+                descriptionConstraint = " (tối đa 125 ký tự)";
+                primaryConstraint = " (tối đa 1000 ký tự)";
+            } else {
+                headlineConstraint = " (max 40 characters)";
+                descriptionConstraint = " (max 125 characters)";
+                primaryConstraint = " (max 1000 characters)";
+            }
+        }
+
         if (isVietnamese) {
             return String.format("""
                 ✍️ HƯỚNG DẪN TẠO NỘI DUNG
@@ -419,15 +475,15 @@ public class ChainOfThoughtPromptBuilder {
 
                 JSON Object:
                 {
-                  "headline": "Tiêu đề hấp dẫn ở đây (tối đa 40 ký tự)",
-                  "description": "Mô tả cuốn hút ở đây (tối đa 125 ký tự)",
-                  "primaryText": "Văn bản chính đầy đủ với giá trị đề xuất rõ ràng và kêu gọi hành động (tối đa 1000 ký tự)",
+                  "headline": "Tiêu đề hấp dẫn ở đây%s",
+                  "description": "Mô tả cuốn hút ở đây%s",
+                  "primaryText": "Văn bản chính đầy đủ với giá trị đề xuất rõ ràng và kêu gọi hành động%s",
                   "callToAction": "Phải khớp với CTA được yêu cầu ở trên",
                   "imagePrompt": "Mô tả ngắn gọn cho ảnh minh họa phù hợp phong cách"
                 }
 
                 Tạo ngay bây giờ và CHỈ trả về JSON object hợp lệ như mẫu trên cho mỗi biến thể:
-                """, numberOfVariations);
+                """, numberOfVariations, headlineConstraint, descriptionConstraint, primaryConstraint);
         } else {
             return String.format("""
                 ✍️ GENERATION INSTRUCTIONS
@@ -442,15 +498,15 @@ public class ChainOfThoughtPromptBuilder {
 
                 JSON Object:
                 {
-                  "headline": "Compelling headline here (max 40 chars)",
-                  "description": "Engaging description here (max 125 chars)",
-                  "primaryText": "Full primary text with value proposition and CTA (max 1000 chars)",
+                  "headline": "Compelling headline here%s",
+                  "description": "Engaging description here%s",
+                  "primaryText": "Full primary text with value proposition and CTA%s",
                   "callToAction": "Must match the CTA specified above",
                   "imagePrompt": "Short scene description for the image generation model"
                 }
 
                 Generate now and ONLY return a valid JSON object matching the schema above for each variation:
-                """, numberOfVariations);
+                """, numberOfVariations, headlineConstraint, descriptionConstraint, primaryConstraint);
         }
     }
 

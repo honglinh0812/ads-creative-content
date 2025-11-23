@@ -63,7 +63,8 @@
                 v-for="noti in recentNotifications" 
                 :key="noti.id" 
                 :class="[
-                  'notification-item hover:bg-neutral-50 dark:hover:bg-neutral-700',
+                  'notification-item',
+                  getNotificationTypeClass(noti),
                   { 'notification-read': noti.read }
                 ]"
                 role="listitem"
@@ -71,16 +72,13 @@
                 @keydown.enter="handleNotificationClick(noti)"
                 @keydown.space.prevent="handleNotificationClick(noti)"
                 @click="handleNotificationClick(noti)"
-                :aria-label="`${$t('notifications.title')}: ${noti.title || noti.type}. ${noti.message}. ${formatTime(noti.timestamp)}`"
+                :aria-label="`${$t('notifications.title')}: ${getNotificationTitle(noti)}. ${noti.message}. ${formatTime(noti.timestamp)}`"
               >
-                <span class="noti-icon" :class="noti.type" aria-hidden="true">
-                  <i v-if="noti.type==='success'" class="pi pi-check-circle text-success-500"></i>
-                  <i v-else-if="noti.type==='error'" class="pi pi-times-circle text-error-500"></i>
-                  <i v-else-if="noti.type==='warning'" class="pi pi-exclamation-triangle text-warning-500"></i>
-                  <i v-else class="pi pi-info-circle text-primary-500"></i>
+                <span class="noti-icon" :class="normalizeNotificationType(noti)" aria-hidden="true">
+                  <i :class="getNotificationIcon(normalizeNotificationType(noti))"></i>
                 </span>
                 <div class="noti-content">
-                  <div class="noti-title text-neutral-900 dark:text-neutral-100">{{ noti.title || noti.type }}</div>
+                  <div class="noti-title text-neutral-900 dark:text-neutral-100">{{ getNotificationTitle(noti) }}</div>
                   <div class="noti-message text-neutral-600 dark:text-neutral-400">{{ noti.message }}</div>
                   <div class="noti-time text-neutral-500 dark:text-neutral-500">{{ formatTime(noti.timestamp) }}</div>
                 </div>
@@ -284,13 +282,42 @@ export default {
       this.$store.dispatch('toast/markAllAsRead')
     },
     getNotificationIcon(type) {
+      const normalized = this.normalizeNotificationType(type)
       const iconMap = {
         success: 'pi pi-check-circle text-success-500',
         error: 'pi pi-times-circle text-error-500',
         warning: 'pi pi-exclamation-triangle text-warning-500',
         info: 'pi pi-info-circle text-primary-500'
       }
-      return iconMap[type] || iconMap.info
+      return iconMap[normalized] || iconMap.info
+    },
+    normalizeNotificationType(notificationOrType) {
+      const fallback = 'info'
+      const allowed = ['success', 'error', 'warning', 'info']
+      const rawType = typeof notificationOrType === 'string'
+        ? notificationOrType
+        : notificationOrType?.type
+      if (!rawType) {
+        return fallback
+      }
+      const normalized = String(rawType).toLowerCase()
+      return allowed.includes(normalized) ? normalized : fallback
+    },
+    getNotificationTypeClass(notification) {
+      const type = this.normalizeNotificationType(notification)
+      return `notification-item--${type}`
+    },
+    getNotificationTitle(notification) {
+      if (notification?.title) {
+        return notification.title
+      }
+      const type = this.normalizeNotificationType(notification)
+      const translationKey = `notifications.defaultTitle.${type}`
+      const translated = this.$t(translationKey)
+      if (translated && translated !== translationKey) {
+        return translated
+      }
+      return type.charAt(0).toUpperCase() + type.slice(1)
     },
     formatTime(ts) {
       if (!ts) return ''
@@ -637,7 +664,7 @@ export default {
   border-radius: 1rem;
   z-index: 1100;
   max-height: 28rem;
-  overflow: hidden;
+  overflow: visible;
   animation: slideDown 0.2s ease-out;
   backdrop-filter: blur(8px);
   box-shadow: 0 10px 40px rgb(0 0 0 / 20%);
@@ -660,38 +687,91 @@ export default {
 .notification-list {
   max-height: 20rem;
   overflow-y: auto;
+  padding: 0.75rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .notification-item {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid theme('colors.neutral.100');
-  transition: background-color 0.15s ease;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid theme('colors.neutral.200');
+  border-left-width: 4px;
+  border-left-color: theme('colors.primary.400');
+  border-radius: 0.9rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgb(15 23 42 / 6%);
+  background: theme('colors.white');
 }
 
 .dark .notification-item {
-  border-bottom-color: theme('colors.neutral.700');
+  border-color: theme('colors.neutral.700');
+  border-left-color: theme('colors.primary.500');
+  background: theme('colors.neutral.900');
+  box-shadow: 0 12px 20px rgb(0 0 0 / 35%);
 }
 
 .notification-item.notification-read {
-  opacity: 0.7;
-}
-
-.notification-item:last-child {
-  border-bottom: none;
+  opacity: 0.75;
+  border-style: dashed;
 }
 
 .notification-item:hover {
-  background: theme('colors.primary.50');
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgb(15 23 42 / 12%);
+}
+
+.notification-item--success {
+  border-left-color: theme('colors.success.500');
+}
+
+.notification-item--error {
+  border-left-color: theme('colors.error.500');
+}
+
+.notification-item--warning {
+  border-left-color: theme('colors.warning.500');
+}
+
+.notification-item--info {
+  border-left-color: theme('colors.primary.500');
 }
 
 .noti-icon {
-  font-size: 1.25rem;
-  margin-top: 0.125rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: theme('colors.neutral.100');
   flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgb(15 23 42 / 6%);
+}
+
+.notification-item--success .noti-icon {
+  background: rgb(34 197 94 / 12%);
+}
+
+.notification-item--error .noti-icon {
+  background: rgb(239 68 68 / 12%);
+}
+
+.notification-item--warning .noti-icon {
+  background: rgb(245 158 11 / 15%);
+}
+
+.notification-item--info .noti-icon {
+  background: rgb(59 130 246 / 12%);
+}
+
+.dark .noti-icon {
+  background: theme('colors.neutral.800');
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
 }
 
 .noti-content {
@@ -700,21 +780,43 @@ export default {
 }
 
 .noti-title {
-  font-weight: 600;
-  font-size: 0.875rem;
-  margin-bottom: 0.25rem;
-  line-height: 1.25;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.35rem;
+  line-height: 1.3;
+}
+
+.notification-item--success .noti-title {
+  color: theme('colors.success.600');
+}
+
+.notification-item--error .noti-title {
+  color: theme('colors.error.600');
+}
+
+.notification-item--warning .noti-title {
+  color: theme('colors.warning.600');
+}
+
+.notification-item--info .noti-title {
+  color: theme('colors.primary.600');
 }
 
 .noti-message {
-  font-size: 0.8125rem;
-  line-height: 1.4;
+  font-size: 0.85rem;
+  line-height: 1.5;
   margin-bottom: 0.25rem;
+  color: theme('colors.neutral.700');
+  font-weight: 500;
+}
+
+.dark .noti-message {
+  color: theme('colors.neutral.200');
 }
 
 .noti-time {
   font-size: 0.75rem;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .notification-footer {

@@ -186,6 +186,7 @@ export default {
     return {
       searchQuery: '',
       selectedRegion: 'US',
+      hasManualRegionSelection: false,
       trends: [],
       loading: false,
       hasSearched: false,
@@ -214,6 +215,14 @@ export default {
     },
     addButtonText() {
       return this.$t('components.trendingKeywords.addButton', { count: this.selectedKeywords.length })
+    }
+  },
+  watch: {
+    language: {
+      immediate: true,
+      handler(newLanguage) {
+        this.applyLanguageDefaults(newLanguage);
+      }
     }
   },
   methods: {
@@ -264,6 +273,7 @@ export default {
       this.fetchTrends();
     },
     handleRegionChange() {
+      this.hasManualRegionSelection = true;
       // Auto-search when region changes if there's already a query
       if (this.searchQuery.trim() && this.hasSearched) {
         this.fetchTrends();
@@ -287,7 +297,8 @@ export default {
         const response = await axios.get('/api/trends/search', {
           params: {
             query: this.searchQuery.trim(),
-            region: this.selectedRegion
+            region: this.selectedRegion,
+            language: this.getLanguageParam()
           }
         });
 
@@ -379,6 +390,32 @@ export default {
     },
     validateAll() {
       return this.validateSearchQuery();
+    },
+    applyLanguageDefaults(language) {
+      const resolvedRegion = this.resolveRegionFromLanguage(language);
+      if (!resolvedRegion) {
+        return;
+      }
+      if (!this.hasManualRegionSelection && this.selectedRegion !== resolvedRegion) {
+        this.selectedRegion = resolvedRegion;
+        if (this.searchQuery.trim() && this.hasSearched) {
+          this.fetchTrends();
+        }
+      }
+    },
+    resolveRegionFromLanguage(language) {
+      const normalized = (language || '').toLowerCase();
+      if (normalized.startsWith('vi')) {
+        return 'VN';
+      }
+      if (normalized.startsWith('en')) {
+        return 'US';
+      }
+      return 'US';
+    },
+    getLanguageParam() {
+      const normalized = (this.language || '').trim();
+      return normalized ? normalized.toLowerCase() : 'en';
     }
   }
 };

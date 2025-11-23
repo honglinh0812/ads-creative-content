@@ -61,18 +61,18 @@
       </div>
     </div>
 
-    <div v-if="!compact && score.suggestions && score.suggestions.length > 0" class="suggestions">
+    <div v-if="!compact && localizedSuggestions.length > 0" class="suggestions">
       <h4>{{ $t('qualityScore.suggestions.title') }}</h4>
       <ul>
-        <li v-for="(suggestion, index) in score.suggestions" :key="index">
+        <li v-for="(suggestion, index) in localizedSuggestions" :key="index">
           {{ suggestion }}
         </li>
       </ul>
     </div>
 
     <!-- Compact mode: show top suggestion only -->
-    <div v-if="compact && score.suggestions && score.suggestions.length > 0" class="compact-suggestion">
-      💡 {{ score.suggestions[0] }}
+    <div v-if="compact && localizedSuggestions.length > 0" class="compact-suggestion">
+      💡 {{ localizedSuggestions[0] }}
     </div>
   </div>
 </template>
@@ -103,6 +103,16 @@ export default {
       default: false
     }
   },
+  computed: {
+    localizedSuggestions() {
+      if (!this.score || !Array.isArray(this.score.suggestions)) {
+        return []
+      }
+      return this.score.suggestions
+        .map(suggestion => this.translateSuggestion(suggestion))
+        .filter(Boolean)
+    }
+  },
   methods: {
     getScoreClass(score) {
       if (score >= 80) return 'excellent';
@@ -123,6 +133,66 @@ export default {
       if (percentage >= 80) return '#52c41a'; // Green
       if (percentage >= 60) return '#faad14'; // Yellow
       return '#f5222d'; // Red
+    },
+    translateSuggestion(text) {
+      if (!text) return ''
+
+      const patterns = [
+        {
+          regex: /^Headline is too long \((\d+) chars, max (\d+)\)/i,
+          key: 'qualityScore.suggestions.headlineTooLong',
+          params: match => ({ current: match[1], max: match[2] })
+        },
+        {
+          regex: /^Description is too long \((\d+) chars, max (\d+)\)/i,
+          key: 'qualityScore.suggestions.descriptionTooLong',
+          params: match => ({ current: match[1], max: match[2] })
+        },
+        {
+          regex: /^Primary text is too long \((\d+) chars, max (\d+)\)/i,
+          key: 'qualityScore.suggestions.primaryTextTooLong',
+          params: match => ({ current: match[1], max: match[2] })
+        },
+        {
+          regex: /^Avoid using prohibited word: '([^']+)'/i,
+          key: 'qualityScore.suggestions.prohibitedWord',
+          params: match => ({ word: match[1] })
+        },
+        {
+          regex: /^Improve readability/i,
+          key: 'qualityScore.suggestions.improveReadability'
+        },
+        {
+          regex: /^Add a clear call-to-action/i,
+          key: 'qualityScore.suggestions.addCTA'
+        },
+        {
+          regex: /^Use more power words/i,
+          key: 'qualityScore.suggestions.usePowerWords'
+        },
+        {
+          regex: /^Add a headline/i,
+          key: 'qualityScore.suggestions.addHeadline'
+        },
+        {
+          regex: /^Add a description/i,
+          key: 'qualityScore.suggestions.addDescription'
+        },
+        {
+          regex: /^Add primary text/i,
+          key: 'qualityScore.suggestions.addPrimaryText'
+        }
+      ]
+
+      for (const pattern of patterns) {
+        const match = text.match(pattern.regex)
+        if (match) {
+          const params = pattern.params ? pattern.params(match) : undefined
+          return this.$t(pattern.key, params)
+        }
+      }
+
+      return text
     }
   }
 };
