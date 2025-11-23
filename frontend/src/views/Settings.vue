@@ -2,483 +2,333 @@
   <div class="settings-page">
     <header class="page-header">
       <div>
-        <h1>Settings</h1>
-        <p>Review and update the preferences that power your workspace.</p>
+        <h1>{{ $t('settingsPage.title') }}</h1>
+        <p>{{ $t('settingsPage.subtitle') }}</p>
       </div>
-      <div class="header-actions">
-        <a-button @click="loadSettings" :loading="loading">
-          Reload
-        </a-button>
-        <a-button type="primary" danger @click="handleLogout">
-          <template #icon><logout-outlined /></template>
-          Logout
-        </a-button>
-      </div>
+      <a-button @click="loadProfile" :loading="loading">
+        {{ $t('common.reload') }}
+      </a-button>
     </header>
 
     <a-spin :spinning="loading">
-      <div class="settings-layout">
-        <div class="panels-column">
-          <section id="general" class="settings-panel">
-            <div class="panel-header">
-              <h2>General Preferences</h2>
-              <p>Language, timezone, and theme are synced across the application.</p>
-            </div>
-            <a-form
-              :model="generalSettings"
-              layout="vertical"
-              @finish="updateGeneralSettings"
-              :disabled="loading"
-            >
-              <div class="form-grid">
-                <a-form-item label="Language" name="language">
-                  <a-select v-model:value="generalSettings.language">
-                    <a-select-option
-                      v-for="lang in languageOptions"
-                      :key="lang.value"
-                      :value="lang.value"
-                    >
-                      {{ lang.label }}
-                    </a-select-option>
-                  </a-select>
-                </a-form-item>
-                <a-form-item label="Timezone" name="timezone">
-                  <a-select
-                    v-model:value="generalSettings.timezone"
-                    show-search
-                    option-filter-prop="children"
-                  >
-                    <a-select-option
-                      v-for="tz in timezoneOptions"
-                      :key="tz.value"
-                      :value="tz.value"
-                    >
-                      {{ tz.label }}
-                    </a-select-option>
-                  </a-select>
-                </a-form-item>
-              </div>
-
-              <div class="form-grid">
-                <a-form-item label="Theme" name="theme">
-                  <a-radio-group v-model:value="generalSettings.theme" @change="onThemeChange">
-                    <a-radio value="light">Light</a-radio>
-                    <a-radio value="dark">Dark</a-radio>
-                    <a-radio value="auto">Auto</a-radio>
-                  </a-radio-group>
-                </a-form-item>
-                <a-form-item label="Auto save changes" name="autoSave">
-                  <div class="switch-row">
-                    <a-switch v-model:checked="generalSettings.autoSave" />
-                    <span>When enabled, drafts are saved automatically.</span>
-                  </div>
-                </a-form-item>
-              </div>
-
-              <div class="panel-actions">
-                <a-button html-type="submit" type="primary" :loading="updatingGeneral" :disabled="loading">
-                  Save Preferences
-                </a-button>
-              </div>
-            </a-form>
-          </section>
-
-          <section id="ai" class="settings-panel">
-            <div class="panel-header">
-              <h2>AI Automation</h2>
-              <p>Pick the default provider and guardrails for creative generation.</p>
-            </div>
-            <div class="panel-highlight">
-              <div>
-                <span class="highlight-label">Active provider</span>
-                <strong>{{ resolvedProviderName }}</strong>
-              </div>
-              <div>
-                <span class="highlight-label">Creativity</span>
-                <strong>{{ Math.round(aiSettings.creativity * 100) }}%</strong>
-              </div>
-            </div>
-            <a-form
-              :model="aiSettings"
-              layout="vertical"
-              @finish="updateAISettings"
-              :disabled="loading"
-            >
-              <div class="form-grid">
-                <a-form-item label="Default provider" name="defaultProvider">
-                  <a-select v-model:value="aiSettings.defaultProvider" :loading="providersLoading">
-                    <a-select-option
-                      v-for="provider in providerOptions"
-                      :key="provider.value"
-                      :value="provider.value"
-                    >
-                      {{ provider.label }}
-                    </a-select-option>
-                  </a-select>
-                </a-form-item>
-                <a-form-item label="Output quality" name="quality">
-                  <a-radio-group v-model:value="aiSettings.quality">
-                    <a-radio value="low">Fast (low)</a-radio>
-                    <a-radio value="medium">Balanced</a-radio>
-                    <a-radio value="high">Best (high)</a-radio>
-                  </a-radio-group>
-                </a-form-item>
-              </div>
-
-              <a-form-item label="Creativity" name="creativity">
-                <div class="slider-row">
-                  <a-slider v-model:value="aiSettings.creativity" :min="0" :max="1" :step="0.05" />
-                  <a-input-number
-                    v-model:value="aiSettings.creativity"
-                    :min="0"
-                    :max="1"
-                    :step="0.05"
-                    style="margin-left: 16px; width: 90px"
-                  />
-                </div>
-                <p class="help-text">0 keeps copy close to inputs, 1 allows more experimentation.</p>
+      <div class="settings-grid">
+        <!-- Account Information -->
+        <section class="settings-panel">
+          <div class="panel-header">
+            <h2>{{ $t('profilePage.sections.information') }}</h2>
+            <p>{{ accountSummary }}</p>
+          </div>
+          <a-form :model="profileForm" layout="vertical" @finish="saveProfile">
+            <div class="form-grid">
+              <a-form-item
+                :label="$t('profilePage.fields.fullName')"
+                name="name"
+                :rules="[{ required: true, message: $t('profilePage.validation.nameRequired') }]"
+              >
+                <a-input
+                  v-model:value="profileForm.name"
+                  :placeholder="$t('profilePage.fields.fullName')"
+                />
               </a-form-item>
-
-              <a-form-item label="Auto optimization" name="autoOptimize">
-                <div class="switch-row">
-                  <a-switch v-model:checked="aiSettings.autoOptimize" />
-                  <span>Re-rank generated variants before saving.</span>
-                </div>
+              <a-form-item :label="$t('profilePage.fields.phone')" name="phoneNumber">
+                <a-input
+                  v-model:value="profileForm.phoneNumber"
+                  :placeholder="$t('profilePage.placeholders.phone')"
+                />
               </a-form-item>
-
-              <div class="panel-actions">
-                <a-button html-type="submit" type="primary" :loading="updatingAI" :disabled="loading">
-                  Save AI Settings
-                </a-button>
-              </div>
-            </a-form>
-          </section>
-
-          <section id="notifications" class="settings-panel">
-            <div class="panel-header">
-              <h2>Notifications</h2>
-              <p>Decide when we should ping you about campaign activity.</p>
             </div>
-            <div class="panel-highlight secondary">
+
+            <div class="static-fields">
               <div>
-                <span class="highlight-label">Email channels</span>
-                <strong>{{ emailNotificationCount }} enabled</strong>
+                <span class="static-label">{{ $t('profilePage.fields.email') }}</span>
+                <p>{{ profileMeta.email }}</p>
               </div>
               <div>
-                <span class="highlight-label">Browser alerts</span>
-                <strong>{{ notificationSettings.browserNotifications ? 'On' : 'Off' }}</strong>
+                <span class="static-label">{{ $t('profilePage.fields.memberSince', { date: memberSince }) }}</span>
+                <p>{{ memberSince }}</p>
               </div>
             </div>
-            <a-form
-              :model="notificationSettings"
-              layout="vertical"
-              @finish="updateNotificationSettings"
-              :disabled="loading"
-            >
-              <div class="notification-grid">
-                <div class="toggle-card">
-                  <h4>Email notifications</h4>
-                  <p>Keep an eye on campaign health and reports.</p>
-                  <div class="toggle-item">
-                    <div>
-                      <strong>Campaign updates</strong>
-                      <p>Delivery, budget, and approval status changes.</p>
-                    </div>
-                    <a-switch v-model:checked="notificationSettings.campaignUpdates" />
-                  </div>
-                  <div class="toggle-item">
-                    <div>
-                      <strong>Weekly report</strong>
-                      <p>Performance overview every Monday.</p>
-                    </div>
-                    <a-switch v-model:checked="notificationSettings.weeklyReports" />
-                  </div>
-                  <div class="toggle-item">
-                    <div>
-                      <strong>General email alerts</strong>
-                      <p>Reminders that are not tied to a single campaign.</p>
-                    </div>
-                    <a-switch v-model:checked="notificationSettings.emailNotifications" />
-                  </div>
-                </div>
-                <div class="toggle-card">
-                  <h4>Browser & push</h4>
-                  <p>Surface urgent issues while you are online.</p>
-                  <div class="toggle-item">
-                    <div>
-                      <strong>Browser alerts</strong>
-                      <p>Requires granting permission to this site.</p>
-                    </div>
-                    <a-switch v-model:checked="notificationSettings.browserNotifications" />
-                  </div>
-                  <div class="toggle-item">
-                    <div>
-                      <strong>Push notifications</strong>
-                      <p>Use push services when they are available.</p>
-                    </div>
-                    <a-switch v-model:checked="notificationSettings.pushNotifications" />
-                  </div>
-                </div>
-              </div>
 
-              <div class="panel-actions">
-                <a-button html-type="submit" type="primary" :loading="updatingNotifications" :disabled="loading">
-                  Save Notification Settings
+            <div class="panel-actions">
+              <a-space>
+                <a-button @click="resetProfileForm" :disabled="savingProfile">
+                  {{ $t('profilePage.actions.reset') }}
                 </a-button>
-              </div>
-            </a-form>
-          </section>
-        </div>
+                <a-button type="primary" html-type="submit" :loading="savingProfile">
+                  {{ $t('profilePage.actions.save') }}
+                </a-button>
+              </a-space>
+            </div>
+          </a-form>
+        </section>
 
-        <aside class="aside-column">
-          <div class="aside-card">
-            <h3>Account summary</h3>
-            <p>Signed in as <strong>{{ user?.email || '—' }}</strong></p>
-            <a-descriptions :column="1" size="small">
-              <a-descriptions-item label="Name">
-                {{ user?.name || 'Not provided' }}
-              </a-descriptions-item>
-              <a-descriptions-item label="Preferred language">
-                {{ resolveLanguageLabel(generalSettings.language) }}
-              </a-descriptions-item>
-              <a-descriptions-item label="Timezone">
-                {{ resolveTimezoneLabel(generalSettings.timezone) }}
-              </a-descriptions-item>
-            </a-descriptions>
-            <a-button block style="margin-top: 16px" @click="$router.push('/profile')">
-              Open Profile
-            </a-button>
+        <!-- Workspace Stats -->
+        <section class="settings-panel stats-panel">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <p class="stat-label">{{ $t('profilePage.stats.campaigns') }}</p>
+              <p class="stat-value">{{ stats.totalCampaigns }}</p>
+              <span>{{ $t('profilePage.stats.campaignsLabel') }}</span>
+            </div>
+            <div class="stat-card">
+              <p class="stat-label">{{ $t('profilePage.stats.ads') }}</p>
+              <p class="stat-value">{{ stats.totalAds }}</p>
+              <span>{{ $t('profilePage.stats.adsLabel') }}</span>
+            </div>
           </div>
 
-          <div class="aside-card muted">
-            <h3>Data workspace</h3>
-            <p>Data import/export tools will reappear when the backend wires up dedicated endpoints.</p>
-            <p class="todo-note">
-              TODO: expose /settings/export, /settings/import, and /settings/cache/clear on the backend to enable data tools here.
-            </p>
+          <div class="recent-ads">
+            <div class="panel-header compact">
+              <h3>{{ $t('profilePage.stats.recentTitle') }}</h3>
+              <p>{{ $t('profilePage.stats.recentSubtitle') }}</p>
+            </div>
+            <div v-if="stats.recentAds.length" class="recent-list">
+              <div
+                v-for="item in stats.recentAds"
+                :key="item.id"
+                class="recent-item"
+              >
+                <div>
+                  <strong>{{ item.name || $t('profilePage.stats.untitledAd') }}</strong>
+                  <p>{{ formatAdDate(item.createdDate) }}</p>
+                </div>
+                <span class="status-pill">{{ item.status }}</span>
+              </div>
+            </div>
+            <a-empty v-else :description="$t('profilePage.stats.empty')" />
           </div>
-        </aside>
+        </section>
+
+        <!-- Security -->
+        <section class="settings-panel">
+          <div class="panel-header">
+            <h2>{{ $t('settingsPage.security.title') }}</h2>
+            <p>{{ $t('settingsPage.security.description') }}</p>
+          </div>
+          <a-form :model="passwordForm" layout="vertical" @finish="handleChangePassword">
+            <a-form-item :label="$t('settingsPage.security.current')" name="currentPassword">
+              <a-input-password v-model:value="passwordForm.currentPassword" />
+            </a-form-item>
+
+            <div class="form-grid">
+              <a-form-item
+                :label="$t('settingsPage.security.new')"
+                name="newPassword"
+                :rules="[{ required: true, message: $t('settingsPage.security.validation.newRequired') }]"
+              >
+                <a-input-password v-model:value="passwordForm.newPassword" />
+              </a-form-item>
+              <a-form-item
+                :label="$t('settingsPage.security.confirm')"
+                name="confirmPassword"
+                :rules="[{ required: true, message: $t('settingsPage.security.validation.confirmRequired') }]"
+              >
+                <a-input-password v-model:value="passwordForm.confirmPassword" />
+              </a-form-item>
+            </div>
+
+            <div class="panel-actions">
+              <a-button type="primary" html-type="submit" :loading="changingPassword">
+                {{ $t('settingsPage.security.actions.save') }}
+              </a-button>
+            </div>
+          </a-form>
+        </section>
+
+        <!-- Danger Zone -->
+        <section class="settings-panel danger">
+          <div class="panel-header">
+            <h2>{{ $t('settingsPage.danger.title') }}</h2>
+            <p>{{ $t('settingsPage.danger.description') }}</p>
+          </div>
+          <a-button danger block @click="showDeleteModal = true">
+            {{ $t('settingsPage.danger.cta') }}
+          </a-button>
+        </section>
       </div>
     </a-spin>
+
+    <a-modal
+      v-model:open="showDeleteModal"
+      :title="$t('settingsPage.modals.deleteTitle')"
+      :ok-text="$t('settingsPage.modals.deleteAction')"
+      ok-type="danger"
+      @ok="handleDeleteAccount"
+      :confirm-loading="deleting"
+      @cancel="resetDeleteState"
+    >
+      <p>{{ $t('settingsPage.modals.deleteDescription') }}</p>
+      <p class="confirm-instruction">{{ $t('settingsPage.danger.confirmLabel') }}</p>
+      <a-input
+        v-model:value="deleteConfirmation"
+        :placeholder="$t('settingsPage.danger.confirmPlaceholder')"
+      />
+    </a-modal>
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import { LogoutOutlined } from '@ant-design/icons-vue'
+import dayjs from 'dayjs'
+import { mapActions } from 'vuex'
 import api from '@/services/api'
 
 export default {
   name: 'AppSettings',
-  components: {
-    LogoutOutlined
-  },
   data() {
     return {
       loading: true,
-      updatingGeneral: false,
-      updatingAI: false,
-      updatingNotifications: false,
-      providersLoading: false,
-      generalSettings: {
-        language: 'en',
-        timezone: 'Asia/Ho_Chi_Minh',
-        theme: 'light',
-        autoSave: true
+      savingProfile: false,
+      profileForm: {
+        name: '',
+        phoneNumber: ''
       },
-      aiSettings: {
-        defaultProvider: 'openai',
-        creativity: 0.7,
-        quality: 'high',
-        autoOptimize: true
+      initialProfile: null,
+      profileMeta: {
+        email: '',
+        createdDate: null
       },
-      notificationSettings: {
-        emailNotifications: true,
-        pushNotifications: true,
-        campaignUpdates: true,
-        weeklyReports: true,
-        browserNotifications: true
+      stats: {
+        totalCampaigns: 0,
+        totalAds: 0,
+        recentAds: []
       },
-      providerOptions: [
-        { value: 'openai', label: 'OpenAI GPT' },
-        { value: 'gemini', label: 'Google Gemini' }
-      ],
-      languageOptions: [
-        { value: 'en', label: 'English' },
-        { value: 'vi', label: 'Tiếng Việt' }
-      ],
-      timezoneOptions: [
-        { value: 'Asia/Ho_Chi_Minh', label: 'Ho Chi Minh City (GMT+7)' },
-        { value: 'America/New_York', label: 'New York (GMT-5)' },
-        { value: 'Europe/London', label: 'London (GMT+0)' },
-        { value: 'Asia/Tokyo', label: 'Tokyo (GMT+9)' },
-        { value: 'UTC', label: 'UTC' }
-      ],
-      // TODO: Data import/export widgets should return once /settings/export, /settings/import, and /settings/cache/clear exist.
+      passwordForm: {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      },
+      changingPassword: false,
+      deleting: false,
+      showDeleteModal: false,
+      deleteConfirmation: ''
     }
   },
   computed: {
-    ...mapGetters('auth', ['user']),
-    resolvedProviderName() {
-      const match = this.providerOptions.find(option => option.value === this.aiSettings.defaultProvider)
-      return match ? match.label : this.aiSettings.defaultProvider
+    memberSince() {
+      if (!this.profileMeta.createdDate) return '—'
+      const formatted = dayjs(this.profileMeta.createdDate)
+      return formatted.isValid() ? formatted.format('MMM DD, YYYY') : '—'
     },
-    emailNotificationCount() {
-      const checks = ['emailNotifications', 'campaignUpdates', 'weeklyReports']
-      return checks.filter(key => this.notificationSettings[key]).length
+    accountSummary() {
+      if (!this.profileMeta.email) {
+        return this.$t('profilePage.summary.empty')
+      }
+      return this.$t('profilePage.summary.text', { email: this.profileMeta.email })
     }
   },
   async mounted() {
-    await Promise.all([this.loadSettings(), this.loadProviderOptions()])
+    await this.loadProfile()
   },
   methods: {
-    async loadSettings() {
+    ...mapActions('auth', ['fetchUser']),
+    async loadProfile() {
       this.loading = true
       try {
-        const response = await api.settings.getSettings()
+        const response = await api.auth.getProfile()
         const data = response.data || {}
-        const general = data.general || {}
-        const ai = data.ai || {}
-        const notifications = data.notifications || {}
-
-        this.generalSettings = {
-          language: general.language || 'en',
-          timezone: general.timezone || 'Asia/Ho_Chi_Minh',
-          theme: general.theme || localStorage.getItem('theme') || 'light',
-          autoSave: general.autoSave !== undefined ? general.autoSave : true
+        this.profileForm = {
+          name: data.name || '',
+          phoneNumber: data.phoneNumber || ''
         }
-
-        this.aiSettings = {
-          defaultProvider: ai.defaultProvider || 'openai',
-          creativity: typeof ai.creativity === 'number' ? ai.creativity : 0.7,
-          quality: ai.quality || 'high',
-          autoOptimize: ai.autoOptimize !== undefined ? ai.autoOptimize : true
+        this.initialProfile = { ...this.profileForm }
+        this.profileMeta = {
+          email: data.email || '',
+          createdDate: data.createdDate
         }
-
-        this.notificationSettings = {
-          emailNotifications: notifications.emailNotifications !== undefined ? notifications.emailNotifications : true,
-          pushNotifications: notifications.pushNotifications !== undefined ? notifications.pushNotifications : true,
-          campaignUpdates: notifications.campaignUpdates !== undefined ? notifications.campaignUpdates : true,
-          weeklyReports: notifications.weeklyReports !== undefined ? notifications.weeklyReports : true,
-          browserNotifications: notifications.browserNotifications !== undefined ? notifications.browserNotifications : true
+        this.stats = {
+          totalCampaigns: data.stats?.totalCampaigns || 0,
+          totalAds: data.stats?.totalAds || 0,
+          recentAds: data.stats?.recentAds || []
         }
-
-        this.applyTheme(this.generalSettings.theme)
       } catch (error) {
-        console.error('Error loading settings:', error)
-        this.$message.error('Failed to load settings')
+        console.error('Error loading profile:', error)
+        this.$message.error(this.$t('profilePage.messages.loadError'))
       } finally {
         this.loading = false
       }
     },
-
-    async loadProviderOptions() {
-      this.providersLoading = true
-      try {
-        const textResponse = await api.providers.getTextProviders()
-        if (Array.isArray(textResponse.data) && textResponse.data.length > 0) {
-          this.providerOptions = textResponse.data.map(provider => ({
-            value: provider.id,
-            label: provider.name
-          }))
-        }
-      } catch (error) {
-        console.error('Error loading provider options:', error)
-        // keep defaults
-      } finally {
-        this.providersLoading = false
+    resetProfileForm() {
+      if (this.initialProfile) {
+        this.profileForm = { ...this.initialProfile }
       }
     },
-
-    async updateGeneralSettings() {
-      this.updatingGeneral = true
+    formatAdDate(date) {
+      if (!date) return ''
+      const parsed = dayjs(date)
+      return parsed.isValid() ? parsed.format('MMM DD, YYYY') : ''
+    },
+    async saveProfile() {
+      this.savingProfile = true
       try {
-        await api.settings.updateGeneralSettings({
-          language: this.generalSettings.language,
-          timezone: this.generalSettings.timezone,
-          theme: this.generalSettings.theme,
-          autoSave: this.generalSettings.autoSave
+        await api.auth.updateProfile({
+          name: this.profileForm.name,
+          phoneNumber: this.profileForm.phoneNumber
         })
-        this.applyTheme(this.generalSettings.theme)
-        this.$message.success('General settings updated')
+        this.initialProfile = { ...this.profileForm }
+        await this.fetchUser()
+        this.$message.success(this.$t('profilePage.messages.updateSuccess'))
+        await this.loadProfile()
       } catch (error) {
-        console.error('Error updating general settings:', error)
-        this.$message.error('Failed to update general settings')
+        console.error('Error updating profile:', error)
+        this.$message.error(this.$t('profilePage.messages.updateError'))
       } finally {
-        this.updatingGeneral = false
+        this.savingProfile = false
       }
     },
-
-    async updateAISettings() {
-      this.updatingAI = true
+    resetPasswordForm() {
+      this.passwordForm = {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }
+    },
+    async handleChangePassword() {
+      if (this.passwordForm.newPassword.length < 6) {
+        this.$message.error(this.$t('settingsPage.security.messages.tooShort'))
+        return
+      }
+      if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+        this.$message.error(this.$t('settingsPage.security.messages.mismatch'))
+        return
+      }
+      this.changingPassword = true
       try {
-        await api.settings.updateAISettings({
-          defaultProvider: this.aiSettings.defaultProvider,
-          creativity: this.aiSettings.creativity,
-          quality: this.aiSettings.quality,
-          autoOptimize: this.aiSettings.autoOptimize
+        await api.auth.changePassword({
+          currentPassword: this.passwordForm.currentPassword,
+          newPassword: this.passwordForm.newPassword
         })
-        this.$message.success('AI settings updated')
+        this.$message.success(this.$t('settingsPage.security.messages.success'))
+        this.resetPasswordForm()
       } catch (error) {
-        console.error('Error updating AI settings:', error)
-        this.$message.error('Failed to update AI settings')
+        console.error('Error updating password:', error)
+        const msg = error.response?.data?.message || this.$t('settingsPage.security.messages.error')
+        this.$message.error(msg)
       } finally {
-        this.updatingAI = false
+        this.changingPassword = false
       }
     },
-
-    async updateNotificationSettings() {
-      this.updatingNotifications = true
+    resetDeleteState() {
+      this.deleteConfirmation = ''
+      this.showDeleteModal = false
+    },
+    async handleDeleteAccount() {
+      if (this.deleteConfirmation !== 'DELETE') {
+        this.$message.error(this.$t('settingsPage.danger.validation'))
+        return
+      }
+      this.deleting = true
       try {
-        await api.settings.updateNotificationSettings({
-          emailNotifications: this.notificationSettings.emailNotifications,
-          pushNotifications: this.notificationSettings.pushNotifications,
-          campaignUpdates: this.notificationSettings.campaignUpdates,
-          weeklyReports: this.notificationSettings.weeklyReports,
-          browserNotifications: this.notificationSettings.browserNotifications
-        })
-        this.$message.success('Notification settings updated')
+        await api.auth.deleteAccount()
+        this.$message.success(this.$t('settingsPage.danger.messages.success'))
+        this.$store.dispatch('auth/logout')
       } catch (error) {
-        console.error('Error updating notification settings:', error)
-        this.$message.error('Failed to update notification settings')
+        console.error('Error deleting account:', error)
+        const msg = error.response?.data?.message || this.$t('settingsPage.danger.messages.error')
+        this.$message.error(msg)
       } finally {
-        this.updatingNotifications = false
+        this.deleting = false
+        this.resetDeleteState()
       }
-    },
-
-    onThemeChange() {
-      this.applyTheme(this.generalSettings.theme)
-    },
-
-    applyTheme(theme) {
-      localStorage.setItem('theme', theme)
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark')
-      } else if (theme === 'light') {
-        document.documentElement.classList.remove('dark')
-      } else {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        if (prefersDark) {
-          document.documentElement.classList.add('dark')
-        } else {
-          document.documentElement.classList.remove('dark')
-        }
-      }
-    },
-
-    resolveLanguageLabel(value) {
-      const match = this.languageOptions.find(option => option.value === value)
-      return match ? match.label : value
-    },
-
-    resolveTimezoneLabel(value) {
-      const match = this.timezoneOptions.find(option => option.value === value)
-      return match ? match.label : value
-    },
-
-    handleLogout() {
-      this.$store.dispatch('auth/logout')
-      this.$router.push('/login')
     }
   }
 }
@@ -487,8 +337,8 @@ export default {
 <style lang="scss" scoped>
 .settings-page {
   padding: 24px;
-  background: #f5f6fa;
   min-height: 100vh;
+  background: #f5f6fa;
 }
 
 .page-header {
@@ -510,20 +360,9 @@ export default {
   color: #64748b;
 }
 
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.settings-layout {
+.settings-grid {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
-  gap: 24px;
-}
-
-.panels-column {
-  display: flex;
-  flex-direction: column;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 24px;
 }
 
@@ -535,10 +374,14 @@ export default {
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
-.panel-header h2 {
+.panel-header {
+  margin-bottom: 16px;
+}
+
+.panel-header h2,
+.panel-header h3 {
   margin: 0 0 4px;
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 20px;
   color: #1f2937;
 }
 
@@ -547,151 +390,116 @@ export default {
   color: #64748b;
 }
 
+.panel-header.compact {
+  margin-bottom: 8px;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
 }
 
-.switch-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #475569;
+.static-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
-.slider-row {
-  display: flex;
-  align-items: center;
+.static-label {
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #94a3b8;
 }
 
 .panel-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
   border-top: 1px solid #edf2f7;
   padding-top: 16px;
-}
-
-.panel-highlight {
   display: flex;
-  justify-content: space-between;
-  background: #f0f7ff;
-  border: 1px solid #bee3f8;
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
-  color: #1e3a8a;
+  justify-content: flex-end;
 }
 
-.panel-highlight.secondary {
-  background: #f6ffed;
-  border-color: #c6f6d5;
-  color: #276749;
-}
-
-.highlight-label {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  display: block;
-}
-
-.notification-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+.stats-panel {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
-.toggle-card {
-  border: 1px solid #edf2f7;
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 16px;
   background: #f8fafc;
 }
 
-.toggle-card h4 {
-  margin: 0 0 8px;
-  font-size: 16px;
+.stat-label {
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #94a3b8;
 }
 
-.toggle-card p {
-  margin: 0 0 16px;
-  color: #64748b;
+.stat-value {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #2563eb;
 }
 
-.toggle-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 0;
-  border-top: 1px solid #e2e8f0;
+.recent-ads {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
 }
 
-.toggle-item:first-of-type {
-  border-top: none;
-}
-
-.toggle-item strong {
-  display: block;
-  margin-bottom: 4px;
-}
-
-.aside-column {
+.recent-list {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 12px;
 }
 
-.aside-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 20px;
-  border: 1px solid #edf2f7;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+.recent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
 }
 
-.aside-card h3 {
-  margin: 0 0 8px;
-  font-size: 18px;
+.recent-item strong {
+  display: block;
+  margin-bottom: 2px;
 }
 
-.aside-card p {
-  margin: 0 0 8px;
-  color: #475569;
-}
-
-.aside-card.muted {
-  background: #f8fafc;
-}
-
-.todo-note {
+.status-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0369a1;
   font-size: 12px;
-  color: #b45309;
-  margin: 8px 0 0;
+  font-weight: 600;
 }
 
-@media (max-width: 1024px) {
-  .settings-layout {
-    grid-template-columns: 1fr;
-  }
+.settings-panel.danger {
+  border-color: #fecdd3;
+}
+
+.confirm-instruction {
+  margin: 12px 0 8px;
+  font-weight: 600;
 }
 
 @media (max-width: 640px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .header-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .panel-highlight {
-    flex-direction: column;
-    gap: 8px;
+  .settings-panel {
+    padding: 20px;
   }
 }
 </style>

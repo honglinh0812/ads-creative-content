@@ -42,18 +42,14 @@
     
     <!-- Profile Dropdown -->
     <div v-if="showProfileMenu" class="mobile-profile-menu">
-      <div class="profile-menu-item" @click="navigateToProfile">
-        <i class="pi pi-user"></i>
-        <span>Profile</span>
-      </div>
       <div class="profile-menu-item" @click="navigateToSettings">
         <i class="pi pi-cog"></i>
-        <span>Settings</span>
+        <span>{{ $t('navigation.settings') }}</span>
       </div>
       <div class="profile-menu-divider"></div>
       <div class="profile-menu-item logout" @click="handleLogout">
         <i class="pi pi-sign-out"></i>
-        <span>Logout</span>
+        <span>{{ $t('auth.logout') }}</span>
       </div>
     </div>
   </header>
@@ -83,7 +79,6 @@ export default {
         '/ads': 'Ads',
         '/ad/create': 'Create Ad',
         '/ad/create-enhanced': 'Create Ad',
-        '/profile': 'Profile',
         '/settings': 'Settings'
       }
       
@@ -118,11 +113,6 @@ export default {
     
     const navigateToCreate = () => {
       router.push('/ad/create-enhanced')
-    }
-    
-    const navigateToProfile = () => {
-      router.push('/profile')
-      showProfileMenu.value = false
     }
     
     const navigateToSettings = () => {
@@ -164,7 +154,6 @@ export default {
       toggleMobileMenu,
       toggleProfileMenu,
       navigateToCreate,
-      navigateToProfile,
       navigateToSettings,
       handleLogout
     }

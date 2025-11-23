@@ -289,8 +289,6 @@
               />
             </a-form-item>
 
-            <!-- Issue #9: Audience Segment removed - now at campaign level -->
-
             <!-- Persona Selector -->
             <PersonaSelector
               v-model="formData.personaId"

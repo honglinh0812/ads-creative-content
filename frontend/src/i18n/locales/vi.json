@@ -104,6 +104,93 @@
   "user": {
     "defaultName": "Người dùng"
   },
+  "common": {
+    "reload": "Tải lại"
+  },
+  "profilePage": {
+    "title": "Hồ sơ",
+    "subtitle": "Quản lý thông tin cá nhân và theo dõi hoạt động làm việc.",
+    "sections": {
+      "information": "Thông tin cá nhân"
+    },
+    "fields": {
+      "fullName": "Họ và tên",
+      "phone": "Số điện thoại",
+      "email": "Email",
+      "memberSince": "Thành viên từ {date}"
+    },
+    "placeholders": {
+      "phone": "Nhập số điện thoại"
+    },
+    "actions": {
+      "save": "Lưu thay đổi",
+      "reset": "Đặt lại"
+    },
+    "summary": {
+      "text": "Đăng nhập bằng {email}",
+      "empty": "Cập nhật thông tin liên hệ của bạn."
+    },
+    "stats": {
+      "campaigns": "Chiến dịch",
+      "campaignsLabel": "Tổng số chiến dịch đã tạo",
+      "ads": "Quảng cáo",
+      "adsLabel": "Tổng số quảng cáo đã tạo",
+      "recentTitle": "Hoạt động gần đây",
+      "recentSubtitle": "Những quảng cáo vừa tạo trong workspace này",
+      "recentAds": "Quảng cáo gần đây",
+      "empty": "Chưa có quảng cáo nào.",
+      "untitledAd": "Quảng cáo chưa đặt tên"
+    },
+    "validation": {
+      "nameRequired": "Vui lòng nhập họ và tên."
+    },
+    "messages": {
+      "loadError": "Không thể tải thông tin hồ sơ.",
+      "updateSuccess": "Cập nhật hồ sơ thành công.",
+      "updateError": "Cập nhật hồ sơ thất bại."
+    }
+  },
+  "settingsPage": {
+    "title": "Cài đặt tài khoản",
+    "subtitle": "Quản lý bảo mật và vòng đời tài khoản.",
+    "security": {
+      "title": "Bảo mật",
+      "description": "Thường xuyên cập nhật mật khẩu để bảo vệ workspace.",
+      "current": "Mật khẩu hiện tại",
+      "new": "Mật khẩu mới",
+      "confirm": "Xác nhận mật khẩu mới",
+      "actions": {
+        "save": "Cập nhật mật khẩu"
+      },
+      "validation": {
+        "newRequired": "Vui lòng nhập mật khẩu mới.",
+        "confirmRequired": "Vui lòng xác nhận mật khẩu mới."
+      },
+      "messages": {
+        "tooShort": "Mật khẩu phải có ít nhất 6 ký tự.",
+        "mismatch": "Mật khẩu mới không trùng khớp.",
+        "success": "Đổi mật khẩu thành công.",
+        "error": "Đổi mật khẩu thất bại."
+      }
+    },
+    "danger": {
+      "title": "Vùng nguy hiểm",
+      "description": "Xóa tài khoản sẽ xóa toàn bộ chiến dịch và quảng cáo vĩnh viễn.",
+      "cta": "Xóa tài khoản",
+      "confirmLabel": "Vui lòng nhập DELETE để xác nhận.",
+      "confirmPlaceholder": "Nhập DELETE",
+      "validation": "Vui lòng nhập DELETE để xác nhận.",
+      "messages": {
+        "success": "Đã xóa tài khoản.",
+        "error": "Xóa tài khoản thất bại."
+      }
+    },
+    "modals": {
+      "deleteTitle": "Xóa tài khoản",
+      "deleteDescription": "Hành động này không thể hoàn tác.",
+      "deleteAction": "Xóa"
+    }
+  },
   "darkMode": {
     "lightMode": "Chế độ sáng đang bật",
     "darkMode": "Chế độ tối đang bật"
@@ -1020,7 +1107,7 @@
   },
   "dashboard": {
     "title": "Bảng điều khiển",
-    "subtitle": "Tổng quan về các chiến dịch và quảng cáo của bạn",
+    "subtitle": "Tổng quan nội dung",
     "newCampaign": "Chiến dịch mới",
     "letsGo": "Bắt đầu thôi!",
     "noCampaign": "Không có chiến dịch",
@@ -1037,7 +1124,7 @@
     "whatNext": "Tiếp theo là gì",
     "yourProgress": "Tiến độ của bạn",
     "quickActions": "Hành động nhanh",
-    "readyToCreate": "Sẵn sàng tạo điều gì đó tuyệt vời?",
+    "readyToCreate": "Hãy bắt đầu tạo nội dung quảng cáo với các bước sau",
     "jumpIntoNext": "Bắt đầu chiến dịch hoặc quảng cáo tiếp theo với các lối tắt này",
     "viewAll": "Xem tất cả",
     "noCampaignsYet": "Chưa có chiến dịch nào",
@@ -1549,7 +1636,7 @@
     },
     "step3": {
       "cardTitle": "Xem trước & Lưu",
-      "instruction": "Chọn biến thể quảng cáo ưa thích của bạn. Điểm chất lượng giúp bạn chọn cái tốt nhất!",
+      "instruction": "Chọn nội dung quảng cáo bạn thấy phù hợp nhất. Điểm đánh giá các nội dung ở dưới đây !",
       "qualityScore": {
         "bestLabel": "Điểm chất lượng tốt nhất",
         "analyzing": "Đang phân tích chất lượng...",

@@ -1,9 +1,12 @@
 package com.fbadsautomation.service;
 
+import com.fbadsautomation.dto.UserProfileResponse;
 import com.fbadsautomation.exception.ApiException;
 import com.fbadsautomation.integration.facebook.FacebookApiClient;
 import com.fbadsautomation.integration.facebook.FacebookProperties;
 import com.fbadsautomation.model.User;
+import com.fbadsautomation.repository.AdRepository;
+import com.fbadsautomation.repository.CampaignRepository;
 import com.fbadsautomation.repository.UserRepository;
 import com.fbadsautomation.security.JwtTokenProvider;
 import java.util.HashMap;
@@ -11,27 +14,31 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Optional;
 import org.springframework.util.StringUtils;
 
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final CampaignRepository campaignRepository;
+    private final AdRepository adRepository;
     private final FacebookApiClient facebookApiClient;
     private final FacebookProperties facebookProperties;
     private final JwtTokenProvider jwtTokenProvider;
@@ -50,9 +57,15 @@ public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     
     @Autowired
-    public AuthService(UserRepository userRepository, FacebookApiClient facebookApiClient, 
-                      FacebookProperties facebookProperties, JwtTokenProvider jwtTokenProvider) {
+    public AuthService(UserRepository userRepository,
+                       CampaignRepository campaignRepository,
+                       AdRepository adRepository,
+                       FacebookApiClient facebookApiClient,
+                       FacebookProperties facebookProperties,
+                       JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
+        this.campaignRepository = campaignRepository;
+        this.adRepository = adRepository;
         this.facebookApiClient = facebookApiClient;
         this.facebookProperties = facebookProperties;
         this.jwtTokenProvider = jwtTokenProvider;
@@ -295,6 +308,67 @@ public class AuthService {
             });
         log.info("Successfully retrieved user: {} with email: {}", user.getId(), user.getEmail());
         return user;
+    }
+
+    public UserProfileResponse getProfileDetails() {
+        User user = getCurrentUser();
+        long totalCampaigns = campaignRepository.countByUser(user);
+        long totalAds = adRepository.countByUser(user);
+
+        List<UserProfileResponse.RecentAdSummary> recentAds = adRepository.findTop5ByUserOrderByCreatedDateDesc(user)
+            .stream()
+            .map(ad -> UserProfileResponse.RecentAdSummary.builder()
+                .id(ad.getId())
+                .name(ad.getName())
+                .status(StringUtils.hasText(ad.getStatus()) ? ad.getStatus() : "DRAFT")
+                .createdDate(ad.getCreatedDate())
+                .build())
+            .collect(Collectors.toList());
+
+        return UserProfileResponse.builder()
+            .id(user.getId())
+            .email(user.getEmail())
+            .name(user.getName())
+            .phoneNumber(user.getPhoneNumber())
+            .createdDate(user.getCreatedDate())
+            .stats(UserProfileResponse.ProfileStats.builder()
+                .totalCampaigns(totalCampaigns)
+                .totalAds(totalAds)
+                .recentAds(recentAds)
+                .build())
+            .build();
+    }
+
+    public User updateProfile(String name, String phoneNumber) {
+        User user = getCurrentUser();
+        if (!StringUtils.hasText(name)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Name is required");
+        }
+        user.setName(name.trim());
+        user.setPhoneNumber(StringUtils.hasText(phoneNumber) ? phoneNumber.trim() : null);
+        return userRepository.save(user);
+    }
+
+    public void changePassword(String currentPassword, String newPassword) {
+        User user = getCurrentUser();
+        if (!StringUtils.hasText(newPassword) || newPassword.length() < 6) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Password must be at least 6 characters");
+        }
+
+        boolean hasExistingPassword = StringUtils.hasText(user.getPasswordHash());
+        if (hasExistingPassword &&
+            (!StringUtils.hasText(currentPassword) || !passwordEncoder.matches(currentPassword, user.getPasswordHash()))) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    public void deleteCurrentUser() {
+        User user = getCurrentUser();
+        userRepository.delete(user);
+        SecurityContextHolder.clearContext();
     }
 
     /**

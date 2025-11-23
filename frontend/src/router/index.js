@@ -22,7 +22,6 @@ const TermsOfService = () => import('../views/legal/TermsOfService.vue')
 const DataDeletion = () => import('../views/legal/DataDeletion.vue')
 const AuthSuccess = () => import('../views/AuthSuccess.vue')
 const ResetPassword = () => import('../views/ResetPassword.vue')
-const Profile = () => import('../views/Profile.vue')
 const Settings = () => import('../views/Settings.vue')
 
 const routes = [
@@ -130,12 +129,6 @@ const routes = [
     name: 'ResetPassword',
     component: ResetPassword,
     meta: { public: true }
-  },
-  {
-    path: '/profile',
-    name: 'Profile',
-    component: Profile,
-    meta: { requiresAuth: true }
   },
   {
     path: '/settings',

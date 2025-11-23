@@ -90,19 +90,6 @@ export default {
     deleteAccount: () => apiClient.delete('/auth/account')
   },
   
-  // Settings endpoints
-  settings: {
-    getSettings: () => apiClient.get('/settings'),
-    updateGeneralSettings: (generalSettings) => apiClient.put('/settings/general', generalSettings),
-    updateAISettings: (aiSettings) => apiClient.put('/settings/ai', aiSettings),
-    updateNotificationSettings: (notificationSettings) => apiClient.put('/settings/notifications', notificationSettings),
-    exportData: () => apiClient.get('/settings/export', { responseType: 'blob' }),
-    importData: (formData) => apiClient.post('/settings/import', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }),
-    clearCache: () => apiClient.post('/settings/cache/clear')
-  },
-  
   // Campaign endpoints
   campaigns: {
     getAll: (page = 0, size = 5) => apiClient.get(`/campaigns?page=${page}&size=${size}`),

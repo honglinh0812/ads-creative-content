@@ -104,6 +104,93 @@
   "user": {
     "defaultName": "User"
   },
+  "common": {
+    "reload": "Reload"
+  },
+  "profilePage": {
+    "title": "Profile",
+    "subtitle": "Manage your personal info and track your workspace activity.",
+    "sections": {
+      "information": "Personal Details"
+    },
+    "fields": {
+      "fullName": "Full name",
+      "phone": "Phone number",
+      "email": "Email",
+      "memberSince": "Member since {date}"
+    },
+    "placeholders": {
+      "phone": "Enter your phone number"
+    },
+    "actions": {
+      "save": "Save changes",
+      "reset": "Reset"
+    },
+    "summary": {
+      "text": "Signed in as {email}",
+      "empty": "Keep your contact details up to date."
+    },
+    "stats": {
+      "campaigns": "Campaigns",
+      "campaignsLabel": "Total campaigns created",
+      "ads": "Ads",
+      "adsLabel": "Total ads created",
+      "recentTitle": "Recent activity",
+      "recentSubtitle": "Latest ads generated in this workspace",
+      "recentAds": "Recently created ads",
+      "empty": "No ads created yet.",
+      "untitledAd": "Untitled ad"
+    },
+    "validation": {
+      "nameRequired": "Please enter your full name."
+    },
+    "messages": {
+      "loadError": "Failed to load profile information.",
+      "updateSuccess": "Profile updated successfully.",
+      "updateError": "Failed to update profile."
+    }
+  },
+  "settingsPage": {
+    "title": "Account Settings",
+    "subtitle": "Manage account security and lifecycle.",
+    "security": {
+      "title": "Security",
+      "description": "Update your password regularly to keep your workspace safe.",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm new password",
+      "actions": {
+        "save": "Update password"
+      },
+      "validation": {
+        "newRequired": "Please enter a new password.",
+        "confirmRequired": "Please confirm your new password."
+      },
+      "messages": {
+        "tooShort": "Password must be at least 6 characters.",
+        "mismatch": "New passwords do not match.",
+        "success": "Password updated successfully.",
+        "error": "Failed to update password."
+      }
+    },
+    "danger": {
+      "title": "Danger Zone",
+      "description": "Deleting your account will remove all campaigns and ads permanently.",
+      "cta": "Delete account",
+      "confirmLabel": "Please type DELETE to confirm.",
+      "confirmPlaceholder": "Type DELETE",
+      "validation": "Please type DELETE to confirm.",
+      "messages": {
+        "success": "Account deleted successfully.",
+        "error": "Failed to delete account."
+      }
+    },
+    "modals": {
+      "deleteTitle": "Delete account",
+      "deleteDescription": "This action cannot be undone.",
+      "deleteAction": "Delete"
+    }
+  },
   "darkMode": {
     "lightMode": "Light mode enabled",
     "darkMode": "Dark mode enabled"

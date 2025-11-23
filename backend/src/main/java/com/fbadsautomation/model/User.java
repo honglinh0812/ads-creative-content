@@ -29,6 +29,9 @@ public class User {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
     @Column(name = "facebook_id", unique = true)
     private String facebookId;
 
@@ -70,6 +73,10 @@ public class User {
     public String getName() {
         return name;
     }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
     
     public String getFacebookId() {
         return facebookId;
@@ -110,6 +117,10 @@ public class User {
     
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
     
     public void setFacebookId(String facebookId) {

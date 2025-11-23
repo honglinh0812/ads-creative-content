@@ -1,5 +1,6 @@
 package com.fbadsautomation.controller;
 
+import com.fbadsautomation.dto.UserProfileResponse;
 import com.fbadsautomation.model.User;
 import com.fbadsautomation.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,6 +56,7 @@ public class AuthController {
         map.put("email", user.getEmail());
         map.put("name", user.getName());
         map.put("username", user.getUsername());
+        map.put("phoneNumber", user.getPhoneNumber());
         return ResponseEntity.ok(map);
     }
 
@@ -141,22 +143,9 @@ public class AuthController {
     })
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/profile")
-    public ResponseEntity<?> getProfile() {
+    public ResponseEntity<UserProfileResponse> getProfile() {
         log.info("Getting user profile");
-        User user = authService.getCurrentUser();
-        Map<String, Object> profile = new HashMap<>();
-        profile.put("id", user.getId());
-        profile.put("email", user.getEmail());
-        profile.put("name", user.getName());
-        profile.put("username", user.getUsername());
-        profile.put("firstName", user.getName() != null ? user.getName().split(" ")[0] : "");
-        profile.put("lastName", user.getName() != null && user.getName().contains(" ") ? user.getName().substring(user.getName().indexOf(" ") + 1) : "");
-        profile.put("phoneNumber", "");
-        profile.put("company", "");
-        profile.put("jobTitle", "");
-        profile.put("language", "en");
-        profile.put("timezone", "Asia/Ho_Chi_Minh");
-        return ResponseEntity.ok(profile);
+        return ResponseEntity.ok(authService.getProfileDetails());
     }
 
     @Operation(summary = "Update user profile", description = "Update profile information of the current user")
@@ -171,8 +160,13 @@ public class AuthController {
         @Parameter(description = "Profile data to update")
         @RequestBody Map<String, Object> profileData) {
         log.info("Updating user profile");
-        // For now, just return success - can be implemented later with proper user fields
-        return ResponseEntity.ok().build();
+        String name = profileData.getOrDefault("name", "").toString();
+        String phoneNumber = profileData.get("phoneNumber") != null ? profileData.get("phoneNumber").toString() : null;
+        User updatedUser = authService.updateProfile(name, phoneNumber);
+        Map<String, Object> response = new HashMap<>();
+        response.put("name", updatedUser.getName());
+        response.put("phoneNumber", updatedUser.getPhoneNumber());
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Change password", description = "Change password for the current user")
@@ -187,7 +181,9 @@ public class AuthController {
         @Parameter(description = "Current and new password data")
         @RequestBody Map<String, String> passwordData) {
         log.info("Changing user password");
-        // For now, just return success - can be implemented later
+        String currentPassword = passwordData.get("currentPassword");
+        String newPassword = passwordData.get("newPassword");
+        authService.changePassword(currentPassword, newPassword);
         return ResponseEntity.ok().build();
     }
 
@@ -200,7 +196,7 @@ public class AuthController {
     @DeleteMapping("/account")
     public ResponseEntity<?> deleteAccount() {
         log.info("Deleting user account");
-        // For now, just return success - can be implemented later
-        return ResponseEntity.ok().build();
+        authService.deleteCurrentUser();
+        return ResponseEntity.noContent().build();
     }
 }

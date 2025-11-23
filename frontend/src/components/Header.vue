@@ -137,16 +137,16 @@
         >
           <a 
             href="#" 
-            @click.prevent="goProfile" 
-            @keydown.enter="goProfile"
-            @keydown.space.prevent="goProfile"
+            @click.prevent="goSettings" 
+            @keydown.enter="goSettings"
+            @keydown.space.prevent="goSettings"
             tabindex="0" 
             role="menuitem" 
             class="text-neutral-900 dark:text-neutral-100 hover:bg-neutral-50 dark:hover:bg-neutral-700 dropdown-item"
-            ref="profileMenuItem"
+            ref="settingsMenuItem"
           >
-            <i class="pi pi-user" aria-hidden="true"></i>
-            Hồ sơ
+            <i class="pi pi-cog" aria-hidden="true"></i>
+            {{ $t('navigation.settings') }}
           </a>
           <a 
             href="#" 
@@ -248,9 +248,9 @@ export default {
     closeDropdown() {
       this.showDropdown = false
     },
-    goProfile() {
+    goSettings() {
       this.showDropdown = false
-      this.$router.push('/profile')
+      this.$router.push('/settings')
     },
     confirmLogout() {
       this.showDropdown = false
@@ -309,7 +309,7 @@ export default {
     focusFirstMenuItem() {
       if (this.showDropdown) {
         this.$nextTick(() => {
-          const firstItem = this.$refs.profileMenuItem
+          const firstItem = this.$refs.settingsMenuItem
           if (firstItem) {
             firstItem.focus()
           }
@@ -317,13 +317,13 @@ export default {
       }
     },
     focusNextMenuItem(event) {
-      const menuItems = [this.$refs.profileMenuItem, this.$refs.logoutMenuItem]
+      const menuItems = [this.$refs.settingsMenuItem, this.$refs.logoutMenuItem]
       const currentIndex = menuItems.findIndex(item => item === event.target)
       const nextIndex = (currentIndex + 1) % menuItems.length
       menuItems[nextIndex]?.focus()
     },
     focusPreviousMenuItem(event) {
-      const menuItems = [this.$refs.profileMenuItem, this.$refs.logoutMenuItem]
+      const menuItems = [this.$refs.settingsMenuItem, this.$refs.logoutMenuItem]
       const currentIndex = menuItems.findIndex(item => item === event.target)
       const prevIndex = currentIndex === 0 ? menuItems.length - 1 : currentIndex - 1
       menuItems[prevIndex]?.focus()

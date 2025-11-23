@@ -74,10 +74,6 @@
                 </a-button>
                 <template #overlay>
                   <a-menu @click="onUserMenuClick">
-                    <a-menu-item key="profile">
-                      <font-awesome-icon icon="user" />
-                      {{ $t('navigation.profile') }}
-                    </a-menu-item>
                     <a-menu-item key="settings">
                       <font-awesome-icon icon="gear" />
                       {{ $t('navigation.settings') }}
@@ -200,8 +196,6 @@ export default {
       if (key === 'logout') {
         this.$store.dispatch('auth/logout')
         this.$router.push('/login')
-      } else if (key === 'profile') {
-        this.$router.push('/profile')
       } else if (key === 'settings') {
         this.$router.push('/settings')
       }
