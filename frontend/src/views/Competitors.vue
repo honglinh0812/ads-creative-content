@@ -212,7 +212,7 @@
     </section>
 
     <section v-if="hasSearchResults || displayMode !== 'empty'" class="surface-card section-card">
-        <template v-if="displayMode === 'data' && searchResults.length > 0" #title>
+        <template v-if="displayMode === 'data' && searchResults.length > 0">
           <div class="section-heading">
             <div>
               <h2>{{ $t('competitors.results.title', { count: searchResults.length, platform: platformName }) }}</h2>
