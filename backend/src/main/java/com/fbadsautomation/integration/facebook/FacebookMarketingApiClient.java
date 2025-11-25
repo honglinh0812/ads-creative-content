@@ -327,8 +327,7 @@ public class FacebookMarketingApiClient {
         if (budget == null || budget <= 0) {
             return "0";
         }
-        // convert to smallest currency unit (assume USD cents or VND unit depending on account currency)
-        long smallest = Math.round(budget * 100);
+        long smallest = Math.round(budget * getBudgetMultiplier());
         return String.valueOf(smallest);
     }
 
@@ -356,12 +355,28 @@ public class FacebookMarketingApiClient {
         if (source == null || source <= 0) {
             return null;
         }
-        long smallest = Math.round(source * 100);
+        long smallest = Math.round(source * getBudgetMultiplier());
         if (smallest <= 0) {
             return null;
         }
         // TODO: allow overriding this calculation when we support bid strategies per campaign.
-        return Math.max(smallest, 100L);
+        return Math.max(smallest, getMinBidAmount());
+    }
+
+    private int getBudgetMultiplier() {
+        String currency = facebookProperties.getAccountCurrency();
+        if ("VND".equalsIgnoreCase(currency)) {
+            return 1;
+        }
+        return 100;
+    }
+
+    private long getMinBidAmount() {
+        String currency = facebookProperties.getAccountCurrency();
+        if ("VND".equalsIgnoreCase(currency)) {
+            return 1000;
+        }
+        return 100;
     }
 
     private String formatDateTime(java.time.LocalDate date) {

@@ -1,207 +1,206 @@
 <template>
-  <div class="competitors-page">
-    <div class="page-header">
-      <div>
-        <h1 class="text-3xl font-bold text-secondary-900">Competitor Insights</h1>
-        <p class="text-secondary-600">Analyze competitor ads and get AI-powered suggestions</p>
-      </div>
-    </div>
-
-    <!-- Platform Selector -->
-    <div class="platform-selector-section">
-      <a-card :bordered="false" class="platform-selector-card">
-        <a-radio-group
-          v-model:value="selectedPlatform"
-          button-style="solid"
-          size="large"
-          @change="handlePlatformChange"
-          class="platform-radio-group"
-        >
-          <a-radio-button value="facebook">
-            <facebook-outlined /> Facebook & Instagram
-          </a-radio-button>
-          <a-radio-button value="google">
-            <google-outlined /> Google Ads & YouTube
-          </a-radio-button>
-          <a-radio-button value="tiktok">
-            <play-circle-outlined /> TikTok Ads
-          </a-radio-button>
-        </a-radio-group>
-      </a-card>
-    </div>
-
-    <!-- Search Section -->
-    <div class="search-section">
-      <a-card title="Search Competitor Ads" :bordered="false">
-        <a-form layout="vertical" @submit.prevent="handleSearch">
-          <a-row :gutter="16">
-            <a-col :xs="24" :sm="24" :md="12">
-              <a-form-item label="Brand Name">
-                <a-input
-                  v-model:value="searchForm.brandName"
-                  placeholder="Enter competitor brand name (e.g., Nike, Coca-Cola)"
-                  size="large"
-                  :maxlength="100"
-                  show-count
-                  allow-clear
-                />
-              </a-form-item>
-            </a-col>
-
-            <a-col :xs="24" :sm="12" :md="6">
-              <a-form-item label="Region">
-                <a-select
-                  v-model:value="searchForm.region"
-                  size="large"
-                  placeholder="Select region"
-                  show-search
-                  option-filter-prop="label"
-                >
-                  <a-select-opt-group label="Americas">
-                    <a-select-option value="US" label="United States">🇺🇸 United States</a-select-option>
-                    <a-select-option value="CA" label="Canada">🇨🇦 Canada</a-select-option>
-                    <a-select-option value="MX" label="Mexico">🇲🇽 Mexico</a-select-option>
-                    <a-select-option value="BR" label="Brazil">🇧🇷 Brazil</a-select-option>
-                  </a-select-opt-group>
-                  <a-select-opt-group label="Europe">
-                    <a-select-option value="GB" label="United Kingdom">🇬🇧 United Kingdom</a-select-option>
-                    <a-select-option value="DE" label="Germany">🇩🇪 Germany</a-select-option>
-                    <a-select-option value="FR" label="France">🇫🇷 France</a-select-option>
-                    <a-select-option value="IT" label="Italy">🇮🇹 Italy</a-select-option>
-                    <a-select-option value="ES" label="Spain">🇪🇸 Spain</a-select-option>
-                    <a-select-option value="NL" label="Netherlands">🇳🇱 Netherlands</a-select-option>
-                  </a-select-opt-group>
-                  <a-select-opt-group label="Oceania">
-                    <a-select-option value="AU" label="Australia">🇦🇺 Australia</a-select-option>
-                    <a-select-option value="NZ" label="New Zealand">🇳🇿 New Zealand</a-select-option>
-                  </a-select-opt-group>
-                </a-select>
-              </a-form-item>
-            </a-col>
-
-            <a-col :xs="24" :sm="12" :md="6">
-              <a-form-item label="Max Results">
-                <a-input-number
-                  v-model:value="searchForm.limit"
-                  :min="1"
-                  :max="50"
-                  size="large"
-                  style="width: 100%"
-                />
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <a-form-item>
-            <a-button
-              type="primary"
-              html-type="submit"
-              size="large"
-              :loading="isSearching"
-              :disabled="!searchForm.brandName"
-            >
-              <template #icon><search-outlined /></template>
-              Search Competitor Ads
-            </a-button>
-          </a-form-item>
-        </a-form>
-      </a-card>
-    </div>
-
-    <!-- Watchlist Section -->
-    <div class="watchlist-section">
-      <a-card title="Competitor Watchlist" :bordered="false">
-        <a-form layout="vertical" @submit.prevent="handleAddWatchlist" class="watchlist-form">
-          <a-row :gutter="[12, 12]" align="bottom">
-            <a-col :xs="24" :md="10">
-              <a-form-item label="Brand">
-                <a-input v-model:value="watchlistForm.brandName" placeholder="Brand name" allow-clear />
-              </a-form-item>
-            </a-col>
-            <a-col :xs="12" :md="4">
-              <a-form-item label="Platform">
-                <a-select v-model:value="watchlistForm.platform">
-                  <a-select-option value="facebook">Facebook</a-select-option>
-                  <a-select-option value="google">Google</a-select-option>
-                  <a-select-option value="tiktok">TikTok</a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :xs="12" :md="4">
-              <a-form-item label="Region">
-                <a-input v-model:value="watchlistForm.region" placeholder="US" />
-              </a-form-item>
-            </a-col>
-            <a-col :xs="12" :md="3">
-              <a-form-item label="Limit">
-                <a-input-number v-model:value="watchlistForm.limit" :min="1" :max="50" style="width: 100%" />
-              </a-form-item>
-            </a-col>
-            <a-col :xs="12" :md="3">
-              <a-form-item label=" ">
-                <a-button type="primary" block @click="handleAddWatchlist">
-                  Add
-                </a-button>
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </a-form>
-
-        <div class="watchlist-actions">
-          <a-button type="default" @click="handleRefreshAllWatchlist" :disabled="!watchlist.length">
-            Refresh all
-          </a-button>
-        </div>
-
-        <div v-if="watchlist.length" class="watchlist-grid">
-          <div
-            v-for="item in watchlist"
-            :key="item.id"
-            class="watchlist-card"
+  <div class="competitors-view">
+    <section class="hero-card surface-card">
+      <div class="hero-text">
+        <p class="eyebrow">{{ $t('competitors.eyebrow') }}</p>
+        <h1>{{ $t('competitors.title') }}</h1>
+        <p class="hero-description">{{ $t('competitors.hero.description') }}</p>
+        <div class="hero-actions">
+          <a-radio-group
+            v-model:value="selectedPlatform"
+            button-style="solid"
+            size="large"
+            @change="handlePlatformChange"
           >
-            <div class="watchlist-card-header">
-              <h4>{{ item.brandName }}</h4>
-              <a-tag color="blue">{{ getPlatformLabel(item.platform) }}</a-tag>
-              <a-tag v-if="item.hasNew" color="green">New</a-tag>
-            </div>
-            <p class="watchlist-meta">
-              {{ item.region }} · {{ item.lastChecked ? formatWatchlistTimestamp(item.lastChecked) : 'Never checked' }}
-            </p>
-            <p class="watchlist-count">
-              {{ item.lastResultCount ?? 0 }} ads tracked
-            </p>
-            <p class="watchlist-hint" v-if="item.lastMessage">{{ item.lastMessage }}</p>
-            <div class="watchlist-card-actions">
-              <a-button
-                size="small"
-                type="link"
-                @click="handleRefreshWatchlist(item)"
-                :loading="isEntryRefreshing(item.id)"
+            <a-radio-button value="facebook">
+              <facebook-outlined /> {{ $t('competitors.platformLabels.facebook') }}
+            </a-radio-button>
+            <a-radio-button value="google">
+              <google-outlined /> {{ $t('competitors.platformLabels.google') }}
+            </a-radio-button>
+            <a-radio-button value="tiktok">
+              <play-circle-outlined /> {{ $t('competitors.platformLabels.tiktok') }}
+            </a-radio-button>
+          </a-radio-group>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <div class="hero-stat">
+          <p class="hero-stat-label">{{ $t('competitors.hero.watchlistLabel') }}</p>
+          <p class="hero-stat-value">{{ watchlist.length }}</p>
+        </div>
+        <div class="hero-stat">
+          <p class="hero-stat-label">{{ $t('competitors.hero.platformLabel') }}</p>
+          <p class="hero-stat-value">{{ getPlatformLabel(selectedPlatform) }}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="surface-card section-card">
+      <div class="section-heading">
+        <div>
+          <h2>{{ $t('competitors.form.title') }}</h2>
+          <p class="section-subtitle">{{ $t('competitors.form.description') }}</p>
+        </div>
+      </div>
+      <a-form layout="vertical" @submit.prevent="handleSearch">
+        <a-row :gutter="[16, 16]">
+          <a-col :xs="24" :md="12">
+            <a-form-item :label="$t('competitors.form.brandLabel')">
+              <a-input
+                v-model:value="searchForm.brandName"
+                :placeholder="$t('competitors.form.brandPlaceholder')"
+                :maxlength="100"
+                show-count
+                allow-clear
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="6">
+            <a-form-item :label="$t('competitors.form.regionLabel')">
+              <a-select
+                v-model:value="searchForm.region"
+                :placeholder="$t('competitors.selectRegion')"
+                show-search
+                option-filter-prop="label"
               >
-                Refresh
+                <a-select-opt-group :label="$t('competitors.form.regionGroups.americas')">
+                  <a-select-option value="US" label="United States">{{ $t('competitors.region.US') }}</a-select-option>
+                  <a-select-option value="CA" label="Canada">{{ $t('competitors.region.CA') }}</a-select-option>
+                  <a-select-option value="MX" label="Mexico">{{ $t('competitors.region.MX') }}</a-select-option>
+                  <a-select-option value="BR" label="Brazil">{{ $t('competitors.region.BR') }}</a-select-option>
+                </a-select-opt-group>
+                <a-select-opt-group :label="$t('competitors.form.regionGroups.europe')">
+                  <a-select-option value="GB" label="United Kingdom">{{ $t('competitors.region.GB') }}</a-select-option>
+                  <a-select-option value="DE" label="Germany">{{ $t('competitors.region.DE') }}</a-select-option>
+                  <a-select-option value="FR" label="France">{{ $t('competitors.region.FR') }}</a-select-option>
+                  <a-select-option value="IT" label="Italy">{{ $t('competitors.region.IT') }}</a-select-option>
+                </a-select-opt-group>
+                <a-select-opt-group :label="$t('competitors.form.regionGroups.oceania')">
+                  <a-select-option value="AU" label="Australia">{{ $t('competitors.region.AU') }}</a-select-option>
+                  <a-select-option value="NZ" label="New Zealand">{{ $t('competitors.region.NZ') }}</a-select-option>
+                </a-select-opt-group>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :xs="24" :md="6">
+            <a-form-item :label="$t('competitors.maxResults')">
+              <a-input-number
+                v-model:value="searchForm.limit"
+                :min="1"
+                :max="50"
+                style="width: 100%"
+              />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item>
+          <a-button
+            type="primary"
+            html-type="submit"
+            :loading="isSearching"
+            :disabled="!searchForm.brandName"
+          >
+            <template #icon><search-outlined /></template>
+            {{ $t('competitors.form.searchButton') }}
+          </a-button>
+        </a-form-item>
+      </a-form>
+    </section>
+
+    <section class="surface-card section-card">
+      <div class="section-heading">
+        <div>
+          <h2>{{ $t('competitors.watchlist.title') }}</h2>
+          <p class="section-subtitle">{{ $t('competitors.watchlist.subtitle') }}</p>
+        </div>
+        <a-button type="default" @click="handleRefreshAllWatchlist" :disabled="!watchlist.length">
+          {{ $t('competitors.watchlist.actions.refreshAll') }}
+        </a-button>
+      </div>
+      <a-form layout="vertical" class="watchlist-form">
+        <a-row :gutter="[16, 16]" align="bottom">
+          <a-col :xs="24" :md="10">
+            <a-form-item :label="$t('competitors.watchlist.brandLabel')">
+              <a-input v-model:value="watchlistForm.brandName" :placeholder="$t('competitors.watchlist.brandPlaceholder')" allow-clear />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="12" :md="4">
+            <a-form-item :label="$t('competitors.watchlist.platformLabel')">
+              <a-select v-model:value="watchlistForm.platform">
+                <a-select-option value="facebook">{{ $t('competitors.platformLabels.facebook') }}</a-select-option>
+                <a-select-option value="google">{{ $t('competitors.platformLabels.google') }}</a-select-option>
+                <a-select-option value="tiktok">{{ $t('competitors.platformLabels.tiktok') }}</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :xs="12" :md="4">
+            <a-form-item :label="$t('competitors.watchlist.regionLabel')">
+              <a-input v-model:value="watchlistForm.region" :placeholder="$t('competitors.watchlist.regionPlaceholder')" />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="12" :md="3">
+            <a-form-item :label="$t('competitors.watchlist.limitLabel')">
+              <a-input-number v-model:value="watchlistForm.limit" :min="1" :max="50" style="width: 100%" />
+            </a-form-item>
+          </a-col>
+          <a-col :xs="12" :md="3">
+            <a-form-item label=" ">
+              <a-button type="primary" block @click="handleAddWatchlist">
+                {{ $t('competitors.watchlist.actions.add') }}
               </a-button>
-              <a-button size="small" type="link" danger @click="handleRemoveWatchlist(item)">
-                Remove
-              </a-button>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+
+      <div v-if="watchlist.length" class="watchlist-grid">
+        <article v-for="item in watchlist" :key="item.id" class="watchlist-card surface-card">
+          <div class="watchlist-card-header">
+            <div>
+              <h4>{{ item.brandName }}</h4>
+              <p class="watchlist-meta">
+                {{ getRegionLabel(item.region) }} · {{ item.lastChecked ? formatWatchlistTimestamp(item.lastChecked) : $t('competitors.watchlist.neverChecked') }}
+              </p>
+            </div>
+            <div>
+              <a-tag color="blue">{{ getPlatformLabel(item.platform) }}</a-tag>
+              <a-tag v-if="item.hasNew" color="green">{{ $t('competitors.watchlist.newLabel') }}</a-tag>
             </div>
           </div>
-        </div>
-        <a-empty v-else description="No brands in watchlist" />
+          <p class="watchlist-count">
+            {{ $t('competitors.watchlist.adsTracked', { count: item.lastResultCount ?? 0 }) }}
+          </p>
+          <p class="watchlist-hint" v-if="item.lastMessage">{{ item.lastMessage }}</p>
+          <div class="watchlist-card-actions">
+            <a-button
+              size="small"
+              type="link"
+              @click="handleRefreshWatchlist(item)"
+              :loading="isEntryRefreshing(item.id)"
+            >
+              {{ $t('competitors.watchlist.actions.refresh') }}
+            </a-button>
+            <a-button size="small" type="link" danger @click="handleRemoveWatchlist(item)">
+              {{ $t('competitors.watchlist.actions.remove') }}
+            </a-button>
+          </div>
+        </article>
+      </div>
+      <a-empty v-else :description="$t('competitors.watchlist.empty')" />
 
-        <div v-if="watchlistActivity.length" class="watchlist-activity">
-          <p class="eyebrow">Recent activity</p>
-          <ul>
-            <li v-for="activity in watchlistActivity" :key="activity.id">
-              <strong>{{ activity.brandName }}</strong> · {{ activity.message }} ·
-              <span class="watchlist-time">{{ formatWatchlistTimestamp(activity.timestamp) }}</span>
-            </li>
-          </ul>
-        </div>
-      </a-card>
-    </div>
+      <div v-if="watchlistActivity.length" class="watchlist-activity">
+        <p class="eyebrow">{{ $t('competitors.watchlist.activityTitle') }}</p>
+        <ul>
+          <li v-for="activity in watchlistActivity" :key="activity.id">
+            <strong>{{ activity.brandName }}</strong> · {{ activity.message }} ·
+            <span class="watchlist-time">{{ formatWatchlistTimestamp(activity.timestamp) }}</span>
+          </li>
+        </ul>
+      </div>
+    </section>
 
-    <!-- Recent Platform Statuses -->
-    <div v-if="recentPlatformStatuses.length" class="status-feed">
+    <section v-if="recentPlatformStatuses.length" class="status-feed surface-card">
       <a-alert
         v-for="status in recentPlatformStatuses"
         :key="status.id"
@@ -209,31 +208,31 @@
         :message="getStatusMessage(status)"
         :description="getStatusDescription(status)"
         show-icon
-        class="mb-2"
       />
-    </div>
+    </section>
 
-    <!-- Search Results -->
-    <div v-if="hasSearchResults || displayMode !== 'empty'" class="results-section">
-      <a-card :bordered="false">
+    <section v-if="hasSearchResults || displayMode !== 'empty'" class="surface-card section-card">
         <template v-if="displayMode === 'data' && searchResults.length > 0" #title>
-          <div class="flex justify-between items-center">
-            <span>Found {{ searchResults.length }} ads from {{ platformName }}</span>
-            <a-space>
+          <div class="section-heading">
+            <div>
+              <h2>{{ $t('competitors.results.title', { count: searchResults.length, platform: platformName }) }}</h2>
+              <p class="section-subtitle">{{ $t('competitors.results.subtitle') }}</p>
+            </div>
+            <div class="section-controls">
               <a-button
                 v-if="hasSelectedAds"
                 type="primary"
                 @click="showComparisonModal = true"
               >
                 <template #icon><comparison-outlined /></template>
-                Compare Selected ({{ selectedCount }})
+                {{ $t('competitors.compareSelected', { count: selectedCount }) }}
               </a-button>
               <a-button @click="exportResults">
                 <template #icon><export-outlined /></template>
-                Export
+                {{ $t('competitors.results.export') }}
               </a-button>
-              <a-button @click="clearSelection">Clear Selection</a-button>
-            </a-space>
+              <a-button @click="clearSelection">{{ $t('competitors.clearSelection') }}</a-button>
+            </div>
           </div>
         </template>
 
@@ -252,7 +251,7 @@
             >
               <a-card
                 hoverable
-                class="competitor-ad-card"
+                class="competitor-ad-card surface-card"
                 :class="{ 'selected': isAdSelected(ad) }"
                 @click="toggleAdSelection(ad)"
               >
@@ -314,7 +313,7 @@
             <a-input-group compact>
               <a-input
                 v-model:value="iframeSearchQuery"
-                placeholder="Search another brand..."
+                :placeholder="$t('competitors.iframe.searchPlaceholder')"
                 size="large"
                 style="width: calc(100% - 180px)"
                 allow-clear
@@ -327,7 +326,7 @@
                 :disabled="!iframeSearchQuery"
               >
                 <template #icon><search-outlined /></template>
-                Search
+                {{ $t('competitors.iframe.searchButton') }}
               </a-button>
             </a-input-group>
           </div>
@@ -341,14 +340,14 @@
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
             style="border: 1px solid #d9d9d9; border-radius: 4px;"
           />
-          <a-empty v-else description="Iframe URL not available" />
+          <a-empty v-else :description="$t('competitors.iframe.notAvailable')" />
 
           <a-space style="margin-top: 16px">
             <a-button @click="openInNewTab" type="primary">
-              <link-outlined /> Open in New Tab
+              <link-outlined /> {{ $t('competitors.iframe.openNewTab') }}
             </a-button>
             <a-button v-if="selectedPlatform === 'google'" @click="retryWithDataMode">
-              <database-outlined /> Try Structured Data Mode
+              <database-outlined /> {{ $t('competitors.iframe.retryDataMode') }}
             </a-button>
           </a-space>
         </div>
@@ -356,17 +355,16 @@
         <!-- Loading State -->
         <div v-else-if="isSearching" style="text-align: center; padding: 40px;">
           <a-spin size="large" />
-          <p style="margin-top: 16px;">Searching {{ platformName }}...</p>
+          <p style="margin-top: 16px;">{{ $t('competitors.results.searching', { platform: platformName }) }}</p>
         </div>
 
         <!-- Empty State -->
-        <a-empty v-else description="No results found" />
-      </a-card>
-    </div>
+        <a-empty v-else :description="$t('competitors.results.empty')" />
+    </section>
 
     <!-- Empty State -->
-    <div v-if="!hasSearchResults && !isSearching && displayMode === 'empty'" class="empty-state">
-      <a-empty description="Search for competitor brands to view their ads">
+    <div v-if="!hasSearchResults && !isSearching && displayMode === 'empty'" class="empty-state surface-card">
+      <a-empty :description="$t('competitors.emptyPrompt')">
         <template #image>
           <search-outlined style="font-size: 64px; color: #d9d9d9" />
         </template>
@@ -376,29 +374,31 @@
     <!-- Comparison Modal -->
     <a-modal
       v-model:open="showComparisonModal"
-      title="AI-Powered Ad Comparison"
+      :title="$t('competitors.modals.comparison.title')"
       width="90%"
       :footer="null"
       :destroy-on-close="true"
+      wrap-class-name="surface-modal"
+      :body-style="{ padding: 0 }"
     >
-      <div class="comparison-content">
+      <div class="modal-content">
         <a-tabs v-model:activeKey="comparisonTab">
           <!-- Compare with My Ad -->
-          <a-tab-pane key="compare" tab="Compare with My Ad">
+          <a-tab-pane key="compare" :tab="$t('competitors.modals.comparison.tabs.compare')">
             <a-form layout="vertical">
-              <a-form-item label="Your Current Ad Text">
+              <a-form-item :label="$t('competitors.modals.comparison.fields.myAd')">
                 <a-textarea
                   v-model:value="myAdText"
                   :rows="4"
-                  placeholder="Enter your current ad text here..."
+                  :placeholder="$t('competitors.modals.comparison.fields.placeholderMyAd')"
                 />
               </a-form-item>
 
-              <a-form-item label="Select Competitor Ad to Compare">
+              <a-form-item :label="$t('competitors.modals.comparison.fields.selectAd')">
                 <a-select
                   v-model:value="selectedCompetitorForComparison"
                   size="large"
-                  placeholder="Select an ad"
+                  :placeholder="$t('competitors.modals.comparison.fields.placeholderSelect')"
                   style="width: 100%"
                 >
                   <a-select-option
@@ -406,7 +406,7 @@
                     :key="ad.adLibraryId"
                     :value="ad.adLibraryId"
                   >
-                    {{ ad.headline || 'Unnamed Ad' }}
+                    {{ ad.headline || $t('competitors.modals.details.notAvailable') }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
@@ -419,22 +419,22 @@
                   :disabled="!myAdText || !selectedCompetitorForComparison"
                 >
                   <template #icon><bulb-outlined /></template>
-                  Generate AI Suggestion
+                  {{ $t('competitors.modals.comparison.generate') }}
                 </a-button>
               </a-form-item>
             </a-form>
 
             <!-- AI Suggestion Result -->
             <div v-if="aiSuggestion" class="ai-result-section">
-              <a-alert type="success" message="AI Suggestion Generated" show-icon class="mb-4" />
+              <a-alert type="success" :message="$t('competitors.modals.comparison.suggestionReady')" show-icon class="mb-4" />
               <div class="suggestion-content" v-html="formatAISuggestion(aiSuggestion)"></div>
             </div>
           </a-tab-pane>
 
           <!-- Identify Patterns -->
-          <a-tab-pane key="patterns" tab="Identify Patterns">
-            <p class="text-gray-600 mb-4">
-              Analyze {{ selectedCount }} selected ads to identify common patterns and strategies.
+          <a-tab-pane key="patterns" :tab="$t('competitors.modals.comparison.tabs.patterns')">
+            <p class="section-subtitle">
+              {{ $t('competitors.modals.comparison.patternsHint', { count: selectedCount }) }}
             </p>
 
             <a-button
@@ -444,34 +444,34 @@
               :disabled="selectedCount < 2"
             >
               <template #icon><fund-outlined /></template>
-              Analyze Patterns
+              {{ $t('competitors.modals.comparison.patternsButton') }}
             </a-button>
 
             <!-- Patterns Result -->
             <div v-if="patterns" class="ai-result-section mt-4">
-              <a-alert type="success" message="Patterns Identified" show-icon class="mb-4" />
+              <a-alert type="success" :message="$t('competitors.modals.comparison.patternsReady')" show-icon class="mb-4" />
               <div class="suggestion-content" v-html="formatPatterns(patterns)"></div>
             </div>
 
-            <a-alert v-if="selectedCount < 2" type="info" message="Select at least 2 ads to identify patterns" show-icon class="mt-4" />
+            <a-alert v-if="selectedCount < 2" type="info" :message="$t('competitors.modals.comparison.selectTwoNotice')" show-icon class="mt-4" />
           </a-tab-pane>
 
           <!-- A/B Test Variations -->
-          <a-tab-pane key="abtest" tab="A/B Test Variations">
+          <a-tab-pane key="abtest" :tab="$t('competitors.modals.comparison.tabs.abtest')">
             <a-form layout="vertical">
-              <a-form-item label="Your Current Ad">
+              <a-form-item :label="$t('competitors.modals.abTest.myAd')">
                 <a-textarea
                   v-model:value="myAdForABTest"
                   :rows="4"
-                  placeholder="Enter your current ad text..."
+                  :placeholder="$t('competitors.modals.comparison.fields.placeholderMyAd')"
                 />
               </a-form-item>
 
-              <a-form-item label="Competitor Ad to Learn From">
+              <a-form-item :label="$t('competitors.modals.abTest.competitorAd')">
                 <a-select
                   v-model:value="competitorForABTest"
                   size="large"
-                  placeholder="Select an ad"
+                  :placeholder="$t('competitors.modals.comparison.fields.placeholderSelect')"
                   style="width: 100%"
                 >
                   <a-select-option
@@ -479,12 +479,12 @@
                     :key="ad.adLibraryId"
                     :value="ad.adLibraryId"
                   >
-                    {{ ad.headline || 'Unnamed Ad' }}
+                    {{ ad.headline || $t('competitors.modals.details.notAvailable') }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
 
-              <a-form-item label="Number of Variations">
+              <a-form-item :label="$t('competitors.modals.abTest.variationCount')">
                 <a-input-number
                   v-model:value="abTestVariationCount"
                   :min="1"
@@ -500,13 +500,13 @@
                 :disabled="!myAdForABTest || !competitorForABTest"
               >
                 <template #icon><experiment-outlined /></template>
-                Generate Variations
+                {{ $t('competitors.modals.abTest.button') }}
               </a-button>
             </a-form>
 
             <!-- A/B Test Results -->
             <div v-if="abTestVariations.length > 0" class="ai-result-section mt-4">
-              <a-alert type="success" message="A/B Test Variations Generated" show-icon class="mb-4" />
+              <a-alert type="success" :message="$t('competitors.modals.abTest.ready')" show-icon class="mb-4" />
               <a-row :gutter="[16, 16]">
                 <a-col
                   v-for="(variation, index) in abTestVariations"
@@ -514,7 +514,7 @@
                   :xs="24"
                   :sm="12"
                 >
-                  <a-card :title="`Variation ${index + 1}`" size="small">
+                  <a-card :title="$t('competitors.modals.abTest.variation', { index: index + 1 })" size="small">
                     <p>{{ variation }}</p>
                   </a-card>
                 </a-col>
@@ -539,32 +539,34 @@
     <!-- Ad Details Modal -->
     <a-modal
       v-model:open="showDetailsModal"
-      :title="selectedAdForDetails?.headline || 'Ad Details'"
+      :title="selectedAdForDetails?.headline || $t('competitors.modals.details.title')"
       width="800px"
       :footer="null"
+      wrap-class-name="surface-modal"
+      :body-style="{ padding: 0 }"
     >
-      <div v-if="selectedAdForDetails" class="ad-details">
+      <div v-if="selectedAdForDetails" class="modal-content ad-details">
         <div v-if="selectedAdForDetails.imageUrl" class="mb-4">
           <img :src="selectedAdForDetails.imageUrl" alt="Ad" class="w-full rounded" />
         </div>
 
         <a-descriptions bordered :column="1">
-          <a-descriptions-item label="Headline">
-            {{ selectedAdForDetails.headline || 'N/A' }}
+          <a-descriptions-item :label="$t('competitors.modals.details.labels.headline')">
+            {{ selectedAdForDetails.headline || $t('competitors.modals.details.notAvailable') }}
           </a-descriptions-item>
-          <a-descriptions-item label="Primary Text">
-            {{ selectedAdForDetails.primaryText || 'N/A' }}
+          <a-descriptions-item :label="$t('competitors.modals.details.labels.primaryText')">
+            {{ selectedAdForDetails.primaryText || $t('competitors.modals.details.notAvailable') }}
           </a-descriptions-item>
-          <a-descriptions-item label="Description">
-            {{ selectedAdForDetails.description || 'N/A' }}
+          <a-descriptions-item :label="$t('competitors.modals.details.labels.description')">
+            {{ selectedAdForDetails.description || $t('competitors.modals.details.notAvailable') }}
           </a-descriptions-item>
-          <a-descriptions-item label="Call to Action">
-            {{ selectedAdForDetails.callToAction || 'N/A' }}
+          <a-descriptions-item :label="$t('competitors.modals.details.labels.callToAction')">
+            {{ selectedAdForDetails.callToAction || $t('competitors.modals.details.notAvailable') }}
           </a-descriptions-item>
-          <a-descriptions-item label="Platform">
-            {{ selectedAdForDetails.platform || 'Facebook' }}
+          <a-descriptions-item :label="$t('competitors.modals.details.labels.platform')">
+            {{ getPlatformLabel(selectedAdForDetails.platform || selectedPlatform) }}
           </a-descriptions-item>
-          <a-descriptions-item label="Landing Page">
+          <a-descriptions-item :label="$t('competitors.modals.details.labels.landingPage')">
             <a
               v-if="selectedAdForDetails.landingPageUrl"
               :href="selectedAdForDetails.landingPageUrl"
@@ -573,7 +575,7 @@
             >
               {{ selectedAdForDetails.landingPageUrl }}
             </a>
-            <span v-else>N/A</span>
+            <span v-else>{{ $t('competitors.modals.details.notAvailable') }}</span>
           </a-descriptions-item>
         </a-descriptions>
       </div>
@@ -693,12 +695,7 @@ export default {
     ]),
 
     platformName() {
-      const names = {
-        facebook: 'Facebook & Instagram',
-        google: 'Google Ads & YouTube',
-        tiktok: 'TikTok'
-      }
-      return names[this.selectedPlatform] || this.selectedPlatform
+      return this.getPlatformLabel(this.selectedPlatform)
     },
 
     currentResponse() {
@@ -757,7 +754,7 @@ export default {
 
     async handleSearch() {
       if (!this.searchForm.brandName.trim()) {
-        message.warning('Please enter a brand name')
+        message.warning(this.$t('competitors.messages.enterBrand'))
         return
       }
 
@@ -773,13 +770,13 @@ export default {
         const displayMessage = result.userMessage || result.message
 
         if (result.mode === 'data' && (result.ads || []).length) {
-          message.success(displayMessage || `Found ${result.ads.length} ads from ${this.platformName}`)
+          message.success(displayMessage || this.$t('competitors.messages.searchSuccess', { count: result.ads.length, platform: this.platformName }))
         } else if (result.mode === 'iframe') {
-          message.info(displayMessage || `Viewing ${this.platformName} ads in embedded mode`)
+          message.info(displayMessage || this.$t('competitors.messages.iframeMode', { platform: this.platformName }))
         } else if (result.mode === 'empty') {
-          message.warning(displayMessage || 'No ads found for this search')
+          message.warning(displayMessage || this.$t('competitors.messages.searchEmpty'))
         } else if (result.mode === 'error') {
-          message.error(displayMessage || 'Failed to search competitor ads')
+          message.error(displayMessage || this.$t('competitors.messages.searchFailed'))
         }
       } catch (error) {
         console.error('Search error:', error)
@@ -814,11 +811,11 @@ export default {
           aiProvider: 'openai'
         })
 
-        message.success('Ad analysis complete')
+        message.success(this.$t('competitors.messages.analysisComplete'))
         this.showComparisonModal = true
         this.comparisonTab = 'compare'
       } catch (error) {
-        message.error('Failed to analyze ad')
+        message.error(this.$t('competitors.messages.analysisFailed'))
       }
     },
 
@@ -828,7 +825,7 @@ export default {
       )
 
       if (!competitorAd) {
-        message.error('Please select a competitor ad')
+        message.error(this.$t('competitors.messages.selectCompetitor'))
         return
       }
 
@@ -839,15 +836,15 @@ export default {
           aiProvider: 'openai'
         })
 
-        message.success('AI suggestion generated successfully')
+        message.success(this.$t('competitors.messages.suggestionSuccess'))
       } catch (error) {
-        message.error('Failed to generate suggestion')
+        message.error(this.$t('competitors.messages.suggestionFailed'))
       }
     },
 
     async identifyPatterns() {
       if (this.selectedCount < 2) {
-        message.warning('Please select at least 2 ads to identify patterns')
+        message.warning(this.$t('competitors.messages.patternsNeedSelection'))
         return
       }
 
@@ -857,9 +854,9 @@ export default {
           aiProvider: 'openai'
         })
 
-        message.success('Patterns identified successfully')
+        message.success(this.$t('competitors.messages.patternsSuccess'))
       } catch (error) {
-        message.error('Failed to identify patterns')
+        message.error(this.$t('competitors.messages.patternsError'))
       }
     },
 
@@ -869,7 +866,7 @@ export default {
       )
 
       if (!competitorAd) {
-        message.error('Please select a competitor ad')
+        message.error(this.$t('competitors.messages.selectCompetitor'))
         return
       }
 
@@ -881,9 +878,9 @@ export default {
           aiProvider: 'openai'
         })
 
-        message.success('A/B test variations generated successfully')
+        message.success(this.$t('competitors.messages.abTestSuccess'))
       } catch (error) {
-        message.error('Failed to generate A/B test variations')
+        message.error(this.$t('competitors.messages.abTestError'))
       }
     },
 
@@ -907,16 +904,29 @@ export default {
     },
 
     getPlatformLabel(platform) {
-      const labels = {
-        facebook: 'Facebook',
-        meta: 'Facebook',
-        google: 'Google',
-        tiktok: 'TikTok',
-        SCRAPE_CREATORS_API: 'Facebook',
-        GOOGLE_ADS_TRANSPARENCY: 'Google',
-        TIKTOK_CREATIVE_CENTER: 'TikTok'
+      if (!platform) return ''
+      const map = {
+        facebook: 'facebook',
+        meta: 'facebook',
+        google: 'google',
+        tiktok: 'tiktok',
+        SCRAPE_CREATORS_API: 'facebook',
+        GOOGLE_ADS_TRANSPARENCY: 'google',
+        TIKTOK_CREATIVE_CENTER: 'tiktok'
       }
-      return labels[platform] || platform
+      const key = map[platform] || platform
+      const normalized = key.toString().toLowerCase()
+      const translationKey = `competitors.platformLabels.${normalized}`
+      const translated = this.$t(translationKey)
+      return translated === translationKey ? key : translated
+    },
+
+    getRegionLabel(region) {
+      if (!region) return ''
+      const normalized = region.toString().toUpperCase()
+      const translationKey = `competitors.region.${normalized}`
+      const translated = this.$t(translationKey)
+      return translated === translationKey ? region : translated
     },
 
     getAdImage(ad) {
@@ -928,7 +938,7 @@ export default {
 
     updateIframeSearch() {
       if (!this.iframeSearchQuery || !this.iframeSearchQuery.trim()) {
-        message.warning('Please enter a brand name')
+        message.warning(this.$t('competitors.messages.enterBrand'))
         return
       }
 
@@ -947,42 +957,42 @@ export default {
         platform: this.selectedPlatform,
         iframeUrl
       })
-      message.success(`Updated search to: ${this.iframeSearchQuery}`)
+      message.success(this.$t('competitors.messages.updatedSearch', { query: this.iframeSearchQuery }))
     },
 
     openInNewTab() {
       if (!this.currentIframeUrl) {
-        message.warning('Iframe URL not available yet')
+        message.warning(this.$t('competitors.messages.iframeUnavailable'))
         return
       }
       window.open(this.currentIframeUrl, '_blank')
     },
 
     retryWithDataMode() {
-      message.info('Retrying search with structured data mode...')
+      message.info(this.$t('competitors.messages.retryDataMode'))
       this.handleSearch()
     },
 
     async handleAddWatchlist() {
       if (!this.watchlistForm.brandName.trim()) {
-        message.warning('Enter a brand name')
+        message.warning(this.$t('competitors.messages.enterBrand'))
         return
       }
       try {
         await this.addWatchlistItemAction({ ...this.watchlistForm })
         this.watchlistForm.brandName = ''
-        message.success('Added to watchlist')
+        message.success(this.$t('competitors.messages.watchlistAdded'))
       } catch (error) {
-        message.error(error?.message || 'Failed to add watchlist item')
+        message.error(error?.message || this.$t('competitors.messages.watchlistAddError'))
       }
     },
 
     async handleRefreshWatchlist(item) {
       try {
         await this.refreshWatchlistItemAction(item)
-        message.success(`Updated ${item.brandName}`)
+        message.success(this.$t('competitors.messages.watchlistRefreshItem', { brand: item.brandName }))
       } catch (error) {
-        message.error(error?.message || 'Failed to refresh item')
+        message.error(error?.message || this.$t('competitors.messages.watchlistRefreshItemError'))
       }
     },
 
@@ -990,19 +1000,19 @@ export default {
       if (!this.watchlist.length) return
       try {
         await this.refreshAllWatchlistAction()
-        message.success('Watchlist refreshed')
+        message.success(this.$t('competitors.messages.watchlistRefreshed'))
       } catch (error) {
-        message.error('Unable to refresh all watchlist items')
+        message.error(this.$t('competitors.messages.watchlistRefreshAllError'))
       }
     },
 
     handleRemoveWatchlist(item) {
       this.removeWatchlistItemAction(item.id)
-      message.info(`Removed ${item.brandName}`)
+      message.info(this.$t('competitors.messages.watchlistRemoved', { brand: item.brandName }))
     },
 
     formatWatchlistTimestamp(value) {
-      if (!value) return 'Never checked'
+      if (!value) return this.$t('competitors.watchlist.neverChecked')
       return new Intl.DateTimeFormat(undefined, {
         day: '2-digit',
         month: 'short',
@@ -1017,12 +1027,20 @@ export default {
 
     exportResults() {
       if (!this.searchResults || this.searchResults.length === 0) {
-        message.warning('No results to export')
+        message.warning(this.$t('competitors.messages.exportNoResults'))
         return
       }
 
       try {
-        const headers = ['Platform', 'Ad ID', 'Headline', 'Description', 'CTA', 'Advertiser', 'URL']
+        const headers = [
+          this.$t('competitors.export.headers.platform'),
+          this.$t('competitors.export.headers.adId'),
+          this.$t('competitors.export.headers.headline'),
+          this.$t('competitors.export.headers.description'),
+          this.$t('competitors.export.headers.cta'),
+          this.$t('competitors.export.headers.advertiser'),
+          this.$t('competitors.export.headers.url')
+        ]
         const rows = this.searchResults.map(ad => [
           ad.dataSource || this.selectedPlatform,
           ad.adId || ad.adLibraryId || '',
@@ -1045,10 +1063,10 @@ export default {
         link.click()
         URL.revokeObjectURL(url)
 
-        message.success('Export completed')
+        message.success(this.$t('competitors.messages.exportSuccess'))
       } catch (error) {
         console.error('Export error:', error)
-        message.error('Failed to export results')
+        message.error(this.$t('competitors.messages.exportError'))
       }
     },
 
@@ -1093,18 +1111,26 @@ export default {
       if (!analysis || typeof analysis !== 'object') return ''
 
       let html = '<div class="structured-analysis">'
+      const errorFallback = this.$t('competitors.modals.analysis.error')
+      const sectionLabels = {
+        strengths: this.$t('competitors.modals.analysis.sections.strengths'),
+        weaknesses: this.$t('competitors.modals.analysis.sections.weaknesses'),
+        recommendations: this.$t('competitors.modals.analysis.sections.recommendations'),
+        patterns: this.$t('competitors.modals.analysis.sections.patterns'),
+        raw: this.$t('competitors.modals.analysis.sections.raw')
+      }
 
       // Display error message if present
       if (analysis.error) {
         html += `<div class="analysis-error">
-          <p class="error-message">${analysis.error_message || 'Analysis failed'}</p>
+          <p class="error-message">${analysis.error_message || errorFallback}</p>
         </div>`
       }
 
       // Format strengths
       if (analysis.strengths && Array.isArray(analysis.strengths)) {
         html += '<div class="analysis-section strengths-section">'
-        html += '<h4 class="section-title">✅ Strengths</h4>'
+        html += `<h4 class="section-title">✅ ${sectionLabels.strengths}</h4>`
         html += '<ul class="analysis-list">'
         analysis.strengths.forEach(item => {
           html += `<li class="analysis-list-item">${item}</li>`
@@ -1115,7 +1141,7 @@ export default {
       // Format weaknesses
       if (analysis.weaknesses && Array.isArray(analysis.weaknesses)) {
         html += '<div class="analysis-section weaknesses-section">'
-        html += '<h4 class="section-title">⚠️ Areas for Improvement</h4>'
+        html += `<h4 class="section-title">⚠️ ${sectionLabels.weaknesses}</h4>`
         html += '<ul class="analysis-list">'
         analysis.weaknesses.forEach(item => {
           html += `<li class="analysis-list-item">${item}</li>`
@@ -1126,7 +1152,7 @@ export default {
       // Format recommendations
       if (analysis.recommendations && Array.isArray(analysis.recommendations)) {
         html += '<div class="analysis-section recommendations-section">'
-        html += '<h4 class="section-title">💡 Recommendations</h4>'
+        html += `<h4 class="section-title">💡 ${sectionLabels.recommendations}</h4>`
         html += '<ul class="analysis-list">'
         analysis.recommendations.forEach(item => {
           html += `<li class="analysis-list-item">${item}</li>`
@@ -1137,7 +1163,7 @@ export default {
       // Format patterns
       if (analysis.patterns && Array.isArray(analysis.patterns)) {
         html += '<div class="analysis-section patterns-section">'
-        html += '<h4 class="section-title">🔍 Patterns Identified</h4>'
+        html += `<h4 class="section-title">🔍 ${sectionLabels.patterns}</h4>`
         html += '<ul class="analysis-list">'
         analysis.patterns.forEach(item => {
           html += `<li class="analysis-list-item">${item}</li>`
@@ -1149,7 +1175,7 @@ export default {
       if (analysis.raw_analysis) {
         html += '<div class="analysis-section raw-section">'
         html += '<details class="raw-details">'
-        html += '<summary class="raw-summary">📄 View Raw Analysis</summary>'
+        html += `<summary class="raw-summary">📄 ${sectionLabels.raw}</summary>`
         html += `<pre class="raw-content">${analysis.raw_analysis}</pre>`
         html += '</details></div>'
       }
@@ -1162,31 +1188,38 @@ export default {
       if (!variations || !Array.isArray(variations)) return ''
 
       let html = '<div class="ab-variations-container">'
+      const labels = {
+        headline: this.$t('competitors.modals.analysis.fields.headline'),
+        primaryText: this.$t('competitors.modals.analysis.fields.primaryText'),
+        callToAction: this.$t('competitors.modals.analysis.fields.callToAction'),
+        viewRaw: this.$t('competitors.modals.analysis.fields.viewRaw')
+      }
 
       variations.forEach((variation, index) => {
         html += `<div class="variation-card variation-${index + 1}">`
+        const title = this.$t('competitors.modals.abTest.variation', { index: variation.variationNumber || index + 1 })
         html += `<div class="variation-header">
-          <span class="variation-number">Variation ${variation.variationNumber || index + 1}</span>
+          <span class="variation-number">${title}</span>
           ${variation.testingFocus ? `<span class="testing-focus">${variation.testingFocus}</span>` : ''}
         </div>`
 
         if (variation.headline) {
           html += `<div class="variation-field">
-            <label class="field-label">Headline:</label>
+            <label class="field-label">${labels.headline}:</label>
             <p class="field-content headline-content">${variation.headline}</p>
           </div>`
         }
 
         if (variation.primaryText) {
           html += `<div class="variation-field">
-            <label class="field-label">Primary Text:</label>
+            <label class="field-label">${labels.primaryText}:</label>
             <p class="field-content text-content">${variation.primaryText}</p>
           </div>`
         }
 
         if (variation.callToAction) {
           html += `<div class="variation-field">
-            <label class="field-label">Call to Action:</label>
+            <label class="field-label">${labels.callToAction}:</label>
             <span class="cta-badge">${variation.callToAction}</span>
           </div>`
         }
@@ -1194,7 +1227,7 @@ export default {
         // Show raw variation in details
         if (variation.rawVariation) {
           html += '<details class="raw-variation-details">'
-          html += '<summary class="raw-variation-summary">View Raw</summary>'
+          html += `<summary class="raw-variation-summary">${labels.viewRaw}</summary>`
           html += `<pre class="raw-variation-content">${variation.rawVariation}</pre>`
           html += '</details>'
         }
@@ -1226,145 +1259,148 @@ export default {
 </script>
 
 <style scoped>
-.competitors-page {
-  padding: 24px;
-  background: #f5f5f5;
-  min-height: 100vh;
+.competitors-view {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
 }
 
-.page-header {
-  margin-bottom: 24px;
-}
-
-.platform-selector-section {
-  margin-bottom: 24px;
-}
-
-.platform-selector-card {
+.surface-card {
   background: #fff;
-  border: 1px solid #e8e8e8;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
 }
 
-.platform-selector-card :deep(.ant-card-body) {
-  padding: 16px;
-}
-
-.platform-radio-group {
-  width: 100%;
+.hero-card {
   display: flex;
-  justify-content: center;
-}
-
-.platform-radio-group :deep(.ant-radio-button-wrapper) {
-  flex: 1;
-  text-align: center;
-  background: #fafafa;
-  border-color: #d9d9d9;
-  font-weight: 500;
-  transition: all 0.3s;
-}
-
-.platform-radio-group :deep(.ant-radio-button-wrapper-checked) {
-  background: #1890ff;
-  border-color: #1890ff;
-  color: #fff;
-}
-
-.platform-radio-group :deep(.ant-radio-button-wrapper:hover) {
-  border-color: #40a9ff;
-  color: #40a9ff;
-}
-
-.platform-radio-group :deep(.ant-radio-button-wrapper-checked:hover) {
-  background: #40a9ff;
-  border-color: #40a9ff;
-  color: #fff;
-}
-
-.iframe-container {
-  position: relative;
-}
-
-.iframe-search-bar {
-  margin-bottom: 16px;
-  padding: 16px;
-  background: #fafafa;
-  border-radius: 4px;
-  border: 1px solid #e8e8e8;
-}
-
-.iframe-search-bar :deep(.ant-input-group) {
-  display: flex;
-}
-
-.iframe-search-bar :deep(.ant-input-group .ant-input) {
-  border-right: none;
-}
-
-.iframe-search-bar :deep(.ant-input-group .ant-btn) {
-  width: 180px;
-}
-
-.search-section {
+  justify-content: space-between;
+  gap: 32px;
+  padding: 32px;
   margin-bottom: 24px;
 }
 
-.results-section {
+.hero-text h1 {
+  margin: 8px 0 12px;
+  font-size: 28px;
+  color: #0f172a;
+}
+
+.eyebrow {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.hero-description {
+  margin: 0 0 20px;
+  color: #475569;
+}
+
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-meta {
+  display: grid;
+  gap: 16px;
+}
+
+.hero-stat {
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.hero-stat-label {
+  margin: 0;
+  font-size: 13px;
+  color: #475569;
+}
+
+.hero-stat-value {
+  margin: 4px 0 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.section-card {
+  padding: 24px;
   margin-bottom: 24px;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #0f172a;
+}
+
+.section-subtitle {
+  margin: 4px 0 0;
+  color: #64748b;
+}
+
+.section-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .status-feed {
+  padding: 16px;
   margin-bottom: 24px;
-}
-
-.watchlist-section {
-  margin-bottom: 24px;
-}
-
-.watchlist-form {
-  margin-bottom: 12px;
-}
-
-.watchlist-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
 }
 
 .watchlist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
   margin-bottom: 16px;
 }
 
 .watchlist-card {
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 12px;
-  background: #fafafa;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
 }
 
 .watchlist-card-header {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .watchlist-card-header h4 {
   margin: 0;
-  flex: 1;
+  font-size: 16px;
+  color: #0f172a;
 }
 
 .watchlist-meta,
 .watchlist-hint,
 .watchlist-time {
-  color: #8c8c8c;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .watchlist-count {
   font-weight: 600;
   margin: 8px 0;
+  color: #0f172a;
 }
 
 .watchlist-card-actions {
@@ -1375,32 +1411,28 @@ export default {
 
 .watchlist-activity ul {
   padding-left: 16px;
-  margin: 0;
+  margin: 8px 0 0;
+  color: #475569;
 }
 
 .competitor-ad-card {
   cursor: pointer;
-  transition: all 0.3s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
 }
 
-.competitor-ad-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
 .competitor-ad-card.selected {
-  border-color: #52c41a;
-  box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.2);
+  border-color: #2563eb;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.2);
 }
 
 .ad-image-container {
   position: relative;
   width: 100%;
   height: 180px;
+  border-radius: 12px;
   overflow: hidden;
-  background: #f5f5f5;
-  border-radius: 4px;
+  background: #f1f5f9;
   margin-bottom: 12px;
 }
 
@@ -1411,348 +1443,97 @@ export default {
 }
 
 .no-image-placeholder {
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fafafa;
+  height: 100%;
+  color: #94a3b8;
 }
 
 .selection-badge {
   position: absolute;
   top: 8px;
   right: 8px;
-  background: white;
+  background: #fff;
   border-radius: 50%;
   padding: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .ad-content {
-  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .ad-headline {
+  margin: 0;
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 8px;
-  line-height: 1.4;
+  color: #0f172a;
 }
 
 .ad-description {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 12px;
-  line-height: 1.5;
-}
-
-.ad-metadata {
-  margin-bottom: 12px;
+  margin: 0;
+  color: #475569;
+  min-height: 48px;
 }
 
 .ad-actions {
   display: flex;
   justify-content: space-between;
+  gap: 8px;
+}
+
+.iframe-container {
+  position: relative;
+}
+
+.iframe-search-bar {
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
 }
 
 .empty-state {
-  padding: 60px 0;
+  margin-top: 24px;
+  padding: 24px;
   text-align: center;
+  border: 1px dashed #e2e8f0;
+  border-radius: 16px;
 }
 
-.comparison-content {
-  padding: 16px 0;
+:deep(.surface-modal .ant-modal-content) {
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
 }
 
-.ai-result-section {
-  background: #f9f9f9;
-  border: 1px solid #e8e8e8;
-  border-radius: 4px;
-  padding: 16px;
-  margin-top: 16px;
+:deep(.surface-modal .ant-modal-header) {
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 24px;
 }
 
-.suggestion-content {
-  font-size: 14px;
-  line-height: 1.6;
-  color: #333;
-}
-
-.suggestion-item {
-  padding: 4px 0;
-}
-
-/* AI Suggestion Formatting Styles */
-.ai-suggestion-content {
-  line-height: 1.6;
-}
-
-.suggestion-header {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1890ff;
-  margin: 16px 0 8px 0;
-  padding-bottom: 4px;
-  border-bottom: 2px solid #e8e8e8;
-}
-
-.suggestion-list-item {
-  margin: 8px 0;
-  padding-left: 20px;
-  position: relative;
-  list-style: none;
-}
-
-.suggestion-list-item::before {
-  content: "•";
-  position: absolute;
-  left: 0;
-  color: #1890ff;
-  font-weight: bold;
-}
-
-.suggestion-paragraph {
-  margin: 12px 0;
-  color: #595959;
-}
-
-/* Structured Analysis Styles */
-.structured-analysis {
-  padding: 16px;
-}
-
-.analysis-section {
-  margin-bottom: 24px;
-  padding: 16px;
-  border-radius: 8px;
-  background: #fafafa;
-}
-
-.strengths-section {
-  background: #f6ffed;
-  border-left: 4px solid #52c41a;
-}
-
-.weaknesses-section {
-  background: #fff7e6;
-  border-left: 4px solid #faad14;
-}
-
-.recommendations-section {
-  background: #e6f7ff;
-  border-left: 4px solid #1890ff;
-}
-
-.patterns-section {
-  background: #f9f0ff;
-  border-left: 4px solid #722ed1;
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 12px 0;
-  color: #262626;
-}
-
-.analysis-list {
-  list-style: none;
+:deep(.surface-modal .ant-modal-body) {
   padding: 0;
-  margin: 0;
 }
 
-.analysis-list-item {
-  padding: 8px 0 8px 24px;
-  position: relative;
-  color: #595959;
-  line-height: 1.6;
-}
-
-.analysis-list-item::before {
-  content: "▸";
-  position: absolute;
-  left: 8px;
-  color: #8c8c8c;
-}
-
-.analysis-error {
-  padding: 16px;
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
-  border-radius: 4px;
-  margin-bottom: 16px;
-}
-
-.error-message {
-  margin: 0;
-  color: #cf1322;
-  font-weight: 500;
-}
-
-.raw-section {
-  background: #f5f5f5;
-  border: 1px dashed #d9d9d9;
-}
-
-.raw-details {
-  cursor: pointer;
-}
-
-.raw-summary {
-  font-weight: 500;
-  color: #595959;
-  padding: 8px;
-  user-select: none;
-}
-
-.raw-summary:hover {
-  color: #1890ff;
-}
-
-.raw-content {
-  margin: 8px 0 0 0;
-  padding: 12px;
-  background: #fff;
-  border-radius: 4px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #595959;
-  overflow-x: auto;
-}
-
-/* A/B Test Variations Styles */
-.ab-variations-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 16px;
-  padding: 16px 0;
-}
-
-.variation-card {
-  background: #fff;
-  border: 2px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 16px;
-  transition: all 0.3s;
-}
-
-.variation-card:hover {
-  border-color: #1890ff;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
-  transform: translateY(-2px);
-}
-
-.variation-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f0f0f0;
-}
-
-.variation-number {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1890ff;
-}
-
-.testing-focus {
-  font-size: 12px;
-  color: #8c8c8c;
-  font-style: italic;
-}
-
-.variation-field {
-  margin-bottom: 12px;
-}
-
-.field-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: #8c8c8c;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
-}
-
-.field-content {
-  margin: 0;
-  color: #262626;
-  line-height: 1.6;
-}
-
-.headline-content {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1890ff;
-}
-
-.text-content {
-  font-size: 14px;
-}
-
-.cta-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  background: #1890ff;
-  color: #fff;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.raw-variation-details {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed #d9d9d9;
-}
-
-.raw-variation-summary {
-  font-size: 12px;
-  color: #8c8c8c;
-  cursor: pointer;
-  user-select: none;
-}
-
-.raw-variation-summary:hover {
-  color: #1890ff;
-}
-
-.raw-variation-content {
-  margin: 8px 0 0 0;
-  padding: 8px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  font-size: 11px;
-  line-height: 1.4;
-  color: #595959;
-  overflow-x: auto;
+.modal-content {
+  padding: 24px;
 }
 
 @media (max-width: 768px) {
-  .competitors-page {
-    padding: 12px;
-  }
-
-  .ad-image-container {
-    height: 150px;
-  }
-
-  .ab-variations-container {
-    grid-template-columns: 1fr;
-  }
-
-  .variation-header {
+  .hero-card {
     flex-direction: column;
-    align-items: flex-start;
+    padding: 24px;
   }
 
-  .testing-focus {
-    margin-top: 4px;
+  .hero-actions,
+  .section-controls {
+    flex-direction: column;
+    width: 100%;
   }
 }
 </style>

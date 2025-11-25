@@ -106,3 +106,4 @@ DEPLOY_TO_REMOTE.md
 
 openmemory.md
 .qoder
+*.sql

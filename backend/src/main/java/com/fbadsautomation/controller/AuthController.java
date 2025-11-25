@@ -34,13 +34,7 @@ public class AuthController {
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
-    /*
-    @GetMapping("/user")
-    public ResponseEntity<User> getCurrentUser() {
-        log.info("Getting current user");
-        return ResponseEntity.ok(authService.getCurrentUser());
-    }
-    */
+
     @Operation(summary = "Get current user", description = "Retrieve information about the currently authenticated user")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User information retrieved successfully"),

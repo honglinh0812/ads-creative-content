@@ -1,86 +1,67 @@
 <template>
-  <div class="personas-page">
-    <!-- Page Header -->
-    <a-page-header
-      :title="$t('personas.title')"
-      :sub-title="$t('personas.subtitle')"
-    >
-      <template #extra>
-        <a-space>
+  <div class="personas-view">
+    <section class="hero-card surface-card">
+      <div class="hero-text">
+        <p class="eyebrow">{{ $t('personas.title') }}</p>
+        <h1>{{ $t('personas.subtitle') }}</h1>
+        <p class="hero-description">{{ $t('personas.subtitle') }}</p>
+        <div class="hero-actions">
           <a-input-search
             v-model:value="searchQuery"
             :placeholder="$t('personas.searchPlaceholder')"
-            style="width: 250px"
             @search="handleSearch"
             allow-clear
           />
-          <a-button type="primary" @click="showCreateModal = true">
+          <a-button type="primary" size="large" @click="showCreateModal = true">
             <template #icon><plus-outlined /></template>
             {{ $t('personas.createPersona') }}
           </a-button>
-        </a-space>
-      </template>
-    </a-page-header>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <div class="hero-stat">
+          <p class="hero-stat-label">{{ $t('personas.total') }}</p>
+          <p class="hero-stat-value">{{ personas.length }}</p>
+        </div>
+        <div class="hero-stat">
+          <p class="hero-stat-label">{{ $t('personas.recent') }}</p>
+          <p class="hero-stat-value">{{ recentPersonasCount }}</p>
+        </div>
+      </div>
+    </section>
 
-    <!-- Stats Cards -->
-    <a-row :gutter="16" class="stats-section">
-      <a-col :xs="24" :sm="12" :md="6">
-        <a-card>
-          <a-statistic
-            :title="$t('personas.total')"
-            :value="personas.length"
-            :prefix="'👥'"
-          />
-        </a-card>
-      </a-col>
-      <a-col :xs="24" :sm="12" :md="6">
-        <a-card>
-          <a-statistic
-            :title="$t('personas.recent')"
-            :value="recentPersonasCount"
-            :prefix="'🆕'"
-            :value-style="{ color: '#3f8600' }"
-          />
-          <template #extra>
-            <span class="stat-extra">{{ $t('personas.stats.last7Days') }}</span>
-          </template>
-        </a-card>
-      </a-col>
-      <a-col :xs="24" :sm="12" :md="6">
-        <a-card>
-          <a-statistic
-            :title="$t('personas.mostCommonTone')"
-            :value="mostCommonTone"
-            :prefix="toneEmoji"
-          />
-        </a-card>
-      </a-col>
-      <a-col :xs="24" :sm="12" :md="6">
-        <a-card>
-          <a-statistic
-            :title="$t('personas.quota')"
-            :value="quotaPercentage"
-            suffix="%"
-            :value-style="quotaPercentage > 80 ? { color: '#cf1322' } : {}"
-          />
-          <template #extra>
-            <span class="stat-extra">{{ personas.length }} / 100</span>
-          </template>
-        </a-card>
-      </a-col>
-    </a-row>
+    <section class="stat-grid">
+      <article class="stat-card surface-card">
+        <p class="stat-label">{{ $t('personas.total') }}</p>
+        <p class="stat-value">{{ personas.length }}</p>
+        <span class="stat-note">{{ $t('personas.stats.updatedNow') }}</span>
+      </article>
+      <article class="stat-card surface-card">
+        <p class="stat-label">{{ $t('personas.stats.last7Days') }}</p>
+        <p class="stat-value">{{ recentPersonasCount }}</p>
+        <span class="stat-note">{{ $t('personas.recent') }}</span>
+      </article>
+      <article class="stat-card surface-card">
+        <p class="stat-label">{{ $t('personas.mostCommonTone') }}</p>
+        <p class="stat-value">{{ toneEmoji }} {{ mostCommonTone }}</p>
+      </article>
+      <article class="stat-card surface-card">
+        <p class="stat-label">{{ $t('personas.quota') }}</p>
+        <p class="stat-value">{{ quotaPercentage }}%</p>
+        <span class="stat-note">{{ personas.length }} / 100</span>
+      </article>
+    </section>
 
-    <!-- Personas Grid -->
-    <a-card class="personas-grid-card" :loading="loading">
-      <template #title>
-        <span>{{ `${$t('personas.title')} (${filteredPersonas.length})` }}</span>
-      </template>
-
-      <template #extra>
-        <a-space>
+    <section class="surface-card section-card">
+      <div class="section-heading">
+        <div>
+          <h2>{{ $t('personas.title') }}</h2>
+          <p class="section-subtitle">{{ $t('personas.subtitle') }}</p>
+        </div>
+        <div class="section-controls">
           <a-select
             v-model:value="sortBy"
-            style="width: 150px"
+            style="width: 180px"
             @change="handleSortChange"
           >
             <a-select-option value="createdAt,desc">{{ $t('personas.sortNewest') }}</a-select-option>
@@ -96,8 +77,8 @@
               <unordered-list-outlined />
             </a-radio-button>
           </a-radio-group>
-        </a-space>
-      </template>
+        </div>
+      </div>
 
       <!-- Empty State -->
       <a-empty
@@ -195,7 +176,7 @@
           :page-size-options="['12', '24', '48', '96']"
         />
       </div>
-    </a-card>
+    </section>
 
     <!-- Create/Edit Modal -->
     <a-modal
@@ -204,13 +185,17 @@
       :footer="null"
       :width="900"
       :destroy-on-close="true"
+      wrap-class-name="surface-modal"
+      :body-style="{ padding: 0 }"
     >
-      <PersonaForm
-        :persona="editingPersona"
-        :loading="submitting"
-        @submit="handleSubmitPersona"
-        @cancel="handleCancelForm"
-      />
+      <div class="modal-content">
+        <PersonaForm
+          :persona="editingPersona"
+          :loading="submitting"
+          @submit="handleSubmitPersona"
+          @cancel="handleCancelForm"
+        />
+      </div>
     </a-modal>
 
     <!-- View Details Modal -->
@@ -219,22 +204,24 @@
       :title="$t('personas.viewPersona')"
       :footer="null"
       :width="700"
+      wrap-class-name="surface-modal"
+      :body-style="{ padding: 0 }"
     >
-      <PersonaCard
-        v-if="viewingPersona"
-        :persona="viewingPersona"
-        :show-full-details="true"
-        :max-display-items="100"
-        preview-mode
-      />
-      <template #footer>
-        <a-space>
+      <div class="modal-content">
+        <PersonaCard
+          v-if="viewingPersona"
+          :persona="viewingPersona"
+          :show-full-details="true"
+          :max-display-items="100"
+          preview-mode
+        />
+        <div class="modal-actions">
           <a-button @click="showViewModal = false">{{ $t('personas.actions.close') }}</a-button>
           <a-button type="primary" @click="handleEditFromView">
             <edit-outlined /> {{ $t('personas.actions.edit') }}
           </a-button>
-        </a-space>
-      </template>
+        </div>
+      </div>
     </a-modal>
   </div>
 </template>
@@ -455,21 +442,137 @@ export default {
 </script>
 
 <style scoped>
-.personas-page {
-  padding: 24px;
+.personas-view {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
 }
 
-.stats-section {
+.surface-card {
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.hero-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 32px;
   margin-bottom: 24px;
 }
 
-.stat-extra {
-  font-size: 12px;
-  color: #8c8c8c;
+.hero-text h1 {
+  margin: 8px 0 12px;
+  font-size: 28px;
+  color: #0f172a;
 }
 
-.personas-grid-card {
-  margin-top: 16px;
+.eyebrow {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.hero-description {
+  margin: 0 0 20px;
+  color: #475569;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hero-actions :deep(.ant-input-search) {
+  min-width: 240px;
+}
+
+.hero-meta {
+  display: grid;
+  gap: 16px;
+}
+
+.hero-stat {
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.hero-stat-label {
+  margin: 0;
+  font-size: 13px;
+  color: #475569;
+}
+
+.hero-stat-value {
+  margin: 4px 0 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  padding: 20px;
+}
+
+.stat-label {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.stat-value {
+  font-size: 30px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 8px 0;
+}
+
+.stat-note {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.section-card {
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #0f172a;
+}
+
+.section-subtitle {
+  margin: 4px 0 0;
+  color: #64748b;
+}
+
+.section-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .pagination-container {
@@ -482,14 +585,46 @@ export default {
   font-size: 12px;
 }
 
-/* Responsive */
+:deep(.surface-modal .ant-modal-content) {
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+}
+
+:deep(.surface-modal .ant-modal-header) {
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 24px;
+}
+
+:deep(.surface-modal .ant-modal-body) {
+  padding: 0;
+}
+
+.modal-content {
+  padding: 24px;
+}
+
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 @media (max-width: 768px) {
-  .personas-page {
-    padding: 16px;
+  .hero-card {
+    flex-direction: column;
+    padding: 24px;
   }
 
-  .stats-section {
-    margin-bottom: 16px;
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .section-controls {
+    width: 100%;
+    flex-direction: column;
   }
 }
 </style>

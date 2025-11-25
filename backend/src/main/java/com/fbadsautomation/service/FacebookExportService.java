@@ -1036,6 +1036,33 @@ public class FacebookExportService {
         return prepared;
     }
 
+    private void enforceBudgetMinimums(List<PreparedAdExport> preparedAds) {
+        double minimumBudget = payloadBuilder.getMinimumBudgetAmount();
+        for (PreparedAdExport prepared : preparedAds) {
+            Campaign campaign = prepared.getAd().getCampaign();
+            if (campaign == null) {
+                continue;
+            }
+            Double budget = resolveCampaignBudget(campaign);
+            if (budget == null || budget < minimumBudget) {
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Campaign '" + campaign.getName() + "' daily budget (" + budget +
+                        ") is below the required minimum of " + minimumBudget +
+                        " " + payloadBuilder.getCurrency() + " for Facebook auto upload.");
+            }
+        }
+    }
+
+    private Double resolveCampaignBudget(Campaign campaign) {
+        if (campaign.getDailyBudget() != null && campaign.getDailyBudget() > 0) {
+            return campaign.getDailyBudget();
+        }
+        if (campaign.getBudgetType() == Campaign.BudgetType.DAILY && campaign.getBudget() != null) {
+            return campaign.getBudget();
+        }
+        return campaign.getTotalBudget();
+    }
+
     /**
      * Generate Excel content with proper formatting
      * Implements SOLID principles: Single responsibility, proper resource management
@@ -1253,6 +1280,7 @@ public class FacebookExportService {
         }
 
         List<PreparedAdExport> prepared = prepareAds(adIds);
+        enforceBudgetMinimums(prepared);
         byte[] fileContent;
         String filename;
         if (normalizedFormat.equals("excel") || normalizedFormat.equals("xlsx")) {

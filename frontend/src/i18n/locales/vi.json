@@ -333,30 +333,6 @@
     },
     "error": {
       "title": "Không thể phân tích"
-    },
-    "rewrite": {
-      "title": "Phòng lab viết lại bằng AI",
-      "subtitle": "Chọn quảng cáo và tạo biến thể mới trong vài giây",
-      "selectAd": "Chọn quảng cáo",
-      "tone": "Tông giọng",
-      "length": "Độ dài",
-      "focus": "Điểm nổi bật",
-      "keywords": "Từ khóa",
-      "guidance": "Ghi chú thêm",
-      "variations": "Số biến thể",
-      "provider": "Mô hình",
-      "generate": "Sinh bản nháp",
-      "keywordsHint": "Nhập từ khóa, ngăn cách bằng dấu phẩy (không bắt buộc)",
-      "guidancePlaceholder": "Thêm bối cảnh chiến dịch hoặc ràng buộc khi viết lại",
-      "noAd": "Hãy chọn quảng cáo để viết lại",
-      "missingCampaign": "Quảng cáo này chưa gắn chiến dịch, vui lòng bổ sung trước.",
-      "empty": "Sinh bản nháp để xem kết quả AI.",
-      "resultsTitle": "Biến thể AI",
-      "copy": "Sao chép",
-      "copied": "Đã sao chép",
-      "success": "Đã sinh bản nháp",
-      "error": "Không sinh được biến thể",
-      "currentCopy": "Nội dung hiện tại"
     }
   },
   "campaign": {
@@ -1307,14 +1283,73 @@
   },
   "competitors": {
     "title": "Phân tích đối thủ",
+    "eyebrow": "Thông tin thị trường",
     "subtitle": "Phân tích quảng cáo đối thủ và nhận gợi ý từ AI",
+    "hero": {
+      "description": "Tìm kiếm mọi thương hiệu trên các thư viện quảng cáo và quản lý watchlist.",
+      "watchlistLabel": "Thương hiệu đã theo dõi",
+      "platformLabel": "Nền tảng gần nhất"
+    },
+    "platformLabels": {
+      "facebook": "Facebook & Instagram",
+      "google": "Google & YouTube",
+      "tiktok": "TikTok"
+    },
     "searchPlaceholder": "Nhập tên thương hiệu đối thủ...",
     "selectRegion": "Chọn khu vực",
     "maxResults": "Số kết quả tối đa",
-    "searchButton": "Tìm quảng cáo đối thủ",
+    "form": {
+      "title": "Tìm kiếm quảng cáo đối thủ",
+      "description": "Lọc theo thương hiệu, khu vực và giới hạn số kết quả.",
+      "brandLabel": "Tên thương hiệu",
+      "brandPlaceholder": "Ví dụ: Nike, Coca-Cola",
+      "regionLabel": "Khu vực",
+      "regionGroups": {
+        "americas": "Châu Mỹ",
+        "europe": "Châu Âu",
+        "oceania": "Châu Đại Dương"
+      },
+      "searchButton": "Tìm quảng cáo đối thủ"
+    },
+    "watchlist": {
+      "title": "Watchlist đối thủ",
+      "subtitle": "Lưu các lần tìm kiếm thường xuyên và làm mới nhanh chóng.",
+      "brandLabel": "Thương hiệu",
+      "brandPlaceholder": "Tên thương hiệu",
+      "platformLabel": "Nền tảng",
+      "regionLabel": "Khu vực",
+      "regionPlaceholder": "US",
+      "limitLabel": "Giới hạn",
+      "actions": {
+        "add": "Thêm thương hiệu",
+        "refreshAll": "Làm mới tất cả",
+        "refresh": "Làm mới",
+        "remove": "Xóa"
+      },
+      "adsTracked": "{count} quảng cáo đã theo dõi",
+      "empty": "Chưa có thương hiệu trong watchlist",
+      "activityTitle": "Hoạt động gần đây",
+      "neverChecked": "Chưa kiểm tra",
+      "newLabel": "Mới"
+    },
+    "results": {
+      "title": "Tìm thấy {count} quảng cáo từ {platform}",
+      "subtitle": "Chọn quảng cáo để so sánh hoặc xuất.",
+      "export": "Xuất",
+      "searching": "Đang tìm {platform}...",
+      "empty": "Không tìm thấy quảng cáo"
+    },
+    "iframe": {
+      "searchPlaceholder": "Tìm thương hiệu khác...",
+      "searchButton": "Tìm kiếm",
+      "notAvailable": "Chưa có đường dẫn iframe",
+      "openNewTab": "Mở tab mới",
+      "retryDataMode": "Thử chế độ dữ liệu cấu trúc"
+    },
+    "emptyPrompt": "Tìm kiếm thương hiệu đối thủ để xem quảng cáo của họ",
     "noResults": "Không tìm thấy quảng cáo đối thủ",
     "selectedAds": "{count} quảng cáo đã chọn",
-    "compareSelected": "So sánh đã chọn",
+    "compareSelected": "So sánh ({count})",
     "clearSelection": "Xóa lựa chọn",
     "viewDetails": "Xem chi tiết",
     "analyze": "Phân tích",
@@ -1328,7 +1363,111 @@
       "AU": "Úc",
       "DE": "Đức",
       "FR": "Pháp",
-      "JP": "Nhật Bản"
+      "JP": "Nhật Bản",
+      "MX": "Mexico",
+      "BR": "Brazil",
+      "IT": "Ý",
+      "NZ": "New Zealand"
+    },
+    "modals": {
+      "comparison": {
+        "title": "So sánh quảng cáo bằng AI",
+        "tabs": {
+          "compare": "So sánh với quảng cáo của tôi",
+          "patterns": "Xác định mẫu",
+          "abtest": "Biến thể A/B Test"
+        },
+        "fields": {
+          "myAd": "Nội dung quảng cáo hiện tại",
+          "placeholderMyAd": "Nhập nội dung quảng cáo của bạn...",
+          "selectAd": "Chọn quảng cáo đối thủ",
+          "placeholderSelect": "Chọn một quảng cáo",
+          "variationCount": "Số biến thể"
+        },
+        "generate": "Tạo gợi ý AI",
+        "suggestionReady": "Đã tạo gợi ý AI",
+        "patternsHint": "Phân tích {count} quảng cáo đã chọn để nhận dạng mẫu chung.",
+        "patternsButton": "Phân tích mẫu",
+        "patternsReady": "Đã xác định mẫu",
+        "selectTwoNotice": "Hãy chọn ít nhất 2 quảng cáo để phân tích mẫu"
+      },
+      "abTest": {
+        "myAd": "Quảng cáo của bạn",
+        "competitorAd": "Quảng cáo đối thủ để tham khảo",
+        "variationCount": "Số biến thể",
+        "button": "Tạo biến thể",
+        "ready": "Đã tạo biến thể A/B",
+        "variation": "Biến thể {index}"
+      },
+      "analysis": {
+        "error": "Phân tích thất bại",
+        "sections": {
+          "strengths": "Điểm mạnh",
+          "weaknesses": "Điểm cần cải thiện",
+          "recommendations": "Khuyến nghị",
+          "patterns": "Mẫu nhận diện",
+          "raw": "Xem phân tích gốc"
+        },
+        "fields": {
+          "headline": "Tiêu đề",
+          "primaryText": "Nội dung chính",
+          "callToAction": "Kêu gọi hành động",
+          "viewRaw": "Xem bản gốc"
+        }
+      },
+      "details": {
+        "title": "Chi tiết quảng cáo",
+        "labels": {
+          "headline": "Tiêu đề",
+          "primaryText": "Nội dung chính",
+          "description": "Mô tả",
+          "callToAction": "Kêu gọi hành động",
+          "platform": "Nền tảng",
+          "landingPage": "Trang đích"
+        },
+        "notAvailable": "Không có"
+      }
+    },
+    "export": {
+      "headers": {
+        "platform": "Nền tảng",
+        "adId": "Mã quảng cáo",
+        "headline": "Tiêu đề",
+        "description": "Mô tả",
+        "cta": "CTA",
+        "advertiser": "Nhà quảng cáo",
+        "url": "URL"
+      }
+    },
+    "messages": {
+      "enterBrand": "Vui lòng nhập tên thương hiệu",
+      "searchSuccess": "Đã tìm thấy {count} quảng cáo từ {platform}",
+      "iframeMode": "Đang xem quảng cáo {platform} ở chế độ nhúng",
+      "searchEmpty": "Không tìm thấy quảng cáo cho lần tìm kiếm này",
+      "searchFailed": "Không thể tìm quảng cáo đối thủ",
+      "analysisComplete": "Đã phân tích quảng cáo",
+      "analysisFailed": "Không thể phân tích quảng cáo",
+      "selectCompetitor": "Vui lòng chọn quảng cáo đối thủ",
+      "suggestionSuccess": "Đã tạo gợi ý AI",
+      "suggestionFailed": "Không thể tạo gợi ý AI",
+      "patternsNeedSelection": "Chọn ít nhất 2 quảng cáo để phân tích mẫu",
+      "patternsSuccess": "Đã phân tích mẫu thành công",
+      "patternsError": "Không thể phân tích mẫu",
+      "abTestSuccess": "Đã tạo biến thể A/B",
+      "abTestError": "Không thể tạo biến thể A/B",
+      "updatedSearch": "Đã cập nhật tìm kiếm: {query}",
+      "iframeUnavailable": "Chưa có URL iframe",
+      "retryDataMode": "Đang thử lại bằng chế độ dữ liệu cấu trúc...",
+      "watchlistAdded": "Đã thêm vào watchlist",
+      "watchlistAddError": "Không thể thêm watchlist",
+      "watchlistRefreshItem": "Đã cập nhật {brand}",
+      "watchlistRefreshItemError": "Không thể làm mới mục này",
+      "watchlistRefreshed": "Đã làm mới watchlist",
+      "watchlistRefreshAllError": "Không thể làm mới toàn bộ watchlist",
+      "watchlistRemoved": "Đã xóa {brand}",
+      "exportNoResults": "Không có kết quả để xuất",
+      "exportSuccess": "Xuất dữ liệu thành công",
+      "exportError": "Không thể xuất kết quả"
     }
   },
   "adCreate": {

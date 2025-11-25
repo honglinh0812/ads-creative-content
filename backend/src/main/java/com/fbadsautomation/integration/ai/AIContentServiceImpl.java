@@ -126,18 +126,35 @@ public class AIContentServiceImpl {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported AI provider: " + providerId);
         }
 
-        // Build final prompt
+        // Build base prompt (user prompt + reference data)
         String finalPrompt = buildFinalPrompt(prompt, adLinks, extractedContent);
 
         try {
             AdType adType = convertContentTypeToAdType(contentType);
             // Issue #9: Use new enhancePromptWithCampaign method
             // Phase 1 & 2: Pass persona and trending keywords
-            String enhancedPrompt = enhancePromptWithCampaign(finalPrompt, adType, campaign, adStyle, userSelectedPersona, trendingKeywords);
+            com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
+
+            PromptBuildResult promptResult = enhancePromptWithCampaign(
+                finalPrompt,
+                adType,
+                campaign,
+                adStyle,
+                userSelectedPersona,
+                trendingKeywords,
+                cta,
+                numberOfVariations
+            );
+
+            String enhancedPrompt = promptResult.getPrompt();
+            log.info("[Prompt] Strategy={} - Final prompt built ({} chars):\n{}",
+                promptResult.getStrategy(),
+                enhancedPrompt.length(),
+                enhancedPrompt);
+
             log.info("[Phase 1&2] Generating {} variations with campaign audience, persona, and trending keywords", numberOfVariations);
 
             // Generate content
-            com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
             List<AdContent> contents = aiProviderService.generateContentWithReliability(
                 enhancedPrompt, textProvider, numberOfVariations, language, adLinks, cta);
 
@@ -548,7 +565,7 @@ public class AIContentServiceImpl {
                 "Could not generate content: Prompt is required when no reference content is available");
         }
         
-        log.info("Final prompt built: {}", finalPrompt.toString());
+        log.debug("Base prompt built: {}", finalPrompt.toString());
         return finalPrompt.toString();
     }
 
@@ -589,11 +606,13 @@ public class AIContentServiceImpl {
      * Issue #9: Enhance prompt with Campaign-level audience
      * Phase 1 & 2: Accept persona and trending keywords
      */
-    private String enhancePromptWithCampaign(String userPrompt, AdType adType,
-                                             com.fbadsautomation.model.Campaign campaign,
-                                             com.fbadsautomation.model.AdStyle adStyle,
-                                             com.fbadsautomation.model.Persona userSelectedPersona,
-                                             List<String> trendingKeywords) {
+    private PromptBuildResult enhancePromptWithCampaign(String userPrompt, AdType adType,
+                                                       com.fbadsautomation.model.Campaign campaign,
+                                                       com.fbadsautomation.model.AdStyle adStyle,
+                                                       com.fbadsautomation.model.Persona userSelectedPersona,
+                                                       List<String> trendingKeywords,
+                                                       com.fbadsautomation.model.FacebookCTA callToAction,
+                                                       int numberOfVariations) {
         // Detect language for bilingual support
         Language detectedLanguage = ValidationMessages.detectLanguage(userPrompt);
         log.info("[Phase 3] Detected language: {}, campaign: {}, persona: {}, keywords: {}",
@@ -620,9 +639,9 @@ public class AIContentServiceImpl {
                     targetAudience,
                     trendingKeywords,
                     detectedLanguage,
-                    com.fbadsautomation.model.FacebookCTA.LEARN_MORE,  // Default CTA for prompt
+                    callToAction,
                     adType,
-                    1,  // numberOfVariations for prompt context
+                    numberOfVariations,
                     null,
                     null,
                     true
@@ -630,7 +649,7 @@ public class AIContentServiceImpl {
 
                 log.info("[Phase 3] CoT prompt built successfully with {} stages",
                         userSelectedPersona != null ? "user persona" : "no persona");
-                return cotPrompt;
+                return PromptBuildResult.of(cotPrompt, PromptStrategy.CHAIN_OF_THOUGHT);
 
             } catch (Exception e) {
                 log.warn("[Phase 3] CoT prompting failed, falling back to multi-stage: {}", e.getMessage());
@@ -674,7 +693,7 @@ public class AIContentServiceImpl {
 
                 log.info("[Phase 1&2 Fallback] Multi-stage prompt built with campaign audience, persona: {}, keywords: {}",
                         persona.name(), trendingKeywords != null ? trendingKeywords.size() : 0);
-                return enhancedPrompt;
+                return PromptBuildResult.of(enhancedPrompt, PromptStrategy.MULTI_STAGE);
 
             } catch (Exception e) {
                 log.warn("[Issue #9] Multi-stage prompting failed, falling back to legacy: {}", e.getMessage());
@@ -683,7 +702,10 @@ public class AIContentServiceImpl {
 
         // Final fallback to legacy prompting
         log.info("[Issue #9] Using legacy prompt (no campaign audience integration)");
-        return buildLegacyPromptForAdType(userPrompt, adType, detectedLanguage);
+        return PromptBuildResult.of(
+            buildLegacyPromptForAdType(userPrompt, adType, detectedLanguage),
+            PromptStrategy.LEGACY
+        );
     }
 
     /**
@@ -1034,5 +1056,33 @@ public class AIContentServiceImpl {
             return line.replaceAll("\\s+", " ");
         }
         return null;
+    }
+
+    private enum PromptStrategy {
+        CHAIN_OF_THOUGHT,
+        MULTI_STAGE,
+        LEGACY
+    }
+
+    private static class PromptBuildResult {
+        private final String prompt;
+        private final PromptStrategy strategy;
+
+        private PromptBuildResult(String prompt, PromptStrategy strategy) {
+            this.prompt = prompt;
+            this.strategy = strategy;
+        }
+
+        public static PromptBuildResult of(String prompt, PromptStrategy strategy) {
+            return new PromptBuildResult(prompt, strategy);
+        }
+
+        public String getPrompt() {
+            return prompt;
+        }
+
+        public PromptStrategy getStrategy() {
+            return strategy;
+        }
     }
 }

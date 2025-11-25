@@ -51,6 +51,8 @@ public class OpenAIProvider implements AIProvider {
         // For parsing JSON;
     @Value("${app.image.storage.location:uploads/images}")
     private String imageStorageLocation;
+    @Value("${ai.openai.log-prompts:false}")
+    private boolean logPrompts;
 
     @Autowired(required = false)
     private MinIOStorageService minIOStorageService;
@@ -119,6 +121,9 @@ public class OpenAIProvider implements AIProvider {
         requestBody.put("response_format", responseFormat);
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
         log.debug("Calling OpenAI Text API at: {} with prompt: {}", textApiUrl, prompt);
+        if (logPrompts) {
+            log.info("[Phase 4] OpenAI prompt body:\n{}", prompt);
+        }
         try {
             Map<String, Object> responseBody = restTemplate.postForObject(textApiUrl, request, Map.class);
             if (responseBody != null && responseBody.containsKey("choices")) {

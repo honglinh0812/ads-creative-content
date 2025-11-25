@@ -141,145 +141,6 @@
       </div>
     </div>
 
-    <div class="lite-card rewrite-panel">
-      <div class="panel-header rewrite-header">
-        <div>
-          <p class="eyebrow">{{ t('optimizationLite.rewrite.title') }}</p>
-          <h3>{{ t('optimizationLite.rewrite.subtitle') }}</h3>
-        </div>
-        <a-button
-          type="primary"
-          :loading="rewriteLoading"
-          :disabled="!rewriteForm.adId"
-          @click="generateRewrite"
-        >
-          {{ t('optimizationLite.rewrite.generate') }}
-        </a-button>
-      </div>
-
-      <div v-if="!ads.length" class="empty-text">
-        {{ t('optimizationLite.rewrite.noAd') }}
-      </div>
-
-      <div v-else class="rewrite-content">
-        <a-form layout="vertical" class="rewrite-form">
-          <a-row :gutter="[16, 16]">
-            <a-col :xs="24" :md="12">
-              <a-form-item :label="t('optimizationLite.rewrite.selectAd')">
-                <a-select v-model:value="rewriteForm.adId" show-search option-filter-prop="children">
-                  <a-select-option
-                    v-for="ad in ads"
-                    :key="ad.id"
-                    :value="ad.id"
-                  >
-                    {{ ad.name || t('optimizationLite.table.untitled') }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :xs="24" :md="6">
-              <a-form-item :label="t('optimizationLite.rewrite.tone')">
-                <a-select v-model:value="rewriteForm.tone">
-                  <a-select-option v-for="tone in toneOptions" :key="tone.value" :value="tone.value">
-                    {{ tone.label }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :xs="24" :md="6">
-              <a-form-item :label="t('optimizationLite.rewrite.length')">
-                <a-select v-model:value="rewriteForm.length">
-                  <a-select-option v-for="length in lengthOptions" :key="length.value" :value="length.value">
-                    {{ length.label }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <a-row :gutter="[16, 16]">
-            <a-col :xs="24" :md="12">
-              <a-form-item :label="t('optimizationLite.rewrite.focus')">
-                <a-input v-model:value="rewriteForm.focus" allow-clear />
-              </a-form-item>
-            </a-col>
-            <a-col :xs="24" :md="12">
-              <a-form-item :label="t('optimizationLite.rewrite.keywords')">
-                <a-input
-                  v-model:value="rewriteForm.keywords"
-                  :placeholder="t('optimizationLite.rewrite.keywordsHint')"
-                  allow-clear
-                />
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <a-row :gutter="[16, 16]">
-            <a-col :xs="24" :md="8">
-              <a-form-item :label="t('optimizationLite.rewrite.provider')">
-                <a-select v-model:value="rewriteForm.provider">
-                  <a-select-option v-for="provider in providerOptions" :key="provider.value" :value="provider.value">
-                    {{ provider.label }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :xs="24" :md="8">
-              <a-form-item :label="t('optimizationLite.rewrite.variations')">
-                <a-input-number v-model:value="rewriteForm.variations" :min="1" :max="5" style="width: 100%" />
-              </a-form-item>
-            </a-col>
-            <a-col :xs="24" :md="8">
-              <a-form-item :label="t('optimizationLite.rewrite.guidance')">
-                <a-input
-                  v-model:value="rewriteForm.guidance"
-                  :placeholder="t('optimizationLite.rewrite.guidancePlaceholder')"
-                  allow-clear
-                />
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </a-form>
-
-        <div v-if="rewriteSelectedAd" class="current-ad-context">
-          <p class="eyebrow">{{ t('optimizationLite.rewrite.currentCopy') }}</p>
-          <p class="context-block">
-            {{ rewriteSelectedAd.primaryText || rewriteSelectedAd.description || rewriteSelectedAd.headline || '—' }}
-          </p>
-        </div>
-
-        <div class="rewrite-results">
-          <p class="eyebrow">{{ t('optimizationLite.rewrite.resultsTitle') }}</p>
-          <div v-if="rewriteResults.length" class="rewrite-result-list">
-            <div
-              v-for="variation in rewriteResults"
-              :key="variation.id"
-              class="rewrite-result-card"
-            >
-              <h4>{{ variation.headline || t('optimizationLite.table.untitled') }}</h4>
-              <p class="hint">{{ variation.description }}</p>
-              <p>{{ variation.primaryText }}</p>
-              <div class="rewrite-card-footer">
-                <a-tag v-if="variation.callToAction">{{ variation.callToAction }}</a-tag>
-                <a-button size="small" @click="copyVariation(variation)">
-                  {{ t('optimizationLite.rewrite.copy') }}
-                </a-button>
-              </div>
-            </div>
-          </div>
-          <p v-else class="hint">{{ t('optimizationLite.rewrite.empty') }}</p>
-        </div>
-
-        <a-alert
-          v-if="rewriteError"
-          type="error"
-          show-icon
-          :message="rewriteError"
-          class="rewrite-alert"
-        />
-      </div>
-    </div>
-
     <div class="lite-card history-panel">
       <div class="panel-header">
         <div>
@@ -331,7 +192,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, reactive, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import api from '@/services/api'
@@ -355,19 +216,6 @@ export default {
     const error = ref(null)
     const adInsightsSupported = ref(true)
     const historySupported = ref(true)
-    const rewriteForm = reactive({
-      adId: null,
-      tone: 'confident',
-      length: 'medium',
-      focus: '',
-      keywords: '',
-      guidance: '',
-      provider: 'openai',
-      variations: 2
-    })
-    const rewriteResults = ref([])
-    const rewriteLoading = ref(false)
-    const rewriteError = ref(null)
 
     const tableColumns = computed(() => [
       {
@@ -425,16 +273,8 @@ export default {
       name: ad.name,
       adType: ad.adType,
       campaignName: ad.campaignName,
-      campaignId: ad.campaignId,
       callToAction: ad.callToAction,
-      createdDate: ad.createdDate,
-      primaryText: ad.primaryText,
-      headline: ad.headline,
-      description: ad.description,
-      status: ad.status,
-      websiteUrl: ad.websiteUrl,
-      adStyle: ad.adStyle,
-      prompt: ad.prompt
+      createdDate: ad.createdDate
     })
 
     const loadAds = async (reset = false) => {
@@ -556,123 +396,6 @@ export default {
       loadHistory(true)
     }
 
-    const toneOptions = [
-      { label: 'Confident', value: 'confident' },
-      { label: 'Friendly', value: 'friendly' },
-      { label: 'Urgent', value: 'urgent' },
-      { label: 'Playful', value: 'playful' }
-    ]
-
-    const lengthOptions = [
-      { label: 'Short', value: 'short' },
-      { label: 'Medium', value: 'medium' },
-      { label: 'Long', value: 'long' }
-    ]
-
-    const providerOptions = [
-      { label: 'OpenAI', value: 'openai' },
-      { label: 'Anthropic', value: 'anthropic' },
-      { label: 'Gemini', value: 'gemini' }
-    ]
-
-    const rewriteSelectedAd = computed(() =>
-      ads.value.find(ad => ad.id === rewriteForm.adId) || null
-    )
-
-    const parseKeywords = (value) => {
-      if (!value) return []
-      return value.split(',').map(item => item.trim()).filter(Boolean)
-    }
-
-    const buildRewriteContext = (ad) => {
-      const sections = []
-      if (ad.primaryText) {
-        sections.push(`Primary Text: ${ad.primaryText}`)
-      }
-      if (ad.headline) {
-        sections.push(`Headline: ${ad.headline}`)
-      }
-      if (ad.description) {
-        sections.push(`Description: ${ad.description}`)
-      }
-      if (rewriteForm.focus) {
-        sections.push(`USP: ${rewriteForm.focus}`)
-      }
-      return sections.join('\n')
-    }
-
-    const generateRewrite = async () => {
-      if (!rewriteForm.adId) {
-        message.warning(t('optimizationLite.rewrite.noAd'))
-        return
-      }
-      const ad = rewriteSelectedAd.value
-      if (!ad) {
-        message.error(t('optimizationLite.rewrite.noAd'))
-        return
-      }
-      if (!ad.campaignId) {
-        message.warning(t('optimizationLite.rewrite.missingCampaign'))
-        return
-      }
-
-      rewriteLoading.value = true
-      rewriteError.value = null
-      try {
-        const payload = {
-          campaignId: ad.campaignId,
-          adType: ad.adType || 'SINGLE_IMAGE',
-          name: `${ad.name || 'Ad'} rewrite`,
-          productDescription: buildRewriteContext(ad) || rewriteForm.guidance,
-          referenceContent: rewriteForm.guidance || ad.primaryText || ad.description || '',
-          creativeStyle: rewriteForm.tone,
-          textProvider: rewriteForm.provider,
-          numberOfVariations: rewriteForm.variations,
-          language: locale.value,
-          callToAction: ad.callToAction || null,
-          trendingKeywords: parseKeywords(rewriteForm.keywords),
-          websiteUrl: ad.websiteUrl || null
-        }
-        if (!payload.productDescription) {
-          payload.productDescription = 'Rewrite this ad to be clearer and more persuasive.'
-        }
-
-        const response = await api.post('/ads/learn/generate', payload)
-        if (response.data.status === 'success') {
-          rewriteResults.value = (response.data.variations || []).map((variation, index) => ({
-            id: variation.id || index,
-            headline: variation.headline,
-            primaryText: variation.primaryText,
-            description: variation.description,
-            callToAction: variation.callToAction
-          }))
-          message.success(t('optimizationLite.rewrite.success'))
-        } else {
-          throw new Error(response.data.message || t('optimizationLite.rewrite.error'))
-        }
-      } catch (err) {
-        console.error(err)
-        rewriteError.value = err?.message || t('optimizationLite.rewrite.error')
-        message.error(rewriteError.value)
-      } finally {
-        rewriteLoading.value = false
-      }
-    }
-
-    const copyVariation = async (variation) => {
-      const content = [variation.headline, variation.primaryText, variation.description]
-        .filter(Boolean)
-        .join('\n\n')
-      if (!content) return
-      try {
-        await navigator.clipboard.writeText(content)
-        message.success(t('optimizationLite.rewrite.copied'))
-      } catch (err) {
-        console.error(err)
-        message.error(t('optimizationLite.rewrite.error'))
-      }
-    }
-
     const onSearch = () => {
       // search is reactive, but we keep handler for keyboard enter
     }
@@ -691,19 +414,8 @@ export default {
       loadHistory(true)
     })
 
-    watch(ads, (newAds) => {
-      if (!rewriteForm.adId && newAds.length) {
-        rewriteForm.adId = newAds[0].id
-      }
-    })
-
-    watch(() => rewriteForm.adId, () => {
-      rewriteResults.value = []
-    })
-
     return {
       t,
-      ads,
       adsLoading,
       filteredAds,
       tableColumns,
@@ -729,17 +441,7 @@ export default {
       onSearch,
       formatDate,
       adInsightsSupported,
-      historySupported,
-      rewriteForm,
-      rewriteResults,
-      rewriteLoading,
-      rewriteError,
-      generateRewrite,
-      copyVariation,
-      rewriteSelectedAd,
-      toneOptions,
-      lengthOptions,
-      providerOptions
+      historySupported
     }
   }
 }
@@ -881,61 +583,6 @@ export default {
 
 .empty-text {
   color: #94a3b8;
-}
-
-.rewrite-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.rewrite-header {
-  align-items: center;
-}
-
-.rewrite-form {
-  margin-bottom: 8px;
-}
-
-.current-ad-context {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.context-block {
-  margin: 0;
-  color: #1f2937;
-}
-
-.rewrite-results {
-  margin-top: 12px;
-}
-
-.rewrite-result-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
-}
-
-.rewrite-result-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.rewrite-card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.rewrite-alert {
-  margin-top: 12px;
 }
 
 @media (max-width: 768px) {

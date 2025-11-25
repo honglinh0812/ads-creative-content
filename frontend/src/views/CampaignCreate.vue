@@ -105,9 +105,12 @@
                 size="large"
                 style="width: 100%"
                 :placeholder="$t('campaign.create.form.placeholder.dailyBudget')"
-                :formatter="value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                :parser="value => value.replace(/\$\s?|(,*)/g, '')"
+                :formatter="formatCurrencyInput"
+                :parser="parseCurrencyInput"
               />
+              <div class="text-xs text-gray-500 mt-1">
+                Minimum budget: {{ minBudgetLabel }} ({{ accountCurrency }})
+              </div>
             </a-form-item>
           </a-col>
 
@@ -125,9 +128,12 @@
                 size="large"
                 style="width: 100%"
                 :placeholder="$t('campaign.create.form.placeholder.totalBudget')"
-                :formatter="value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                :parser="value => value.replace(/\$\s?|(,*)/g, '')"
+                :formatter="formatCurrencyInput"
+                :parser="parseCurrencyInput"
               />
+              <div class="text-xs text-gray-500 mt-1">
+                Minimum budget: {{ minBudgetLabel }} ({{ accountCurrency }})
+              </div>
             </a-form-item>
           </a-col>
 
@@ -314,6 +320,21 @@ export default {
   computed: {
     ...mapState('auth', ['user']),
 
+    accountCurrency() {
+      const currency = process.env.VUE_APP_FACEBOOK_ACCOUNT_CURRENCY || 'USD'
+      return currency.toUpperCase()
+    },
+
+    minBudgetAmount() {
+      return this.accountCurrency === 'VND' ? 30000 : 5
+    },
+
+    minBudgetLabel() {
+      return this.accountCurrency === 'VND'
+        ? `${this.minBudgetAmount.toLocaleString('vi-VN')} ₫`
+        : `$${this.minBudgetAmount}`
+    },
+
     objectiveOptions() {
       return [
         { value: 'BRAND_AWARENESS', label: this.$t('campaign.objective.brandAwareness') },
@@ -372,6 +393,19 @@ export default {
     ...mapActions('auth', ['logout']),
     ...mapActions('toast', ['showToast']),
 
+    formatCurrencyInput(value) {
+      if (value === undefined || value === null || value === '') {
+        return `${this.currencySymbol} 0`
+      }
+      const numeric = value.toString().replace(/[^\d.]/g, '')
+      return `${this.currencySymbol} ${numeric}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+    },
+
+    parseCurrencyInput(value) {
+      if (!value) return ''
+      return value.replace(/[^\d.]/g, '')
+    },
+
     // Issue #9: Convert audienceSegment object to targetAudience string
     formatTargetAudienceString(segment) {
       if (!segment) return '';
@@ -429,14 +463,14 @@ export default {
       }
 
       // Validate budget based on type
-      if (this.form.budgetType === 'DAILY') {
-        if (!this.form.dailyBudget || this.form.dailyBudget <= 0) {
-          this.errors.dailyBudget = 'Daily budget is required and must be greater than 0'
-        }
-      } else if (this.form.budgetType === 'LIFETIME') {
-        if (!this.form.totalBudget || this.form.totalBudget <= 0) {
-          this.errors.totalBudget = 'Total budget is required and must be greater than 0'
-        }
+        if (this.form.budgetType === 'DAILY') {
+          if (!this.form.dailyBudget || this.form.dailyBudget < this.minBudgetAmount) {
+            this.errors.dailyBudget = `Daily budget must be at least ${this.minBudgetLabel}`
+          }
+        } else if (this.form.budgetType === 'LIFETIME') {
+          if (!this.form.totalBudget || this.form.totalBudget < this.minBudgetAmount) {
+            this.errors.totalBudget = `Total budget must be at least ${this.minBudgetLabel}`
+          }
       }
 
       // Validate start date

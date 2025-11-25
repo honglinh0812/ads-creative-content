@@ -18,6 +18,7 @@ public class FacebookProperties {
     private String pixelId;
     private String defaultAdAccountId;
     private String defaultLinkUrl;
+    private String accountCurrency;
     private boolean adsetBudgetSharingEnabled;
     private boolean debugPayloads;
     
@@ -62,6 +63,7 @@ public class FacebookProperties {
         return defaultAdAccountId;
     }
     public String getDefaultLinkUrl() { return defaultLinkUrl; }
+    public String getAccountCurrency() { return accountCurrency; }
 
     public boolean isAdsetBudgetSharingEnabled() {
         return adsetBudgetSharingEnabled;
@@ -112,6 +114,7 @@ public class FacebookProperties {
         this.defaultAdAccountId = defaultAdAccountId;
     }
     public void setDefaultLinkUrl(String defaultLinkUrl) { this.defaultLinkUrl = defaultLinkUrl; }
+    public void setAccountCurrency(String accountCurrency) { this.accountCurrency = accountCurrency; }
 
     public void setAdsetBudgetSharingEnabled(boolean adsetBudgetSharingEnabled) {
         this.adsetBudgetSharingEnabled = adsetBudgetSharingEnabled;

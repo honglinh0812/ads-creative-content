@@ -38,6 +38,7 @@ public class FacebookAdPayloadBuilder {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
     private final MinIOStorageService minioStorageService;
+    private final com.fbadsautomation.integration.facebook.FacebookProperties facebookProperties;
 
     public FacebookAdPayload buildPayload(Ad ad) {
         Campaign campaign = ad.getCampaign();
@@ -161,7 +162,25 @@ public class FacebookAdPayloadBuilder {
     }
 
     private int getBudgetMultiplier() {
+        String currency = getCurrency();
+        if ("VND".equalsIgnoreCase(currency)) {
+            return 1;
+        }
         return 100;
+    }
+
+    public double getMinimumBudgetAmount() {
+        String currency = getCurrency();
+        if ("VND".equalsIgnoreCase(currency)) {
+            return 30000d;
+        }
+        return 5d;
+    }
+
+    public String getCurrency() {
+        return StringUtils.hasText(facebookProperties.getAccountCurrency())
+            ? facebookProperties.getAccountCurrency()
+            : "USD";
     }
 
     private String extractCountriesFromAudience(String targetAudience) {

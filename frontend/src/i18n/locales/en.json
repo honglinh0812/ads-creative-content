@@ -333,30 +333,6 @@
     },
     "error": {
       "title": "Unable to analyze"
-    },
-    "rewrite": {
-      "title": "AI rewrite playground",
-      "subtitle": "Pick an ad and generate new copy instantly",
-      "selectAd": "Select ad",
-      "tone": "Tone",
-      "length": "Length",
-      "focus": "Unique selling point",
-      "keywords": "Keywords",
-      "guidance": "Extra notes",
-      "variations": "Variations",
-      "provider": "Provider",
-      "generate": "Generate rewrite",
-      "keywordsHint": "Comma-separated keywords (optional)",
-      "guidancePlaceholder": "Any guardrails or campaign context for the rewrite",
-      "noAd": "Select an ad to rewrite",
-      "missingCampaign": "This ad is missing a campaign. Please assign one first.",
-      "empty": "Generate a rewrite to see AI variations.",
-      "resultsTitle": "AI variations",
-      "copy": "Copy",
-      "copied": "Copied",
-      "success": "Rewrite generated",
-      "error": "Unable to generate rewrite",
-      "currentCopy": "Current copy"
     }
   },
   "campaign": {
@@ -1124,16 +1100,75 @@
   },
   "competitors": {
     "title": "Competitor Insights",
+    "eyebrow": "Market intelligence",
     "subtitle": "Analyze competitor ads and get AI-powered suggestions",
+    "hero": {
+      "description": "Search any brand across major ad libraries and track watchlists.",
+      "watchlistLabel": "Watchlist brands",
+      "platformLabel": "Latest platform"
+    },
+    "platformLabels": {
+      "facebook": "Facebook & Instagram",
+      "google": "Google & YouTube",
+      "tiktok": "TikTok"
+    },
     "searchPlaceholder": "Enter competitor brand name...",
     "selectRegion": "Select region",
     "maxResults": "Max results",
-    "searchButton": "Search Competitor Ads",
+    "form": {
+      "title": "Search competitor ads",
+      "description": "Filter by brand, region, and number of results.",
+      "brandLabel": "Brand name",
+      "brandPlaceholder": "e.g. Nike, Coca-Cola",
+      "regionLabel": "Region",
+      "regionGroups": {
+        "americas": "Americas",
+        "europe": "Europe",
+        "oceania": "Oceania"
+      },
+      "searchButton": "Search competitor ads"
+    },
+    "watchlist": {
+      "title": "Competitor watchlist",
+      "subtitle": "Save frequent searches and refresh with one click.",
+      "brandLabel": "Brand",
+      "brandPlaceholder": "Brand name",
+      "platformLabel": "Platform",
+      "regionLabel": "Region",
+      "regionPlaceholder": "US",
+      "limitLabel": "Limit",
+      "actions": {
+        "add": "Add brand",
+        "refreshAll": "Refresh all",
+        "refresh": "Refresh",
+        "remove": "Remove"
+      },
+      "adsTracked": "{count} ads tracked",
+      "empty": "No brands in watchlist",
+      "activityTitle": "Recent activity",
+      "neverChecked": "Never checked",
+      "newLabel": "New"
+    },
+    "results": {
+      "title": "Found {count} ads from {platform}",
+      "subtitle": "Select ads to compare or export.",
+      "export": "Export",
+      "searching": "Searching {platform}...",
+      "empty": "No results found"
+    },
+    "iframe": {
+      "searchPlaceholder": "Search another brand...",
+      "searchButton": "Search",
+      "notAvailable": "Iframe URL not available",
+      "openNewTab": "Open in new tab",
+      "retryDataMode": "Try structured data mode"
+    },
+    "emptyPrompt": "Search for competitor brands to view their ads",
     "noResults": "No competitor ads found",
     "selectedAds": "{count} ad(s) selected",
-    "compareSelected": "Compare Selected",
-    "clearSelection": "Clear Selection",
-    "viewDetails": "View Details",
+    "compareSelected": "Compare selected ({count})",
+    "clearSelection": "Clear selection",
+    "viewDetails": "View details",
     "analyze": "Analyze",
     "aiSuggestion": "AI Suggestion",
     "patterns": "Identify Patterns",
@@ -1145,7 +1180,111 @@
       "AU": "Australia",
       "DE": "Germany",
       "FR": "France",
-      "JP": "Japan"
+      "JP": "Japan",
+      "MX": "Mexico",
+      "BR": "Brazil",
+      "IT": "Italy",
+      "NZ": "New Zealand"
+    },
+    "modals": {
+      "comparison": {
+        "title": "AI-powered ad comparison",
+        "tabs": {
+          "compare": "Compare with my ad",
+          "patterns": "Identify patterns",
+          "abtest": "A/B test variations"
+        },
+        "fields": {
+          "myAd": "Your current ad text",
+          "placeholderMyAd": "Enter your current ad text...",
+          "selectAd": "Select competitor ad",
+          "placeholderSelect": "Choose an ad",
+          "variationCount": "Number of variations"
+        },
+        "generate": "Generate AI suggestion",
+        "suggestionReady": "AI suggestion generated",
+        "patternsHint": "Analyze {count} selected ads to identify common patterns.",
+        "patternsButton": "Analyze patterns",
+        "patternsReady": "Patterns identified",
+        "selectTwoNotice": "Select at least 2 ads to identify patterns"
+      },
+      "abTest": {
+        "myAd": "Your current ad",
+        "competitorAd": "Competitor ad to learn from",
+        "variationCount": "Number of variations",
+        "button": "Generate variations",
+        "ready": "A/B test variations generated",
+        "variation": "Variation {index}"
+      },
+      "analysis": {
+        "error": "Analysis failed",
+        "sections": {
+          "strengths": "Strengths",
+          "weaknesses": "Areas for improvement",
+          "recommendations": "Recommendations",
+          "patterns": "Patterns identified",
+          "raw": "View raw analysis"
+        },
+        "fields": {
+          "headline": "Headline",
+          "primaryText": "Primary text",
+          "callToAction": "Call to action",
+          "viewRaw": "View raw"
+        }
+      },
+      "details": {
+        "title": "Ad details",
+        "labels": {
+          "headline": "Headline",
+          "primaryText": "Primary text",
+          "description": "Description",
+          "callToAction": "Call to action",
+          "platform": "Platform",
+          "landingPage": "Landing page"
+        },
+        "notAvailable": "N/A"
+      }
+    },
+    "export": {
+      "headers": {
+        "platform": "Platform",
+        "adId": "Ad ID",
+        "headline": "Headline",
+        "description": "Description",
+        "cta": "CTA",
+        "advertiser": "Advertiser",
+        "url": "URL"
+      }
+    },
+    "messages": {
+      "enterBrand": "Please enter a brand name",
+      "searchSuccess": "Found {count} ads from {platform}",
+      "iframeMode": "Viewing {platform} ads in embedded mode",
+      "searchEmpty": "No ads found for this search",
+      "searchFailed": "Failed to search competitor ads",
+      "analysisComplete": "Ad analysis complete",
+      "analysisFailed": "Failed to analyze ad",
+      "selectCompetitor": "Please select a competitor ad",
+      "suggestionSuccess": "AI suggestion generated successfully",
+      "suggestionFailed": "Failed to generate suggestion",
+      "patternsNeedSelection": "Select at least 2 ads to identify patterns",
+      "patternsSuccess": "Patterns identified successfully",
+      "patternsError": "Failed to identify patterns",
+      "abTestSuccess": "A/B test variations generated successfully",
+      "abTestError": "Failed to generate A/B test variations",
+      "updatedSearch": "Updated search to: {query}",
+      "iframeUnavailable": "Iframe URL not available yet",
+      "retryDataMode": "Retrying search with structured data mode...",
+      "watchlistAdded": "Added to watchlist",
+      "watchlistAddError": "Failed to add watchlist item",
+      "watchlistRefreshItem": "Updated {brand}",
+      "watchlistRefreshItemError": "Failed to refresh item",
+      "watchlistRefreshed": "Watchlist refreshed",
+      "watchlistRefreshAllError": "Unable to refresh all watchlist items",
+      "watchlistRemoved": "Removed {brand}",
+      "exportNoResults": "No results to export",
+      "exportSuccess": "Export completed",
+      "exportError": "Failed to export results"
     }
   },
   "adCreate": {

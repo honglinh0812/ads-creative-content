@@ -47,6 +47,9 @@ public class TrendingKeywordsService {
     @Autowired(required = false)
     private ApifyService apifyService;
 
+    @Autowired(required = false)
+    private PublicFeedTrendsService publicFeedTrendsService;
+
     /**
      * Build deterministic Redis cache key (also used by SpEL)
      */
@@ -87,9 +90,10 @@ public class TrendingKeywordsService {
         }
 
         List<TrendingKeyword> googleTrends = fetchFromGoogleTrends(normalizedQuery, normalizedRegion, normalizedLanguage);
+        List<TrendingKeyword> feedTrends = fetchFromPublicFeeds(normalizedRegion, normalizedLanguage);
         List<TrendingKeyword> tiktokTrends = extractTikTokTrends(normalizedQuery, normalizedRegion);
 
-        List<TrendingKeyword> mergedTrends = mergeTrendSources(googleTrends, tiktokTrends);
+        List<TrendingKeyword> mergedTrends = mergeTrendSources(googleTrends, feedTrends, tiktokTrends);
 
         if (mergedTrends == null || mergedTrends.isEmpty()) {
             log.info("Using mock trends data (API not available or failed)");
@@ -115,6 +119,18 @@ public class TrendingKeywordsService {
             return results != null ? results : Collections.emptyList();
         } catch (Exception e) {
             log.error("Error fetching Google Trends data: {}", e.getMessage(), e);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<TrendingKeyword> fetchFromPublicFeeds(String region, String language) {
+        if (publicFeedTrendsService == null || !publicFeedTrendsService.isAvailable()) {
+            return Collections.emptyList();
+        }
+        try {
+            return publicFeedTrendsService.fetchFromFeeds(region, language, 20);
+        } catch (Exception e) {
+            log.warn("Failed to build public-feed trend insights: {}", e.getMessage());
             return Collections.emptyList();
         }
     }
