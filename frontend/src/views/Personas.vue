@@ -5,51 +5,13 @@
         <p class="eyebrow">{{ $t('personas.title') }}</p>
         <h1>{{ $t('personas.subtitle') }}</h1>
         <p class="hero-description">{{ $t('personas.subtitle') }}</p>
-        <div class="hero-actions">
-          <a-input-search
-            v-model:value="searchQuery"
-            :placeholder="$t('personas.searchPlaceholder')"
-            @search="handleSearch"
-            allow-clear
-          />
+        <div class="hero-actions">     
           <a-button type="primary" size="large" @click="showCreateModal = true">
             <template #icon><plus-outlined /></template>
             {{ $t('personas.createPersona') }}
           </a-button>
         </div>
       </div>
-      <div class="hero-meta">
-        <div class="hero-stat">
-          <p class="hero-stat-label">{{ $t('personas.total') }}</p>
-          <p class="hero-stat-value">{{ personas.length }}</p>
-        </div>
-        <div class="hero-stat">
-          <p class="hero-stat-label">{{ $t('personas.recent') }}</p>
-          <p class="hero-stat-value">{{ recentPersonasCount }}</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="stat-grid">
-      <article class="stat-card surface-card">
-        <p class="stat-label">{{ $t('personas.total') }}</p>
-        <p class="stat-value">{{ personas.length }}</p>
-        <span class="stat-note">{{ $t('personas.stats.updatedNow') }}</span>
-      </article>
-      <article class="stat-card surface-card">
-        <p class="stat-label">{{ $t('personas.stats.last7Days') }}</p>
-        <p class="stat-value">{{ recentPersonasCount }}</p>
-        <span class="stat-note">{{ $t('personas.recent') }}</span>
-      </article>
-      <article class="stat-card surface-card">
-        <p class="stat-label">{{ $t('personas.mostCommonTone') }}</p>
-        <p class="stat-value">{{ toneEmoji }} {{ mostCommonTone }}</p>
-      </article>
-      <article class="stat-card surface-card">
-        <p class="stat-label">{{ $t('personas.quota') }}</p>
-        <p class="stat-value">{{ quotaPercentage }}%</p>
-        <span class="stat-note">{{ personas.length }} / 100</span>
-      </article>
     </section>
 
     <section class="surface-card section-card">

@@ -157,7 +157,7 @@ public class Persona {
         sb.append("\n- Giọng điệu ưa thích: ").append(tone);
 
         if (painPoints != null && !painPoints.isEmpty()) {
-            sb.append("\n- Điểm đau (Pain Points): ");
+            sb.append("\n- Vấn đề nhức nhối (Pain Points): ");
             for (int i = 0; i < painPoints.size(); i++) {
                 sb.append("\n  ").append(i + 1).append(". ").append(painPoints.get(i));
             }

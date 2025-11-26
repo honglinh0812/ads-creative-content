@@ -31,8 +31,8 @@
           <p class="hero-stat-value">{{ stats?.totalCampaigns || 0 }}</p>
         </div>
         <div class="hero-stat">
-          <p class="hero-stat-label">{{ $t('dashboard.activeAds') }}</p>
-          <p class="hero-stat-value">{{ stats?.activeAds || 0 }}</p>
+          <p class="hero-stat-label">{{ $t('dashboard.totalAds') }}</p>
+          <p class="hero-stat-value">{{ stats?.totalAds || 0 }}</p>
         </div>
       </div>
     </section>
@@ -57,65 +57,6 @@
     </div>
 
     <template v-else>
-      <section class="stat-grid" v-if="hasDashboardData">
-        <div
-          v-for="stat in overviewStats"
-          :key="stat.key"
-          class="stat-card surface-card"
-        >
-          <p class="stat-label">{{ stat.label }}</p>
-          <p class="stat-value">{{ stat.value }}</p>
-          <span class="stat-note">{{ stat.note }}</span>
-        </div>
-      </section>
-
-      <div class="insight-grid">
-        <a-card class="surface-card actions-card" :bordered="false">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">{{ $t('dashboard.readyToCreate') }}</p>
-              <h2>{{ $t('dashboard.jumpIntoNext') }}</h2>
-            </div>
-          </div>
-          <div class="action-list">
-            <router-link
-              v-for="action in quickActions"
-              :key="action.name"
-              :to="action.link"
-              class="action-item"
-            >
-              <div class="action-content">
-                <p class="action-title">{{ action.name }}</p>
-                <p class="action-desc">{{ action.description }}</p>
-              </div>
-              <span class="action-link">{{ $t('dashboard.view') }}</span>
-            </router-link>
-          </div>
-        </a-card>
-
-        <a-card class="surface-card insight-panel" :bordered="false">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">{{ $t('dashboard.proTip') }}</p>
-              <h2>{{ $t('dashboard.youDoingGreat') }}</h2>
-            </div>
-          </div>
-          <p class="insight-message">
-            {{ getContextualInsight() }}
-          </p>
-          <div class="activity-list" v-if="recentActivity.length">
-            <div v-for="activity in recentActivity" :key="activity.id" class="activity-item">
-              <div>
-                <p class="activity-title">{{ activity.title }}</p>
-                <p class="activity-desc">{{ activity.description }}</p>
-              </div>
-              <span class="activity-time">{{ formatDate(activity.timestamp) }}</span>
-            </div>
-          </div>
-          <a-empty v-else :description="$t('dashboard.noData')" />
-        </a-card>
-      </div>
-
       <section class="surface-card section-card">
         <div class="section-heading">
           <div>

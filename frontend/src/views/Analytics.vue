@@ -1,26 +1,12 @@
 <template>
   <div class="analytics-lite">
-    <!-- Hero Section -->
     <div class="lite-card hero" v-if="!loading">
       <div class="hero-content">
         <div class="hero-text">
           <p class="eyebrow">{{ t('analyticsLite.summaryLabel') }}</p>
           <h1 class="hero-number">{{ insights?.summary?.totalAds ?? '—' }}</h1>
           <p class="subtitle">{{ t('analyticsLite.summarySubtitle') }}</p>
-          <p class="generated-at" v-if="insights?.generatedAt">
-            {{ t('analyticsLite.generatedAt', { time: formatDate(insights.generatedAt) }) }}
-          </p>
         </div>
-        <a-space class="hero-actions" :size="12">
-          <a-button @click="loadInsights" :loading="loading" size="large">
-            <template #icon><ReloadOutlined /></template>
-            {{ t('analyticsLite.actions.refresh') }}
-          </a-button>
-          <a-button type="primary" @click="$router.push('/ads')" size="large">
-            <template #icon><AppstoreOutlined /></template>
-            {{ t('analyticsLite.actions.goToAds') }}
-          </a-button>
-        </a-space>
       </div>
     </div>
 
@@ -175,39 +161,6 @@
           </div>
           <p v-else class="empty-text">{{ t('analyticsLite.cta.empty') }}</p>
         </div>
-      </div>
-
-      <div class="lite-card panel recent-panel">
-        <div class="panel-header">
-          <div>
-            <p class="eyebrow">{{ t('analyticsLite.recent.title') }}</p>
-            <h3>{{ t('analyticsLite.recent.subtitle') }}</h3>
-          </div>
-        </div>
-
-        <div v-if="recentAds.length" class="recent-list">
-          <div
-            v-for="ad in recentAds"
-            :key="ad.id"
-            class="recent-item"
-          >
-            <div class="recent-meta">
-              <h4>{{ ad.name }}</h4>
-              <p class="hint">
-                {{ ad.campaignName || t('analyticsLite.recent.uncategorized') }}
-                · {{ formatDate(ad.createdDate) }}
-              </p>
-              <p class="excerpt">{{ ad.excerpt }}</p>
-            </div>
-            <div class="tag-group">
-              <a-tag>{{ ad.adType || '—' }}</a-tag>
-              <a-tag :color="ad.hasMedia ? 'green' : 'orange'">
-                {{ ad.hasMedia ? t('analyticsLite.recent.media') : t('analyticsLite.recent.noMedia') }}
-              </a-tag>
-            </div>
-          </div>
-        </div>
-        <p v-else class="empty-text">{{ t('analyticsLite.recent.empty') }}</p>
       </div>
     </div>
 

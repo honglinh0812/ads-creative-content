@@ -24,16 +24,6 @@
           </a-radio-group>
         </div>
       </div>
-      <div class="hero-meta">
-        <div class="hero-stat">
-          <p class="hero-stat-label">{{ $t('competitors.hero.watchlistLabel') }}</p>
-          <p class="hero-stat-value">{{ watchlist.length }}</p>
-        </div>
-        <div class="hero-stat">
-          <p class="hero-stat-label">{{ $t('competitors.hero.platformLabel') }}</p>
-          <p class="hero-stat-value">{{ getPlatformLabel(selectedPlatform) }}</p>
-        </div>
-      </div>
     </section>
 
     <section class="surface-card section-card">

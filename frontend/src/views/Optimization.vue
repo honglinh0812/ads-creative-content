@@ -7,17 +7,6 @@
           <h2>{{ t('optimizationLite.subtitle') }}</h2>
           <p class="hint">{{ t('optimizationLite.description') }}</p>
         </div>
-        <div class="panel-actions">
-          <a-input-search
-            v-model:value="searchTerm"
-            :placeholder="t('optimizationLite.searchPlaceholder')"
-            allow-clear
-            @search="onSearch"
-          />
-          <a-button @click="refreshAds" :loading="adsLoading">
-            {{ t('optimizationLite.actions.refreshAds') }}
-          </a-button>
-        </div>
       </div>
 
       <div class="table-actions">
