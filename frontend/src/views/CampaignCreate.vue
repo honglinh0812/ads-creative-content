@@ -326,7 +326,10 @@ export default {
     },
 
     minBudgetAmount() {
-      return this.accountCurrency === 'VND' ? 30000 : 5
+      if (this.accountCurrency === 'VND') {
+        return 26481
+      }
+      return 5
     },
 
     minBudgetLabel() {

@@ -1044,7 +1044,8 @@ public class FacebookExportService {
                 continue;
             }
             Double budget = resolveCampaignBudget(campaign);
-            if (budget == null || budget < minimumBudget) {
+            double normalizedBudget = payloadBuilder.normalizeBudgetForCurrency(budget);
+            if (normalizedBudget < minimumBudget) {
                 throw new ApiException(HttpStatus.BAD_REQUEST,
                     "Campaign '" + campaign.getName() + "' daily budget (" + budget +
                         ") is below the required minimum of " + minimumBudget +

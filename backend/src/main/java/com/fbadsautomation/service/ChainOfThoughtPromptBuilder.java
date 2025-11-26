@@ -116,7 +116,7 @@ public class ChainOfThoughtPromptBuilder {
         prompt.append(buildStage2_AudienceAnalysis(persona, targetAudience, isVietnamese));
 
         // Stage 3: Creative Direction
-        prompt.append(buildStage3_CreativeDirection(adStyle, trendingKeywords, referenceContent, referenceLink, userPrompt, isVietnamese, referenceMetrics));
+        prompt.append(buildStage3_CreativeDirection(adStyle, trendingKeywords, referenceContent, referenceLink, userPrompt, isVietnamese, referenceMetrics, !enforceCharacterLimits));
 
         // Stage 4: Constraints & Requirements
         prompt.append(buildStage4_Constraints(callToAction, language, isVietnamese, enforceCharacterLimits));
@@ -200,23 +200,28 @@ public class ChainOfThoughtPromptBuilder {
         return stage.toString();
     }
 
-    private String buildReferenceMirrorCue(ReferenceMetrics referenceMetrics, boolean isVietnamese) {
+    private String buildReferenceMirrorCue(ReferenceMetrics referenceMetrics, boolean isVietnamese, boolean allowLongForm) {
         StringBuilder cue = new StringBuilder();
+        Integer targetSentences = getGuidedSentenceCount(referenceMetrics, allowLongForm);
+        Integer targetWords = getGuidedWordCount(referenceMetrics, allowLongForm);
+
         if (isVietnamese) {
             cue.append("🪞 BÁM SÁT QUẢNG CÁO THAM CHIẾU\n");
             cue.append("- Giữ nhịp điệu, bố cục câu và cảm xúc tương tự phần REFERENCE STYLE nhưng thay toàn bộ dữ liệu bằng sản phẩm hiện tại.\n");
-            if (referenceMetrics != null) {
-                if (referenceMetrics.getSentenceCount() != null && referenceMetrics.getSentenceCount() > 0) {
-                    cue.append(String.format("- Mục tiêu độ dài: khoảng %d câu", referenceMetrics.getSentenceCount()));
-                    if (referenceMetrics.getWordCount() != null && referenceMetrics.getWordCount() > 0) {
-                        cue.append(String.format(" (~%d từ).\n", referenceMetrics.getWordCount()));
-                    } else {
-                        cue.append(".\n");
-                    }
-                } else if (referenceMetrics.getWordCount() != null && referenceMetrics.getWordCount() > 0) {
-                    cue.append(String.format("- Viết dài tương tự (~%d từ).\n", referenceMetrics.getWordCount()));
+            if (targetSentences != null || targetWords != null) {
+                cue.append("- Mục tiêu độ dài: ");
+                if (targetSentences != null) {
+                    cue.append(String.format("khoảng %d câu", targetSentences));
                 }
-
+                if (targetWords != null) {
+                    if (targetSentences != null) {
+                        cue.append(" / ");
+                    }
+                    cue.append(String.format("~%d từ", targetWords));
+                }
+                cue.append(".\n");
+            }
+            if (referenceMetrics != null) {
                 if (Boolean.TRUE.equals(referenceMetrics.getContainsCallToAction())) {
                     cue.append("- Quảng cáo mẫu có CTA nổi bật, hãy chuyển hóa CTA đó thành lời kêu gọi tự nhiên cho thương hiệu của bạn.\n");
                 }
@@ -228,18 +233,20 @@ public class ChainOfThoughtPromptBuilder {
         } else {
             cue.append("🪞 MIRROR THE REFERENCE AD\n");
             cue.append("- Match the cadence, paragraph structure, and emotional tone from REFERENCE STYLE while swapping in the user's product details.\n");
-            if (referenceMetrics != null) {
-                if (referenceMetrics.getSentenceCount() != null && referenceMetrics.getSentenceCount() > 0) {
-                    cue.append(String.format("- Target a similar length (~%d sentences", referenceMetrics.getSentenceCount()));
-                    if (referenceMetrics.getWordCount() != null && referenceMetrics.getWordCount() > 0) {
-                        cue.append(String.format(" / ~%d words).\n", referenceMetrics.getWordCount()));
-                    } else {
-                        cue.append(").\n");
-                    }
-                } else if (referenceMetrics.getWordCount() != null && referenceMetrics.getWordCount() > 0) {
-                    cue.append(String.format("- Aim for roughly %d words to stay close to the reference pacing.\n", referenceMetrics.getWordCount()));
+            if (targetSentences != null || targetWords != null) {
+                cue.append("- Target a similar length (");
+                if (targetSentences != null) {
+                    cue.append(String.format("~%d sentences", targetSentences));
                 }
-
+                if (targetWords != null) {
+                    if (targetSentences != null) {
+                        cue.append(" / ");
+                    }
+                    cue.append(String.format("~%d words", targetWords));
+                }
+                cue.append(").\n");
+            }
+            if (referenceMetrics != null) {
                 if (Boolean.TRUE.equals(referenceMetrics.getContainsCallToAction())) {
                     cue.append("- The sample uses a strong CTA—translate that urgency into your own offering.\n");
                 }
@@ -262,7 +269,8 @@ public class ChainOfThoughtPromptBuilder {
                                                  String referenceLink,
                                                  String baseDescription,
                                                  boolean isVietnamese,
-                                                 ReferenceMetrics referenceMetrics) {
+                                                 ReferenceMetrics referenceMetrics,
+                                                 boolean allowLongForm) {
         StringBuilder stage = new StringBuilder();
 
         if (isVietnamese) {
@@ -279,7 +287,7 @@ public class ChainOfThoughtPromptBuilder {
                 stage.append("\n");
             }
             appendReferenceSection(stage, referenceContent, referenceLink, baseDescription, true);
-            stage.append(buildReferenceMirrorCue(referenceMetrics, true));
+            stage.append(buildReferenceMirrorCue(referenceMetrics, true, allowLongForm));
         } else {
             stage.append("🎨 CREATIVE DIRECTION\n\n");
 
@@ -294,7 +302,7 @@ public class ChainOfThoughtPromptBuilder {
                 stage.append("\n");
             }
             appendReferenceSection(stage, referenceContent, referenceLink, baseDescription, false);
-            stage.append(buildReferenceMirrorCue(referenceMetrics, false));
+            stage.append(buildReferenceMirrorCue(referenceMetrics, false, allowLongForm));
         }
 
         return stage.toString();
@@ -576,6 +584,8 @@ public class ChainOfThoughtPromptBuilder {
         String primaryConstraint = "";
         String depthRequirement = "";
         String mirrorLengthNote = "";
+        Integer guidedSentences = getGuidedSentenceCount(referenceMetrics, !enforceCharacterLimits);
+        Integer guidedWords = getGuidedWordCount(referenceMetrics, !enforceCharacterLimits);
 
         if (enforceCharacterLimits) {
             if (isVietnamese) {
@@ -600,27 +610,20 @@ public class ChainOfThoughtPromptBuilder {
                 depthRequirement = "\n5. Length: Match or exceed the reference with natural multi-sentence storytelling.";
             }
 
-            if (referenceMetrics != null &&
-                    (referenceMetrics.getWordCount() != null || referenceMetrics.getSentenceCount() != null)) {
-                Integer words = referenceMetrics.getWordCount();
-                Integer sentences = referenceMetrics.getSentenceCount();
-                if (isVietnamese) {
-                    mirrorLengthNote = "\n🎯 Gợi ý độ dài: ";
-                } else {
-                    mirrorLengthNote = "\n🎯 Target length: ";
-                }
-                if (sentences != null && sentences > 0) {
+            if (guidedSentences != null || guidedWords != null) {
+                mirrorLengthNote = isVietnamese ? "\n🎯 Gợi ý độ dài: " : "\n🎯 Target length: ";
+                if (guidedSentences != null) {
                     mirrorLengthNote += isVietnamese
-                            ? String.format("~%d câu", sentences)
-                            : String.format("~%d sentences", sentences);
+                            ? String.format("~%d câu", guidedSentences)
+                            : String.format("~%d sentences", guidedSentences);
                 }
-                if (words != null && words > 0) {
-                    if (sentences != null && sentences > 0) {
+                if (guidedWords != null) {
+                    if (guidedSentences != null) {
                         mirrorLengthNote += isVietnamese ? " / " : " / ";
                     }
                     mirrorLengthNote += isVietnamese
-                            ? String.format("~%d từ", words)
-                            : String.format("~%d words", words);
+                            ? String.format("~%d từ", guidedWords)
+                            : String.format("~%d words", guidedWords);
                 }
                 mirrorLengthNote += ".\n";
             }
@@ -718,6 +721,34 @@ public class ChainOfThoughtPromptBuilder {
             stage.append("⚠️ Use the reference ONLY for tone & structure. NEVER mention the brands/locations/promotions from the reference text.\n");
             stage.append("Always replace them with details about your product: ").append(productCue).append("\n\n");
         }
+    }
+
+    private Integer getGuidedSentenceCount(ReferenceMetrics referenceMetrics, boolean allowLongForm) {
+        if (!allowLongForm) {
+            if (referenceMetrics == null || referenceMetrics.getSentenceCount() == null || referenceMetrics.getSentenceCount() <= 0) {
+                return referenceMetrics != null ? referenceMetrics.getSentenceCount() : null;
+            }
+            return referenceMetrics.getSentenceCount();
+        }
+        int floor = 4;
+        if (referenceMetrics == null || referenceMetrics.getSentenceCount() == null || referenceMetrics.getSentenceCount() <= 0) {
+            return floor;
+        }
+        return Math.max(referenceMetrics.getSentenceCount(), floor);
+    }
+
+    private Integer getGuidedWordCount(ReferenceMetrics referenceMetrics, boolean allowLongForm) {
+        if (!allowLongForm) {
+            if (referenceMetrics == null || referenceMetrics.getWordCount() == null || referenceMetrics.getWordCount() <= 0) {
+                return referenceMetrics != null ? referenceMetrics.getWordCount() : null;
+            }
+            return referenceMetrics.getWordCount();
+        }
+        int floor = 120;
+        if (referenceMetrics == null || referenceMetrics.getWordCount() == null || referenceMetrics.getWordCount() <= 0) {
+            return floor;
+        }
+        return Math.max(referenceMetrics.getWordCount(), floor);
     }
 
     /**

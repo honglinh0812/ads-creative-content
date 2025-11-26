@@ -720,7 +720,6 @@ export default {
         this.asyncJobCurrentStep = ''
         this.showAsyncProgressModal = true
         this.startJobPolling()
-        this.$message.info(this.$t('adLearn.async.started'))
         return true
       } catch (error) {
         const status = error.response?.status

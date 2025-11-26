@@ -19,6 +19,8 @@ public class FacebookProperties {
     private String defaultAdAccountId;
     private String defaultLinkUrl;
     private String accountCurrency;
+    private double legacyUsdToVndRate = 25000d;
+    private boolean autoDetectCurrency = true;
     private boolean adsetBudgetSharingEnabled;
     private boolean debugPayloads;
     
@@ -64,6 +66,8 @@ public class FacebookProperties {
     }
     public String getDefaultLinkUrl() { return defaultLinkUrl; }
     public String getAccountCurrency() { return accountCurrency; }
+    public double getLegacyUsdToVndRate() { return legacyUsdToVndRate; }
+    public boolean isAutoDetectCurrency() { return autoDetectCurrency; }
 
     public boolean isAdsetBudgetSharingEnabled() {
         return adsetBudgetSharingEnabled;
@@ -115,6 +119,8 @@ public class FacebookProperties {
     }
     public void setDefaultLinkUrl(String defaultLinkUrl) { this.defaultLinkUrl = defaultLinkUrl; }
     public void setAccountCurrency(String accountCurrency) { this.accountCurrency = accountCurrency; }
+    public void setLegacyUsdToVndRate(double legacyUsdToVndRate) { this.legacyUsdToVndRate = legacyUsdToVndRate; }
+    public void setAutoDetectCurrency(boolean autoDetectCurrency) { this.autoDetectCurrency = autoDetectCurrency; }
 
     public void setAdsetBudgetSharingEnabled(boolean adsetBudgetSharingEnabled) {
         this.adsetBudgetSharingEnabled = adsetBudgetSharingEnabled;

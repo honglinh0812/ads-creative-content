@@ -31,6 +31,10 @@ public class FacebookConfig {
         properties.setDefaultAdAccountId(environment.getProperty("facebook.default-ad-account-id", ""));
         properties.setDefaultLinkUrl(environment.getProperty("facebook.default-link-url", ""));
         properties.setAccountCurrency(environment.getProperty("facebook.account-currency", "USD"));
+        properties.setLegacyUsdToVndRate(Double.parseDouble(
+            environment.getProperty("facebook.legacy-usd-to-vnd-rate", "25000")));
+        properties.setAutoDetectCurrency(Boolean.parseBoolean(
+            environment.getProperty("facebook.auto-detect-currency", "true")));
         properties.setAdsetBudgetSharingEnabled(Boolean.parseBoolean(
             environment.getProperty("facebook.adset-budget-sharing-enabled", "false")));
         properties.setDebugPayloads(Boolean.parseBoolean(

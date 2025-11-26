@@ -58,6 +58,10 @@ public class FacebookMarketingApiClient {
     private final RestTemplate restTemplate;
     private final FacebookProperties facebookProperties;
     private final MinIOStorageService minIOStorageService;
+    private final FacebookAccountMetadataService facebookAccountMetadataService;
+
+    private static final double MIN_VND_DAILY_BUDGET = 26481d;
+    private static final double DEFAULT_LEGACY_USD_TO_VND_RATE = 25000d;
 
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
     private static final Map<String, String> COUNTRY_CODE_ALIASES = Map.ofEntries(
@@ -78,6 +82,7 @@ public class FacebookMarketingApiClient {
     );
 
     public UploadResult uploadAdToAccount(Ad ad, String adAccountId, String accessToken) {
+        facebookAccountMetadataService.ensureCurrencyLoaded(false);
         validateInputs(adAccountId, accessToken);
 
         try {
@@ -332,16 +337,16 @@ public class FacebookMarketingApiClient {
     }
 
     private Double resolveAdsetBudget(Campaign campaign) {
+        Double budget = null;
         if (campaign.getDailyBudget() != null && campaign.getDailyBudget() > 0) {
-            return campaign.getDailyBudget();
+            budget = campaign.getDailyBudget();
+        } else if (campaign.getBudgetType() == Campaign.BudgetType.DAILY && campaign.getBudget() != null) {
+            budget = campaign.getBudget();
+        } else if (campaign.getTotalBudget() != null) {
+            budget = campaign.getTotalBudget();
         }
-        if (campaign.getBudgetType() == Campaign.BudgetType.DAILY && campaign.getBudget() != null) {
-            return campaign.getBudget();
-        }
-        if (campaign.getTotalBudget() != null) {
-            return campaign.getTotalBudget();
-        }
-        return 0.0;
+        budget = normalizeBudgetForCurrency(budget);
+        return budget != null ? budget : 0.0;
     }
 
     private Long resolveBidAmount(Campaign campaign) {
@@ -355,6 +360,7 @@ public class FacebookMarketingApiClient {
         if (source == null || source <= 0) {
             return null;
         }
+        source = normalizeBudgetForCurrency(source);
         long smallest = Math.round(source * getBudgetMultiplier());
         if (smallest <= 0) {
             return null;
@@ -377,6 +383,21 @@ public class FacebookMarketingApiClient {
             return 1000;
         }
         return 100;
+    }
+
+    private Double normalizeBudgetForCurrency(Double budget) {
+        if (budget == null || budget <= 0) {
+            return budget;
+        }
+        if ("VND".equalsIgnoreCase(facebookProperties.getAccountCurrency()) && budget < MIN_VND_DAILY_BUDGET) {
+            double rate = facebookProperties.getLegacyUsdToVndRate() > 0
+                ? facebookProperties.getLegacyUsdToVndRate()
+                : DEFAULT_LEGACY_USD_TO_VND_RATE;
+            double converted = budget * rate;
+            log.debug("Normalized legacy USD budget {} using rate {} -> {}", budget, rate, converted);
+            return converted;
+        }
+        return budget;
     }
 
     private String formatDateTime(java.time.LocalDate date) {

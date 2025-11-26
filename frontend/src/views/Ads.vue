@@ -652,7 +652,10 @@ export default {
       }
       this.autoUploadLoading = true
       try {
-        const result = await this.$store.dispatch('fbExport/exportToFacebook', { autoUpload: true })
+        const result = await this.$store.dispatch('fbExport/exportToFacebook', {
+          autoUpload: true,
+          skipDownloadFallback: true
+        })
         this.handleExportSuccess(result)
       } catch (error) {
         this.handleExportError(error)

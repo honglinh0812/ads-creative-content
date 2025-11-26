@@ -263,7 +263,7 @@ const actions = {
   /**
    * Export ads and optionally auto-upload to Facebook.
    */
-  async exportToFacebook({ state, commit }, { adAccountId, autoUpload = true } = {}) {
+  async exportToFacebook({ state, commit }, { adAccountId, autoUpload = true, skipDownloadFallback = false } = {}) {
     if (state.selectedAdIds.length === 0) {
       commit('SET_ERROR', 'Please select at least one ad to export')
       throw new Error('No ads selected')
@@ -283,7 +283,9 @@ const actions = {
       const redirectUrl = autoUploadResult.adsManagerUrl || ADS_MANAGER_URL
 
       if (!autoUploadResult.status || autoUploadResult.status !== 'UPLOADED') {
-        triggerFileDownload(data)
+        if (!skipDownloadFallback) {
+          triggerFileDownload(data)
+        }
         commit('CLEAR_SELECTED_ADS')
         commit('CLEAR_PREVIEW_DATA')
       } else {

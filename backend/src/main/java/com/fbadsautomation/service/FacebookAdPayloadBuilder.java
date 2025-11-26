@@ -1,6 +1,8 @@
 package com.fbadsautomation.service;
 
 import com.fbadsautomation.dto.FacebookAdPayload;
+import com.fbadsautomation.integration.facebook.FacebookAccountMetadataService;
+import com.fbadsautomation.integration.facebook.FacebookProperties;
 import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.AdType;
 import com.fbadsautomation.model.Campaign;
@@ -38,7 +40,8 @@ public class FacebookAdPayloadBuilder {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
     private final MinIOStorageService minioStorageService;
-    private final com.fbadsautomation.integration.facebook.FacebookProperties facebookProperties;
+    private final FacebookProperties facebookProperties;
+    private final FacebookAccountMetadataService facebookAccountMetadataService;
 
     public FacebookAdPayload buildPayload(Ad ad) {
         Campaign campaign = ad.getCampaign();
@@ -154,10 +157,11 @@ public class FacebookAdPayloadBuilder {
     }
 
     private String formatBudgetForFacebook(Double budget) {
-        if (budget == null || budget <= 0) {
+        double normalized = normalizeBudgetForCurrency(budget);
+        if (normalized <= 0) {
             return "";
         }
-        long budgetInSmallestUnit = Math.round(budget * getBudgetMultiplier());
+        long budgetInSmallestUnit = Math.round(normalized * getBudgetMultiplier());
         return String.valueOf(budgetInSmallestUnit);
     }
 
@@ -172,12 +176,28 @@ public class FacebookAdPayloadBuilder {
     public double getMinimumBudgetAmount() {
         String currency = getCurrency();
         if ("VND".equalsIgnoreCase(currency)) {
-            return 30000d;
+            return 26481d;
         }
         return 5d;
     }
 
+    public double normalizeBudgetForCurrency(Double budget) {
+        if (budget == null || budget <= 0) {
+            return 0d;
+        }
+        if ("VND".equalsIgnoreCase(getCurrency()) && budget < getMinimumBudgetAmount()) {
+            double rate = facebookProperties.getLegacyUsdToVndRate() > 0
+                ? facebookProperties.getLegacyUsdToVndRate()
+                : 25000d;
+            double converted = budget * rate;
+            log.debug("Normalized legacy USD budget {} using rate {} -> {}", budget, rate, converted);
+            return converted;
+        }
+        return budget;
+    }
+
     public String getCurrency() {
+        facebookAccountMetadataService.ensureCurrencyLoaded(false);
         return StringUtils.hasText(facebookProperties.getAccountCurrency())
             ? facebookProperties.getAccountCurrency()
             : "USD";
