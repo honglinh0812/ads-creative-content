@@ -36,6 +36,39 @@ public class ChainOfThoughtPromptBuilder {
 
     private static final Logger log = LoggerFactory.getLogger(ChainOfThoughtPromptBuilder.class);
 
+    public static class ReferenceMetrics {
+        private final Integer wordCount;
+        private final Integer sentenceCount;
+        private final Boolean containsCallToAction;
+        private final Boolean containsPrice;
+
+        public ReferenceMetrics(Integer wordCount,
+                                Integer sentenceCount,
+                                Boolean containsCallToAction,
+                                Boolean containsPrice) {
+            this.wordCount = wordCount;
+            this.sentenceCount = sentenceCount;
+            this.containsCallToAction = containsCallToAction;
+            this.containsPrice = containsPrice;
+        }
+
+        public Integer getWordCount() {
+            return wordCount;
+        }
+
+        public Integer getSentenceCount() {
+            return sentenceCount;
+        }
+
+        public Boolean getContainsCallToAction() {
+            return containsCallToAction;
+        }
+
+        public Boolean getContainsPrice() {
+            return containsPrice;
+        }
+    }
+
     /**
      * Build unified Chain-of-Thought prompt with all input fields.
      * This is the main entry point for Phase 3.
@@ -65,7 +98,8 @@ public class ChainOfThoughtPromptBuilder {
         int numberOfVariations,
         String referenceContent,
         String referenceLink,
-        boolean enforceCharacterLimits
+        boolean enforceCharacterLimits,
+        ReferenceMetrics referenceMetrics
     ) {
         log.info("[Phase 3] Building CoT prompt: language={}, adType={}, variations={}, persona={}, keywords={}",
                 language, adType, numberOfVariations,
@@ -82,7 +116,7 @@ public class ChainOfThoughtPromptBuilder {
         prompt.append(buildStage2_AudienceAnalysis(persona, targetAudience, isVietnamese));
 
         // Stage 3: Creative Direction
-        prompt.append(buildStage3_CreativeDirection(adStyle, trendingKeywords, referenceContent, referenceLink, userPrompt, isVietnamese));
+        prompt.append(buildStage3_CreativeDirection(adStyle, trendingKeywords, referenceContent, referenceLink, userPrompt, isVietnamese, referenceMetrics));
 
         // Stage 4: Constraints & Requirements
         prompt.append(buildStage4_Constraints(callToAction, language, isVietnamese, enforceCharacterLimits));
@@ -91,7 +125,7 @@ public class ChainOfThoughtPromptBuilder {
         prompt.append(buildStage5_ReasoningProcess(persona, adStyle, isVietnamese, enforceCharacterLimits));
 
         // Stage 6: Generation Instruction
-        prompt.append(buildStage6_GenerationInstruction(numberOfVariations, language, isVietnamese, enforceCharacterLimits));
+        prompt.append(buildStage6_GenerationInstruction(numberOfVariations, language, isVietnamese, enforceCharacterLimits, referenceMetrics));
 
         log.debug("[Phase 3] CoT prompt built successfully (length: {} chars)", prompt.length());
         return prompt.toString();
@@ -166,6 +200,58 @@ public class ChainOfThoughtPromptBuilder {
         return stage.toString();
     }
 
+    private String buildReferenceMirrorCue(ReferenceMetrics referenceMetrics, boolean isVietnamese) {
+        StringBuilder cue = new StringBuilder();
+        if (isVietnamese) {
+            cue.append("🪞 BÁM SÁT QUẢNG CÁO THAM CHIẾU\n");
+            cue.append("- Giữ nhịp điệu, bố cục câu và cảm xúc tương tự phần REFERENCE STYLE nhưng thay toàn bộ dữ liệu bằng sản phẩm hiện tại.\n");
+            if (referenceMetrics != null) {
+                if (referenceMetrics.getSentenceCount() != null && referenceMetrics.getSentenceCount() > 0) {
+                    cue.append(String.format("- Mục tiêu độ dài: khoảng %d câu", referenceMetrics.getSentenceCount()));
+                    if (referenceMetrics.getWordCount() != null && referenceMetrics.getWordCount() > 0) {
+                        cue.append(String.format(" (~%d từ).\n", referenceMetrics.getWordCount()));
+                    } else {
+                        cue.append(".\n");
+                    }
+                } else if (referenceMetrics.getWordCount() != null && referenceMetrics.getWordCount() > 0) {
+                    cue.append(String.format("- Viết dài tương tự (~%d từ).\n", referenceMetrics.getWordCount()));
+                }
+
+                if (Boolean.TRUE.equals(referenceMetrics.getContainsCallToAction())) {
+                    cue.append("- Quảng cáo mẫu có CTA nổi bật, hãy chuyển hóa CTA đó thành lời kêu gọi tự nhiên cho thương hiệu của bạn.\n");
+                }
+                if (Boolean.TRUE.equals(referenceMetrics.getContainsPrice())) {
+                    cue.append("- Nếu mẫu đề cập ưu đãi/giá, hãy diễn đạt lại bằng dữ liệu giá trị hoặc ưu đãi của bạn (không sao chép con số).\n");
+                }
+            }
+            cue.append("- Ưu tiên các cụm từ, cảm xúc và cách kể chuyện đời thường, tránh giọng \"AI\" khô cứng.\n\n");
+        } else {
+            cue.append("🪞 MIRROR THE REFERENCE AD\n");
+            cue.append("- Match the cadence, paragraph structure, and emotional tone from REFERENCE STYLE while swapping in the user's product details.\n");
+            if (referenceMetrics != null) {
+                if (referenceMetrics.getSentenceCount() != null && referenceMetrics.getSentenceCount() > 0) {
+                    cue.append(String.format("- Target a similar length (~%d sentences", referenceMetrics.getSentenceCount()));
+                    if (referenceMetrics.getWordCount() != null && referenceMetrics.getWordCount() > 0) {
+                        cue.append(String.format(" / ~%d words).\n", referenceMetrics.getWordCount()));
+                    } else {
+                        cue.append(").\n");
+                    }
+                } else if (referenceMetrics.getWordCount() != null && referenceMetrics.getWordCount() > 0) {
+                    cue.append(String.format("- Aim for roughly %d words to stay close to the reference pacing.\n", referenceMetrics.getWordCount()));
+                }
+
+                if (Boolean.TRUE.equals(referenceMetrics.getContainsCallToAction())) {
+                    cue.append("- The sample uses a strong CTA—translate that urgency into your own offering.\n");
+                }
+                if (Boolean.TRUE.equals(referenceMetrics.getContainsPrice())) {
+                    cue.append("- If the sample highlights price/offer, resurface a comparable benefit with your own numbers.\n");
+                }
+            }
+            cue.append("- Favor natural, conversational language over generic \"AI\" phrasing.\n\n");
+        }
+        return cue.toString();
+    }
+
     /**
      * Stage 3: Creative Direction
      * Define style and trending keywords
@@ -175,7 +261,8 @@ public class ChainOfThoughtPromptBuilder {
                                                  String referenceContent,
                                                  String referenceLink,
                                                  String baseDescription,
-                                                 boolean isVietnamese) {
+                                                 boolean isVietnamese,
+                                                 ReferenceMetrics referenceMetrics) {
         StringBuilder stage = new StringBuilder();
 
         if (isVietnamese) {
@@ -192,6 +279,7 @@ public class ChainOfThoughtPromptBuilder {
                 stage.append("\n");
             }
             appendReferenceSection(stage, referenceContent, referenceLink, baseDescription, true);
+            stage.append(buildReferenceMirrorCue(referenceMetrics, true));
         } else {
             stage.append("🎨 CREATIVE DIRECTION\n\n");
 
@@ -206,6 +294,7 @@ public class ChainOfThoughtPromptBuilder {
                 stage.append("\n");
             }
             appendReferenceSection(stage, referenceContent, referenceLink, baseDescription, false);
+            stage.append(buildReferenceMirrorCue(referenceMetrics, false));
         }
 
         return stage.toString();
@@ -242,6 +331,13 @@ public class ChainOfThoughtPromptBuilder {
                 - Văn bản chính (primaryText): NGHIÊM NGẶT 1000 ký tự
 
                 """);
+            } else {
+                stage.append("""
+                ✒️ KHÔNG GIỚI HẠN ĐỘ DÀI:
+                - Được phép viết dài, kể chuyện chi tiết giống quảng cáo tham chiếu.
+                - Ưu tiên nhiều câu, mô tả giàu cảm xúc và cụ thể.
+
+                """);
             }
 
             stage.append(String.format("""
@@ -275,6 +371,13 @@ public class ChainOfThoughtPromptBuilder {
                 - Primary Text: STRICTLY 1000 characters
 
                 """);
+            } else {
+                stage.append("""
+                ✒️ NO LENGTH CAP:
+                - Feel free to write multi-sentence headlines/primary text mirroring the reference pacing.
+                - Lean into storytelling and sensory description.
+
+                """);
             }
 
             stage.append(String.format("""
@@ -300,6 +403,28 @@ public class ChainOfThoughtPromptBuilder {
                                                 AdStyle adStyle,
                                                 boolean isVietnamese,
                                                 boolean enforceCharacterLimits) {
+        if (!enforceCharacterLimits) {
+            if (isVietnamese) {
+                return """
+                🧠 GỢI Ý NHANH
+
+                - Bắt đầu bằng 1 câu mở đầu giống nhịp điệu quảng cáo tham chiếu (nêu vấn đề + lợi ích).
+                - Triển khai 2-3 câu thân bài kể chuyện tự nhiên, nêu cảm xúc và ưu đãi cụ thể của sản phẩm này.
+                - Kết thúc bằng CTA rõ ràng, thúc đẩy hành động tương tự tinh thần quảng cáo mẫu.
+
+                """;
+            } else {
+                return """
+                🧠 QUICK CREATIVE REMINDER
+
+                - Open with a hook that mirrors the reference cadence (problem + promise).
+                - Write 2-3 body sentences packed with concrete benefits and sensory details from the current offer.
+                - Close with a decisive CTA that channels the urgency/tempo of the reference ad.
+
+                """;
+            }
+        }
+
         if (isVietnamese) {
             StringBuilder stage = new StringBuilder("""
                 🧠 QUY TRÌNH SUY LUẬN
@@ -444,10 +569,13 @@ public class ChainOfThoughtPromptBuilder {
     private String buildStage6_GenerationInstruction(int numberOfVariations,
                                                      Language language,
                                                      boolean isVietnamese,
-                                                     boolean enforceCharacterLimits) {
+                                                     boolean enforceCharacterLimits,
+                                                     ReferenceMetrics referenceMetrics) {
         String headlineConstraint = "";
         String descriptionConstraint = "";
         String primaryConstraint = "";
+        String depthRequirement = "";
+        String mirrorLengthNote = "";
 
         if (enforceCharacterLimits) {
             if (isVietnamese) {
@@ -458,6 +586,43 @@ public class ChainOfThoughtPromptBuilder {
                 headlineConstraint = " (max 40 characters)";
                 descriptionConstraint = " (max 125 characters)";
                 primaryConstraint = " (max 1000 characters)";
+            }
+        } else {
+            if (isVietnamese) {
+                headlineConstraint = " (linh hoạt, có thể dài nếu vẫn súc tích)";
+                descriptionConstraint = " (linh hoạt, nhấn mạnh cảm xúc)";
+                primaryConstraint = " (ít nhất 2-3 câu kể chuyện chi tiết)";
+                depthRequirement = "\n5. Độ dài: Viết tự nhiên, có thể dài bằng hoặc hơn quảng cáo tham khảo.";
+            } else {
+                headlineConstraint = " (flexible length, keep it punchy)";
+                descriptionConstraint = " (flexible, focus on intrigue)";
+                primaryConstraint = " (minimum 2-3 rich sentences)";
+                depthRequirement = "\n5. Length: Match or exceed the reference with natural multi-sentence storytelling.";
+            }
+
+            if (referenceMetrics != null &&
+                    (referenceMetrics.getWordCount() != null || referenceMetrics.getSentenceCount() != null)) {
+                Integer words = referenceMetrics.getWordCount();
+                Integer sentences = referenceMetrics.getSentenceCount();
+                if (isVietnamese) {
+                    mirrorLengthNote = "\n🎯 Gợi ý độ dài: ";
+                } else {
+                    mirrorLengthNote = "\n🎯 Target length: ";
+                }
+                if (sentences != null && sentences > 0) {
+                    mirrorLengthNote += isVietnamese
+                            ? String.format("~%d câu", sentences)
+                            : String.format("~%d sentences", sentences);
+                }
+                if (words != null && words > 0) {
+                    if (sentences != null && sentences > 0) {
+                        mirrorLengthNote += isVietnamese ? " / " : " / ";
+                    }
+                    mirrorLengthNote += isVietnamese
+                            ? String.format("~%d từ", words)
+                            : String.format("~%d words", words);
+                }
+                mirrorLengthNote += ".\n";
             }
         }
 
@@ -472,6 +637,8 @@ public class ChainOfThoughtPromptBuilder {
                 2. Format: Chỉ trả về JSON object hợp lệ cho từng biến thể
                 3. Tính độc đáo: Mỗi biến thể phải khác biệt có ý nghĩa
                 4. Tuân thủ: Mọi quảng cáo phải đáp ứng tất cả yêu cầu Facebook
+                %s
+                %s
 
                 JSON Object:
                 {
@@ -483,7 +650,7 @@ public class ChainOfThoughtPromptBuilder {
                 }
 
                 Tạo ngay bây giờ và CHỈ trả về JSON object hợp lệ như mẫu trên cho mỗi biến thể:
-                """, numberOfVariations, headlineConstraint, descriptionConstraint, primaryConstraint);
+                """, numberOfVariations, depthRequirement, mirrorLengthNote, headlineConstraint, descriptionConstraint, primaryConstraint);
         } else {
             return String.format("""
                 ✍️ GENERATION INSTRUCTIONS
@@ -495,6 +662,8 @@ public class ChainOfThoughtPromptBuilder {
                 2. Format: Return ONLY a valid JSON object per variation
                 3. Uniqueness: Each variation must be meaningfully different
                 4. Compliance: Every ad must pass all Facebook requirements
+                %s
+                %s
 
                 JSON Object:
                 {
@@ -506,7 +675,7 @@ public class ChainOfThoughtPromptBuilder {
                 }
 
                 Generate now and ONLY return a valid JSON object matching the schema above for each variation:
-                """, numberOfVariations, headlineConstraint, descriptionConstraint, primaryConstraint);
+                """, numberOfVariations, depthRequirement, mirrorLengthNote, headlineConstraint, descriptionConstraint, primaryConstraint);
         }
     }
 

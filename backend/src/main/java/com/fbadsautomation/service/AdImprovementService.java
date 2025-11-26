@@ -374,6 +374,8 @@ public class AdImprovementService {
         AdStyle adStyle = parseAdStyle(request.getCreativeStyle());
         boolean enforceCharacterLimits = !Boolean.TRUE.equals(request.getAllowUnlimitedLength());
 
+        ChainOfThoughtPromptBuilder.ReferenceMetrics referenceMetrics = buildReferenceMetrics(request);
+
         return chainOfThoughtPromptBuilder.buildCoTPrompt(
                 StringUtils.hasText(request.getProductDescription()) ? request.getProductDescription() : "N/A",
                 null,
@@ -386,8 +388,36 @@ public class AdImprovementService {
                 request.getNumberOfVariations(),
                 request.getReferenceContent(),
                 request.getReferenceLink(),
-                enforceCharacterLimits
+                enforceCharacterLimits,
+                referenceMetrics
         );
+    }
+
+    private ChainOfThoughtPromptBuilder.ReferenceMetrics buildReferenceMetrics(AdImprovementRequest request) {
+        Integer wordCount = null;
+        Integer sentenceCount = null;
+        Boolean containsCTA = null;
+        Boolean containsPrice = null;
+
+        if (request.getReferenceInsights() != null) {
+            AdImprovementRequest.ReferenceInsights insights = request.getReferenceInsights();
+            wordCount = insights.getWordCount();
+            sentenceCount = insights.getSentenceCount();
+            containsCTA = insights.getContainsCallToAction();
+            containsPrice = insights.getContainsPrice();
+        } else if (StringUtils.hasText(request.getReferenceContent())) {
+            ReferenceAnalysisResponse.ReferenceInsights computedInsights = buildInsights(request.getReferenceContent());
+            wordCount = computedInsights.getWordCount();
+            sentenceCount = computedInsights.getSentenceCount();
+            containsCTA = computedInsights.isContainsCallToAction();
+            containsPrice = computedInsights.isContainsPrice();
+        }
+
+        if (wordCount == null && sentenceCount == null && containsCTA == null && containsPrice == null) {
+            return null;
+        }
+
+        return new ChainOfThoughtPromptBuilder.ReferenceMetrics(wordCount, sentenceCount, containsCTA, containsPrice);
     }
 
     private AdGenerationResponse.AdVariation convertToAdVariation(AdContent content, String languageCode) {

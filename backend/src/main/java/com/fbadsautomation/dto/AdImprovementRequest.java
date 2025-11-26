@@ -45,6 +45,8 @@ public class AdImprovementRequest {
 
     private String referenceAccessToken;
 
+    private ReferenceInsights referenceInsights;
+
     @NotBlank(message = "Text provider là bắt buộc")
     private String textProvider;
 
@@ -82,4 +84,12 @@ public class AdImprovementRequest {
 
     @Valid
     private List<VariationProviderConfig> variations;
+
+    @Data
+    public static class ReferenceInsights {
+        private Integer wordCount;
+        private Integer sentenceCount;
+        private Boolean containsCallToAction;
+        private Boolean containsPrice;
+    }
 }

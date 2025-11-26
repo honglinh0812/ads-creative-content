@@ -112,6 +112,16 @@
         @export-error="handleExportError"
       />
 
+      <!-- Legacy Export Modal (Download flows) -->
+      <ExportToFacebookModal
+        :visible="showExportModal"
+        :ad-ids="selectedAdIds"
+        :show-auto-upload="exportModalShowAutoUpload"
+        @update:visible="showExportModal = $event"
+        @success="handleExportSuccess"
+        @error="handleExportError"
+      />
+
       <!-- Facebook Instructions Modal -->
       <FacebookInstructionsModal
         :visible="showInstructionsModal"
@@ -178,6 +188,7 @@ import { PlusOutlined } from "@ant-design/icons-vue"
 
 import AdTable from '@/components/AdTable.vue'
 import ExportPreviewModal from '@/components/ExportPreviewModal.vue'
+import ExportToFacebookModal from '@/components/ExportToFacebookModal.vue'
 import FacebookInstructionsModal from '@/components/FacebookInstructionsModal.vue'
 
 export default {
@@ -193,6 +204,7 @@ export default {
 
     AdTable,
     ExportPreviewModal,
+    ExportToFacebookModal,
     FacebookInstructionsModal
   },
   data() {
@@ -211,6 +223,8 @@ export default {
       showPreviewModal: false,
       previewAds: [],
       previewAutoUpload: true,
+      showExportModal: false,
+      exportModalShowAutoUpload: true,
       showInstructionsModal: false,
       exportFormat: 'csv',
       exportTimestamp: Date.now()
@@ -588,6 +602,7 @@ export default {
 
     handleExportSuccess(result) {
       this.showPreviewModal = false
+      this.showExportModal = false
       const count = result?.payloads?.length || this.previewAds.length || this.selectedAdIds.length
 
       if (this.previewAutoUpload) {
@@ -632,13 +647,8 @@ export default {
       }
       this.selectedAdIds = adIds
       this.setSelectedAdsForExport(adIds)
-      this.previewAds = this.safeAds.filter(item => adIds.includes(item.id))
-      if (!this.previewAds.length) {
-        message.error(this.$t('ads.messages.error.invalidAdData'))
-        return
-      }
-      this.previewAutoUpload = false
-      this.showPreviewModal = true
+      this.exportModalShowAutoUpload = true
+      this.showExportModal = true
     },
 
     async duplicateAd(adOrRecord) {

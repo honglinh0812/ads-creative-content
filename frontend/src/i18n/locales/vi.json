@@ -2066,7 +2066,7 @@
       "generate": "Tạo xem trước",
       "allowUnlimitedLength": {
         "label": "Cho phép AI bỏ qua giới hạn ký tự",
-        "description": "Tắt giới hạn tiêu đề/mô tả/văn bản khi cần nội dung dài hơn chuẩn Facebook."
+        "description": "Tắt giới hạn tiêu đề/mô tả/văn bản. Nên cung cấp nội dung mô tả dài hoặc quảng cáo tham khảo chi tiết để AI viết phong phú hơn."
       }
     },
     "step3": {

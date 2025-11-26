@@ -38,7 +38,8 @@ class ChainOfThoughtPromptBuilderTest {
             3,
             null,
             null,
-            true
+            true,
+            null
         );
 
         assertTrue(prompt.contains("Call-to-Action: Mua ngay"), "CTA phải được hiển thị bằng tiếng Việt");
@@ -61,7 +62,8 @@ class ChainOfThoughtPromptBuilderTest {
             2,
             null,
             null,
-            true
+            true,
+            null
         );
 
         assertTrue(prompt.contains("Call-to-Action: SIGN_UP"), "CTA phải dùng giá trị tiếng Anh");

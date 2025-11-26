@@ -628,6 +628,7 @@ export default {
           productDescription: this.formData.baseContent,
           referenceLink: this.formData.referenceLink,
           referenceContent: this.referenceContent || this.formData.baseContent,
+          referenceInsights: this.referenceInsights || null,
           textProvider: this.formData.textProvider,
           imageProvider: this.formData.imageProvider,
           numberOfVariations: this.formData.numberOfVariations,

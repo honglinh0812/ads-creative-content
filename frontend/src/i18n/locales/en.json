@@ -1883,7 +1883,7 @@
       "generate": "Generate previews",
       "allowUnlimitedLength": {
         "label": "Allow AI to ignore character limits",
-        "description": "Disable Facebook headline/primary text/description limits when you want long-form explorations."
+        "description": "Disable Facebook headline/primary text/description limits. For richer outputs, provide long base content or a detailed reference link."
       }
     },
     "step3": {
