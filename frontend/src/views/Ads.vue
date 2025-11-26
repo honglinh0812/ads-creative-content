@@ -102,14 +102,14 @@
         </div>
       </a-modal>
 
-      <!-- Export to Facebook Modal -->
-      <ExportToFacebookModal
-        :visible="showExportModal"
-        :ad-ids="selectedAdIds"
-        :show-auto-upload="exportModalShowAutoUpload"
-        @update:visible="showExportModal = $event"
-        @success="handleExportSuccess"
-        @error="handleExportError"
+      <!-- Export Preview Modal -->
+      <ExportPreviewModal
+        :visible="showPreviewModal"
+        :ads="previewAds"
+        :auto-upload="previewAutoUpload"
+        @update:visible="showPreviewModal = $event"
+        @export-complete="handleExportSuccess"
+        @export-error="handleExportError"
       />
 
       <!-- Facebook Instructions Modal -->
@@ -119,17 +119,6 @@
         :timestamp="exportTimestamp"
         @update:visible="showInstructionsModal = $event"
       />
-
-      <!-- Bulk Export Confirm Modal -->
-      <a-modal
-        :open="showBulkConfirmModal"
-        :title="'Xác nhận'"
-        :confirm-loading="$store.state.fbExport.isExporting"
-        @ok="handleBulkConfirm"
-        @cancel="showBulkConfirmModal = false"
-      >
-        <p>Bạn sắp upload {{ selectedAdIds.length }} quảng cáo lên Ads Manager. Tiếp tục?</p>
-      </a-modal>
 
       <!-- Edit Ad Modal -->
       <a-modal v-model:open="showEditModal" :title="$t('ads.editModal.title')" width="90vw" style="max-width: 1200px">
@@ -188,7 +177,7 @@ import { Modal, Input, Select, Button, message } from "ant-design-vue"
 import { PlusOutlined } from "@ant-design/icons-vue"
 
 import AdTable from '@/components/AdTable.vue'
-import ExportToFacebookModal from '@/components/ExportToFacebookModal.vue'
+import ExportPreviewModal from '@/components/ExportPreviewModal.vue'
 import FacebookInstructionsModal from '@/components/FacebookInstructionsModal.vue'
 
 export default {
@@ -203,7 +192,7 @@ export default {
     PlusOutlined,
 
     AdTable,
-    ExportToFacebookModal,
+    ExportPreviewModal,
     FacebookInstructionsModal
   },
   data() {
@@ -219,9 +208,9 @@ export default {
       filteredAds: [],
       errors: {},
       selectedAdIds: [],
-      showExportModal: false,
-      exportModalShowAutoUpload: true,
-      showBulkConfirmModal: false,
+      showPreviewModal: false,
+      previewAds: [],
+      previewAutoUpload: true,
       showInstructionsModal: false,
       exportFormat: 'csv',
       exportTimestamp: Date.now()
@@ -296,12 +285,18 @@ export default {
   created() {
     this.$confirm = this.$confirm || Modal.confirm;
   },
+  watch: {
+    showPreviewModal(val) {
+      if (!val) {
+        this.previewAds = []
+        this.previewAutoUpload = true
+      }
+    }
+  },
   methods: {
     ...mapActions("ad", ["fetchAds", "deleteAd", "updateAd"]),
     ...mapActions("fbExport", {
-      setSelectedAdsForExport: "setSelectedAds",
-      showFBInstructions: "showInstructions",
-      uploadAfterPreview: "uploadAfterPreview"
+      setSelectedAdsForExport: "setSelectedAds"
     }),
     ...mapActions('cta', ['loadCTAs']),
 
@@ -555,63 +550,60 @@ export default {
 
     // Facebook Export Methods
     exportAdToFacebook(adIdOrRecord) {
-      let adIds = [];
+      let adIds = []
 
-      // Handle single ad ID (number)
       if (typeof adIdOrRecord === 'number') {
-        adIds = [adIdOrRecord];
-      }
-      // Handle ad object with id property (from AdTable button click)
-      else if (adIdOrRecord && typeof adIdOrRecord === 'object' && !Array.isArray(adIdOrRecord)) {
+        adIds = [adIdOrRecord]
+      } else if (adIdOrRecord && typeof adIdOrRecord === 'object' && !Array.isArray(adIdOrRecord)) {
         if (adIdOrRecord.id) {
-          adIds = [adIdOrRecord.id];
+          adIds = [adIdOrRecord.id]
         } else {
-          message.error(this.$t('ads.messages.error.invalidAdData'));
-          return;
+          message.error(this.$t('ads.messages.error.invalidAdData'))
+          return
         }
-      }
-      // Handle array of IDs (bulk export)
-      else if (Array.isArray(adIdOrRecord)) {
-        adIds = adIdOrRecord;
-      }
-      // Invalid input
-      else {
-        message.error(this.$t('ads.messages.error.invalidExportData'));
-        return;
-      }
-
-      if (adIds.length === 0) {
-        message.warning(this.$t('ads.messages.warning.selectAdToExport'));
-        return;
-      }
-
-      // Set selected ads in store
-      this.selectedAdIds = adIds;
-      this.setSelectedAdsForExport(adIds);
-
-      // If bulk selection (>1), show confirm modal then auto-upload
-      if (adIds.length > 1) {
-        this.showBulkConfirmModal = true
-        this.exportModalShowAutoUpload = false
+      } else if (Array.isArray(adIdOrRecord)) {
+        adIds = adIdOrRecord
+      } else {
+        message.error(this.$t('ads.messages.error.invalidExportData'))
         return
       }
 
-      // Single ad: auto upload immediately
-      this.autoUploadSelectedAds()
+      if (!adIds.length) {
+        message.warning(this.$t('ads.messages.warning.selectAdToExport'))
+        return
+      }
+
+      this.selectedAdIds = adIds
+      this.setSelectedAdsForExport(adIds)
+      this.previewAds = this.safeAds.filter(ad => adIds.includes(ad.id))
+      this.previewAutoUpload = true
+
+      if (!this.previewAds.length) {
+        message.error(this.$t('ads.messages.error.invalidAdData'))
+        return
+      }
+
+      this.showPreviewModal = true
     },
 
-    handleExportSuccess() {
-      message.success(this.$t('ads.messages.success.exportSuccess', { count: this.selectedAdIds.length }))
+    handleExportSuccess(result) {
+      this.showPreviewModal = false
+      const count = result?.payloads?.length || this.previewAds.length || this.selectedAdIds.length
 
-      const format = this.$store.state.fbExport.format
-      this.exportFormat = format
+      if (this.previewAutoUpload) {
+        message.success(this.$t('ads.messages.success.exportSuccess', { count }))
+        const format = this.$store.state.fbExport.format
+        this.exportFormat = format
 
-      setTimeout(() => {
-        this.showInstructionsModal = true
-      }, 500)
+        setTimeout(() => {
+          this.showInstructionsModal = true
+        }, 500)
 
-      this.exportTimestamp = Date.now()
+        this.exportTimestamp = Date.now()
+      }
+
       this.selectedAdIds = []
+      this.previewAds = []
     },
 
     handleExportError(error) {
@@ -640,40 +632,13 @@ export default {
       }
       this.selectedAdIds = adIds
       this.setSelectedAdsForExport(adIds)
-      this.exportModalShowAutoUpload = false
-      this.showExportModal = true
-    },
-
-    async autoUploadSelectedAds() {
-      if (!this.selectedAdIds.length) {
-        message.warning(this.$t('ads.messages.warning.selectAdToExport'))
+      this.previewAds = this.safeAds.filter(item => adIds.includes(item.id))
+      if (!this.previewAds.length) {
+        message.error(this.$t('ads.messages.error.invalidAdData'))
         return
       }
-      const hide = message.loading(this.$t('ads.messages.info.exportingAds') || 'Đang upload quảng cáo...', 0)
-      try {
-        const result = await this.uploadAfterPreview({ autoUpload: true })
-        const status = result?.autoUpload?.status
-        const redirectUrl = result?.redirectUrl || 'https://business.facebook.com/adsmanager/manage/ads'
-        window.open(redirectUrl, '_blank', 'noopener,noreferrer')
-        if (status === 'UPLOADED') {
-          message.success(this.$t('ads.messages.success.uploadedToFacebook') || 'Đã upload quảng cáo lên Facebook')
-        } else {
-          const reason = result?.autoUpload?.message || this.$t('ads.messages.success.exportSuccess', { count: this.selectedAdIds.length }) || 'Đã tải xuống file export.'
-          message.success(reason)
-        }
-        this.clearSelection()
-      } catch (error) {
-        const errMsg = error.response?.data?.message || error.message || 'Upload failed'
-        message.error(errMsg)
-        console.error('Auto upload error:', error)
-      } finally {
-        hide()
-        this.showBulkConfirmModal = false
-      }
-    },
-
-    async handleBulkConfirm() {
-      await this.autoUploadSelectedAds()
+      this.previewAutoUpload = false
+      this.showPreviewModal = true
     },
 
     async duplicateAd(adOrRecord) {

@@ -1437,6 +1437,32 @@
         "cta": "CTA",
         "advertiser": "Nhà quảng cáo",
         "url": "URL"
+      },
+      "preview": {
+        "modalTitle": "Xem trước {count} quảng cáo đã chọn",
+        "description": "Vui lòng kiểm tra lại các quảng cáo trước khi xuất lên Facebook Ads Manager.",
+        "formatLabel": "Định dạng xuất",
+        "actions": {
+          "upload": "Xuất lên Facebook",
+          "download": "Tải {format}"
+        },
+        "status": {
+          "preparing": "Đang chuẩn bị dữ liệu...",
+          "uploading": "Đang upload quảng cáo lên Facebook...",
+          "downloading": "Đang xuất file {format}...",
+          "completed": "Hoàn tất xuất dữ liệu!"
+        },
+        "messages": {
+          "uploaded": "Đã upload quảng cáo lên Facebook!",
+          "downloaded": "Đã tải {count} quảng cáo dưới dạng {format}!"
+        },
+        "errors": {
+          "uploadFailed": "Xuất thất bại: {error}"
+        },
+        "validation": {
+          "allValid": "Tất cả {count} quảng cáo hợp lệ để xuất",
+          "hasIssues": "{count} quảng cáo có vấn đề cần kiểm tra"
+        }
       }
     },
     "messages": {
@@ -1477,16 +1503,16 @@
       "backToDashboard": "Quay lại Dashboard"
     },
     "progress": {
-      "headerTitle": "Hãy tạo quảng cáo của bạn",
-      "stepOf": "Bước {step} trong {total}",
-      "step1Message": "Cho chúng tôi biết về quảng cáo của bạn",
-      "step2Message": "Chọn siêu năng lực AI của bạn",
+      "headerTitle": "Tạo quảng cáo mới",
+      "stepOf": "Bước {step}/{total}",
+      "step1Message": "Hãy mô tả đối tượng bạn muốn quảng cáo",
+      "step2Message": "Chọn nhà cung cấp AI bạn mong muốn",
       "step3Message": "Gần xong rồi!"
     },
     "progressSteps": {
       "step1": {
         "title": "Thông tin cơ bản",
-        "description": "Cho chúng tôi biết về quảng cáo của bạn",
+        "description": "Hãy mô tả chi tiết đối tượng bạn muốn quảng cáo",
         "emoji": ""
       },
       "step2": {
@@ -1962,8 +1988,8 @@
   "adLearn": {
     "pageHeader": {
       "title": "Cải thiện quảng cáo từ mẫu",
-      "subtitle": "Học phong cách từ quảng cáo trong Meta Ad Library và điều chỉnh cho phù hợp với nội dung của bạn",
-      "backToAds": "Quay lại danh sách quảng cáo"
+      "subtitle": "Học phong cách từ quảng cáo trong Meta Ad Library",
+      "backToAds": "Quay lại"
     },
     "progress": {
       "headerTitle": "Quy trình cải thiện quảng cáo",
@@ -2424,7 +2450,7 @@
         },
         "sourceTooltip": {
           "title": "Nguồn dữ liệu",
-          "description": "Kết hợp Google Trends (nhu cầu tìm kiếm) và TikTok Creative Center/Apify (hashtag quảng cáo). Hãy cấu hình SERPAPI_API_KEY và Apify để có dữ liệu thời gian thực."
+          "description": "Chúng tôi sử dụng Google Trends và TikTok Creative Center để cung cấp các từ khóa thịnh hành dựa trên xu hướng nội dung hiện tại."
         },
         "selection": {
           "maxTitle": "Đã chọn tối đa từ khóa",

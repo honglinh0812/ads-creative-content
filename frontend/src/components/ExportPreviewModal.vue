@@ -1,16 +1,20 @@
 <template>
   <a-modal
     :open="visible"
-    :title="$t('export.previewTitle', { count: ads.length })"
+    :title="$t('export.preview.modalTitle', { count: ads.length })"
     :width="900"
     :footer="null"
     @cancel="handleClose"
     class="export-preview-modal"
   >
     <div class="preview-container">
+      <p class="text-sm text-gray-600 mb-4">
+        {{ $t('export.preview.description', { count: ads.length }) }}
+      </p>
+
       <!-- Format Selection -->
-      <div class="format-selection mb-4">
-        <label class="block text-sm font-medium mb-2">Export Format:</label>
+      <div v-if="!autoUpload" class="format-selection mb-4">
+        <label class="block text-sm font-medium mb-2">{{ $t('export.preview.formatLabel') }}</label>
         <a-radio-group v-model:value="selectedFormat" button-style="solid">
           <a-radio-button value="csv">
             <file-text-outlined /> CSV
@@ -93,7 +97,7 @@
       <div class="modal-actions mt-6">
         <a-space>
           <a-button @click="handleClose" :disabled="exporting">
-            Cancel
+            {{ $t('common.actions.cancel') }}
           </a-button>
           <a-button
             type="primary"
@@ -101,7 +105,13 @@
             :loading="exporting"
             :disabled="!canExport"
           >
-            <download-outlined /> Export {{ selectedFormat.toUpperCase() }}
+            <download-outlined />
+            <span v-if="autoUpload">
+              {{ $t('export.preview.actions.upload') }}
+            </span>
+            <span v-else>
+              {{ $t('export.preview.actions.download', { format: selectedFormat.toUpperCase() }) }}
+            </span>
           </a-button>
         </a-space>
       </div>
@@ -114,6 +124,8 @@ import { ref, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { FileTextOutlined, FileExcelOutlined, DownloadOutlined } from '@ant-design/icons-vue'
 import api from '@/services/api'
+import { useStore } from 'vuex'
+import { useI18n } from 'vue-i18n'
 
 const MIME_TYPES = {
   csv: 'text/csv;charset=utf-8;',
@@ -155,10 +167,16 @@ export default {
     ads: {
       type: Array,
       required: true
+    },
+    autoUpload: {
+      type: Boolean,
+      default: false
     }
   },
-  emits: ['update:visible', 'export-complete'],
+  emits: ['update:visible', 'export-complete', 'export-error'],
   setup(props, { emit }) {
+    const { t } = useI18n()
+    const store = useStore()
     const selectedFormat = ref('csv')
     const loading = ref(false)
     const exporting = ref(false)
@@ -225,8 +243,8 @@ export default {
           validationSummary.value = {
             hasErrors: invalidAds.length > 0,
             message: invalidAds.length > 0
-              ? `${invalidAds.length} ad(s) have validation issues`
-              : `All ${previewData.value.length} ads are valid for export`,
+              ? t('export.preview.validation.hasIssues', { count: invalidAds.length })
+              : t('export.preview.validation.allValid', { count: previewData.value.length }),
             errors: invalidAds.map(ad => `Ad "${ad.headline}" is missing required fields`)
           }
         }
@@ -247,56 +265,75 @@ export default {
 
       exporting.value = true
       exportProgress.value = 0
-      exportStatusMessage.value = 'Preparing export...'
+      exportStatusMessage.value = t('export.preview.status.preparing')
+
+      const adIds = props.ads.map(ad => ad.id)
+
+      const progressInterval = setInterval(() => {
+        if (exportProgress.value < 90) {
+          exportProgress.value += 10
+          exportStatusMessage.value = props.autoUpload
+            ? t('export.preview.status.uploading')
+            : t('export.preview.status.downloading', { format: selectedFormat.value.toUpperCase() })
+        }
+      }, 250)
 
       try {
-        const adIds = props.ads.map(ad => ad.id)
+        if (props.autoUpload) {
+          const result = await store.dispatch('fbExport/exportToFacebook', { autoUpload: true })
+          clearInterval(progressInterval)
+          exportProgress.value = 100
+          exportStatusMessage.value = t('export.preview.status.completed')
 
-        // Simulate progress
-        const progressInterval = setInterval(() => {
-          if (exportProgress.value < 90) {
-            exportProgress.value += 10
-            exportStatusMessage.value = `Exporting ${selectedFormat.value.toUpperCase()}... ${exportProgress.value}%`
+          if (result?.autoUpload?.status === 'UPLOADED') {
+            message.success(t('export.preview.messages.uploaded'))
+          } else {
+            const reason = result?.autoUpload?.message || t('export.preview.messages.uploaded')
+            message.info(reason)
           }
-        }, 200)
 
-        const response = await api.facebookExport.exportMultipleAds(
-          adIds,
-          selectedFormat.value,
-          { autoUpload: false }
-        )
-
-        clearInterval(progressInterval)
-        exportProgress.value = 100
-        exportStatusMessage.value = 'Export complete!'
-
-        // Download file
-        const data = response.data || {}
-        const format = (data.format || selectedFormat.value).toLowerCase()
-        const mimeType = MIME_TYPES[format] || MIME_TYPES.csv
-        const blob = base64ToBlob(data.fileContent, mimeType)
-        const url = window.URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        const extension = format === 'excel' || format === 'xlsx' ? 'xlsx' : 'csv'
-        link.setAttribute('download', `ads_export_${Date.now()}.${extension}`)
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-
-        message.success(`Successfully exported ${adIds.length} ads to ${selectedFormat.value.toUpperCase()}`)
-
-        setTimeout(() => {
-          emit('export-complete')
+          emit('export-complete', result)
           handleClose()
-        }, 1000)
+        } else {
+          const response = await api.facebookExport.exportMultipleAds(
+            adIds,
+            selectedFormat.value,
+            { autoUpload: false }
+          )
+
+          clearInterval(progressInterval)
+          exportProgress.value = 100
+          exportStatusMessage.value = t('export.preview.status.completed')
+
+          const data = response.data || {}
+          const format = (data.format || selectedFormat.value).toLowerCase()
+          const mimeType = MIME_TYPES[format] || MIME_TYPES.csv
+          const blob = base64ToBlob(data.fileContent, mimeType)
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          const extension = format === 'excel' || format === 'xlsx' ? 'xlsx' : 'csv'
+          link.setAttribute('download', `ads_export_${Date.now()}.${extension}`)
+          document.body.appendChild(link)
+          link.click()
+          link.remove()
+          window.URL.revokeObjectURL(url)
+
+          message.success(t('export.preview.messages.downloaded', { count: adIds.length, format: selectedFormat.value.toUpperCase() }))
+
+          setTimeout(() => {
+            emit('export-complete')
+            handleClose()
+          }, 500)
+        }
       } catch (error) {
         console.error('Export failed:', error)
-        message.error('Export failed: ' + (error.response?.data?.message || error.message))
+        message.error(t('export.preview.errors.uploadFailed', { error: error.response?.data?.message || error.message }))
         exportProgress.value = 0
         exportStatusMessage.value = ''
+        emit('export-error', error)
       } finally {
+        clearInterval(progressInterval)
         exporting.value = false
       }
     }

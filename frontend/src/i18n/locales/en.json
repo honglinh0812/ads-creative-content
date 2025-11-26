@@ -1254,6 +1254,32 @@
         "cta": "CTA",
         "advertiser": "Advertiser",
         "url": "URL"
+      },
+      "preview": {
+        "modalTitle": "Review {count} selected ad(s)",
+        "description": "Please review the selected ads before exporting to Facebook Ads Manager.",
+        "formatLabel": "Export format",
+        "actions": {
+          "upload": "Export to Facebook",
+          "download": "Download {format}"
+        },
+        "status": {
+          "preparing": "Preparing export...",
+          "uploading": "Uploading ads to Facebook...",
+          "downloading": "Exporting {format} file...",
+          "completed": "Export complete!"
+        },
+        "messages": {
+          "uploaded": "Ads uploaded to Facebook!",
+          "downloaded": "Downloaded {count} ad(s) as {format}"
+        },
+        "errors": {
+          "uploadFailed": "Export failed: {error}"
+        },
+        "validation": {
+          "allValid": "All {count} ad(s) are valid for export",
+          "hasIssues": "{count} ad(s) have validation issues"
+        }
       }
     },
     "messages": {
