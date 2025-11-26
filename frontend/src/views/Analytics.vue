@@ -178,14 +178,11 @@
 <script>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ReloadOutlined, AppstoreOutlined } from '@ant-design/icons-vue'
 import api from '@/services/api'
 
 export default {
   name: 'AnalyticsLiteView',
   components: {
-    ReloadOutlined,
-    AppstoreOutlined
   },
   setup() {
     const { t } = useI18n()
