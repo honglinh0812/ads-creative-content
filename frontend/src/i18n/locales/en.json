@@ -1278,7 +1278,8 @@
         },
         "validation": {
           "allValid": "All {count} ad(s) are valid for export",
-          "hasIssues": "{count} ad(s) have validation issues"
+          "hasIssues": "{count} ad(s) have validation issues",
+          "unknown": "Unnamed ad"
         }
       }
     },

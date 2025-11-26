@@ -1461,7 +1461,8 @@
         },
         "validation": {
           "allValid": "Tất cả {count} quảng cáo hợp lệ để xuất",
-          "hasIssues": "{count} quảng cáo có vấn đề cần kiểm tra"
+          "hasIssues": "{count} quảng cáo có vấn đề cần kiểm tra",
+          "unknown": "Quảng cáo chưa đặt tên"
         }
       }
     },

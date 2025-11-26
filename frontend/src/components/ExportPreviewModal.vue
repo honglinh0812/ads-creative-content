@@ -1,7 +1,7 @@
 <template>
   <a-modal
     :open="visible"
-    :title="$t('export.preview.modalTitle', { count: ads.length })"
+    :title="$t('ads.export.preview.modalTitle', { count: ads.length })"
     :width="900"
     :footer="null"
     @cancel="handleClose"
@@ -9,12 +9,12 @@
   >
     <div class="preview-container">
       <p class="text-sm text-gray-600 mb-4">
-        {{ $t('export.preview.description', { count: ads.length }) }}
+        {{ $t('ads.export.preview.description', { count: ads.length }) }}
       </p>
 
       <!-- Format Selection -->
       <div v-if="!autoUpload" class="format-selection mb-4">
-        <label class="block text-sm font-medium mb-2">{{ $t('export.preview.formatLabel') }}</label>
+        <label class="block text-sm font-medium mb-2">{{ $t('ads.export.preview.formatLabel') }}</label>
         <a-radio-group v-model:value="selectedFormat" button-style="solid">
           <a-radio-button value="csv">
             <file-text-outlined /> CSV
@@ -107,10 +107,10 @@
           >
             <download-outlined />
             <span v-if="autoUpload">
-              {{ $t('export.preview.actions.upload') }}
+              {{ $t('ads.export.preview.actions.upload') }}
             </span>
             <span v-else>
-              {{ $t('export.preview.actions.download', { format: selectedFormat.toUpperCase() }) }}
+              {{ $t('ads.export.preview.actions.download', { format: selectedFormat.toUpperCase() }) }}
             </span>
           </a-button>
         </a-space>
@@ -224,6 +224,17 @@ export default {
       return previewData.value.length > 0 && !exporting.value
     })
 
+    const normalizePreviewData = (data) => {
+      if (!data) return []
+      if (Array.isArray(data)) return data
+      if (Array.isArray(data.ads)) return data.ads
+      if (Array.isArray(data.data)) return data.data
+      if (Array.isArray(data.items)) return data.items
+      if (data.ad) return [data.ad]
+      if (data.preview) return Array.isArray(data.preview) ? data.preview : [data.preview]
+      return []
+    }
+
     const loadPreview = async () => {
       if (props.ads.length === 0) return
 
@@ -233,7 +244,8 @@ export default {
         const response = await api.facebookExport.previewMultipleAds(adIds)
 
         if (response.data) {
-          previewData.value = response.data.map(ad => ({
+          const rows = normalizePreviewData(response.data)
+          previewData.value = rows.map(ad => ({
             ...ad,
             valid: validateAd(ad)
           }))
@@ -243,9 +255,9 @@ export default {
           validationSummary.value = {
             hasErrors: invalidAds.length > 0,
             message: invalidAds.length > 0
-              ? t('export.preview.validation.hasIssues', { count: invalidAds.length })
-              : t('export.preview.validation.allValid', { count: previewData.value.length }),
-            errors: invalidAds.map(ad => `Ad "${ad.headline}" is missing required fields`)
+              ? t('ads.export.preview.validation.hasIssues', { count: invalidAds.length })
+              : t('ads.export.preview.validation.allValid', { count: previewData.value.length }),
+            errors: invalidAds.map(ad => ad.headline || ad.adName || ad.name || t('ads.export.preview.validation.unknown'))
           }
         }
       } catch (error) {
@@ -265,7 +277,7 @@ export default {
 
       exporting.value = true
       exportProgress.value = 0
-      exportStatusMessage.value = t('export.preview.status.preparing')
+      exportStatusMessage.value = t('ads.export.preview.status.preparing')
 
       const adIds = props.ads.map(ad => ad.id)
 
@@ -273,8 +285,8 @@ export default {
         if (exportProgress.value < 90) {
           exportProgress.value += 10
           exportStatusMessage.value = props.autoUpload
-            ? t('export.preview.status.uploading')
-            : t('export.preview.status.downloading', { format: selectedFormat.value.toUpperCase() })
+            ? t('ads.export.preview.status.uploading')
+            : t('ads.export.preview.status.downloading', { format: selectedFormat.value.toUpperCase() })
         }
       }, 250)
 
@@ -283,12 +295,12 @@ export default {
           const result = await store.dispatch('fbExport/exportToFacebook', { autoUpload: true })
           clearInterval(progressInterval)
           exportProgress.value = 100
-          exportStatusMessage.value = t('export.preview.status.completed')
+          exportStatusMessage.value = t('ads.export.preview.status.completed')
 
           if (result?.autoUpload?.status === 'UPLOADED') {
-            message.success(t('export.preview.messages.uploaded'))
+            message.success(t('ads.export.preview.messages.uploaded'))
           } else {
-            const reason = result?.autoUpload?.message || t('export.preview.messages.uploaded')
+            const reason = result?.autoUpload?.message || t('ads.export.preview.messages.uploaded')
             message.info(reason)
           }
 
@@ -303,7 +315,7 @@ export default {
 
           clearInterval(progressInterval)
           exportProgress.value = 100
-          exportStatusMessage.value = t('export.preview.status.completed')
+          exportStatusMessage.value = t('ads.export.preview.status.completed')
 
           const data = response.data || {}
           const format = (data.format || selectedFormat.value).toLowerCase()
@@ -319,7 +331,7 @@ export default {
           link.remove()
           window.URL.revokeObjectURL(url)
 
-          message.success(t('export.preview.messages.downloaded', { count: adIds.length, format: selectedFormat.value.toUpperCase() }))
+          message.success(t('ads.export.preview.messages.downloaded', { count: adIds.length, format: selectedFormat.value.toUpperCase() }))
 
           setTimeout(() => {
             emit('export-complete')
@@ -328,7 +340,7 @@ export default {
         }
       } catch (error) {
         console.error('Export failed:', error)
-        message.error(t('export.preview.errors.uploadFailed', { error: error.response?.data?.message || error.message }))
+        message.error(t('ads.export.preview.errors.uploadFailed', { error: error.response?.data?.message || error.message }))
         exportProgress.value = 0
         exportStatusMessage.value = ''
         emit('export-error', error)
