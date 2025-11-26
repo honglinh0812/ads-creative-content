@@ -1,7 +1,7 @@
 <template>
   <a-modal
     :open="visible"
-    :title="$t('ads.export.preview.modalTitle', { count: ads.length })"
+    :title="t('ads.export.preview.modalTitle', { count: ads.length })"
     :width="900"
     :footer="null"
     @cancel="handleClose"
@@ -9,12 +9,12 @@
   >
     <div class="preview-container">
       <p class="text-sm text-gray-600 mb-4">
-        {{ $t('ads.export.preview.description', { count: ads.length }) }}
+        {{ t('ads.export.preview.description', { count: ads.length }) }}
       </p>
 
       <!-- Format Selection -->
       <div v-if="!autoUpload" class="format-selection mb-4">
-        <label class="block text-sm font-medium mb-2">{{ $t('ads.export.preview.formatLabel') }}</label>
+        <label class="block text-sm font-medium mb-2">{{ t('ads.export.preview.formatLabel') }}</label>
         <a-radio-group v-model:value="selectedFormat" button-style="solid">
           <a-radio-button value="csv">
             <file-text-outlined /> CSV
@@ -58,7 +58,7 @@
             <template v-else-if="column.key === 'validation'">
               <a-badge
                 :status="record.valid ? 'success' : 'error'"
-                :text="record.valid ? 'Valid' : 'Invalid'"
+                :text="record.valid ? t('ads.export.preview.validation.validLabel') : t('ads.export.preview.validation.invalidLabel')"
               />
             </template>
           </template>
@@ -97,7 +97,7 @@
       <div class="modal-actions mt-6">
         <a-space>
           <a-button @click="handleClose" :disabled="exporting">
-            {{ $t('common.actions.cancel') }}
+            {{ t('common.actions.cancel') }}
           </a-button>
           <a-button
             type="primary"
@@ -107,10 +107,10 @@
           >
             <download-outlined />
             <span v-if="autoUpload">
-              {{ $t('ads.export.preview.actions.upload') }}
+              {{ t('ads.export.preview.actions.upload') }}
             </span>
             <span v-else>
-              {{ $t('ads.export.preview.actions.download', { format: selectedFormat.toUpperCase() }) }}
+              {{ t('ads.export.preview.actions.download', { format: selectedFormat.toUpperCase() }) }}
             </span>
           </a-button>
         </a-space>
@@ -120,7 +120,7 @@
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import { FileTextOutlined, FileExcelOutlined, DownloadOutlined } from '@ant-design/icons-vue'
 import api from '@/services/api'
@@ -185,44 +185,44 @@ export default {
     const previewData = ref([])
     const validationSummary = ref(null)
 
-    const columns = [
+    const columns = computed(() => ([
       {
-        title: 'Image',
+        title: t('ads.export.preview.table.image'),
         key: 'imageUrl',
         width: 80
       },
       {
-        title: 'Headline',
+        title: t('ads.export.preview.table.headline'),
+        dataIndex: 'headline',
         key: 'headline',
         width: 150
       },
       {
-        title: 'Primary Text',
+        title: t('ads.export.preview.table.primaryText'),
+        dataIndex: 'primaryText',
         key: 'primaryText',
         width: 200
       },
       {
-        title: 'Description',
+        title: t('ads.export.preview.table.description'),
         dataIndex: 'description',
         key: 'description',
         width: 150
       },
       {
-        title: 'CTA',
+        title: t('ads.export.preview.table.cta'),
         dataIndex: 'callToAction',
         key: 'callToAction',
         width: 100
       },
       {
-        title: 'Status',
+        title: t('ads.export.preview.table.validation'),
         key: 'validation',
-        width: 80
+        width: 120
       }
-    ]
+    ]))
 
-    const canExport = computed(() => {
-      return previewData.value.length > 0 && !exporting.value
-    })
+    const canExport = computed(() => previewData.value.length > 0 && !exporting.value)
 
     const normalizePreviewData = (data) => {
       if (!data) return []
@@ -230,46 +230,97 @@ export default {
       if (Array.isArray(data.ads)) return data.ads
       if (Array.isArray(data.data)) return data.data
       if (Array.isArray(data.items)) return data.items
+      if (Array.isArray(data.rows)) return data.rows
       if (data.ad) return [data.ad]
-      if (data.preview) return Array.isArray(data.preview) ? data.preview : [data.preview]
+      if (Array.isArray(data.preview)) return data.preview
+      if (data.preview) return [data.preview]
       return []
     }
 
+    const ensureSelection = async () => {
+      const ids = (props.ads || []).map(ad => ad?.id).filter(Boolean)
+      if (!ids.length || store.state.fbExport.selectedAdIds.length) {
+        return ids
+      }
+      await store.dispatch('fbExport/setSelectedAds', ids)
+      return ids
+    }
+
+    const buildPreviewRow = (row) => {
+      const adId = row?.adId || row?.id
+      const localAd = (props.ads || []).find(ad => ad.id === adId) || {}
+      const headline = row?.headline || localAd.headline || ''
+      const primaryText = row?.primaryText || row?.body || localAd.primaryText || ''
+      const description = row?.description || row?.linkDescription || localAd.description || ''
+      const callToAction = row?.callToAction || localAd.callToAction || ''
+      const imageUrl = row?.imageUrl || localAd.imageUrl || ''
+
+      const validation = validateAd({ headline, primaryText, callToAction })
+
+      return {
+        ...row,
+        id: adId,
+        imageUrl,
+        headline,
+        primaryText,
+        description,
+        callToAction,
+        adName: row?.adName || localAd.name || '',
+        campaignName: row?.campaignName || localAd.campaignName || localAd.campaign?.name || '',
+        valid: validation.valid,
+        warnings: validation.warnings || []
+      }
+    }
+
+    const refreshValidationSummary = () => {
+      if (!previewData.value.length) {
+        validationSummary.value = null
+        return
+      }
+
+      const invalidAds = previewData.value.filter(ad => !ad.valid)
+      validationSummary.value = {
+        hasErrors: invalidAds.length > 0,
+        message: invalidAds.length > 0
+          ? t('ads.export.preview.validation.hasIssues', { count: invalidAds.length })
+          : t('ads.export.preview.validation.allValid', { count: previewData.value.length }),
+        errors: invalidAds.map(ad => ad.adName || ad.headline || t('ads.export.preview.validation.unknown'))
+      }
+    }
+
     const loadPreview = async () => {
-      if (props.ads.length === 0) return
-
+      if (!props.ads.length) return
+      await ensureSelection()
       loading.value = true
+
       try {
-        const adIds = props.ads.map(ad => ad.id)
-        const response = await api.facebookExport.previewMultipleAds(adIds)
+        const response = await store.dispatch('fbExport/previewExport')
+        const rows = normalizePreviewData(response)
+        const safeRows = Array.isArray(rows) ? rows : []
+        const hydratedRows = safeRows.length ? safeRows : props.ads
 
-        if (response.data) {
-          const rows = normalizePreviewData(response.data)
-          previewData.value = rows.map(ad => ({
-            ...ad,
-            valid: validateAd(ad)
-          }))
-
-          // Calculate validation summary
-          const invalidAds = previewData.value.filter(ad => !ad.valid)
-          validationSummary.value = {
-            hasErrors: invalidAds.length > 0,
-            message: invalidAds.length > 0
-              ? t('ads.export.preview.validation.hasIssues', { count: invalidAds.length })
-              : t('ads.export.preview.validation.allValid', { count: previewData.value.length }),
-            errors: invalidAds.map(ad => ad.headline || ad.adName || ad.name || t('ads.export.preview.validation.unknown'))
-          }
-        }
+        previewData.value = hydratedRows.map(row => buildPreviewRow(row))
+        refreshValidationSummary()
       } catch (error) {
         console.error('Failed to load preview:', error)
-        message.error('Failed to load preview: ' + (error.response?.data?.message || error.message))
+        const msg = error.response?.data?.message || error.message
+        message.error(t('ads.export.preview.errors.previewFailed', { error: msg }))
+        previewData.value = []
+        validationSummary.value = null
       } finally {
         loading.value = false
       }
     }
 
     const validateAd = (ad) => {
-      return !!(ad.headline && ad.primaryText && ad.callToAction)
+      const warnings = []
+      if (!ad.headline) warnings.push('headline')
+      if (!ad.primaryText) warnings.push('primaryText')
+      if (!ad.callToAction) warnings.push('cta')
+      return {
+        valid: warnings.length === 0,
+        warnings
+      }
     }
 
     const handleExport = async () => {
@@ -368,7 +419,14 @@ export default {
       }
     })
 
+    watch(() => props.ads, () => {
+      if (props.visible) {
+        loadPreview()
+      }
+    }, { deep: true })
+
     return {
+      t,
       selectedFormat,
       loading,
       exporting,

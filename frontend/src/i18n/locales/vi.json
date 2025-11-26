@@ -105,7 +105,10 @@
     "defaultName": "Người dùng"
   },
   "common": {
-    "reload": "Tải lại"
+    "reload": "Tải lại",
+    "actions": {
+      "cancel": "Hủy"
+    }
   },
   "profilePage": {
     "title": "Hồ sơ",
@@ -1457,13 +1460,29 @@
           "downloaded": "Đã tải {count} quảng cáo dưới dạng {format}!"
         },
         "errors": {
-          "uploadFailed": "Xuất thất bại: {error}"
+          "uploadFailed": "Xuất thất bại: {error}",
+          "previewFailed": "Không thể tải xem trước: {error}"
+        },
+        "table": {
+          "image": "Hình ảnh",
+          "headline": "Tiêu đề",
+          "primaryText": "Nội dung chính",
+          "description": "Mô tả",
+          "cta": "CTA",
+          "validation": "Kiểm tra"
         },
         "validation": {
           "allValid": "Tất cả {count} quảng cáo hợp lệ để xuất",
           "hasIssues": "{count} quảng cáo có vấn đề cần kiểm tra",
-          "unknown": "Quảng cáo chưa đặt tên"
+          "unknown": "Quảng cáo chưa đặt tên",
+          "validLabel": "Hợp lệ",
+          "invalidLabel": "Không hợp lệ"
         }
+      },
+      "confirm": {
+        "title": "Xuất {count} quảng cáo lên Facebook?",
+        "message": "Bạn có chắc muốn tự động upload {count} quảng cáo đã chọn lên Facebook Ads Manager không?",
+        "note": "Hệ thống sẽ bắt đầu upload ngay và hiển thị hướng dẫn sau khi hoàn tất."
       }
     },
     "messages": {

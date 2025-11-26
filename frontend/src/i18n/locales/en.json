@@ -105,7 +105,10 @@
     "defaultName": "User"
   },
   "common": {
-    "reload": "Reload"
+    "reload": "Reload",
+    "actions": {
+      "cancel": "Cancel"
+    }
   },
   "profilePage": {
     "title": "Profile",
@@ -1274,13 +1277,29 @@
           "downloaded": "Downloaded {count} ad(s) as {format}"
         },
         "errors": {
-          "uploadFailed": "Export failed: {error}"
+          "uploadFailed": "Export failed: {error}",
+          "previewFailed": "Failed to load preview: {error}"
+        },
+        "table": {
+          "image": "Image",
+          "headline": "Headline",
+          "primaryText": "Primary Text",
+          "description": "Description",
+          "cta": "CTA",
+          "validation": "Validation"
         },
         "validation": {
           "allValid": "All {count} ad(s) are valid for export",
           "hasIssues": "{count} ad(s) have validation issues",
-          "unknown": "Unnamed ad"
+          "unknown": "Unnamed ad",
+          "validLabel": "Valid",
+          "invalidLabel": "Invalid"
         }
+      },
+      "confirm": {
+        "title": "Export {count} ad(s) to Facebook?",
+        "message": "Are you sure you want to auto-upload {count} selected ad(s) to Facebook Ads Manager?",
+        "note": "This action will immediately start the upload and show instructions once complete."
       }
     },
     "messages": {

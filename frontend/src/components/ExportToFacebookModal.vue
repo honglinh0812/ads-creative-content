@@ -134,7 +134,7 @@
 
         <!-- Preview Table -->
         <div class="preview-table-container">
-          <h3 class="text-sm font-medium text-gray-700 mb-3">Preview (First 5 Ads)</h3>
+          <h3 class="text-sm font-medium text-gray-700 mb-3">Preview</h3>
           <a-table
             :columns="previewColumns"
             :data-source="previewTableData"

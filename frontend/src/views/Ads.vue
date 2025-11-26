@@ -102,15 +102,19 @@
         </div>
       </a-modal>
 
-      <!-- Export Preview Modal -->
-      <ExportPreviewModal
-        :visible="showPreviewModal"
-        :ads="previewAds"
-        :auto-upload="previewAutoUpload"
-        @update:visible="showPreviewModal = $event"
-        @export-complete="handleExportSuccess"
-        @export-error="handleExportError"
-      />
+      <!-- Simple Export Confirmation Modal -->
+      <a-modal
+        v-model:open="autoUploadConfirmVisible"
+        :confirm-loading="autoUploadLoading"
+        :title="$t('ads.export.confirm.title', { count: selectedAdIds.length })"
+        @ok="confirmAutoUpload"
+        @cancel="cancelAutoUpload"
+      >
+        <p>{{ $t('ads.export.confirm.message', { count: selectedAdIds.length }) }}</p>
+        <p class="text-gray-500 text-sm mt-2">
+          {{ $t('ads.export.confirm.note') }}
+        </p>
+      </a-modal>
 
       <!-- Legacy Export Modal (Download flows) -->
       <ExportToFacebookModal
@@ -187,7 +191,6 @@ import { Modal, Input, Select, Button, message } from "ant-design-vue"
 import { PlusOutlined } from "@ant-design/icons-vue"
 
 import AdTable from '@/components/AdTable.vue'
-import ExportPreviewModal from '@/components/ExportPreviewModal.vue'
 import ExportToFacebookModal from '@/components/ExportToFacebookModal.vue'
 import FacebookInstructionsModal from '@/components/FacebookInstructionsModal.vue'
 
@@ -203,7 +206,6 @@ export default {
     PlusOutlined,
 
     AdTable,
-    ExportPreviewModal,
     ExportToFacebookModal,
     FacebookInstructionsModal
   },
@@ -220,9 +222,9 @@ export default {
       filteredAds: [],
       errors: {},
       selectedAdIds: [],
-      showPreviewModal: false,
-      previewAds: [],
       previewAutoUpload: true,
+      autoUploadConfirmVisible: false,
+      autoUploadLoading: false,
       showExportModal: false,
       exportModalShowAutoUpload: true,
       showInstructionsModal: false,
@@ -298,14 +300,6 @@ export default {
   },
   created() {
     this.$confirm = this.$confirm || Modal.confirm;
-  },
-  watch: {
-    showPreviewModal(val) {
-      if (!val) {
-        this.previewAds = []
-        this.previewAutoUpload = true
-      }
-    }
   },
   methods: {
     ...mapActions("ad", ["fetchAds", "deleteAd", "updateAd"]),
@@ -589,23 +583,17 @@ export default {
 
       this.selectedAdIds = adIds
       this.setSelectedAdsForExport(adIds)
-      this.previewAds = this.safeAds.filter(ad => adIds.includes(ad.id))
       this.previewAutoUpload = true
-
-      if (!this.previewAds.length) {
-        message.error(this.$t('ads.messages.error.invalidAdData'))
-        return
-      }
-
-      this.showPreviewModal = true
+      this.autoUploadConfirmVisible = true
     },
 
     handleExportSuccess(result) {
-      this.showPreviewModal = false
       this.showExportModal = false
-      const count = result?.payloads?.length || this.previewAds.length || this.selectedAdIds.length
+      this.autoUploadConfirmVisible = false
+      const count = result?.payloads?.length || this.selectedAdIds.length
+      const autoUploadCompleted = this.previewAutoUpload || !!(result && result.autoUpload)
 
-      if (this.previewAutoUpload) {
+      if (autoUploadCompleted) {
         message.success(this.$t('ads.messages.success.exportSuccess', { count }))
         const format = this.$store.state.fbExport.format
         this.exportFormat = format
@@ -615,15 +603,19 @@ export default {
         }, 500)
 
         this.exportTimestamp = Date.now()
+      } else if (count) {
+        message.success(this.$t('ads.messages.success.exportSuccess', { count }))
       }
 
       this.selectedAdIds = []
-      this.previewAds = []
+      this.previewAutoUpload = autoUploadCompleted
     },
 
     handleExportError(error) {
       console.error('Export error:', error)
       message.error(this.$t('ads.messages.error.exportError', { error: error.message || 'Unknown error' }))
+      this.autoUploadConfirmVisible = false
+      this.autoUploadLoading = false
     },
 
     toggleAdSelection(adId) {
@@ -648,7 +640,30 @@ export default {
       this.selectedAdIds = adIds
       this.setSelectedAdsForExport(adIds)
       this.exportModalShowAutoUpload = true
+      this.previewAutoUpload = false
+      this.autoUploadConfirmVisible = false
       this.showExportModal = true
+    },
+
+    async confirmAutoUpload() {
+      if (!this.selectedAdIds.length) {
+        message.warning(this.$t('ads.messages.warning.selectAdToExport'))
+        return
+      }
+      this.autoUploadLoading = true
+      try {
+        const result = await this.$store.dispatch('fbExport/exportToFacebook', { autoUpload: true })
+        this.handleExportSuccess(result)
+      } catch (error) {
+        this.handleExportError(error)
+      } finally {
+        this.autoUploadLoading = false
+      }
+    },
+
+    cancelAutoUpload() {
+      this.autoUploadConfirmVisible = false
+      this.previewAutoUpload = false
     },
 
     async duplicateAd(adOrRecord) {

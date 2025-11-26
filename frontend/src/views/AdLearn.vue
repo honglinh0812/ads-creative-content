@@ -527,8 +527,10 @@ export default {
     },
     async handleNextFromStep1() {
       if (!this.validateStep1()) return
-      await this.analyzeReference()
-      this.currentStep = 2
+      const extracted = await this.analyzeReference()
+      if (extracted) {
+        this.currentStep = 2
+      }
     },
     async analyzeReference() {
       if (!this.formData.referenceLink) return false
@@ -539,8 +541,20 @@ export default {
           fallbackContent: this.formData.baseContent
         }
         const response = await api.post('/ads/learn/reference', payload)
-        this.referenceContent = response.data.referenceContent || ''
-        this.extractedContent = this.referenceContent
+        const extracted = (response.data.referenceContent || '').trim()
+        if (!extracted) {
+          this.referenceContent = ''
+          this.extractedContent = ''
+          this.referenceInsights = null
+          this.detectedStyle = null
+          this.detectedCallToAction = null
+          this.referenceSummaryText = ''
+          this.hasReferenceInsights = false
+          this.$message.error(this.$t('adLearn.messages.error.extractContentFailed'))
+          return false
+        }
+        this.referenceContent = extracted
+        this.extractedContent = extracted
         this.referenceInsights = response.data.insights || null
         this.detectedStyle = response.data.detectedStyle || null
         this.detectedCallToAction = response.data.suggestedCallToAction || null
