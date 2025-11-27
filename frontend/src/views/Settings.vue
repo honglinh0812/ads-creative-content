@@ -5,9 +5,6 @@
         <h1>{{ $t('settingsPage.title') }}</h1>
         <p>{{ $t('settingsPage.subtitle') }}</p>
       </div>
-      <a-button @click="loadProfile" :loading="loading">
-        {{ $t('common.reload') }}
-      </a-button>
     </header>
 
     <a-spin :spinning="loading">

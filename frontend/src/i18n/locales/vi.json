@@ -175,9 +175,9 @@
       "ads": "Quảng cáo",
       "adsLabel": "Tổng số quảng cáo đã tạo",
       "recentTitle": "Hoạt động gần đây",
-      "recentSubtitle": "Những quảng cáo vừa tạo trong workspace này",
+      "recentSubtitle": "",
       "recentAds": "Quảng cáo gần đây",
-      "empty": "Chưa có quảng cáo nào.",
+      "empty": "Chưa có hoạt động nào.",
       "untitledAd": "Quảng cáo chưa đặt tên"
     },
     "validation": {
@@ -191,10 +191,10 @@
   },
   "settingsPage": {
     "title": "Cài đặt tài khoản",
-    "subtitle": "Quản lý bảo mật và vòng đời tài khoản.",
+    "subtitle": "",
     "security": {
-      "title": "Bảo mật",
-      "description": "Thường xuyên cập nhật mật khẩu để bảo vệ workspace.",
+      "title": "Đổi mật khẩu",
+      "description": "",
       "current": "Mật khẩu hiện tại",
       "new": "Mật khẩu mới",
       "confirm": "Xác nhận mật khẩu mới",
