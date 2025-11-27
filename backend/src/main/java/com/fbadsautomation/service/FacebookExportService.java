@@ -1334,6 +1334,7 @@ public class FacebookExportService {
                             campaign.getDailyBudget(),
                             campaign.getTotalBudget(),
                             campaign.getTargetAudience(),
+                            campaign.getBidCap(),
                             campaign.getStartDate(),
                             campaign.getEndDate()
                         ),

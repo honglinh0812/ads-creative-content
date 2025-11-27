@@ -13,6 +13,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -417,6 +418,14 @@ public class FacebookMarketingApiClient {
             return 1000;
         }
         return 100;
+    }
+
+    private long getMaxBidAmount() {
+        String currency = facebookProperties.getAccountCurrency();
+        if ("VND".equalsIgnoreCase(currency)) {
+            return MAX_BID_VND;
+        }
+        return MAX_BID_USD_CENTS;
     }
 
     private Double normalizeBudgetForCurrency(Double budget) {
