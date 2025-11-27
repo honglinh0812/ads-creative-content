@@ -105,9 +105,45 @@
     "defaultName": "Người dùng"
   },
   "common": {
-    "reload": "Tải lại",
+    "action": {
+      "cancel": "Hủy",
+      "save": "Lưu",
+      "delete": "Xóa",
+      "edit": "Sửa",
+      "create": "Tạo",
+      "close": "Đóng",
+      "ok": "OK",
+      "yes": "Có",
+      "no": "Không",
+      "confirm": "Xác nhận",
+      "retry": "Thử lại",
+      "export": "Xuất",
+      "search": "Tìm kiếm",
+      "start": "Bắt đầu"
+    },
+    "default": {
+      "notAvailable": "Không có sẵn"
+    },
+    "state": {
+      "loading": "Đang tải..."
+    },
     "actions": {
-      "cancel": "Hủy"
+      "cancel": "Hủy",
+      "save": "Lưu",
+      "delete": "Xóa",
+      "edit": "Sửa",
+      "create": "Tạo",
+      "close": "Đóng",
+      "ok": "OK",
+      "yes": "Có",
+      "no": "Không",
+      "confirm": "Xác nhận",
+      "retry": "Thử lại",
+      "export": "Xuất",
+      "search": "Tìm kiếm",
+      "start": "Bắt đầu",
+      "tryAgain": "Thử lại",
+      "createFirstAd": "Tạo quảng cáo đầu tiên"
     }
   },
   "profilePage": {
@@ -414,7 +450,8 @@
           "dailyBudget": "Ngân sách hàng ngày",
           "totalBudget": "Tổng ngân sách",
           "startDate": "Ngày & Giờ bắt đầu",
-          "endDate": "Ngày & Giờ kết thúc"
+          "endDate": "Ngày & Giờ kết thúc",
+          "bidCap": "Giới hạn bid"
         },
         "placeholder": {
           "campaignName": "Nhập tên chiến dịch đáng nhớ...",
@@ -423,7 +460,8 @@
           "dailyBudget": "Nhập ngân sách hàng ngày...",
           "totalBudget": "Nhập tổng ngân sách...",
           "startDate": "Chọn ngày và giờ bắt đầu...",
-          "endDate": "Chọn ngày và giờ kết thúc..."
+          "endDate": "Chọn ngày và giờ kết thúc...",
+          "bidCap": "Tùy chọn: giới hạn số tiền Facebook có thể bid mỗi lần..."
         },
         "budgetType": {
           "daily": "Ngân sách hàng ngày",
@@ -435,6 +473,12 @@
           "cancel": "Hủy",
           "creating": "Đang tạo...",
           "create": "Tạo chiến dịch"
+        },
+        "helper": {
+          "bidCap": "Facebook sẽ không bid cao hơn mức này trong mỗi phiên đấu giá. Bỏ trống nếu muốn hệ thống tự tối ưu."
+        },
+        "validation": {
+          "bidCapPositive": "Giới hạn bid phải lớn hơn 0"
         }
       },
       "help": {
@@ -1037,48 +1081,6 @@
   },
   "cta": {
     "note": "Lưu ý: Chỉ sử dụng một trong các Call to Action sau cho quảng cáo: {ctaList}. Không tạo CTA khác."
-  },
-  "common": {
-    "action": {
-      "cancel": "Hủy",
-      "save": "Lưu",
-      "delete": "Xóa",
-      "edit": "Sửa",
-      "create": "Tạo",
-      "close": "Đóng",
-      "ok": "OK",
-      "yes": "Có",
-      "no": "Không",
-      "confirm": "Xác nhận",
-      "retry": "Thử lại",
-      "export": "Xuất",
-      "search": "Tìm kiếm",
-      "start": "Bắt đầu"
-    },
-    "default": {
-      "notAvailable": "Không có sẵn"
-    },
-    "state": {
-      "loading": "Đang tải..."
-    },
-    "actions": {
-      "cancel": "Hủy",
-      "save": "Lưu",
-      "delete": "Xóa",
-      "edit": "Sửa",
-      "create": "Tạo",
-      "close": "Đóng",
-      "ok": "OK",
-      "yes": "Có",
-      "no": "Không",
-      "confirm": "Xác nhận",
-      "retry": "Thử lại",
-      "export": "Xuất",
-      "search": "Tìm kiếm",
-      "start": "Bắt đầu",
-      "tryAgain": "Thử lại",
-      "createFirstAd": "Tạo quảng cáo đầu tiên"
-    }
   },
   "sidebar": {
     "openSidebar": "Mở sidebar",
@@ -2334,209 +2336,209 @@
         "close": "Đóng"
       }
     },
-      "audienceSegment": {
-        "title": "🎯 Đối tượng mục tiêu",
-        "form": {
-          "gender": "Giới tính",
-          "genderPlaceholder": "Chọn giới tính mục tiêu",
-          "genderOptions": {
-            "all": "Tất cả",
-            "male": "Nam",
-            "female": "Nữ"
-          },
-          "location": "Vị trí",
-          "locationPlaceholder": "vd., Hoa Kỳ, Việt Nam",
-          "ageRange": "Độ tuổi",
-          "ageDisplay": "{min} - {max} tuổi",
-          "interests": "Sở thích (Tùy chọn)",
-          "interestsPlaceholder": "vd., Công nghệ, Thời trang, Thể thao",
-          "interestsHint": "Phân tách nhiều sở thích bằng dấu phẩy"
-        },
-        "validation": {
-          "fixErrors": "Vui lòng sửa các lỗi xác thực ở trên",
-          "genderRequired": "Vui lòng chọn giới tính",
-          "locationMinLength": "Vị trí phải có ít nhất 2 ký tự",
-          "locationMaxLength": "Vị trí không được vượt quá 500 ký tự",
-          "locationInvalidChars": "Vị trí chỉ có thể chứa chữ cái, khoảng trắng, dấu phẩy và dấu gạch ngang",
-          "minAgeRange": "Tuổi tối thiểu phải từ 13 đến 65",
-          "maxAgeRange": "Tuổi tối đa phải từ 13 đến 65",
-          "minGreaterThanMax": "Tuổi tối thiểu không thể lớn hơn tuổi tối đa",
-          "narrowAgeRange": "Phạm vi độ tuổi rất hẹp. Hãy cân nhắc mở rộng để kết quả tốt hơn",
-          "interestsMaxLength": "Sở thích không được vượt quá 1000 ký tự",
-          "tooManyInterests": "Quá nhiều sở thích có thể hạn chế phạm vi tiếp cận của bạn. Hãy tập trung vào các sở thích hàng đầu",
-          "interestMinLength": "Mỗi sở thích phải có ít nhất 2 ký tự"
-        },
-        "preview": {
-          "title": "Xem trước nhắm mục tiêu",
-          "targeting": "Nhắm đến",
-          "males": "nam giới",
-          "females": "nữ giới",
-          "aged": "độ tuổi {min}-{max}",
-          "inLocation": "tại {location}",
-          "interestedIn": "quan tâm đến {interests}"
-        },
-        "reach": {
-          "title": "Phạm vi ước tính",
-          "millionPeople": "{count} triệu người",
-          "thousandPeople": "{count} nghìn người",
-          "people": "{count} người"
-        }
-      },
-      "personaSelector": {
-        "title": "🎭 Chân dung khách hàng mục tiêu (Tùy chọn)",
-        "createNew": "Tạo mới",
-        "createModalTitle": "Tạo chân dung khách hàng mà không rời khỏi bước hiện tại",
-        "form": {
-          "label": "Chọn chân dung khách hàng để điều chỉnh quảng cáo của bạn",
-          "placeholder": "Chọn chân dung khách hàng mục tiêu (tùy chọn)"
-        },
-        "empty": {
-          "description": "Không tìm thấy chân dung khách hàng",
-          "action": "Tạo chân dung khách hàng đầu tiên của bạn"
-        },
-        "preview": {
-          "title": "Xem trước Chân dung khách hàng",
-          "years": "{age} tuổi",
-          "interests": "{count} Sở thích",
-          "painPoints": "{count} Điểm khó khăn",
-          "topInterests": "Sở thích hàng đầu",
-          "more": "+{count} thêm",
-          "mainChallenges": "Thách thức chính",
-          "moreEllipsis": "+{count} thêm...",
-          "goal": "Mục tiêu",
-          "viewDetails": "Xem chi tiết đầy đủ",
-          "clearSelection": "Xóa lựa chọn"
-        },
-        "enhancement": {
-          "title": "Cải thiện câu lệnh gợi ý AI",
-          "description": "Câu lệnh quảng cáo của bạn sẽ được tự động làm phong phú với hồ sơ chân dung khách hàng này để tạo nội dung nhắm mục tiêu hơn."
-        },
-        "help": {
-          "title": "Mẹo",
-          "description": "Chọn một chân dung khách hàng để tự động điều chỉnh nội dung quảng cáo của bạn theo đặc điểm đối tượng cụ thể. Điều này giúp tạo ra quảng cáo phù hợp và hấp dẫn hơn."
-        },
-        "messages": {
-          "loadError": "Không tải được chân dung khách hàng: {error}",
-          "selected": "Đã chọn chân dung khách hàng \"{name}\"",
-          "cleared": "Đã xóa lựa chọn chân dung khách hàng",
-          "created": "Đã tạo chân dung khách hàng \"{name}\"",
-          "createError": "Không thể tạo chân dung khách hàng: {error}"
-        },
-        "gender": {
+    "audienceSegment": {
+      "title": "🎯 Đối tượng mục tiêu",
+      "form": {
+        "gender": "Giới tính",
+        "genderPlaceholder": "Chọn giới tính mục tiêu",
+        "genderOptions": {
+          "all": "Tất cả",
           "male": "Nam",
-          "female": "Nữ",
-          "all": "Tất cả"
-        }
+          "female": "Nữ"
+        },
+        "location": "Vị trí",
+        "locationPlaceholder": "vd., Hoa Kỳ, Việt Nam",
+        "ageRange": "Độ tuổi",
+        "ageDisplay": "{min} - {max} tuổi",
+        "interests": "Sở thích (Tùy chọn)",
+        "interestsPlaceholder": "vd., Công nghệ, Thời trang, Thể thao",
+        "interestsHint": "Phân tách nhiều sở thích bằng dấu phẩy"
       },
-      "promptValidator": {
-        "quality": {
-          "label": "Chất lượng Câu lệnh"
-        },
-        "suggestions": {
-          "title": "💡 Gợi ý"
-        },
-        "improved": {
-          "title": "✨ Phiên bản cải tiến",
-          "useButton": "Sử dụng câu lệnh cải tiến này"
-        },
-        "loading": "Đang phân tích chất lượng câu lệnh...",
-        "error": {
-          "validation": "Không thể xác thực câu lệnh. Vui lòng thử lại."
-        }
+      "validation": {
+        "fixErrors": "Vui lòng sửa các lỗi xác thực ở trên",
+        "genderRequired": "Vui lòng chọn giới tính",
+        "locationMinLength": "Vị trí phải có ít nhất 2 ký tự",
+        "locationMaxLength": "Vị trí không được vượt quá 500 ký tự",
+        "locationInvalidChars": "Vị trí chỉ có thể chứa chữ cái, khoảng trắng, dấu phẩy và dấu gạch ngang",
+        "minAgeRange": "Tuổi tối thiểu phải từ 13 đến 65",
+        "maxAgeRange": "Tuổi tối đa phải từ 13 đến 65",
+        "minGreaterThanMax": "Tuổi tối thiểu không thể lớn hơn tuổi tối đa",
+        "narrowAgeRange": "Phạm vi độ tuổi rất hẹp. Hãy cân nhắc mở rộng để kết quả tốt hơn",
+        "interestsMaxLength": "Sở thích không được vượt quá 1000 ký tự",
+        "tooManyInterests": "Quá nhiều sở thích có thể hạn chế phạm vi tiếp cận của bạn. Hãy tập trung vào các sở thích hàng đầu",
+        "interestMinLength": "Mỗi sở thích phải có ít nhất 2 ký tự"
       },
-      "trendingKeywords": {
-        "title": "📈 Từ khóa thịnh hành",
-        "search": {
-          "placeholder": "Tìm kiếm xu hướng (vd., 'thiết bị công nghệ', 'thời trang')",
-          "button": "Tìm kiếm"
-        },
-        "region": {
-          "placeholder": "Khu vực"
-        },
-        "list": {
-          "searches": "{volume} lượt tìm kiếm"
-        },
-        "empty": {
-          "description": "Không tìm thấy xu hướng. Hãy thử từ khóa tìm kiếm khác."
-        },
-        "help": {
-          "message": "Nhập từ khóa tìm kiếm để khám phá từ khóa thịnh hành",
-          "description": "Tìm các chủ đề phổ biến liên quan đến sản phẩm hoặc dịch vụ của bạn"
-        },
-        "sourceTooltip": {
-          "title": "Nguồn dữ liệu",
-          "description": "Chúng tôi sử dụng Google Trends và TikTok Creative Center để cung cấp các từ khóa thịnh hành dựa trên xu hướng nội dung hiện tại."
-        },
-        "selection": {
-          "maxTitle": "Đã chọn tối đa từ khóa",
-          "maxDescription": "Bạn đã chọn tối đa 5 từ khóa. Bỏ chọn một số để thêm các từ khác.",
-          "selectedTitle": "Từ khóa đã chọn ({count}/5)"
-        },
-        "addButton": "Thêm {count} từ khóa vào câu lệnh",
-        "lastSearch": "Tìm kiếm cuối: \"{query}\" tại {region} - {count} kết quả",
-        "validation": {
-          "minLength": "Truy vấn tìm kiếm phải có ít nhất 2 ký tự",
-          "maxLength": "Truy vấn tìm kiếm không được vượt quá 100 ký tự",
-          "invalidChars": "Truy vấn tìm kiếm chứa ký tự không hợp lệ"
-        },
-        "messages": {
-          "invalidQuery": "Vui lòng nhập truy vấn tìm kiếm hợp lệ (2-100 ký tự)",
-          "enterQuery": "Vui lòng nhập truy vấn tìm kiếm",
-          "noResults": "Không tìm thấy từ khóa thịnh hành cho tìm kiếm này",
-          "found": "Đã tìm thấy {count} từ khóa thịnh hành",
-          "error": "Không tải được từ khóa thịnh hành. Vui lòng thử lại.",
-          "maxSelection": "Bạn có thể chọn tối đa 5 từ khóa",
-          "selectOne": "Vui lòng chọn ít nhất một từ khóa",
-          "added": "Đã thêm {count} từ khóa vào câu lệnh"
-        }
+      "preview": {
+        "title": "Xem trước nhắm mục tiêu",
+        "targeting": "Nhắm đến",
+        "males": "nam giới",
+        "females": "nữ giới",
+        "aged": "độ tuổi {min}-{max}",
+        "inLocation": "tại {location}",
+        "interestedIn": "quan tâm đến {interests}"
       },
-      "facebookInstructions": {
-        "modal": {
-          "title": "Tải lên Facebook Ads Manager"
-        },
-        "result": {
-          "title": "Tải file thành công!",
-          "subtitle": "Làm theo các bước sau để tải quảng cáo của bạn lên Facebook"
-        },
-        "steps": {
-          "locate": {
-            "title": "Xác định vị trí file đã tải xuống của bạn",
-            "description": "File của bạn đã được tải xuống vào thư mục tải xuống mặc định."
-          },
-          "navigate": {
-            "title": "Điều hướng đến Ads Manager",
-            "description": "Facebook Ads Manager sẽ mở trong tab mới.",
-            "ifNot": "Nếu không, nhấp vào nút bên dưới:",
-            "button": "Mở Facebook Ads Manager"
-          },
-          "upload": {
-            "title": "Tải lên quảng cáo của bạn",
-            "step1": "Nhấp vào nút <strong>\"Tạo\"</strong> trong Ads Manager",
-            "step2": "Chọn <strong>\"Tạo hàng loạt\"</strong> hoặc <strong>\"Nhập\"</strong>",
-            "step3": "Chọn <strong>\"Tải lên file\"</strong>",
-            "step4": "Chọn file {format} đã tải xuống của bạn"
-          },
-          "review": {
-            "title": "Xem xét và Xuất bản",
-            "step1": "Xem xét quảng cáo của bạn trong bản xem trước Facebook",
-            "step2": "Cấu hình thêm nhắm mục tiêu nếu cần",
-            "step3": "Nhấp vào <strong>\"Xuất bản\"</strong> để khởi chạy chiến dịch của bạn"
-          },
-          "monitor": {
-            "title": "Giám sát hiệu suất",
-            "description": "Sau khi quảng cáo của bạn đang chạy:",
-            "step1": "Tải xuống báo cáo hiệu suất từ Facebook",
-            "step2": "Nhập chúng trở lại đây để phân tích",
-            "step3": "Theo dõi ROI và tối ưu hóa chiến dịch của bạn"
-          }
-        },
-        "help": {
-          "title": "Cần trợ giúp?",
-          "bulkGuide": "Hướng dẫn tải lên hàng loạt Facebook",
-          "documentation": "Tài liệu Ads Manager"
-        },
-        "dontShowAgain": "Không hiển thị lại",
-        "understand": "Tôi hiểu"
+      "reach": {
+        "title": "Phạm vi ước tính",
+        "millionPeople": "{count} triệu người",
+        "thousandPeople": "{count} nghìn người",
+        "people": "{count} người"
       }
+    },
+    "personaSelector": {
+      "title": "🎭 Chân dung khách hàng mục tiêu (Tùy chọn)",
+      "createNew": "Tạo mới",
+      "createModalTitle": "Tạo chân dung khách hàng mà không rời khỏi bước hiện tại",
+      "form": {
+        "label": "Chọn chân dung khách hàng để điều chỉnh quảng cáo của bạn",
+        "placeholder": "Chọn chân dung khách hàng mục tiêu (tùy chọn)"
+      },
+      "empty": {
+        "description": "Không tìm thấy chân dung khách hàng",
+        "action": "Tạo chân dung khách hàng đầu tiên của bạn"
+      },
+      "preview": {
+        "title": "Xem trước Chân dung khách hàng",
+        "years": "{age} tuổi",
+        "interests": "{count} Sở thích",
+        "painPoints": "{count} Điểm khó khăn",
+        "topInterests": "Sở thích hàng đầu",
+        "more": "+{count} thêm",
+        "mainChallenges": "Thách thức chính",
+        "moreEllipsis": "+{count} thêm...",
+        "goal": "Mục tiêu",
+        "viewDetails": "Xem chi tiết đầy đủ",
+        "clearSelection": "Xóa lựa chọn"
+      },
+      "enhancement": {
+        "title": "Cải thiện câu lệnh gợi ý AI",
+        "description": "Câu lệnh quảng cáo của bạn sẽ được tự động làm phong phú với hồ sơ chân dung khách hàng này để tạo nội dung nhắm mục tiêu hơn."
+      },
+      "help": {
+        "title": "Mẹo",
+        "description": "Chọn một chân dung khách hàng để tự động điều chỉnh nội dung quảng cáo của bạn theo đặc điểm đối tượng cụ thể. Điều này giúp tạo ra quảng cáo phù hợp và hấp dẫn hơn."
+      },
+      "messages": {
+        "loadError": "Không tải được chân dung khách hàng: {error}",
+        "selected": "Đã chọn chân dung khách hàng \"{name}\"",
+        "cleared": "Đã xóa lựa chọn chân dung khách hàng",
+        "created": "Đã tạo chân dung khách hàng \"{name}\"",
+        "createError": "Không thể tạo chân dung khách hàng: {error}"
+      },
+      "gender": {
+        "male": "Nam",
+        "female": "Nữ",
+        "all": "Tất cả"
+      }
+    },
+    "promptValidator": {
+      "quality": {
+        "label": "Chất lượng Câu lệnh"
+      },
+      "suggestions": {
+        "title": "💡 Gợi ý"
+      },
+      "improved": {
+        "title": "✨ Phiên bản cải tiến",
+        "useButton": "Sử dụng câu lệnh cải tiến này"
+      },
+      "loading": "Đang phân tích chất lượng câu lệnh...",
+      "error": {
+        "validation": "Không thể xác thực câu lệnh. Vui lòng thử lại."
+      }
+    },
+    "trendingKeywords": {
+      "title": "📈 Từ khóa thịnh hành",
+      "search": {
+        "placeholder": "Tìm kiếm xu hướng (vd., 'thiết bị công nghệ', 'thời trang')",
+        "button": "Tìm kiếm"
+      },
+      "region": {
+        "placeholder": "Khu vực"
+      },
+      "list": {
+        "searches": "{volume} lượt tìm kiếm"
+      },
+      "empty": {
+        "description": "Không tìm thấy xu hướng. Hãy thử từ khóa tìm kiếm khác."
+      },
+      "help": {
+        "message": "Nhập từ khóa tìm kiếm để khám phá từ khóa thịnh hành",
+        "description": "Tìm các chủ đề phổ biến liên quan đến sản phẩm hoặc dịch vụ của bạn"
+      },
+      "sourceTooltip": {
+        "title": "Nguồn dữ liệu",
+        "description": "Chúng tôi sử dụng Google Trends và TikTok Creative Center để cung cấp các từ khóa thịnh hành dựa trên xu hướng nội dung hiện tại."
+      },
+      "selection": {
+        "maxTitle": "Đã chọn tối đa từ khóa",
+        "maxDescription": "Bạn đã chọn tối đa 5 từ khóa. Bỏ chọn một số để thêm các từ khác.",
+        "selectedTitle": "Từ khóa đã chọn ({count}/5)"
+      },
+      "addButton": "Thêm {count} từ khóa vào câu lệnh",
+      "lastSearch": "Tìm kiếm cuối: \"{query}\" tại {region} - {count} kết quả",
+      "validation": {
+        "minLength": "Truy vấn tìm kiếm phải có ít nhất 2 ký tự",
+        "maxLength": "Truy vấn tìm kiếm không được vượt quá 100 ký tự",
+        "invalidChars": "Truy vấn tìm kiếm chứa ký tự không hợp lệ"
+      },
+      "messages": {
+        "invalidQuery": "Vui lòng nhập truy vấn tìm kiếm hợp lệ (2-100 ký tự)",
+        "enterQuery": "Vui lòng nhập truy vấn tìm kiếm",
+        "noResults": "Không tìm thấy từ khóa thịnh hành cho tìm kiếm này",
+        "found": "Đã tìm thấy {count} từ khóa thịnh hành",
+        "error": "Không tải được từ khóa thịnh hành. Vui lòng thử lại.",
+        "maxSelection": "Bạn có thể chọn tối đa 5 từ khóa",
+        "selectOne": "Vui lòng chọn ít nhất một từ khóa",
+        "added": "Đã thêm {count} từ khóa vào câu lệnh"
+      }
+    },
+    "facebookInstructions": {
+      "modal": {
+        "title": "Tải lên Facebook Ads Manager"
+      },
+      "result": {
+        "title": "Tải file thành công!",
+        "subtitle": "Làm theo các bước sau để tải quảng cáo của bạn lên Facebook"
+      },
+      "steps": {
+        "locate": {
+          "title": "Xác định vị trí file đã tải xuống của bạn",
+          "description": "File của bạn đã được tải xuống vào thư mục tải xuống mặc định."
+        },
+        "navigate": {
+          "title": "Điều hướng đến Ads Manager",
+          "description": "Facebook Ads Manager sẽ mở trong tab mới.",
+          "ifNot": "Nếu không, nhấp vào nút bên dưới:",
+          "button": "Mở Facebook Ads Manager"
+        },
+        "upload": {
+          "title": "Tải lên quảng cáo của bạn",
+          "step1": "Nhấp vào nút <strong>\"Tạo\"</strong> trong Ads Manager",
+          "step2": "Chọn <strong>\"Tạo hàng loạt\"</strong> hoặc <strong>\"Nhập\"</strong>",
+          "step3": "Chọn <strong>\"Tải lên file\"</strong>",
+          "step4": "Chọn file {format} đã tải xuống của bạn"
+        },
+        "review": {
+          "title": "Xem xét và Xuất bản",
+          "step1": "Xem xét quảng cáo của bạn trong bản xem trước Facebook",
+          "step2": "Cấu hình thêm nhắm mục tiêu nếu cần",
+          "step3": "Nhấp vào <strong>\"Xuất bản\"</strong> để khởi chạy chiến dịch của bạn"
+        },
+        "monitor": {
+          "title": "Giám sát hiệu suất",
+          "description": "Sau khi quảng cáo của bạn đang chạy:",
+          "step1": "Tải xuống báo cáo hiệu suất từ Facebook",
+          "step2": "Nhập chúng trở lại đây để phân tích",
+          "step3": "Theo dõi ROI và tối ưu hóa chiến dịch của bạn"
+        }
+      },
+      "help": {
+        "title": "Cần trợ giúp?",
+        "bulkGuide": "Hướng dẫn tải lên hàng loạt Facebook",
+        "documentation": "Tài liệu Ads Manager"
+      },
+      "dontShowAgain": "Không hiển thị lại",
+      "understand": "Tôi hiểu"
+    }
   }
 }

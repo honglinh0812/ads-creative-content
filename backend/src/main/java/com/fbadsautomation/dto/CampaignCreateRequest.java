@@ -36,6 +36,9 @@ public class CampaignCreateRequest {
     @Size(max = 1000, message = "Target audience description cannot exceed 1000 characters")
     private String targetAudience;
 
+    @DecimalMin(value = "0.0", inclusive = false, message = "Bid cap must be greater than 0")
+    private Double bidCap;
+
     @Future(message = "Start date must be in the future")
     private LocalDate startDate;
 
@@ -60,6 +63,7 @@ public class CampaignCreateRequest {
 
     public CampaignCreateRequest(String name, String objective, String budgetType, 
                                Double dailyBudget, Double totalBudget, String targetAudience,
+                               Double bidCap,
                                LocalDate startDate, LocalDate endDate) {
         this.name = name;
         this.objective = objective;
@@ -67,6 +71,7 @@ public class CampaignCreateRequest {
         this.dailyBudget = dailyBudget;
         this.totalBudget = totalBudget;
         this.targetAudience = targetAudience;
+        this.bidCap = bidCap;
         this.startDate = startDate;
         this.endDate = endDate;
     }
@@ -94,6 +99,9 @@ public class CampaignCreateRequest {
 
     public String getTargetAudience() { return targetAudience; }
     public void setTargetAudience(String targetAudience) { this.targetAudience = targetAudience;
+    }
+    public Double getBidCap() { return bidCap; }
+    public void setBidCap(Double bidCap) { this.bidCap = bidCap;
     }
 
     public LocalDate getStartDate() { return startDate; }

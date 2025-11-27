@@ -357,6 +357,15 @@ public class FacebookMarketingApiClient {
     }
 
     private Long resolveBidAmount(Campaign campaign) {
+        Double manualBid = campaign.getBidCap();
+        if (manualBid != null && manualBid > 0) {
+            double normalizedManual = normalizeBudgetForCurrency(manualBid);
+            long manualSmallest = Math.round(normalizedManual * getBudgetMultiplier());
+            if (manualSmallest > 0) {
+                return clampBid(manualSmallest);
+            }
+        }
+
         Double source = resolveAdsetBudget(campaign);
         if (source == null || source <= 0) {
             source = campaign.getDailyBudget();
@@ -368,12 +377,30 @@ public class FacebookMarketingApiClient {
             return null;
         }
         source = normalizeBudgetForCurrency(source);
-        long smallest = Math.round(source * getBudgetMultiplier());
+        int multiplier = getBudgetMultiplier();
+        double minBidCurrency = getMinBidAmount() / (double) multiplier;
+        double baseBid = Math.max(source * 0.1, minBidCurrency);
+        long smallest = Math.round(baseBid * multiplier);
         if (smallest <= 0) {
             return null;
         }
-        // TODO: allow overriding this calculation when we support bid strategies per campaign.
-        return Math.max(smallest, getMinBidAmount());
+        return clampBid(smallest);
+    }
+
+    private long clampBid(long smallest) {
+        long minBid = getMinBidAmount();
+        long maxBid = getMaxBidAmount();
+        long clamped = smallest;
+        if (smallest < minBid) {
+            clamped = minBid;
+        } else if (smallest > maxBid) {
+            log.warn("Bid amount {} exceeds Meta cap {} for currency {}. Clamping to allowed maximum.",
+                smallest,
+                maxBid,
+                facebookProperties.getAccountCurrency());
+            clamped = maxBid;
+        }
+        return clamped;
     }
 
     private int getBudgetMultiplier() {

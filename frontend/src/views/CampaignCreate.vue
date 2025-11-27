@@ -137,6 +137,28 @@
             </a-form-item>
           </a-col>
 
+          <!-- Bid Cap -->
+          <a-col :xs="24" :md="12">
+            <a-form-item
+              :label="$t('campaign.create.form.label.bidCap')"
+              :validate-status="errors.bidCap ? 'error' : ''"
+              :help="errors.bidCap"
+            >
+              <a-input-number
+                v-model:value="form.bidCap"
+                :min="0"
+                size="large"
+                style="width: 100%"
+                :placeholder="$t('campaign.create.form.placeholder.bidCap')"
+                :formatter="formatCurrencyInput"
+                :parser="parseCurrencyInput"
+              />
+              <div class="text-xs text-gray-500 mt-1">
+                {{ $t('campaign.create.form.helper.bidCap') }}
+              </div>
+            </a-form-item>
+          </a-col>
+
           <!-- Start Date -->
           <a-col :xs="24" :md="12">
             <a-form-item
@@ -299,6 +321,7 @@ export default {
         budgetType: 'DAILY',
         dailyBudget: null,
         totalBudget: null,
+        bidCap: null,
         // Issue #9: Target audience at campaign level
         audienceSegment: {
           gender: 'ALL',
@@ -323,6 +346,10 @@ export default {
     accountCurrency() {
       const currency = process.env.VUE_APP_FACEBOOK_ACCOUNT_CURRENCY || 'USD'
       return currency.toUpperCase()
+    },
+
+    currencySymbol() {
+      return this.accountCurrency === 'VND' ? '₫' : '$'
     },
 
     minBudgetAmount() {
@@ -466,14 +493,18 @@ export default {
       }
 
       // Validate budget based on type
-        if (this.form.budgetType === 'DAILY') {
-          if (!this.form.dailyBudget || this.form.dailyBudget < this.minBudgetAmount) {
-            this.errors.dailyBudget = `Daily budget must be at least ${this.minBudgetLabel}`
-          }
-        } else if (this.form.budgetType === 'LIFETIME') {
-          if (!this.form.totalBudget || this.form.totalBudget < this.minBudgetAmount) {
-            this.errors.totalBudget = `Total budget must be at least ${this.minBudgetLabel}`
-          }
+      if (this.form.budgetType === 'DAILY') {
+        if (!this.form.dailyBudget || this.form.dailyBudget < this.minBudgetAmount) {
+          this.errors.dailyBudget = `Daily budget must be at least ${this.minBudgetLabel}`
+        }
+      } else if (this.form.budgetType === 'LIFETIME') {
+        if (!this.form.totalBudget || this.form.totalBudget < this.minBudgetAmount) {
+          this.errors.totalBudget = `Total budget must be at least ${this.minBudgetLabel}`
+        }
+      }
+
+      if (this.form.bidCap && this.form.bidCap <= 0) {
+        this.errors.bidCap = this.$t('campaign.create.form.validation.bidCapPositive')
       }
 
       // Validate start date
