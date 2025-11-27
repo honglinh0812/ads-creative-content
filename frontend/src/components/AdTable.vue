@@ -5,7 +5,6 @@
         <div>
           <p class="panel__eyebrow">Creative library</p>
           <h2 class="panel__title">Ad performance overview</h2>
-          <p class="panel__subtitle">Use filters to focus on the assets that matter today.</p>
         </div>
         <div class="view-toggle-wrapper">
           <a-segmented

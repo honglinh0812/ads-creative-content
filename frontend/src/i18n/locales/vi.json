@@ -783,6 +783,14 @@
     },
     "imageError": {
       "cannotLoad": "Không tải được ảnh"
+    },
+    "export": {
+      "confirm": {
+        "title": "Xác nhận",
+        "message": "Bạn có chắc chắn muốn xuất {count} quảng cáo đã chọn sang Facebook không?",
+        "okText": "Xác nhận",
+        "cancelText": "Hủy"
+      }
     }
   },
   "ad": {

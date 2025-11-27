@@ -111,9 +111,6 @@
         @cancel="cancelAutoUpload"
       >
         <p>{{ $t('ads.export.confirm.message', { count: selectedAdIds.length }) }}</p>
-        <p class="text-gray-500 text-sm mt-2">
-          {{ $t('ads.export.confirm.note') }}
-        </p>
       </a-modal>
 
       <!-- Legacy Export Modal (Download flows) -->
@@ -594,17 +591,19 @@ export default {
       const autoUploadCompleted = this.previewAutoUpload || !!(result && result.autoUpload)
 
       if (autoUploadCompleted) {
+        const redirectUrl = result?.redirectUrl || result?.autoUpload?.adsManagerUrl
+        message.success(this.$t('ads.messages.success.exportSuccess', { count }))
+        if (redirectUrl) {
+          window.open(redirectUrl, '_blank', 'noopener,noreferrer')
+        }
+      } else if (count) {
         message.success(this.$t('ads.messages.success.exportSuccess', { count }))
         const format = this.$store.state.fbExport.format
         this.exportFormat = format
-
+        this.exportTimestamp = Date.now()
         setTimeout(() => {
           this.showInstructionsModal = true
         }, 500)
-
-        this.exportTimestamp = Date.now()
-      } else if (count) {
-        message.success(this.$t('ads.messages.success.exportSuccess', { count }))
       }
 
       this.selectedAdIds = []
