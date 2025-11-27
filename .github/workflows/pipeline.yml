@@ -12,6 +12,8 @@ env:
   GCP_HOST: 34.126.190.19
   GCP_USER: linhnh
   DEPLOY_PATH: /home/linhnh/ads-creative-content
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
 
 jobs:
   test:
@@ -124,11 +126,11 @@ jobs:
           echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ env.GCP_HOST }} >> ~/.ssh/known_hosts
-      - name: Pre-deployment Migration Safety Check
+      - name: Database migration 
         run: |
           ssh -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }} << 'ENDSSH'
             set -e
-            echo "=== Pre-Deployment Migration Safety Check ==="
+            echo "=== Database migration ==="
             cd ${{ env.DEPLOY_PATH }}
             # Check if database is accessible
             echo "1. Checking database connectivity..."
@@ -159,6 +161,32 @@ jobs:
             echo ""
             echo "=== Pre-deployment checks completed ==="
           ENDSSH
+      - name: Run Flyway migrations on server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }} <<EOF
+            set -e
+            echo "=== Running Flyway migrations ==="
+            cd ${{ env.DEPLOY_PATH }}
+            git fetch origin
+            git reset --hard origin/main
+            NETWORK_NAME=\$(docker network ls --filter name=fbads-network --format '{{ .Name }}' | head -n 1)
+            if [ -z "\$NETWORK_NAME" ]; then
+              echo "ERROR: Could not determine docker network for database"
+              exit 1
+            fi
+            echo "Using docker network: \$NETWORK_NAME"
+            docker run --rm \
+              --network "\$NETWORK_NAME" \
+              -v "\$(pwd)/backend/src/main/resources/db/migration:/flyway/sql:ro" \
+              flyway/flyway:9.22-alpine \
+              -url=jdbc:postgresql://fbads-postgres:5432/fbadsautomation \
+              -user=${{ env.POSTGRES_USER }} \
+              -password=${{ env.POSTGRES_PASSWORD }} \
+              -baselineOnMigrate=true \
+              -connectRetries=10 \
+              migrate
+            echo "Flyway migrations executed successfully"
+          EOF
       - name: Deploy to GCP server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }} << 'ENDSSH'

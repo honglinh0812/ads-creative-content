@@ -387,8 +387,15 @@
         "title": "Campaign Details",
         "label": {
           "name": "Name",
-          "budget": "Budget",
           "status": "Status",
+          "objective": "Objective",
+          "budgetType": "Budget Type",
+          "dailyBudget": "Daily Budget",
+          "totalBudget": "Total Budget",
+          "bidCap": "Bid Cap",
+          "targetAudience": "Target Audience",
+          "startDate": "Start Date",
+          "endDate": "End Date",
           "createdDate": "Created Date",
           "totalAds": "Total Ads"
         }
@@ -397,11 +404,25 @@
         "title": "Edit Campaign",
         "placeholder": {
           "name": "Enter campaign name",
-          "budget": "Enter budget",
-          "status": "Select status"
+          "objective": "Select campaign objective",
+          "budgetType": "Select budget type",
+          "dailyBudget": "Enter daily budget",
+          "totalBudget": "Enter total budget",
+          "bidCap": "Enter bid cap (optional)",
+          "startDate": "Select start date",
+          "endDate": "Select end date",
+          "targetAudience": "Describe your target audience"
         },
         "validation": {
           "nameRequired": "Name is required",
+          "objectiveRequired": "Objective is required",
+          "budgetTypeRequired": "Budget type is required",
+          "dailyBudgetRequired": "Please provide a valid daily budget",
+          "totalBudgetRequired": "Please provide a valid total budget",
+          "bidCapPositive": "Bid cap must be greater than 0",
+          "startDateRequired": "Start date is required",
+          "endDateRequired": "End date is required",
+          "endDateAfterStart": "End date must be after start date",
           "fillRequired": "Please fill in all required fields."
         },
         "success": {
