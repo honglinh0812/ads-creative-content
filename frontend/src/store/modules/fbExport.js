@@ -282,17 +282,32 @@ const actions = {
       const autoUploadResult = data.autoUpload || {}
       const redirectUrl = autoUploadResult.adsManagerUrl || ADS_MANAGER_URL
 
-      if (!autoUploadResult.status || autoUploadResult.status !== 'UPLOADED') {
-        if (!skipDownloadFallback) {
-          triggerFileDownload(data)
+      if (autoUpload) {
+        const uploaded = autoUploadResult && autoUploadResult.status === 'UPLOADED'
+        if (!uploaded) {
+          if (!skipDownloadFallback) {
+            triggerFileDownload(data)
+            commit('CLEAR_SELECTED_ADS')
+            commit('CLEAR_PREVIEW_DATA')
+            return {
+              redirectUrl,
+              autoUpload: autoUploadResult
+            }
+          }
+          const errorMessage = autoUploadResult?.message || data?.message || 'Auto upload failed'
+          throw new Error(errorMessage)
         }
-        commit('CLEAR_SELECTED_ADS')
-        commit('CLEAR_PREVIEW_DATA')
-      } else {
         commit('CLEAR_PREVIEW_DATA')
         commit('CLEAR_SELECTED_ADS')
+        return {
+          redirectUrl,
+          autoUpload: autoUploadResult
+        }
       }
 
+      triggerFileDownload(data)
+      commit('CLEAR_PREVIEW_DATA')
+      commit('CLEAR_SELECTED_ADS')
       return {
         redirectUrl,
         autoUpload: autoUploadResult

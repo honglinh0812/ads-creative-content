@@ -3,8 +3,6 @@
     <section class="hero-card surface-card">
       <div class="hero-text">
         <p class="eyebrow">{{ $t('personas.title') }}</p>
-        <h1>{{ $t('personas.subtitle') }}</h1>
-        <p class="hero-description">{{ $t('personas.subtitle') }}</p>
         <div class="hero-actions">     
           <a-button type="primary" size="large" @click="showCreateModal = true">
             <template #icon><plus-outlined /></template>
@@ -18,7 +16,6 @@
       <div class="section-heading">
         <div>
           <h2>{{ $t('personas.title') }}</h2>
-          <p class="section-subtitle">{{ $t('personas.subtitle') }}</p>
         </div>
         <div class="section-controls">
           <a-select

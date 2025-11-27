@@ -62,6 +62,10 @@ public class FacebookMarketingApiClient {
 
     private static final double MIN_VND_DAILY_BUDGET = 26481d;
     private static final double DEFAULT_LEGACY_USD_TO_VND_RATE = 25000d;
+    private static final long MAX_BID_VND = 26_508_324L;
+    private static final long MAX_BID_USD_CENTS = 10_000_000L; // $100,000.00
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
     private static final Map<String, String> COUNTRY_CODE_ALIASES = Map.ofEntries(
@@ -229,12 +233,15 @@ public class FacebookMarketingApiClient {
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(form, headers);
 
-        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
-        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-            throw new ApiException(HttpStatus.BAD_REQUEST,
-                "Facebook API error: " + response.getStatusCode());
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                throw buildFacebookApiException(response.getBody(), response.getStatusCode());
+            }
+            return response.getBody();
+        } catch (HttpStatusCodeException ex) {
+            throw parseFacebookApiException(ex);
         }
-        return response.getBody();
     }
 
 
@@ -425,6 +432,62 @@ public class FacebookMarketingApiClient {
         geo.put("countries", getCountries(campaign));
         targeting.put("geo_locations", geo);
         return JsonUtils.toJson(targeting);
+    }
+
+    private ApiException buildFacebookApiException(Map body, HttpStatus status) {
+        String serialized = null;
+        if (body != null) {
+            try {
+                serialized = objectMapper.writeValueAsString(body);
+            } catch (JsonProcessingException ignored) {
+            }
+        }
+        String message = extractFacebookErrorMessage(serialized, status);
+        return new ApiException(HttpStatus.BAD_REQUEST, message);
+    }
+
+    private ApiException parseFacebookApiException(HttpStatusCodeException exception) {
+        String responseBody = exception.getResponseBodyAsString();
+        String message = extractFacebookErrorMessage(responseBody, exception.getStatusCode());
+        return new ApiException(HttpStatus.BAD_REQUEST, message);
+    }
+
+    private String extractFacebookErrorMessage(String responseBody, HttpStatus status) {
+        String defaultMessage = "Facebook API error: " + status;
+        if (!StringUtils.hasText(responseBody)) {
+            return defaultMessage;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode errorNode = root.path("error");
+            if (errorNode.isMissingNode()) {
+                return defaultMessage;
+            }
+            String userMessage = textOrNull(errorNode, "error_user_msg");
+            String userTitle = textOrNull(errorNode, "error_user_title");
+            String message = textOrNull(errorNode, "message");
+            if (StringUtils.hasText(userMessage)) {
+                return userMessage;
+            }
+            if (StringUtils.hasText(userTitle) && StringUtils.hasText(message)) {
+                return userTitle + ": " + message;
+            }
+            if (StringUtils.hasText(message)) {
+                return message;
+            }
+        } catch (Exception e) {
+            log.warn("Failed to parse Facebook error response: {}", e.getMessage());
+        }
+        return defaultMessage;
+    }
+
+    private String textOrNull(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        if (value == null || value.isMissingNode() || value.isNull()) {
+            return null;
+        }
+        String text = value.asText();
+        return StringUtils.hasText(text) ? text : null;
     }
 
     private String uploadImageToAdAccount(String adAccountId, String imageUrl, String accessToken) {

@@ -2126,7 +2126,7 @@
       "hint": "Quá trình có thể mất 30 giây đến vài phút tùy độ phức tạp và số lượng biến thể.",
       "jobId": "Mã tác vụ",
       "cancel": "Hủy tác vụ",
-      "started": "",
+      "started": "Đã khởi chạy chế độ async. Vui lòng giữ nguyên tab để xem kết quả.",
       "timeout": "Tác vụ mất quá nhiều thời gian. Vui lòng thử lại sau.",
       "statusFailed": "Không thể theo dõi trạng thái async. Tác vụ có thể vẫn đang chạy.",
       "cancelled": "Đã hủy quá trình tạo",
