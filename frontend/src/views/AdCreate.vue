@@ -276,16 +276,6 @@
                 :maxlength="2000"
                 show-count
               />
-
-              <!-- Prompt Validator Component -->
-              <PromptValidator
-                :prompt="formData.prompt"
-                :ad-type="formData.adType"
-                :language="formData.language"
-                :target-audience="formData.targetAudience || ''"
-                :auto-validate="true"
-                @prompt-updated="onPromptUpdated"
-              />
             </a-form-item>
 
             <!-- Persona Selector -->
@@ -1005,7 +995,6 @@ import {
   WarningOutlined
 } from '@ant-design/icons-vue'
 import api from '@/services/api'
-import PromptValidator from '@/components/PromptValidator.vue'
 import PersonaSelector from '@/components/PersonaSelector.vue'
 import TrendingKeywords from '@/components/TrendingKeywords.vue'
 import FieldError from '@/components/FieldError.vue'
@@ -1030,7 +1019,6 @@ export default {
     InfoCircleOutlined,
     LoadingOutlined,
     WarningOutlined,
-    PromptValidator,
     PersonaSelector,
     TrendingKeywords,
     FieldError,
@@ -2308,14 +2296,31 @@ export default {
       }
     },
 
+    prepareQualityDetails(rawDetails) {
+      if (!rawDetails || typeof rawDetails !== 'object') {
+        return null
+      }
+      return {
+        ...rawDetails,
+        suggestions: Array.isArray(rawDetails.suggestions) ? rawDetails.suggestions : [],
+        strengths: Array.isArray(rawDetails.strengths) ? rawDetails.strengths : []
+      }
+    },
+
     normalizeVariations(variations = []) {
       const timestamp = Date.now()
       return variations.map((variation, index) => {
         const clientId = variation.id || variation.clientId || `variation-${timestamp}-${index}`
+        const qualityDetails = this.prepareQualityDetails(
+          variation.qualityDetails || (typeof variation.qualityScore === 'object' ? variation.qualityScore : null)
+        )
+
         return {
           ...variation,
           clientId,
-          imageUrl: variation.imageUrl || variation.uploadedFileUrl || variation.mediaFileUrl || this.uploadedFileUrl || ''
+          imageUrl: variation.imageUrl || variation.uploadedFileUrl || variation.mediaFileUrl || this.uploadedFileUrl || '',
+          qualityDetails,
+          qualityScore: qualityDetails || null
         }
       })
     },
@@ -2561,6 +2566,7 @@ export default {
           this.adId = response.data.adId
           this.currentStep = 3
           this.$message.success(this.$t('adCreate.messages.success.adCreated'))
+          await this.loadQualityScoresForVariations()
         } else {
           throw new Error(response.data.message)
         }
@@ -2690,46 +2696,64 @@ export default {
         return
       }
 
+      const missingScores = this.adVariations.filter(v => !v.qualityScore && v.id)
+      if (missingScores.length === 0) {
+        this.updateBestQualityHighlights()
+        return
+      }
+
       this.loadingQualityScores = true
       try {
-        const adContentIds = this.adVariations.map(v => v.id).filter(id => id)
+        const adContentIds = missingScores.map(v => v.id).filter(id => id)
 
         if (adContentIds.length === 0) {
-          console.warn('No valid ad content IDs found')
+          console.warn('No valid ad content IDs found for quality scoring')
+          this.updateBestQualityHighlights()
           return
         }
 
         const response = await qualityApi.getQualityScoreBatch(adContentIds)
 
-        // Attach quality scores to variations
-        this.adVariations = this.adVariations.map(variation => {
-          const scoreData = response.data.find(s => s.adContentId === variation.id)
+        const updatedVariations = this.adVariations.map(variation => {
+          const scoreData = variation.id
+            ? response.data.find(s => s.adContentId === variation.id)
+            : null
+          const qualityDetails = this.prepareQualityDetails(scoreData)
           return {
             ...variation,
-            qualityScore: scoreData || null
+            qualityDetails: qualityDetails || variation.qualityDetails || null,
+            qualityScore: qualityDetails || variation.qualityScore || null
           }
         })
 
-        // Find best quality score
-        const scores = this.adVariations
-          .map(v => v.qualityScore?.totalScore)
-          .filter(s => s !== null && s !== undefined)
-
-        if (scores.length > 0) {
-          this.bestQualityScoreValue = Math.max(...scores)
-          const bestVariation = this.adVariations.find(
-            v => v.qualityScore?.totalScore === this.bestQualityScoreValue
-          )
-
-          if (bestVariation && bestVariation.qualityScore) {
-            this.bestQualityScore = `${bestVariation.qualityScore.totalScore.toFixed(1)}/100 (${bestVariation.qualityScore.grade})`
-          }
-        }
+        this.adVariations = updatedVariations
+        this.updateBestQualityHighlights()
       } catch (error) {
         console.error('Error loading quality scores:', error)
         this.$message.warning(this.$t('adCreate.messages.warning.loadQualityScoresFailed'))
       } finally {
         this.loadingQualityScores = false
+      }
+    },
+
+    updateBestQualityHighlights() {
+      const scores = this.adVariations
+        .map(v => v.qualityScore?.totalScore)
+        .filter(s => s !== null && s !== undefined)
+
+      if (scores.length === 0) {
+        this.bestQualityScoreValue = null
+        this.bestQualityScore = null
+        return
+      }
+
+      this.bestQualityScoreValue = Math.max(...scores)
+      const bestVariation = this.adVariations.find(
+        v => v.qualityScore?.totalScore === this.bestQualityScoreValue
+      )
+
+      if (bestVariation && bestVariation.qualityScore) {
+        this.bestQualityScore = `${bestVariation.qualityScore.totalScore.toFixed(1)}/100 (${bestVariation.qualityScore.grade})`
       }
     }
   }

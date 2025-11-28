@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 @Service
 /**
@@ -130,16 +129,6 @@ public class AIContentServiceImpl {
         // Build base prompt (user prompt + reference data)
         String finalPrompt = buildFinalPrompt(prompt, adLinks, extractedContent);
 
-        Language requestedLanguage = parseLanguagePreference(language);
-        Language effectiveLanguage = requestedLanguage != null
-            ? requestedLanguage
-            : ValidationMessages.detectLanguage(finalPrompt);
-        if (requestedLanguage != null) {
-            log.info("[Phase 3] Using user-selected language override: {}", requestedLanguage);
-        } else {
-            log.info("[Phase 3] Detected language: {}", effectiveLanguage);
-        }
-
         try {
             AdType adType = convertContentTypeToAdType(contentType);
             // Issue #9: Use new enhancePromptWithCampaign method
@@ -154,8 +143,7 @@ public class AIContentServiceImpl {
                 userSelectedPersona,
                 trendingKeywords,
                 cta,
-                numberOfVariations,
-                effectiveLanguage
+                numberOfVariations
             );
 
             String enhancedPrompt = promptResult.getPrompt();
@@ -167,9 +155,8 @@ public class AIContentServiceImpl {
             log.info("[Phase 1&2] Generating {} variations with campaign audience, persona, and trending keywords", numberOfVariations);
 
             // Generate content
-            String providerLanguage = determineProviderLanguageCode(language, effectiveLanguage);
             List<AdContent> contents = aiProviderService.generateContentWithReliability(
-                enhancedPrompt, textProvider, numberOfVariations, providerLanguage, adLinks, cta);
+                enhancedPrompt, textProvider, numberOfVariations, language, adLinks, cta);
 
             final String imageSubject = deriveImageSubject(prompt);
 
@@ -625,15 +612,11 @@ public class AIContentServiceImpl {
                                                        com.fbadsautomation.model.Persona userSelectedPersona,
                                                        List<String> trendingKeywords,
                                                        com.fbadsautomation.model.FacebookCTA callToAction,
-                                                       int numberOfVariations,
-                                                       Language preferredLanguage) {
-        // Detect language for bilingual support (respect user preference when provided)
-        Language detectedLanguage = preferredLanguage != null
-            ? preferredLanguage
-            : ValidationMessages.detectLanguage(userPrompt);
-        log.info("[Phase 3] Using language {} (override={} ), campaign: {}, persona: {}, keywords={}",
+                                                       int numberOfVariations) {
+        // Detect language for bilingual support
+        Language detectedLanguage = ValidationMessages.detectLanguage(userPrompt);
+        log.info("[Phase 3] Detected language: {}, campaign: {}, persona: {}, keywords: {}",
                  detectedLanguage,
-                 preferredLanguage != null,
                  campaign != null ? campaign.getId() : "none",
                  userSelectedPersona != null ? userSelectedPersona.getName() : "auto-select",
                  trendingKeywords != null ? trendingKeywords.size() : 0);
@@ -815,7 +798,7 @@ public class AIContentServiceImpl {
      */
     private String injectAudienceSegment(String basePrompt, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment) {
         StringBuilder enhanced = new StringBuilder(basePrompt);
-        enhanced.append("\n\n🎯 TARGET AUDIENCE PROFILE:\n");
+        enhanced.append("\n\nTARGET AUDIENCE PROFILE:\n");
 
         if (audienceSegment.getGender() != null) {
             enhanced.append("👥 Gender: ").append(audienceSegment.getGender().getDisplayName()).append("\n");
@@ -1074,25 +1057,6 @@ public class AIContentServiceImpl {
             return line.replaceAll("\\s+", " ");
         }
         return null;
-    }
-
-    private Language parseLanguagePreference(String languageCode) {
-        if (!StringUtils.hasText(languageCode)) {
-            return null;
-        }
-        String normalized = languageCode.trim().toLowerCase();
-        return switch (normalized) {
-            case "vi", "vn", "vietnamese" -> Language.VIETNAMESE;
-            case "en", "english" -> Language.ENGLISH;
-            default -> null;
-        };
-    }
-
-    private String determineProviderLanguageCode(String originalLanguage, Language effectiveLanguage) {
-        if (StringUtils.hasText(originalLanguage)) {
-            return originalLanguage;
-        }
-        return effectiveLanguage == Language.VIETNAMESE ? "vi" : "en";
     }
 
     private enum PromptStrategy {

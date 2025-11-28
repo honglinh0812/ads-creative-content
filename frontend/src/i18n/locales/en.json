@@ -1584,7 +1584,7 @@
           "feature3": "Long context"
         },
         "claude": {
-          "name": "Anthropic Claude",
+          "name": "Claude",
           "description": "Logical, safe, follows brand guidelines strictly",
           "feature1": "Professional tone",
           "feature2": "Safety focused",
@@ -2295,6 +2295,14 @@
       "addHeadline": "Provide a descriptive headline so the ad feels complete.",
       "addDescription": "Add a description (>= 20 characters) to support the offer.",
       "addPrimaryText": "Add primary text (>= 50 characters) outlining the problem, solution, or offer."
+    },
+    "strengths": {
+      "title": "Key strengths",
+      "complianceStrong": "Compliant with Facebook length limits and wording policies.",
+      "linguisticClarity": "Clear, easy-to-read copy with natural flow.",
+      "ctaReady": "Includes a clear Call-To-Action button.",
+      "valueProposition": "Highlights benefits and persuasive wording.",
+      "completeStructure": "All required ad fields are filled with meaningful content."
     }
   },
   "components": {
@@ -2421,8 +2429,17 @@
         "placeholder": "Search trends (e.g., 'tech gadgets', 'fashion')",
         "button": "Search"
       },
-      "region": {
-        "placeholder": "Region"
+      "location": {
+        "label": "Location",
+        "placeholder": "Select a location"
+      },
+      "language": {
+        "label": "Language",
+        "placeholder": "Select a language"
+      },
+      "limit": {
+        "label": "Results",
+        "placeholder": "Number of keywords (max 50)"
       },
       "list": {
         "searches": "{volume} searches"
@@ -2436,7 +2453,7 @@
       },
       "sourceTooltip": {
         "title": "Data sources",
-        "description": "Blend of Google Trends (search demand) and TikTok Creative Center hashtags (via Apify). Configure SERPAPI_API_KEY and Apify credentials for live data."
+        "description": "Powered by RapidAPI - Google Keyword Insight with live trending keywords per market and language."
       },
       "selection": {
         "maxTitle": "Maximum keywords selected",
@@ -2444,7 +2461,7 @@
         "selectedTitle": "Selected Keywords ({count}/5)"
       },
       "addButton": "Add {count} Keyword(s) to Prompt",
-      "lastSearch": "Last searched: \"{query}\" in {region} - {count} results",
+      "lastSearch": "Last searched: \"{query}\" · {location} · {language} — {count} results",
       "validation": {
         "minLength": "Search query must be at least 2 characters",
         "maxLength": "Search query must not exceed 100 characters",
@@ -2458,7 +2475,10 @@
         "error": "Failed to fetch trending keywords. Please try again.",
         "maxSelection": "You can select up to 5 keywords maximum",
         "selectOne": "Please select at least one keyword",
-        "added": "Added {count} keyword(s) to prompt"
+        "added": "Added {count} keyword(s) to prompt",
+        "locationsError": "Unable to load locations. Please try again.",
+        "languagesError": "Unable to load languages. Please try again.",
+        "invalidLocale": "Please select both a location and a language."
       }
     },
     "facebookInstructions": {

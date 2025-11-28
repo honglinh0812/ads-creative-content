@@ -1,8 +1,6 @@
 package com.fbadsautomation.controller;
 
 import com.fbadsautomation.dto.CompetitorAdDTO;
-import com.fbadsautomation.dto.PlatformSearchMode;
-import com.fbadsautomation.dto.PlatformSearchResult;
 import com.fbadsautomation.model.CompetitorSearch;
 import com.fbadsautomation.service.ComparisonService;
 import com.fbadsautomation.service.CompetitorService;
@@ -62,80 +60,6 @@ public class CompetitorController {
     private final CompetitorService competitorService;
     private final ComparisonService comparisonService;
 
-    /**
-     * Search for competitor ads by brand name
-     *
-     * Endpoint: POST /api/competitors/search
-     *
-     * @param request Search request containing brand name and optional filters
-     * @param authentication Spring Security authentication context
-     * @return List of competitor ads matching the brand
-     */
-    @Operation(
-        summary = "Search competitor ads by brand",
-        description = "Search Facebook Ad Library for competitor ads by brand name. Results are cached for 24 hours."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Search successful",
-            content = @Content(schema = @Schema(implementation = CompetitorSearchResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid request parameters"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    @PostMapping("/search")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<CompetitorSearchResponse> searchCompetitorBrand(
-            @Valid @RequestBody CompetitorSearchRequest request,
-            Authentication authentication) {
-
-        log.info("Searching competitor ads for brand: {} by user: {}",
-                 request.getBrandName(), authentication.getName());
-
-        try {
-            Long userId = getUserIdFromAuthentication(authentication);
-
-            List<CompetitorAdDTO> ads = competitorService.searchCompetitorAds(
-                request.getBrandName(),
-                request.getRegion(),
-                userId,
-                request.getLimit()
-            );
-
-            CompetitorSearchResponse response = CompetitorSearchResponse.builder()
-                    .success(true)
-                    .brandName(request.getBrandName())
-                    .region(request.getRegion())
-                    .totalResults(ads.size())
-                    .ads(ads)
-                    .message(ads.isEmpty()
-                        ? "No ads found for this brand. Try a different search term."
-                        : String.format("Found %d ads for %s", ads.size(), request.getBrandName()))
-                    .build();
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("Error searching competitor ads: {}", e.getMessage(), e);
-
-            CompetitorSearchResponse errorResponse = CompetitorSearchResponse.builder()
-                    .success(false)
-                    .message("Failed to search competitor ads: " + e.getMessage())
-                    .build();
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                 .body(errorResponse);
-        }
-    }
-
-    private HttpStatus determineStatus(PlatformSearchResult result) {
-        if (result == null) {
-            return HttpStatus.OK;
-        }
-        if (result.getMode() == PlatformSearchMode.ERROR) {
-            return HttpStatus.BAD_GATEWAY;
-        }
-        return HttpStatus.OK;
-    }
 
     /**
      * Fetch specific competitor ads by Facebook Ad Library URLs
@@ -194,121 +118,6 @@ public class CompetitorController {
         }
     }
 
-    /**
-     * Search Google Ads using SerpAPI
-     *
-     * Endpoint: POST /api/competitors/search/google
-     *
-     * @param request Search request containing brand name and region
-     * @param authentication Spring Security authentication
-     * @return List of Google ads or iframe URL for fallback
-     */
-    @Operation(
-        summary = "Search Google Ads",
-        description = "Search Google Ads Transparency Center using SerpAPI. Falls back to iframe mode if API unavailable."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Search successful or iframe URL returned"),
-        @ApiResponse(responseCode = "400", description = "Invalid request parameters"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    @PostMapping("/search/google")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PlatformSearchResult> searchGoogleAds(
-            @Valid @RequestBody CompetitorSearchRequest request,
-            Authentication authentication) {
-
-        log.info("Google Ads search request from user {}: {}",
-                 authentication.getName(), request.getBrandName());
-
-        PlatformSearchResult result;
-        try {
-            Long userId = getUserIdFromAuthentication(authentication);
-
-            result = competitorService.searchGoogleAds(
-                request.getBrandName(),
-                request.getRegion() != null ? request.getRegion() : "US",
-                userId,
-                request.getLimit() > 0 ? request.getLimit() : 20
-            );
-
-        } catch (Exception e) {
-            log.error("Error searching Google Ads", e);
-
-            PlatformSearchResult fallback = PlatformSearchResult.builder()
-                .success(false)
-                .mode(PlatformSearchMode.ERROR)
-                .message("Failed to search Google Ads: " + e.getMessage())
-                .platform(com.fbadsautomation.dto.AdPlatform.GOOGLE)
-                .brandName(request.getBrandName())
-                .region(request.getRegion())
-                .build();
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fallback);
-        }
-
-        HttpStatus status = determineStatus(result);
-        return ResponseEntity.status(status).body(result);
-    }
-
-    /**
-     * Search TikTok Ads
-     *
-     * Endpoint: POST /api/competitors/search/tiktok
-     *
-     * @param request Search request containing brand name
-     * @param authentication Spring Security authentication
-     * @return Iframe URL for TikTok Creative Center
-     */
-    @Operation(
-        summary = "Search TikTok Ads",
-        description = "Search TikTok Creative Center. Currently returns iframe URL for embedded view."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Iframe URL returned"),
-        @ApiResponse(responseCode = "400", description = "Invalid request parameters"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    @PostMapping("/search/tiktok")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PlatformSearchResult> searchTikTokAds(
-            @Valid @RequestBody CompetitorSearchRequest request,
-            Authentication authentication) {
-
-        log.info("TikTok Ads search request from user {}: {}",
-                 authentication.getName(), request.getBrandName());
-
-        PlatformSearchResult result;
-        try {
-            Long userId = getUserIdFromAuthentication(authentication);
-
-            result = competitorService.searchTikTokAds(
-                request.getBrandName(),
-                request.getRegion() != null ? request.getRegion() : "US",
-                userId,
-                request.getLimit() > 0 ? request.getLimit() : 20
-            );
-
-        } catch (Exception e) {
-            log.error("Error searching TikTok Ads", e);
-
-            PlatformSearchResult fallback = PlatformSearchResult.builder()
-                .success(false)
-                .mode(PlatformSearchMode.ERROR)
-                .message("Failed to search TikTok Ads: " + e.getMessage())
-                .platform(com.fbadsautomation.dto.AdPlatform.TIKTOK)
-                .brandName(request.getBrandName())
-                .region(request.getRegion())
-                .build();
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(fallback);
-        }
-
-        HttpStatus status = determineStatus(result);
-        return ResponseEntity.status(status).body(result);
-    }
 
     /**
      * Get search history for current user
@@ -604,57 +413,6 @@ public class CompetitorController {
     }
 
     // ==================== Request/Response DTOs ====================
-
-    /**
-     * Request DTO for competitor brand search
-     */
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Schema(description = "Request for searching competitor ads by brand name")
-    public static class CompetitorSearchRequest {
-
-        @NotBlank(message = "Brand name is required")
-        @Schema(description = "Brand or company name to search", example = "Nike", required = true)
-        private String brandName;
-
-        @Schema(description = "Target region code (ISO 3166-1 alpha-2)", example = "US")
-        private String region = "US";
-
-        @Min(1)
-        @Max(50)
-        @Schema(description = "Maximum number of ads to return", example = "5", defaultValue = "5")
-        private int limit = 5;
-    }
-
-    /**
-     * Response DTO for competitor search
-     */
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @lombok.Builder
-    @Schema(description = "Response containing competitor search results")
-    public static class CompetitorSearchResponse {
-
-        @Schema(description = "Whether search was successful")
-        private boolean success;
-
-        @Schema(description = "Brand name searched")
-        private String brandName;
-
-        @Schema(description = "Region searched")
-        private String region;
-
-        @Schema(description = "Total results found")
-        private int totalResults;
-
-        @Schema(description = "List of competitor ads")
-        private List<CompetitorAdDTO> ads;
-
-        @Schema(description = "Status message")
-        private String message;
-    }
 
     /**
      * Request DTO for fetching ads by URLs

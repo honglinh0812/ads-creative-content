@@ -40,6 +40,7 @@ public class AdImprovementService {
     private final AsyncJobService asyncJobService;
     private final AsyncAIContentService asyncAIContentService;
     private final ObjectMapper objectMapper;
+    private final QualityDetailsMapper qualityDetailsMapper;
 
     private static final Map<String, List<String>> STYLE_KEYWORDS = Map.of(
             "PROFESSIONAL", List.of("expert", "chuyên gia", "bảo hành", "uy tín"),
@@ -449,6 +450,11 @@ public class AdImprovementService {
             );
         }
 
+        AdGenerationResponse.QualityDetails qualityDetails = qualityDetailsMapper.buildDetails(content);
+        Integer summarizedScore = qualityDetails != null
+                ? (int) Math.round(qualityDetails.getTotalScore())
+                : content.getQualityScore();
+
         return AdGenerationResponse.AdVariation.builder()
                 .id(content.getId())
                 .headline(content.getHeadline())
@@ -458,9 +464,10 @@ public class AdImprovementService {
                 .callToActionLabel(callToActionLabel)
                 .imageUrl(content.getImageUrl())
                 .order(content.getPreviewOrder())
-                .qualityScore(content.getQualityScore())
+                .qualityScore(summarizedScore)
                 .hasWarnings(content.getHasWarnings())
                 .warnings(warnings)
+                .qualityDetails(qualityDetails)
                 .build();
     }
 

@@ -1,6 +1,7 @@
 package com.fbadsautomation.service;
 
 import com.fbadsautomation.dto.AdGenerationRequest;
+import com.fbadsautomation.dto.AdGenerationResponse;
 import com.fbadsautomation.dto.AudienceSegmentRequest;
 import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.AdContent;
@@ -27,6 +28,7 @@ public class AsyncAIContentService {
     private final com.fbadsautomation.repository.UserRepository userRepository;
     private final com.fbadsautomation.repository.CampaignRepository campaignRepository;
     private final PersonaService personaService;
+    private final QualityDetailsMapper qualityDetailsMapper;
 
     @Async("aiProcessingExecutor")
     public CompletableFuture<Void> generateContentAsync(
@@ -178,7 +180,9 @@ public class AsyncAIContentService {
                     dto.put("previewOrder", content.getPreviewOrder());
                     dto.put("isSelected", content.getIsSelected());
                     dto.put("needsReview", content.getNeedsReview());
-                    dto.put("qualityScore", content.getQualityScore());
+                    AdGenerationResponse.QualityDetails qualityDetails = qualityDetailsMapper.buildDetails(content);
+                    dto.put("qualityScore", qualityDetails != null ? qualityDetails.getTotalScore() : content.getQualityScore());
+                    dto.put("qualityDetails", qualityDetails != null ? qualityDetails.toMap() : null);
                     dto.put("hasWarnings", content.getHasWarnings());
                     dto.put("validationWarnings", content.getValidationWarnings());
                     dto.put("aiProvider", content.getAiProvider());

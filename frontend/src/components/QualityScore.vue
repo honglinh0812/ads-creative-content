@@ -61,6 +61,15 @@
       </div>
     </div>
 
+    <div v-if="!compact && localizedStrengths.length > 0" class="strengths">
+      <h4>{{ $t('qualityScore.strengths.title') }}</h4>
+      <ul>
+        <li v-for="(strength, index) in localizedStrengths" :key="index">
+          {{ strength }}
+        </li>
+      </ul>
+    </div>
+
     <div v-if="!compact && localizedSuggestions.length > 0" class="suggestions">
       <h4>{{ $t('qualityScore.suggestions.title') }}</h4>
       <ul>
@@ -71,6 +80,9 @@
     </div>
 
     <!-- Compact mode: show top suggestion only -->
+    <div v-if="compact && localizedStrengths.length > 0" class="compact-strength">
+      ✅ {{ localizedStrengths[0] }}
+    </div>
     <div v-if="compact && localizedSuggestions.length > 0" class="compact-suggestion">
       💡 {{ localizedSuggestions[0] }}
     </div>
@@ -95,7 +107,8 @@ export default {
         persuasivenessScore: 0,
         completenessScore: 0,
         grade: 'N/A',
-        suggestions: []
+        suggestions: [],
+        strengths: []
       })
     },
     compact: {
@@ -110,6 +123,14 @@ export default {
       }
       return this.score.suggestions
         .map(suggestion => this.translateSuggestion(suggestion))
+        .filter(Boolean)
+    },
+    localizedStrengths() {
+      if (!this.score || !Array.isArray(this.score.strengths)) {
+        return []
+      }
+      return this.score.strengths
+        .map(code => this.translateStrength(code))
         .filter(Boolean)
     }
   },
@@ -193,6 +214,12 @@ export default {
       }
 
       return text
+    },
+    translateStrength(code) {
+      if (!code) return ''
+      const key = `qualityScore.strengths.${code}`
+      const translated = this.$t(key)
+      return translated === key ? code : translated
     }
   }
 };
@@ -349,6 +376,28 @@ export default {
   }
 }
 
+.strengths {
+  margin-top: 16px;
+
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a7f37;
+    margin-bottom: 8px;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 18px;
+
+    li {
+      font-size: 13px;
+      color: #1f2933;
+      margin-bottom: 6px;
+    }
+  }
+}
+
 /* Compact mode styles */
 .quality-score-card.compact {
   padding: 12px;
@@ -385,6 +434,17 @@ export default {
   border-radius: 4px;
   font-size: 12px;
   color: #595959;
+  line-height: 1.5;
+}
+
+.compact-strength {
+  margin-top: 12px;
+  padding: 8px;
+  background: #f6ffed;
+  border-left: 3px solid #52c41a;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #3f6212;
   line-height: 1.5;
 }
 </style>

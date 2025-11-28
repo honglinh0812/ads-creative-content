@@ -1,6 +1,9 @@
 package com.fbadsautomation.controller;
 
+import com.fbadsautomation.dto.KeywordLanguage;
+import com.fbadsautomation.dto.KeywordLocation;
 import com.fbadsautomation.dto.TrendingKeyword;
+import com.fbadsautomation.service.RapidKeywordInsightService;
 import com.fbadsautomation.service.TrendingKeywordsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -25,19 +28,26 @@ public class TrendingKeywordsController {
     @Autowired
     private TrendingKeywordsService trendingKeywordsService;
 
+    @Autowired
+    private RapidKeywordInsightService rapidKeywordInsightService;
+
     @GetMapping("/search")
     @Operation(summary = "Search trending keywords", description = "Fetch trending keywords for a query and region. Public endpoint - no authentication required.")
     public ResponseEntity<List<TrendingKeyword>> getTrends(
             @RequestParam String query,
-            @RequestParam(defaultValue = "US") String region,
-            @RequestParam(defaultValue = "en") String language,
+            @RequestParam(name = "location", required = false) String location,
+            @RequestParam(name = "region", required = false) String legacyRegion,
+            @RequestParam(name = "language", defaultValue = "en") String language,
+            @RequestParam(name = "num", defaultValue = "10") Integer limit,
             Authentication authentication) {
 
         // Authentication is optional - will be null for unauthenticated requests
         String username = authentication != null ? authentication.getName() : "anonymous";
-        log.info("User {} searching trends for query: {} in region: {} (language={})", username, query, region, language);
+        String resolvedLocation = location != null ? location : (legacyRegion != null ? legacyRegion : "US");
+        log.info("User {} searching trends for query: {} in location: {} (language={}, limit={})",
+            username, query, resolvedLocation, language, limit);
 
-        List<TrendingKeyword> trends = trendingKeywordsService.fetchTrends(query, region, language);
+        List<TrendingKeyword> trends = trendingKeywordsService.fetchTrends(query, resolvedLocation, language, limit);
 
         return ResponseEntity.ok(trends);
     }
@@ -47,22 +57,37 @@ public class TrendingKeywordsController {
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<String> clearCache(
             @RequestParam String query,
-            @RequestParam(defaultValue = "US") String region,
+            @RequestParam(name = "location", required = false) String location,
+            @RequestParam(name = "region", required = false) String legacyRegion,
             @RequestParam(defaultValue = "en") String language,
+            @RequestParam(name = "num", defaultValue = "10") Integer limit,
             Authentication authentication) {
 
         // Cache clearing requires authentication
         if (authentication == null) {
-            log.warn("Unauthenticated attempt to clear trend cache for query: {} in region: {}", query, region);
+            log.warn("Unauthenticated attempt to clear trend cache for query: {} in region: {}", query, legacyRegion);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Authentication required to clear cache");
         }
 
-        log.info("User {} clearing trend cache for query: {} in region: {} (language={})",
-                authentication.getName(), query, region, language);
+        String resolvedLocation = location != null ? location : (legacyRegion != null ? legacyRegion : "US");
+        log.info("User {} clearing trend cache for query: {} in location: {} (language={}, limit={})",
+                authentication.getName(), query, resolvedLocation, language, limit);
 
-        trendingKeywordsService.clearTrendCache(query, region, language);
+        trendingKeywordsService.clearTrendCache(query, resolvedLocation, language, limit);
 
         return ResponseEntity.ok("Cache cleared successfully");
+    }
+
+    @GetMapping("/locations")
+    @Operation(summary = "Get supported locations", description = "List locations supported by RapidAPI Google Keyword Insight.")
+    public ResponseEntity<List<KeywordLocation>> getSupportedLocations() {
+        return ResponseEntity.ok(rapidKeywordInsightService.fetchSupportedLocations());
+    }
+
+    @GetMapping("/languages")
+    @Operation(summary = "Get supported languages", description = "List languages supported by RapidAPI Google Keyword Insight.")
+    public ResponseEntity<List<KeywordLanguage>> getSupportedLanguages() {
+        return ResponseEntity.ok(rapidKeywordInsightService.fetchSupportedLanguages());
     }
 }

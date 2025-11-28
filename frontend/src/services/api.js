@@ -237,21 +237,12 @@ export default {
   // Competitor Insights endpoints (Phase 3)
   competitors: {
     // Search competitor ads by brand name
-    search: (brandName, region = 'US', limit = 5) => apiClient.post('/competitors/search', {
-      brandName,
-      region,
-      limit
-    }),
-
-    searchGoogle: (brandName, region = 'US', limit = 20) => apiClient.post('/competitors/search/google', {
-      brandName,
-      region,
-      limit
-    }),
-
-    searchTikTok: (brandName, region = 'US', limit = 20) => apiClient.post('/competitors/search/tiktok', {
-      brandName,
-      region,
+    search: ({ query, engine = 'google', location = '', gl = '', hl = '', limit = 10 }) => apiClient.post('/competitors/search', {
+      query,
+      engine,
+      location,
+      gl,
+      hl,
       limit
     }),
 

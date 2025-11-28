@@ -1789,7 +1789,7 @@
           "feature3": "Ngữ cảnh dài"
         },
         "claude": {
-          "name": "Anthropic Claude",
+          "name": "Claude",
           "description": "Logic, an toàn, tuân thủ hướng dẫn thương hiệu nghiêm ngặt",
           "feature1": "Giọng điệu chuyên nghiệp",
           "feature2": "Tập trung vào an toàn",
@@ -2374,6 +2374,14 @@
       "addHeadline": "Bổ sung tiêu đề mô tả để hoàn thiện quảng cáo.",
       "addDescription": "Bổ sung phần mô tả (>= 20 ký tự) để giải thích ưu đãi.",
       "addPrimaryText": "Bổ sung văn bản chính (>= 50 ký tự) để trình bày vấn đề và lợi ích."
+    },
+    "strengths": {
+      "title": "Điểm mạnh nổi bật",
+      "complianceStrong": "Tuân thủ giới hạn ký tự và chính sách từ ngữ của Facebook.",
+      "linguisticClarity": "Câu chữ rõ ràng, dễ đọc và tự nhiên.",
+      "ctaReady": "Đã có nút kêu gọi hành động rõ ràng.",
+      "valueProposition": "Trình bày lợi ích hấp dẫn, giàu tính thuyết phục.",
+      "completeStructure": "Các trường quan trọng đều có nội dung giá trị."
     }
   },
   "components": {
@@ -2500,8 +2508,17 @@
         "placeholder": "Tìm kiếm xu hướng (vd., 'thiết bị công nghệ', 'thời trang')",
         "button": "Tìm kiếm"
       },
-      "region": {
-        "placeholder": "Khu vực"
+      "location": {
+        "label": "Khu vực",
+        "placeholder": "Chọn khu vực"
+      },
+      "language": {
+        "label": "Ngôn ngữ",
+        "placeholder": "Chọn ngôn ngữ"
+      },
+      "limit": {
+        "label": "Số lượng kết quả",
+        "placeholder": "Số từ khóa (tối đa 50)"
       },
       "list": {
         "searches": "{volume} lượt tìm kiếm"
@@ -2515,7 +2532,7 @@
       },
       "sourceTooltip": {
         "title": "Nguồn dữ liệu",
-        "description": "Chúng tôi sử dụng Google Trends và TikTok Creative Center để cung cấp các từ khóa thịnh hành dựa trên xu hướng nội dung hiện tại."
+        "description": "Sử dụng RapidAPI - Google Keyword Insight để lấy dữ liệu từ khóa thịnh hành theo quốc gia và ngôn ngữ."
       },
       "selection": {
         "maxTitle": "Đã chọn tối đa từ khóa",
@@ -2523,7 +2540,7 @@
         "selectedTitle": "Từ khóa đã chọn ({count}/5)"
       },
       "addButton": "Thêm {count} từ khóa vào câu lệnh",
-      "lastSearch": "Tìm kiếm cuối: \"{query}\" tại {region} - {count} kết quả",
+      "lastSearch": "Lần tìm gần nhất: \"{query}\" · {location} · {language} — {count} kết quả",
       "validation": {
         "minLength": "Truy vấn tìm kiếm phải có ít nhất 2 ký tự",
         "maxLength": "Truy vấn tìm kiếm không được vượt quá 100 ký tự",
@@ -2537,7 +2554,10 @@
         "error": "Không tải được từ khóa thịnh hành. Vui lòng thử lại.",
         "maxSelection": "Bạn có thể chọn tối đa 5 từ khóa",
         "selectOne": "Vui lòng chọn ít nhất một từ khóa",
-        "added": "Đã thêm {count} từ khóa vào câu lệnh"
+        "added": "Đã thêm {count} từ khóa vào câu lệnh",
+        "locationsError": "Không tải được danh sách khu vực. Vui lòng thử lại.",
+        "languagesError": "Không tải được danh sách ngôn ngữ. Vui lòng thử lại.",
+        "invalidLocale": "Vui lòng chọn đủ khu vực và ngôn ngữ."
       }
     },
     "facebookInstructions": {

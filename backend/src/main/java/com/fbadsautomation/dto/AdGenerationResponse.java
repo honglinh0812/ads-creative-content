@@ -1,6 +1,8 @@
 package com.fbadsautomation.dto;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AdGenerationResponse {
     private Long adId; // ID của ad đã tạo
@@ -91,6 +93,7 @@ public class AdGenerationResponse {
         private Boolean hasWarnings; // Flag for warnings
         private List<String> warnings; // List of validation warnings
         private Boolean needsReview; // Flag for content truncated to meet Facebook limits
+        private QualityDetails qualityDetails; // Detailed quality breakdown
 
         public AdVariation() {}
         
@@ -142,6 +145,9 @@ public class AdGenerationResponse {
         public Boolean getNeedsReview() { return needsReview; }
         public void setNeedsReview(Boolean needsReview) { this.needsReview = needsReview; }
 
+        public QualityDetails getQualityDetails() { return qualityDetails; }
+        public void setQualityDetails(QualityDetails qualityDetails) { this.qualityDetails = qualityDetails; }
+
         // Builder pattern for AdVariation
         public static Builder builder() {
             return new Builder();
@@ -159,6 +165,7 @@ public class AdGenerationResponse {
             private Integer qualityScore;
             private Boolean hasWarnings;
             private List<String> warnings;
+            private QualityDetails qualityDetails;
 
             public Builder id(Long id) {
                 this.id = id;
@@ -215,12 +222,18 @@ public class AdGenerationResponse {
                 return this;
             }
 
+            public Builder qualityDetails(QualityDetails qualityDetails) {
+                this.qualityDetails = qualityDetails;
+                return this;
+            }
+
             public AdVariation build() {
                 AdVariation variation = new AdVariation(id, headline, primaryText, description, callToAction, imageUrl, order);
                 variation.setCallToActionLabel(callToActionLabel);
                 variation.setQualityScore(qualityScore);
                 variation.setHasWarnings(hasWarnings);
                 variation.setWarnings(warnings);
+                variation.setQualityDetails(qualityDetails);
                 return variation;
             }
         }
@@ -262,5 +275,53 @@ public class AdGenerationResponse {
 
         public double getAverageQualityScore() { return averageQualityScore; }
         public void setAverageQualityScore(double averageQualityScore) { this.averageQualityScore = averageQualityScore; }
+    }
+
+    public static class QualityDetails {
+        private double complianceScore;
+        private double linguisticScore;
+        private double persuasivenessScore;
+        private double completenessScore;
+        private double totalScore;
+        private String grade;
+        private List<String> suggestions;
+        private List<String> strengths;
+
+        public double getComplianceScore() { return complianceScore; }
+        public void setComplianceScore(double complianceScore) { this.complianceScore = complianceScore; }
+
+        public double getLinguisticScore() { return linguisticScore; }
+        public void setLinguisticScore(double linguisticScore) { this.linguisticScore = linguisticScore; }
+
+        public double getPersuasivenessScore() { return persuasivenessScore; }
+        public void setPersuasivenessScore(double persuasivenessScore) { this.persuasivenessScore = persuasivenessScore; }
+
+        public double getCompletenessScore() { return completenessScore; }
+        public void setCompletenessScore(double completenessScore) { this.completenessScore = completenessScore; }
+
+        public double getTotalScore() { return totalScore; }
+        public void setTotalScore(double totalScore) { this.totalScore = totalScore; }
+
+        public String getGrade() { return grade; }
+        public void setGrade(String grade) { this.grade = grade; }
+
+        public List<String> getSuggestions() { return suggestions; }
+        public void setSuggestions(List<String> suggestions) { this.suggestions = suggestions; }
+
+        public List<String> getStrengths() { return strengths; }
+        public void setStrengths(List<String> strengths) { this.strengths = strengths; }
+
+        public Map<String, Object> toMap() {
+            Map<String, Object> map = new HashMap<>();
+            map.put("complianceScore", complianceScore);
+            map.put("linguisticScore", linguisticScore);
+            map.put("persuasivenessScore", persuasivenessScore);
+            map.put("completenessScore", completenessScore);
+            map.put("totalScore", totalScore);
+            map.put("grade", grade);
+            map.put("suggestions", suggestions);
+            map.put("strengths", strengths);
+            return map;
+        }
     }
 }

@@ -622,6 +622,21 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.campaign-form-card :deep(.ant-form-item) {
+  display: flex;
+  flex-direction: column;
+}
+
+.campaign-form-card :deep(.ant-form-item-label) {
+  width: 100%;
+  text-align: left;
+  padding-bottom: 4px;
+}
+
+.campaign-form-card :deep(.ant-form-item-control) {
+  width: 100%;
+}
+
 .help-dialog .help-content {
   padding: 16px 0;
 }

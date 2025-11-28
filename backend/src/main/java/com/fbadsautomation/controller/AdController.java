@@ -9,6 +9,7 @@ import com.fbadsautomation.model.AdResponse;
 import com.fbadsautomation.service.AIContentService;
 import com.fbadsautomation.service.AdService;
 import com.fbadsautomation.service.MetaAdLibraryService;
+import com.fbadsautomation.service.QualityDetailsMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -45,12 +46,15 @@ public class AdController {
     private final AdService adService;
     private final AIContentService aiContentService;
     private final MetaAdLibraryService metaAdLibraryService;
+    private final QualityDetailsMapper qualityDetailsMapper;
 
     @Autowired
-    public AdController(AdService adService, AIContentService aiContentService, MetaAdLibraryService metaAdLibraryService) {
+    public AdController(AdService adService, AIContentService aiContentService, MetaAdLibraryService metaAdLibraryService,
+                        QualityDetailsMapper qualityDetailsMapper) {
         this.adService = adService;
         this.aiContentService = aiContentService;
         this.metaAdLibraryService = metaAdLibraryService;
+        this.qualityDetailsMapper = qualityDetailsMapper;
     }
 
     @Operation(summary = "Get all ads", description = "Retrieve paginated list of ads for the current user")
@@ -662,6 +666,11 @@ public class AdController {
             );
         }
 
+        AdGenerationResponse.QualityDetails qualityDetails = qualityDetailsMapper.buildDetails(content);
+        Integer totalScore = qualityDetails != null
+                ? (int) Math.round(qualityDetails.getTotalScore())
+                : content.getQualityScore();
+
         return AdGenerationResponse.AdVariation.builder()
                 .id(content.getId())
                 .headline(content.getHeadline())
@@ -671,9 +680,10 @@ public class AdController {
                 .callToActionLabel(callToActionLabel)
                 .imageUrl(content.getImageUrl())
                 .order(content.getPreviewOrder())
-                .qualityScore(content.getQualityScore())
+                .qualityScore(totalScore)
                 .hasWarnings(content.getHasWarnings())
                 .warnings(warnings)
+                .qualityDetails(qualityDetails)
                 .build();
     }
 

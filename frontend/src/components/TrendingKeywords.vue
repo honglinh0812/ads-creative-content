@@ -13,7 +13,7 @@
       </div>
     </template>
     <a-row :gutter="16" class="search-row">
-      <a-col :span="16">
+      <a-col :span="12">
         <a-form-item
           :validate-status="validationStatus.searchQuery"
           :help="validationMessages.searchQuery"
@@ -32,19 +32,59 @@
           </a-input-search>
         </a-form-item>
       </a-col>
-      <a-col :span="8">
-        <a-select
-          v-model:value="selectedRegion"
-          :placeholder="$t('components.trendingKeywords.region.placeholder')"
-          style="width: 100%"
-          @change="handleRegionChange"
-        >
-          <a-select-option value="US">🇺🇸 United States</a-select-option>
-          <a-select-option value="VN">🇻🇳 Vietnam</a-select-option>
-          <a-select-option value="UK">🇬🇧 United Kingdom</a-select-option>
-          <a-select-option value="JP">🇯🇵 Japan</a-select-option>
-          <a-select-option value="SG">🇸🇬 Singapore</a-select-option>
-        </a-select>
+      <a-col :span="6">
+        <a-form-item :label="$t('components.trendingKeywords.location.label')">
+          <a-select
+            v-model:value="selectedLocation"
+            :placeholder="$t('components.trendingKeywords.location.placeholder')"
+            style="width: 100%"
+            :loading="locationsLoading"
+            :disabled="locationsLoading || locationOptions.length === 0"
+            @change="handleLocationChange"
+          >
+            <a-select-option
+              v-for="location in locationOptions"
+              :key="location.countryCode"
+              :value="location.countryCode"
+            >
+              {{ formatLocationOption(location) }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-col>
+      <a-col :span="6">
+        <a-form-item :label="$t('components.trendingKeywords.language.label')">
+          <a-select
+            v-model:value="selectedLanguage"
+            :placeholder="$t('components.trendingKeywords.language.placeholder')"
+            style="width: 100%"
+            :loading="languagesLoading"
+            :disabled="languagesLoading || languageOptions.length === 0"
+            @change="handleLanguageChange"
+          >
+            <a-select-option
+              v-for="lang in languageOptions"
+              :key="lang.languageCode"
+              :value="lang.languageCode"
+            >
+              {{ formatLanguageOption(lang) }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-col>
+    </a-row>
+    <a-row :gutter="16" class="search-row">
+      <a-col :span="6">
+        <a-form-item :label="$t('components.trendingKeywords.limit.label')">
+          <a-input-number
+            v-model:value="keywordLimit"
+            :min="1"
+            :max="50"
+            :placeholder="$t('components.trendingKeywords.limit.placeholder')"
+            style="width: 100%"
+            @change="handleLimitChange"
+          />
+        </a-form-item>
       </a-col>
     </a-row>
 
@@ -158,7 +198,7 @@
 
     <div v-if="lastSearchInfo" class="search-info">
       <a-typography-text type="secondary">
-        {{ $t('components.trendingKeywords.lastSearch', { query: lastSearchInfo.query, region: lastSearchInfo.region, count: lastSearchInfo.resultCount }) }}
+        {{ $t('components.trendingKeywords.lastSearch', { query: lastSearchInfo.query, location: lastSearchInfo.locationLabel, language: lastSearchInfo.languageLabel, count: lastSearchInfo.resultCount }) }}
       </a-typography-text>
     </div>
   </a-card>
@@ -167,6 +207,9 @@
 <script>
 import { ArrowUpOutlined, PlusOutlined, InfoCircleOutlined } from '@ant-design/icons-vue';
 import axios from 'axios';
+
+const PREFERRED_LOCATIONS = ['VN', 'US', 'SG', 'TH', 'JP', 'KR', 'AU', 'GB', 'FR', 'CN'];
+const PREFERRED_LANGUAGES = ['vi', 'en', 'ja', 'ko', 'zh', 'th', 'fr', 'de'];
 
 export default {
   name: 'TrendingKeywords',
@@ -185,8 +228,18 @@ export default {
   data() {
     return {
       searchQuery: '',
-      selectedRegion: 'US',
-      hasManualRegionSelection: false,
+      selectedLocation: 'VN',
+      selectedLanguage: 'vi',
+      keywordLimit: 10,
+      locationOptions: [],
+      languageOptions: [],
+      locationsLoading: false,
+      languagesLoading: false,
+      initializingLocations: true,
+      initializingLanguages: true,
+      hasManualLocationSelection: false,
+      hasManualLanguageSelection: false,
+      pendingLanguageFromProp: this.language || 'en',
       trends: [],
       loading: false,
       hasSearched: false,
@@ -221,11 +274,90 @@ export default {
     language: {
       immediate: true,
       handler(newLanguage) {
-        this.applyLanguageDefaults(newLanguage);
+        this.pendingLanguageFromProp = newLanguage || 'en';
+        if (!this.hasManualLanguageSelection && !this.initializingLanguages) {
+          this.applyLanguagePreference();
+        }
+        if (!this.hasManualLocationSelection && !this.initializingLocations) {
+          this.applyLocationPreference();
+        }
       }
     }
   },
+  mounted() {
+    this.initializeLocaleOptions();
+  },
   methods: {
+    async initializeLocaleOptions() {
+      await Promise.allSettled([
+        this.loadLocationOptions(),
+        this.loadLanguageOptions()
+      ]);
+      this.applyLanguagePreference();
+      this.applyLocationPreference();
+    },
+    async loadLocationOptions() {
+      this.locationsLoading = true;
+      try {
+        const response = await axios.get('/api/trends/locations');
+        if (Array.isArray(response.data)) {
+          this.locationOptions = this.prioritizeLocations(response.data);
+        } else {
+          this.locationOptions = [];
+        }
+      } catch (error) {
+        console.error('Failed to load locations', error);
+        this.locationOptions = [];
+        this.$message.error(this.$t('components.trendingKeywords.messages.locationsError'));
+      } finally {
+        this.locationsLoading = false;
+        this.initializingLocations = false;
+        this.applyLocationPreference();
+      }
+    },
+    async loadLanguageOptions() {
+      this.languagesLoading = true;
+      try {
+        const response = await axios.get('/api/trends/languages');
+        if (Array.isArray(response.data)) {
+          this.languageOptions = this.prioritizeLanguages(response.data);
+        } else {
+          this.languageOptions = [];
+        }
+      } catch (error) {
+        console.error('Failed to load languages', error);
+        this.languageOptions = [];
+        this.$message.error(this.$t('components.trendingKeywords.messages.languagesError'));
+      } finally {
+        this.languagesLoading = false;
+        this.initializingLanguages = false;
+        this.applyLanguagePreference();
+      }
+    },
+    prioritizeLocations(list) {
+      if (!Array.isArray(list)) {
+        return [];
+      }
+      const preferred = list.filter(item =>
+        item.countryCode && PREFERRED_LOCATIONS.includes(item.countryCode.toUpperCase())
+      );
+      if (preferred.length > 0) {
+        return preferred;
+      }
+      return list.slice(0, 30);
+    },
+    prioritizeLanguages(list) {
+      if (!Array.isArray(list)) {
+        return [];
+      }
+      const preferred = list.filter(item =>
+        item.languageCode && PREFERRED_LANGUAGES.includes(item.languageCode.toLowerCase())
+      );
+      if (preferred.length > 0) {
+        return preferred;
+      }
+      return list.slice(0, 30);
+    },
     validateSearchQuery() {
       const query = this.searchQuery.trim();
 
@@ -272,9 +404,34 @@ export default {
 
       this.fetchTrends();
     },
-    handleRegionChange() {
-      this.hasManualRegionSelection = true;
-      // Auto-search when region changes if there's already a query
+    handleLocationChange() {
+      if (this.initializingLocations) {
+        return;
+      }
+      this.hasManualLocationSelection = true;
+      if (this.searchQuery.trim() && this.hasSearched) {
+        this.fetchTrends();
+      }
+    },
+    handleLanguageChange() {
+      if (this.initializingLanguages) {
+        return;
+      }
+      this.hasManualLanguageSelection = true;
+      if (this.searchQuery.trim() && this.hasSearched) {
+        this.fetchTrends();
+      }
+    },
+    handleLimitChange(value) {
+      if (value === undefined || value === null || Number.isNaN(value)) {
+        this.keywordLimit = 10;
+        return;
+      }
+      if (value < 1) {
+        this.keywordLimit = 1;
+      } else if (value > 50) {
+        this.keywordLimit = 50;
+      }
       if (this.searchQuery.trim() && this.hasSearched) {
         this.fetchTrends();
       }
@@ -289,6 +446,11 @@ export default {
         return;
       }
 
+      if (!this.selectedLocation || !this.selectedLanguage) {
+        this.$message.warning(this.$t('components.trendingKeywords.messages.invalidLocale'));
+        return;
+      }
+
       this.loading = true;
       this.errorMessage = '';
       this.hasSearched = true;
@@ -297,8 +459,9 @@ export default {
         const response = await axios.get('/api/trends/search', {
           params: {
             query: this.searchQuery.trim(),
-            region: this.selectedRegion,
-            language: this.getLanguageParam()
+            location: this.selectedLocation,
+            language: this.selectedLanguage,
+            num: this.keywordLimit
           }
         });
 
@@ -311,7 +474,10 @@ export default {
           // Store search info
           this.lastSearchInfo = {
             query: this.searchQuery.trim(),
-            region: this.selectedRegion,
+            location: this.selectedLocation,
+            locationLabel: this.getLocationLabel(this.selectedLocation),
+            language: this.selectedLanguage,
+            languageLabel: this.getLanguageLabel(this.selectedLanguage),
             resultCount: this.trends.length
           };
 
@@ -391,31 +557,67 @@ export default {
     validateAll() {
       return this.validateSearchQuery();
     },
-    applyLanguageDefaults(language) {
-      const resolvedRegion = this.resolveRegionFromLanguage(language);
-      if (!resolvedRegion) {
+    applyLanguagePreference() {
+      if (this.hasManualLanguageSelection) {
         return;
       }
-      if (!this.hasManualRegionSelection && this.selectedRegion !== resolvedRegion) {
-        this.selectedRegion = resolvedRegion;
-        if (this.searchQuery.trim() && this.hasSearched) {
-          this.fetchTrends();
-        }
+      const desired = (this.pendingLanguageFromProp || 'en').toLowerCase();
+      if (!this.languageOptions.length) {
+        this.selectedLanguage = desired;
+        return;
+      }
+      const option = this.languageOptions.find(lang => lang.languageCode.toLowerCase() === desired)
+        || this.languageOptions[0];
+      if (option) {
+        this.selectedLanguage = option.languageCode.toLowerCase();
       }
     },
-    resolveRegionFromLanguage(language) {
+    applyLocationPreference() {
+      if (this.hasManualLocationSelection) {
+        return;
+      }
+      if (!this.locationOptions.length) {
+        this.selectedLocation = this.resolveLocationFromLanguage(this.pendingLanguageFromProp);
+        return;
+      }
+      const preferred = this.resolveLocationFromLanguage(this.pendingLanguageFromProp);
+      const option = this.locationOptions.find(loc => loc.countryCode === preferred)
+        || this.locationOptions.find(loc => loc.countryCode === 'VN')
+        || this.locationOptions[0];
+      if (option) {
+        this.selectedLocation = option.countryCode;
+      }
+    },
+    resolveLocationFromLanguage(language) {
       const normalized = (language || '').toLowerCase();
-      if (normalized.startsWith('vi')) {
-        return 'VN';
-      }
-      if (normalized.startsWith('en')) {
-        return 'US';
-      }
+      if (normalized.startsWith('vi')) return 'VN';
+      if (normalized.startsWith('en')) return 'US';
+      if (normalized.startsWith('ja')) return 'JP';
+      if (normalized.startsWith('ko')) return 'KR';
+      if (normalized.startsWith('zh')) return 'CN';
+      if (normalized.startsWith('th')) return 'TH';
+      if (normalized.startsWith('fr')) return 'FR';
       return 'US';
     },
-    getLanguageParam() {
-      const normalized = (this.language || '').trim();
-      return normalized ? normalized.toLowerCase() : 'en';
+    formatLocationOption(location) {
+      if (!location) {
+        return '';
+      }
+      return `${location.countryName || location.countryCode} (${location.countryCode})`;
+    },
+    formatLanguageOption(language) {
+      if (!language) {
+        return '';
+      }
+      return `${language.languageName || language.languageCode} (${language.languageCode})`;
+    },
+    getLocationLabel(code) {
+      const option = this.locationOptions.find(loc => loc.countryCode === code);
+      return option ? `${option.countryName} (${option.countryCode})` : code;
+    },
+    getLanguageLabel(code) {
+      const option = this.languageOptions.find(lang => lang.languageCode === code);
+      return option ? `${option.languageName} (${option.languageCode})` : code;
     }
   }
 };

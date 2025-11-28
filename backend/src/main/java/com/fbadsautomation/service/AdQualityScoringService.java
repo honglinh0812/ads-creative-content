@@ -69,6 +69,7 @@ public class AdQualityScoringService {
         score.setTotalScore(totalScore);
         score.setGrade(determineGrade(totalScore));
         score.setSuggestions(generateSuggestions(adContent, score));
+        score.setStrengths(generateStrengths(adContent, score));
 
         log.info("Quality score calculated: {} (Grade: {})", totalScore, score.getGrade());
 
@@ -424,6 +425,31 @@ public class AdQualityScoringService {
         return suggestions;
     }
 
+    private List<String> generateStrengths(AdContent adContent, AdQualityScore score) {
+        List<String> strengths = new ArrayList<>();
+
+        if (score.getComplianceScore() >= 25) {
+            strengths.add("complianceStrong");
+        }
+
+        if (score.getLinguisticScore() >= 22) {
+            strengths.add("linguisticClarity");
+        }
+
+        if (score.getPersuasivenessScore() >= 15) {
+            if (adContent.getCallToAction() != null) {
+                strengths.add("ctaReady");
+            }
+            strengths.add("valueProposition");
+        }
+
+        if (score.getCompletenessScore() >= 16) {
+            strengths.add("completeStructure");
+        }
+
+        return strengths;
+    }
+
     /**
      * Data class for quality score result.
      */
@@ -437,6 +463,7 @@ public class AdQualityScoringService {
         private double totalScore;           // 0-100
         private String grade;                // A+, A, B+, etc.
         private List<String> suggestions;    // Improvement suggestions
+        private List<String> strengths;      // Highlighted strengths (keys)
 
         public Map<String, Object> toMap() {
             Map<String, Object> map = new HashMap<>();
@@ -448,6 +475,7 @@ public class AdQualityScoringService {
             map.put("totalScore", totalScore);
             map.put("grade", grade);
             map.put("suggestions", suggestions);
+            map.put("strengths", strengths);
             return map;
         }
     }
