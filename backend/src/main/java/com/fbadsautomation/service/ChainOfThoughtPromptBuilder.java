@@ -140,7 +140,7 @@ public class ChainOfThoughtPromptBuilder {
 
         if (isVietnamese) {
             return String.format("""
-                🎯 NHIỆM VỤ
+                NHIỆM VỤ
                 Bạn đang tạo chiến dịch quảng cáo Facebook cho:
                 %s
 
@@ -150,7 +150,7 @@ public class ChainOfThoughtPromptBuilder {
                 """, userPrompt, adTypeName, numberOfVariations);
         } else {
             return String.format("""
-                🎯 TASK
+                TASK
                 You are creating a Facebook ad campaign for:
                 %s
 

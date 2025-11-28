@@ -51,9 +51,9 @@
         <!-- Fun Progress Indicator -->
         <div class="fun-progress">
           <div class="progress-character">
-            <span v-if="currentStep === 1">🎯</span>
-            <span v-else-if="currentStep === 2">🤖</span>
-            <span v-else>🎉</span>
+            <span v-if="currentStep === 1"></span>
+            <span v-else-if="currentStep === 2"></span>
+            <span v-else></span>
           </div>
           <div class="progress-message">
             <span v-if="currentStep === 1">{{ $t('adCreate.progress.step1Message') }}</span>
@@ -88,21 +88,20 @@
               </a-select>
             </a-form-item>
 
-            <!-- Issue #9: Display Campaign Target Audience (Read-only) -->
             <a-card
               v-if="selectedCampaign && selectedCampaign.targetAudience"
               class="campaign-audience-card"
               style="margin-bottom: 24px; background: linear-gradient(135deg, #f0f7ff 0%, #e6f4ff 100%); border: 1px solid #91caff;"
             >
               <template #title>
-                <span style="color: #1890ff;">🎯 {{ $t('adCreate.step1.targetAudience.title') }}</span>
+                <span style="color: #1890ff;">{{ $t('adCreate.step1.targetAudience.title') }}</span>
               </template>
               <div style="padding: 12px;">
                 <div style="font-size: 14px; color: #262626; margin-bottom: 8px; white-space: pre-wrap;">
                   {{ selectedCampaign.targetAudience }}
                 </div>
                 <div style="font-size: 12px; color: #8c8c8c; margin-top: 12px;">
-                  💡 {{ $t('adCreate.step1.targetAudience.info') }}
+                  {{ $t('adCreate.step1.targetAudience.info') }}
                 </div>
               </div>
             </a-card>
@@ -185,7 +184,7 @@
 
               <!-- Preview selected style -->
               <div v-if="formData.adStyle && stylePreviewDescription" class="style-preview">
-                <div class="preview-icon">🎨</div>
+                <div class="preview-icon"></div>
                 <div class="preview-content">
                   <div class="preview-title">{{ $t('adCreate.step1.creativeStyle.previewTitle') }}</div>
                   <div class="preview-desc">{{ stylePreviewDescription }}</div>

@@ -79,38 +79,6 @@
           </a-form-item>
         </a-col>
       </a-row>
-
-      <a-alert
-        v-if="hasValidationErrors"
-        type="error"
-        show-icon
-        class="validation-alert"
-        :message="$t('components.audienceSegment.validation.fixErrors')"
-      />
-
-      <a-alert
-        v-else-if="localSegment.gender || localSegment.location"
-        type="info"
-        show-icon
-        class="preview-alert"
-      >
-        <template #message>
-          <strong>{{ $t('components.audienceSegment.preview.title') }}:</strong>
-          {{ getTargetingPreview() }}
-        </template>
-      </a-alert>
-
-      <a-alert
-        v-if="estimatedReach"
-        type="success"
-        show-icon
-        class="reach-alert"
-      >
-        <template #message>
-          <strong>{{ $t('components.audienceSegment.reach.title') }}:</strong>
-          {{ estimatedReach }}
-        </template>
-      </a-alert>
     </a-form>
   </a-card>
 </template>

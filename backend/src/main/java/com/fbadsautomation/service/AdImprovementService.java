@@ -129,8 +129,9 @@ public class AdImprovementService {
     public AdGenerationResponse generateImprovedAds(AdImprovementRequest request, Long userId) {
         validateImprovementRequest(request);
 
-        String finalLanguage = StringUtils.hasText(request.getLanguage()) ? request.getLanguage() : "vi";
-        String mergedPrompt = buildPromptFromRequest(request);
+        Language resolvedLanguage = resolveLanguageEnum(request.getLanguage());
+        String finalLanguage = toLanguageCode(resolvedLanguage);
+        String mergedPrompt = buildPromptFromRequest(request, resolvedLanguage);
         List<String> adLinks = new ArrayList<>();
         if (StringUtils.hasText(request.getReferenceLink())) {
             adLinks.add(request.getReferenceLink());
@@ -208,7 +209,9 @@ public class AdImprovementService {
                     "Bạn đang có quá nhiều tác vụ đang chạy. Vui lòng chờ hoàn tất trước khi tạo mới.");
         }
 
-        String prompt = buildPromptFromRequest(request);
+        Language resolvedLanguage = resolveLanguageEnum(request.getLanguage());
+        String safeLanguage = toLanguageCode(resolvedLanguage);
+        String prompt = buildPromptFromRequest(request, resolvedLanguage);
         List<String> adLinks = new ArrayList<>();
         if (StringUtils.hasText(request.getReferenceLink())) {
             adLinks.add(request.getReferenceLink().trim());
@@ -220,7 +223,6 @@ public class AdImprovementService {
                 : FacebookCTA.LEARN_MORE;
         String textProvider = determineTextProvider(request);
         String imageProvider = determineImageProvider(request);
-        String safeLanguage = StringUtils.hasText(request.getLanguage()) ? request.getLanguage() : "vi";
         String extractedReference = StringUtils.hasText(request.getReferenceContent())
                 ? request.getReferenceContent()
                 : (StringUtils.hasText(request.getProductDescription()) ? request.getProductDescription() : "");
@@ -366,11 +368,8 @@ public class AdImprovementService {
         return request.getImageProvider();
     }
 
-    private String buildPromptFromRequest(AdImprovementRequest request) {
+    private String buildPromptFromRequest(AdImprovementRequest request, Language language) {
         AdType adType = adService.mapFrontendAdTypeToEnum(request.getAdType());
-        Language language = "vi".equalsIgnoreCase(request.getLanguage())
-                ? Language.VIETNAMESE
-                : Language.ENGLISH;
         AdStyle adStyle = parseAdStyle(request.getCreativeStyle());
         boolean enforceCharacterLimits = !Boolean.TRUE.equals(request.getAllowUnlimitedLength());
 
@@ -391,6 +390,17 @@ public class AdImprovementService {
                 enforceCharacterLimits,
                 referenceMetrics
         );
+    }
+
+    private Language resolveLanguageEnum(String requestedLanguage) {
+        if ("vi".equalsIgnoreCase(requestedLanguage) || "vietnamese".equalsIgnoreCase(requestedLanguage)) {
+            return Language.VIETNAMESE;
+        }
+        return Language.ENGLISH;
+    }
+
+    private String toLanguageCode(Language language) {
+        return language == Language.VIETNAMESE ? "vi" : "en";
     }
 
     private ChainOfThoughtPromptBuilder.ReferenceMetrics buildReferenceMetrics(AdImprovementRequest request) {

@@ -401,8 +401,14 @@ public class AdService {
             if (updatedAd.getImageUrl() != null) {
                 ad.setImageUrl(updatedAd.getImageUrl());
             }
+            if (updatedAd.getVideoUrl() != null) {
+                ad.setVideoUrl(updatedAd.getVideoUrl());
+            }
             if (updatedAd.getStatus() != null) {
                 ad.setStatus(updatedAd.getStatus());
+            }
+            if (updatedAd.getAdType() != null) {
+                ad.setAdType(updatedAd.getAdType());
             }
             if (updatedAd.getWebsiteUrl() != null) {
                 ad.setWebsiteUrl(updatedAd.getWebsiteUrl());

@@ -380,9 +380,9 @@ export default {
 
     getDeveloperMessage() {
       const messages = [
-        "Hey there! You found the developer easter egg! 👋",
-        "Curious developer, aren't you? I like that! 🕵️‍♂️",
-        "7 clicks to unlock this message... you're persistent! 🎯",
+        "Hey there! You found the developer easter egg! ",
+        "Curious developer, aren't you? I like that! 🕵️",
+        "7 clicks to unlock this message... you're persistent! ",
         "Welcome to the secret developer club! 🤝",
         "Achievement unlocked: Professional Button Clicker! 🏆"
       ]
@@ -1244,6 +1244,5 @@ export default {
   64% { background-color: #00ff88; }
   80% { background-color: #0088ff; }
   100% { background-color: #8800ff; }
-}
 }
 </style>

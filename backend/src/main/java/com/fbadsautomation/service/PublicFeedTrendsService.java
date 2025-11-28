@@ -4,6 +4,8 @@ import com.fbadsautomation.dto.TrendingKeyword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -13,7 +15,6 @@ import org.xml.sax.InputSource;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.StringReader;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -34,9 +35,9 @@ public class PublicFeedTrendsService {
 
     public PublicFeedTrendsService(
         RestTemplate restTemplate,
-        @Value("${trends.feed.vn:https://trends.google.com/trends/trendingsearches/daily/rss?geo=VN}") String vietnamFeed,
-        @Value("${trends.feed.us:https://trends.google.com/trends/trendingsearches/daily/rss?geo=US}") String usFeed,
-        @Value("${trends.feed.sg:https://trends.google.com/trends/trendingsearches/daily/rss?geo=SG}") String singaporeFeed
+        @Value("${trends.feed.vn:https://trends.google.com/trends/trendingsearches/daily/rss?geo=VN&hl=vi&tz=-420}") String vietnamFeed,
+        @Value("${trends.feed.us:https://trends.google.com/trends/trendingsearches/daily/rss?geo=US&hl=en-US&tz=-420}") String usFeed,
+        @Value("${trends.feed.sg:https://trends.google.com/trends/trendingsearches/daily/rss?geo=SG&hl=en&tz=-480}") String singaporeFeed
     ) {
         this.restTemplate = restTemplate;
         this.feedByRegion = new HashMap<>();
@@ -75,7 +76,11 @@ public class PublicFeedTrendsService {
 
         for (String feedUrl : candidateFeeds) {
             try {
-                ResponseEntity<String> response = restTemplate.exchange(feedUrl, HttpMethod.GET, null, String.class);
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("User-Agent", "Mozilla/5.0 (compatible; FBAdsAutomation/1.0; +https://github.com)");
+                HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+                ResponseEntity<String> response = restTemplate.exchange(feedUrl, HttpMethod.GET, entity, String.class);
                 if (!response.hasBody() || response.getBody() == null) {
                     continue;
                 }

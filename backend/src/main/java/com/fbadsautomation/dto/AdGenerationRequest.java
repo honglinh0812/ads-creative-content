@@ -4,8 +4,9 @@ import com.fbadsautomation.dto.AdVariation;
 import com.fbadsautomation.model.FacebookCTA;
 import java.util.Arrays;
 import java.util.List;
-import javax.validation.constraints.*;
 import javax.validation.Valid;
+import javax.validation.constraints.*;
+import org.springframework.util.StringUtils;
 public class AdGenerationRequest {
     
     @NotNull(message = "Campaign ID is required")
@@ -231,7 +232,7 @@ public class AdGenerationRequest {
     public void setSaveExistingContent(Boolean saveExistingContent) { this.saveExistingContent = saveExistingContent; }
     
     public String getWebsiteUrl() { return websiteUrl; }
-    public void setWebsiteUrl(String websiteUrl) { this.websiteUrl = websiteUrl; }
+    public void setWebsiteUrl(String websiteUrl) { this.websiteUrl = normalizeWebsiteUrl(websiteUrl); }
 
     public Boolean getAllowUnlimitedLength() { return allowUnlimitedLength; }
     public void setAllowUnlimitedLength(Boolean allowUnlimitedLength) { this.allowUnlimitedLength = allowUnlimitedLength; }
@@ -257,4 +258,19 @@ public class AdGenerationRequest {
 
     public List<VariationProviderConfig> getVariations() { return variations; }
     public void setVariations(List<VariationProviderConfig> variations) { this.variations = variations; }
+
+    private String normalizeWebsiteUrl(String url) {
+        if (!StringUtils.hasText(url)) {
+            return url;
+        }
+        String sanitized = url.trim();
+        sanitized = sanitized.replaceFirst("^(https?)[;:]+/{0,2}", "$1://");
+        sanitized = sanitized.replaceFirst("^(https?)/{2}", "$1://");
+        sanitized = sanitized.replaceAll("\\s+", "");
+        if (!sanitized.matches("^https?://.*$")) {
+            String withoutLeadingSlashes = sanitized.replaceFirst("^/+","");
+            sanitized = "https://" + withoutLeadingSlashes;
+        }
+        return sanitized;
+    }
 }

@@ -3,7 +3,7 @@
     <div class="next-steps-header">
       <div class="header-content">
         <h3 class="next-steps-title">
-          <span class="title-icon">🎯</span>
+          <span class="title-icon"></span>
           {{ $t('dashboard.whatNext') }}
         </h3>
         <p class="next-steps-subtitle">{{ $t('dashboard.nextSteps.title') }}</p>

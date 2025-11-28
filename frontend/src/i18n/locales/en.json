@@ -2001,6 +2001,8 @@
         "campaign": "Campaign",
         "adType": "Ad Type",
         "status": "Status",
+        "createdDate": "Created Date",
+        "websiteUrl": "Website URL",
         "headline": "Headline",
         "description": "Description",
         "primaryText": "Primary Text",
@@ -2016,11 +2018,15 @@
       "title": "Edit Ad",
       "fields": {
         "name": "Name",
+        "adType": "Ad Type",
         "headline": "Headline",
         "description": "Description",
         "primaryText": "Primary Text",
         "callToAction": "Call to Action",
-        "status": "Status"
+        "status": "Status",
+        "imageUrl": "Image URL",
+        "videoUrl": "Video URL",
+        "websiteUrl": "Website URL"
       },
       "statusOptions": {
         "draft": "DRAFT",
@@ -2046,6 +2052,19 @@
         "okText": "Yes, Cancel",
         "cancelText": "No, Stay"
       }
+    },
+    "statusLabel": {
+      "draft": "Draft",
+      "ready": "Ready",
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "adTypeLabel": {
+      "websiteConversion": "Website Conversion Ad",
+      "pagePost": "Page Post Ad",
+      "leadForm": "Lead Form Ad"
     },
     "deleteConfirm": {
       "title": "Delete Confirmation",
@@ -2287,7 +2306,7 @@
       }
     },
     "audienceSegment": {
-      "title": "🎯 Audience Targeting",
+      "title": "Audience Targeting",
       "form": {
         "gender": "Gender",
         "genderPlaceholder": "Select target gender",

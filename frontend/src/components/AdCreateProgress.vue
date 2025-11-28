@@ -37,9 +37,9 @@
     <!-- Fun Progress Indicator -->
     <div class="fun-progress">
       <div class="progress-character">
-        <span v-if="currentStep === 1">🎯</span>
-        <span v-else-if="currentStep === 2">🤖</span>
-        <span v-else>🎉</span>
+        <span v-if="currentStep === 1"></span>
+        <span v-else-if="currentStep === 2"></span>
+        <span v-else></span>
       </div>
       <div class="progress-message">
         <span v-if="currentStep === 1">Tell us about your ad</span>

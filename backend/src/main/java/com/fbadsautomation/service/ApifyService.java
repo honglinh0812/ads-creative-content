@@ -137,6 +137,17 @@ public class ApifyService {
                     .build();
             }
 
+            if (code == 0 && "ok".equalsIgnoreCase(msg.trim())) {
+                return builder
+                    .success(false)
+                    .mode(PlatformSearchMode.EMPTY)
+                    .errorCode(PlatformSearchErrorCode.NO_RESULTS)
+                    .message("Apify trả về 'OK' nhưng dataset rỗng - có thể thiếu cookie hoặc TikTok chặn truy cập.")
+                    .friendlySuggestion("Kiểm tra lại cookie TikTok, quyền truy cập region hoặc dùng iframe Creative Center.")
+                    .retryable(false)
+                    .build();
+            }
+
             return builder
                 .success(false)
                 .mode(PlatformSearchMode.ERROR)

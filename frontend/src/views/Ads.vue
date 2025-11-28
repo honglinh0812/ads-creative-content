@@ -37,44 +37,88 @@
       />
 
       <!-- Ad Detail Modal -->
-      <a-modal v-model:open="showDetailModal" :title="$t('ads.detailModal.title')" width="90vw" style="max-width: 1200px">
-        <div v-if="selectedAd">
-          <div class="field mb-4">
-            <label class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.detailModal.fields.name') }}:</label>
-            <p class="text-secondary-900">{{ selectedAd.name }}</p>
+      <a-modal
+        v-model:open="showDetailModal"
+        :title="$t('ads.detailModal.title')"
+        width="90vw"
+        style="max-width: 1200px"
+        :footer="null"
+      >
+        <div v-if="selectedAd" class="ad-detail-modal">
+          <a-descriptions :column="2" bordered size="small" class="mb-6">
+            <a-descriptions-item :label="$t('ads.detailModal.fields.name')">
+              {{ selectedAd.name || $t('ads.detailModal.notAvailable') }}
+            </a-descriptions-item>
+            <a-descriptions-item :label="$t('ads.detailModal.fields.campaign')">
+              {{ selectedAd.campaignName || $t('ads.detailModal.notAvailable') }}
+            </a-descriptions-item>
+            <a-descriptions-item :label="$t('ads.detailModal.fields.adType')">
+              <a-tag v-if="selectedAd.adType" color="blue">
+                {{ getAdTypeLabel(selectedAd.adType) }}
+              </a-tag>
+              <span v-else>{{ $t('ads.detailModal.notAvailable') }}</span>
+            </a-descriptions-item>
+            <a-descriptions-item :label="$t('ads.detailModal.fields.status')">
+              <a-tag :color="getStatusColor(selectedAd.status)">
+                {{ getStatusLabel(selectedAd.status) }}
+              </a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item :label="$t('ads.detailModal.fields.callToAction')">
+              {{ getCTALabel(selectedAd.callToAction) || $t('ads.detailModal.notAvailable') }}
+            </a-descriptions-item>
+            <a-descriptions-item :label="$t('ads.detailModal.fields.createdDate')">
+              {{ formatDate(selectedAd.createdDate) || $t('ads.detailModal.notAvailable') }}
+            </a-descriptions-item>
+            <a-descriptions-item :label="$t('ads.detailModal.fields.websiteUrl')">
+              <template v-if="selectedAd.websiteUrl">
+                <a :href="selectedAd.websiteUrl" target="_blank" class="break-all text-blue-600 hover:text-blue-800">
+                  {{ selectedAd.websiteUrl }}
+                </a>
+              </template>
+              <span v-else>{{ $t('ads.detailModal.notAvailable') }}</span>
+            </a-descriptions-item>
+            <a-descriptions-item :label="$t('ads.detailModal.fields.imageUrl')">
+              <template v-if="selectedAd.imageUrl">
+                <a :href="selectedAd.imageUrl" target="_blank" class="break-all text-blue-600 hover:text-blue-800">
+                  {{ selectedAd.imageUrl }}
+                </a>
+              </template>
+              <span v-else>{{ $t('ads.detailModal.notAvailable') }}</span>
+            </a-descriptions-item>
+            <a-descriptions-item :label="$t('ads.detailModal.fields.videoUrl')" :span="2">
+              <template v-if="selectedAd.videoUrl">
+                <a :href="selectedAd.videoUrl" target="_blank" class="break-all text-blue-600 hover:text-blue-800">
+                  {{ selectedAd.videoUrl }}
+                </a>
+              </template>
+              <span v-else>{{ $t('ads.detailModal.notAvailable') }}</span>
+            </a-descriptions-item>
+          </a-descriptions>
+
+          <div class="grid md:grid-cols-2 gap-4 mb-6">
+            <div class="field">
+              <label class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.detailModal.fields.headline') }}:</label>
+              <p class="text-secondary-900 whitespace-pre-wrap">
+                {{ selectedAd.headline || $t('ads.detailModal.notAvailable') }}
+              </p>
+            </div>
+            <div class="field">
+              <label class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.detailModal.fields.description') }}:</label>
+              <p class="text-secondary-900 whitespace-pre-wrap">
+                {{ selectedAd.description || $t('ads.detailModal.notAvailable') }}
+              </p>
+            </div>
+            <div class="field md:col-span-2">
+              <label class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.detailModal.fields.primaryText') }}:</label>
+              <p class="text-secondary-900 whitespace-pre-wrap">
+                {{ selectedAd.primaryText || $t('ads.detailModal.notAvailable') }}
+              </p>
+            </div>
           </div>
-          <div class="field mb-4">
-            <label class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.detailModal.fields.campaign') }}:</label>
-            <p class="text-secondary-900">{{ selectedAd.campaignName || $t('ads.detailModal.notAvailable') }}</p>
-          </div>
-          <div class="field mb-4">
-            <label class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.detailModal.fields.adType') }}:</label>
-            <p class="text-secondary-900">{{ selectedAd.adType?.replace('_', ' ') || $t('ads.detailModal.notAvailable') }}</p>
-          </div>
-          <div class="field mb-4">
-            <label class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.detailModal.fields.status') }}:</label>
-            <p class="text-secondary-900">{{ selectedAd.status || $t('ads.detailModal.notAvailable') }}</p>
-          </div>
-          <div class="field mb-4">
-            <label class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.detailModal.fields.headline') }}:</label>
-            <p class="text-secondary-900">{{ selectedAd.headline || $t('ads.detailModal.notAvailable') }}</p>
-          </div>
-          <div class="field mb-4">
-            <label class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.detailModal.fields.description') }}:</label>
-            <p class="text-secondary-900">{{ selectedAd.description || $t('ads.detailModal.notAvailable') }}</p>
-          </div>
-          <div class="field mb-4">
-            <label class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.detailModal.fields.primaryText') }}:</label>
-            <p class="text-secondary-900">{{ selectedAd.primaryText || $t('ads.detailModal.notAvailable') }}</p>
-          </div>
-          <div class="field mb-4">
-            <label class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.detailModal.fields.callToAction') }}:</label>
-            <p class="text-secondary-900">{{ getCTALabel(selectedAd.callToAction) || $t('ads.detailModal.notAvailable') }}</p>
-          </div>
-          <div class="field mb-4">
-            <label class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.detailModal.fields.media') }}:</label>
+
+          <div class="field mb-6">
+            <label class="block text-sm font-medium text-secondary-700 mb-3">{{ $t('ads.detailModal.fields.media') }}:</label>
             <div v-if="selectedAd.imageUrl || selectedAd.videoUrl" class="space-y-3">
-              <!-- Image Preview -->
               <div v-if="selectedAd.imageUrl" class="flex items-center space-x-3">
                 <img :src="selectedAd.imageUrl" alt="Ad Image" class="w-20 h-20 object-cover rounded" />
                 <div>
@@ -82,7 +126,6 @@
                   <a :href="selectedAd.imageUrl" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm break-all">{{ selectedAd.imageUrl }}</a>
                 </div>
               </div>
-              <!-- Video Preview -->
               <div v-if="selectedAd.videoUrl" class="flex items-center space-x-3">
                 <video :src="selectedAd.videoUrl" class="w-20 h-20 object-cover rounded" controls></video>
                 <div>
@@ -91,13 +134,18 @@
                 </div>
               </div>
             </div>
-            <!-- No Media -->
-            <div v-else class="py-8">
+            <div v-else class="py-8 text-center">
               <svg class="w-10 h-10 sm:w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
               </svg>
               <p class="text-gray-600">{{ $t('ads.detailModal.noMedia') }}</p>
             </div>
+          </div>
+
+          <div class="text-right">
+            <a-button type="primary" @click="showDetailModal = false">
+              {{ $t('common.action.close') }}
+            </a-button>
           </div>
         </div>
       </a-modal>
@@ -134,44 +182,77 @@
       <!-- Edit Ad Modal -->
       <a-modal v-model:open="showEditModal" :title="$t('ads.editModal.title')" width="90vw" style="max-width: 1200px">
         <div v-if="editingAd">
-          <div class="field mb-4">
-            <label for="editAdName" class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.editModal.fields.name') }}:</label>
-            <a-input id="editAdName" v-model:value="editingAd.name" :status="errors.name ? 'error' : ''" @blur="validateEditAd()" />
-            <p v-if="errors.name" class="form-error flex items-center gap-2 mt-1">
-              <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-              {{ errors.name }}
-            </p>
-          </div>
-          <div class="field mb-4">
-            <label for="editAdHeadline" class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.editModal.fields.headline') }}:</label>
-            <a-input id="editAdHeadline" v-model:value="editingAd.headline" />
-          </div>
-          <div class="field mb-4">
-            <label for="editAdDescription" class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.editModal.fields.description') }}:</label>
-            <a-textarea id="editAdDescription" v-model:value="editingAd.description" :rows="3" />
-          </div>
-          <div class="field mb-4">
-            <label for="editAdPrimaryText" class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.editModal.fields.primaryText') }}:</label>
-            <a-textarea id="editAdPrimaryText" v-model:value="editingAd.primaryText" :rows="3" />
-          </div>
-          <div class="field mb-4">
-            <label for="editAdCallToAction" class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.editModal.fields.callToAction') }}:</label>
-            <a-select id="editAdCallToAction" v-model:value="editingAd.callToAction" :placeholder="$t('ads.editModal.fields.callToAction')" style="width: 100%">
-              <a-select-option v-for="cta in standardCTAs" :key="cta.value" :value="cta.value">
-                {{ cta.label }}
-              </a-select-option>
-            </a-select>
-          </div>
-          <div class="field mb-4">
-            <label for="editAdStatus" class="block text-sm font-medium text-secondary-700 mb-1">{{ $t('ads.editModal.fields.status') }}:</label>
-            <a-select id="editAdStatus" v-model:value="editingAd.status" :placeholder="$t('ads.editModal.fields.status')" style="width: 100%">
-              <a-select-option value="DRAFT">{{ $t('ads.editModal.statusOptions.draft') }}</a-select-option>
-              <a-select-option value="ACTIVE">{{ $t('ads.editModal.statusOptions.active') }}</a-select-option>
-              <a-select-option value="PAUSED">{{ $t('ads.editModal.statusOptions.paused') }}</a-select-option>
-              <a-select-option value="COMPLETED">{{ $t('ads.editModal.statusOptions.completed') }}</a-select-option>
-              <a-select-option value="FAILED">{{ $t('ads.editModal.statusOptions.failed') }}</a-select-option>
-            </a-select>
-          </div>
+          <a-form layout="vertical">
+            <a-row :gutter="[16, 16]">
+              <a-col :xs="24" :md="12">
+                <a-form-item :label="$t('ads.editModal.fields.name')" :validate-status="errors.name ? 'error' : ''" :help="errors.name">
+                  <a-input v-model:value="editingAd.name" @blur="validateEditAd" />
+                </a-form-item>
+              </a-col>
+              <a-col :xs="24" :md="12">
+                <a-form-item :label="$t('ads.editModal.fields.adType')">
+                  <a-select
+                    v-model:value="editingAd.adType"
+                    :options="adTypeSelectOptions"
+                    allow-clear
+                    :placeholder="$t('ads.editModal.fields.adType')"
+                  />
+                </a-form-item>
+              </a-col>
+              <a-col :xs="24" :md="12">
+                <a-form-item :label="$t('ads.editModal.fields.status')" :validate-status="errors.status ? 'error' : ''" :help="errors.status">
+                  <a-select
+                    v-model:value="editingAd.status"
+                    :options="editStatusOptions"
+                    :placeholder="$t('ads.editModal.fields.status')"
+                  />
+                </a-form-item>
+              </a-col>
+              <a-col :xs="24" :md="12">
+                <a-form-item :label="$t('ads.editModal.fields.callToAction')" :validate-status="errors.callToAction ? 'error' : ''" :help="errors.callToAction">
+                  <a-select
+                    v-model:value="editingAd.callToAction"
+                    :placeholder="$t('ads.editModal.fields.callToAction')"
+                    show-search
+                  >
+                    <a-select-option v-for="cta in standardCTAs" :key="cta.value" :value="cta.value">
+                      {{ cta.label }}
+                    </a-select-option>
+                  </a-select>
+                </a-form-item>
+              </a-col>
+              <a-col :xs="24" :md="12">
+                <a-form-item :label="$t('ads.editModal.fields.headline')" :validate-status="errors.headline ? 'error' : ''" :help="errors.headline">
+                  <a-input v-model:value="editingAd.headline" />
+                </a-form-item>
+              </a-col>
+              <a-col :xs="24" :md="12">
+                <a-form-item :label="$t('ads.editModal.fields.websiteUrl')">
+                  <a-input v-model:value="editingAd.websiteUrl" type="url" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="24">
+                <a-form-item :label="$t('ads.editModal.fields.description')">
+                  <a-textarea v-model:value="editingAd.description" :rows="3" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="24">
+                <a-form-item :label="$t('ads.editModal.fields.primaryText')">
+                  <a-textarea v-model:value="editingAd.primaryText" :rows="4" />
+                </a-form-item>
+              </a-col>
+              <a-col :xs="24" :md="12">
+                <a-form-item :label="$t('ads.editModal.fields.imageUrl')">
+                  <a-input v-model:value="editingAd.imageUrl" />
+                </a-form-item>
+              </a-col>
+              <a-col :xs="24" :md="12">
+                <a-form-item :label="$t('ads.editModal.fields.videoUrl')">
+                  <a-input v-model:value="editingAd.videoUrl" />
+                </a-form-item>
+              </a-col>
+            </a-row>
+          </a-form>
         </div>
         <template #footer>
           <a-button @click="confirmCancelEdit">{{ $t('ads.editModal.buttons.cancel') }}</a-button>
@@ -288,6 +369,42 @@ export default {
     totalPages() {
       if (!this.totalItems) return 0
       return Math.ceil(this.totalItems / this.size)
+    },
+
+    statusLabelMap() {
+      return {
+        DRAFT: this.$t('ads.statusLabel.draft'),
+        READY: this.$t('ads.statusLabel.ready'),
+        ACTIVE: this.$t('ads.statusLabel.active'),
+        PAUSED: this.$t('ads.statusLabel.paused'),
+        COMPLETED: this.$t('ads.statusLabel.completed'),
+        FAILED: this.$t('ads.statusLabel.failed')
+      }
+    },
+
+    adTypeLabelMap() {
+      return {
+        WEBSITE_CONVERSION_AD: this.$t('ads.adTypeLabel.websiteConversion'),
+        PAGE_POST_AD: this.$t('ads.adTypeLabel.pagePost'),
+        LEAD_FORM_AD: this.$t('ads.adTypeLabel.leadForm')
+      }
+    },
+
+    editStatusOptions() {
+      return [
+        { value: 'DRAFT', label: this.statusLabelMap.DRAFT },
+        { value: 'ACTIVE', label: this.statusLabelMap.ACTIVE },
+        { value: 'PAUSED', label: this.statusLabelMap.PAUSED },
+        { value: 'COMPLETED', label: this.statusLabelMap.COMPLETED },
+        { value: 'FAILED', label: this.statusLabelMap.FAILED }
+      ]
+    },
+
+    adTypeSelectOptions() {
+      return Object.entries(this.adTypeLabelMap).map(([value, label]) => ({
+        value,
+        label
+      }))
     }
   },
   async mounted() {
@@ -358,33 +475,13 @@ export default {
     },
 
     showEditAdModal(ad) {
-      this.editingAd = { ...ad };
+      this.editingAd = this.prepareEditingAd(ad);
       this.showEditModal = true;
       this.errors = {};
     },
 
     async saveEditedAd() {
-      this.errors = {};
-      let isValid = true;
-
-      if (!this.editingAd.name) {
-        this.errors.name = this.$t('ads.editModal.validation.nameRequired');
-        isValid = false;
-      }
-      if (!this.editingAd.headline) {
-        this.errors.headline = this.$t('ads.editModal.validation.headlineRequired');
-        isValid = false;
-      }
-      if (!this.editingAd.callToAction) {
-        this.errors.callToAction = this.$t('ads.editModal.validation.callToActionRequired');
-        isValid = false;
-      }
-      if (!this.editingAd.status) {
-        this.errors.status = this.$t('ads.editModal.validation.statusRequired');
-        isValid = false;
-      }
-
-      if (!isValid) {
+      if (!this.validateEditAd()) {
         message.error(this.$t('ads.editModal.validation.fillAllFields'));
         return;
       }
@@ -399,7 +496,9 @@ export default {
           callToAction,
           imageUrl,
           videoUrl,
-          status
+          status,
+          adType,
+          websiteUrl
         } = this.editingAd;
 
         await this.updateAd({
@@ -412,7 +511,9 @@ export default {
             callToAction,
             imageUrl,
             videoUrl,
-            status
+            status,
+            adType,
+            websiteUrl
           }
         });
         this.showEditModal = false;
@@ -499,6 +600,20 @@ export default {
       }
     },
 
+    getStatusLabel(status) {
+      if (!status) {
+        return this.$t('ads.detailModal.notAvailable');
+      }
+      return this.statusLabelMap[status] || this.formatEnumValue(status);
+    },
+
+    getAdTypeLabel(adType) {
+      if (!adType) {
+        return this.$t('ads.detailModal.notAvailable');
+      }
+      return this.adTypeLabelMap[adType] || this.formatEnumValue(adType);
+    },
+
     formatDate(dateString) {
       if (!dateString) return ""
       const date = new Date(dateString)
@@ -545,6 +660,23 @@ export default {
       }
 
       return isValid;
+    },
+
+    prepareEditingAd(ad) {
+      return {
+        ...ad,
+        adType: ad.adType || null,
+        websiteUrl: ad.websiteUrl || '',
+        imageUrl: ad.imageUrl || '',
+        videoUrl: ad.videoUrl || ''
+      }
+    },
+
+    formatEnumValue(value) {
+      if (!value) {
+        return this.$t('ads.detailModal.notAvailable');
+      }
+      return value.replace(/_/g, ' ');
     },
 
     handleLogout() {

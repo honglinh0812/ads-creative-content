@@ -729,6 +729,8 @@
         "campaign": "Chiến dịch",
         "adType": "Loại quảng cáo",
         "status": "Trạng thái",
+        "createdDate": "Ngày tạo",
+        "websiteUrl": "URL trang web",
         "headline": "Tiêu đề",
         "description": "Mô tả",
         "primaryText": "Văn bản chính",
@@ -744,11 +746,15 @@
       "title": "Chỉnh sửa quảng cáo",
       "fields": {
         "name": "Tên",
+        "adType": "Loại quảng cáo",
         "headline": "Tiêu đề",
         "description": "Mô tả",
         "primaryText": "Văn bản chính",
         "callToAction": "Lời kêu gọi hành động",
-        "status": "Trạng thái"
+        "status": "Trạng thái",
+        "imageUrl": "URL hình ảnh",
+        "videoUrl": "URL video",
+        "websiteUrl": "URL trang web"
       },
       "statusOptions": {
         "draft": "BẢN NHÁP",
@@ -774,6 +780,19 @@
         "okText": "Có, Hủy",
         "cancelText": "Không, Ở lại"
       }
+    },
+    "statusLabel": {
+      "draft": "Bản nháp",
+      "ready": "Sẵn sàng",
+      "active": "Đang hoạt động",
+      "paused": "Tạm dừng",
+      "completed": "Hoàn thành",
+      "failed": "Thất bại"
+    },
+    "adTypeLabel": {
+      "websiteConversion": "Quảng cáo trang web",
+      "pagePost": "Quảng cáo bài đăng",
+      "leadForm": "Quảng cáo biểu mẫu khách hàng"
     },
     "deleteConfirm": {
       "title": "Xác nhận xóa",
@@ -2366,7 +2385,7 @@
       }
     },
     "audienceSegment": {
-      "title": "🎯 Đối tượng mục tiêu",
+      "title": "Đối tượng mục tiêu",
       "form": {
         "gender": "Giới tính",
         "genderPlaceholder": "Chọn giới tính mục tiêu",

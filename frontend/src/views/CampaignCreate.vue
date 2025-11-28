@@ -91,50 +91,50 @@
             </a-form-item>
           </a-col>
 
-          <!-- Daily Budget -->
-          <a-col v-if="form.budgetType === 'DAILY'" :xs="24" :md="12">
-            <a-form-item
-              :label="$t('campaign.create.form.label.dailyBudget')"
-              :validate-status="errors.dailyBudget ? 'error' : ''"
-              :help="errors.dailyBudget"
-              required
-            >
-              <a-input-number
-                v-model:value="form.dailyBudget"
-                :min="1"
-                size="large"
-                style="width: 100%"
-                :placeholder="$t('campaign.create.form.placeholder.dailyBudget')"
-                :formatter="formatCurrencyInput"
-                :parser="parseCurrencyInput"
-              />
-              <div class="text-xs text-gray-500 mt-1">
-                Minimum budget: {{ minBudgetLabel }} ({{ accountCurrency }})
-              </div>
-            </a-form-item>
-          </a-col>
-
-          <!-- Total Budget -->
-          <a-col v-if="form.budgetType === 'LIFETIME'" :xs="24" :md="12">
-            <a-form-item
-              :label="$t('campaign.create.form.label.totalBudget')"
-              :validate-status="errors.totalBudget ? 'error' : ''"
-              :help="errors.totalBudget"
-              required
-            >
-              <a-input-number
-                v-model:value="form.totalBudget"
-                :min="1"
-                size="large"
-                style="width: 100%"
-                :placeholder="$t('campaign.create.form.placeholder.totalBudget')"
-                :formatter="formatCurrencyInput"
-                :parser="parseCurrencyInput"
-              />
-              <div class="text-xs text-gray-500 mt-1">
-                Minimum budget: {{ minBudgetLabel }} ({{ accountCurrency }})
-              </div>
-            </a-form-item>
+          <!-- Budget Amount -->
+          <a-col :xs="24" :md="12">
+            <template v-if="form.budgetType === 'DAILY'">
+              <a-form-item
+                :label="$t('campaign.create.form.label.dailyBudget')"
+                :validate-status="errors.dailyBudget ? 'error' : ''"
+                :help="errors.dailyBudget"
+                required
+              >
+                <a-input-number
+                  v-model:value="form.dailyBudget"
+                  :min="1"
+                  size="large"
+                  style="width: 100%"
+                  :placeholder="$t('campaign.create.form.placeholder.dailyBudget')"
+                  :formatter="formatCurrencyInput"
+                  :parser="parseCurrencyInput"
+                />
+                <div class="text-xs text-gray-500 mt-1">
+                  Minimum budget: {{ minBudgetLabel }} ({{ accountCurrency }})
+                </div>
+              </a-form-item>
+            </template>
+            <template v-else-if="form.budgetType === 'LIFETIME'">
+              <a-form-item
+                :label="$t('campaign.create.form.label.totalBudget')"
+                :validate-status="errors.totalBudget ? 'error' : ''"
+                :help="errors.totalBudget"
+                required
+              >
+                <a-input-number
+                  v-model:value="form.totalBudget"
+                  :min="1"
+                  size="large"
+                  style="width: 100%"
+                  :placeholder="$t('campaign.create.form.placeholder.totalBudget')"
+                  :formatter="formatCurrencyInput"
+                  :parser="parseCurrencyInput"
+                />
+                <div class="text-xs text-gray-500 mt-1">
+                  Minimum budget: {{ minBudgetLabel }} ({{ accountCurrency }})
+                </div>
+              </a-form-item>
+            </template>
           </a-col>
 
           <!-- Bid Cap -->
@@ -146,7 +146,6 @@
             >
               <a-input-number
                 v-model:value="form.bidCap"
-                :min="0"
                 size="large"
                 style="width: 100%"
                 :placeholder="$t('campaign.create.form.placeholder.bidCap')"
@@ -199,7 +198,6 @@
             </a-form-item>
           </a-col>
 
-          <!-- Issue #9: Target Audience (Campaign Level) -->
           <a-col :span="24">
             <AudienceSegmentForm v-model="form.audienceSegment" />
           </a-col>
@@ -436,6 +434,17 @@ export default {
       return value.replace(/[^\d.]/g, '')
     },
 
+    normalizeBidCap(value) {
+      if (value === null || value === undefined || value === '') {
+        return null
+      }
+      const numeric = Number(value)
+      if (Number.isNaN(numeric) || numeric <= 0) {
+        return null
+      }
+      return numeric
+    },
+
     // Issue #9: Convert audienceSegment object to targetAudience string
     formatTargetAudienceString(segment) {
       if (!segment) return '';
@@ -503,8 +512,11 @@ export default {
         }
       }
 
-      if (this.form.bidCap && this.form.bidCap <= 0) {
-        this.errors.bidCap = this.$t('campaign.create.form.validation.bidCapPositive')
+      if (this.form.bidCap !== null && this.form.bidCap !== undefined && this.form.bidCap !== '') {
+        const bidCapValue = Number(this.form.bidCap)
+        if (Number.isNaN(bidCapValue) || bidCapValue <= 0) {
+          this.errors.bidCap = this.$t('campaign.create.form.validation.bidCapPositive')
+        }
       }
 
       // Validate start date
@@ -553,6 +565,7 @@ export default {
         // Issue #9: Convert audienceSegment to targetAudience string
         const campaignData = {
           ...this.form,
+          bidCap: this.normalizeBidCap(this.form.bidCap),
           targetAudience: this.formatTargetAudienceString(this.form.audienceSegment)
         };
         // Remove audienceSegment from payload (it's converted to targetAudience)
