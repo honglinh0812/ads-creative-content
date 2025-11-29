@@ -61,7 +61,7 @@ module.exports = {
       }
     },
     // Enable source maps in dev, disable them entirely in prod
-    devtool: process.env.NODE_ENV === 'development' ? 'eval-source-map' : false
+    devtool: process.env.NODE_ENV === 'development' ? 'eval-source-map' : 'source-map'
   },
 
   chainWebpack: config => {

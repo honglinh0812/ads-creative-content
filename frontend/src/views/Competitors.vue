@@ -498,6 +498,10 @@ export default {
       const preset = this.resolveLocationPreset(item.locationKey || item.location || 'global')
       return this.$te(preset.labelKey) ? this.$t(preset.labelKey) : preset.fallback
     },
+    isAdSelected(ad) {
+      if (!ad) return false
+      return this.selectedCompetitorAds.some(item => item.id === ad.id)
+    },
     getEngineLabel(engine) {
       if (!engine) return ''
       if (engine === 'linkedin_ad_library') {
