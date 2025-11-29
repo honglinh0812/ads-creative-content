@@ -10,9 +10,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -42,9 +46,24 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CompetitorService {
 
+    private static final Set<String> SUPPORTED_SEARCH_TYPES = new HashSet<>();
+
     private final MetaAdLibraryService metaAdLibraryService;
     private final CompetitorSearchRepository competitorSearchRepository;
     private final UserRepository userRepository;
+
+    static {
+        SUPPORTED_SEARCH_TYPES.add("BRAND");
+        SUPPORTED_SEARCH_TYPES.add("URL");
+        SUPPORTED_SEARCH_TYPES.add("INDUSTRY");
+        SUPPORTED_SEARCH_TYPES.add("KEYWORD");
+        SUPPORTED_SEARCH_TYPES.add("FACEBOOK");
+        SUPPORTED_SEARCH_TYPES.add("GOOGLE");
+        SUPPORTED_SEARCH_TYPES.add("TIKTOK");
+        SUPPORTED_SEARCH_TYPES.add("MANUAL");
+        SUPPORTED_SEARCH_TYPES.add("LINKEDIN_AD_LIBRARY");
+        SUPPORTED_SEARCH_TYPES.add("TIKTOK_ADS_LIBRARY");
+    }
 
     /**
      * Fetch competitor ads from specific ad URLs
@@ -257,7 +276,8 @@ public class CompetitorService {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> ResourceException.notFound("User", String.valueOf(userId)));
             String sanitized = sanitizeBrandName(brandName);
-            saveSearchHistoryInternal(sanitized, region, user, platform, resultCount, success);
+            String searchType = normalizeSearchType(platform);
+            saveSearchHistoryInternal(sanitized, region, user, searchType, resultCount, success);
         } catch (Exception e) {
             log.error("Failed to record search history for user {}: {}", userId, e.getMessage());
         }
@@ -317,6 +337,26 @@ public class CompetitorService {
         }
 
         return url.contains("facebook.com/ads/library") && url.contains("id=");
+    }
+
+    private String normalizeSearchType(String platform) {
+        if (!StringUtils.hasText(platform)) {
+            return "BRAND";
+        }
+        String normalized = platform.trim().toUpperCase(Locale.ROOT);
+        if (SUPPORTED_SEARCH_TYPES.contains(normalized)) {
+            return normalized;
+        }
+        if (normalized.contains("TIKTOK")) {
+            return SUPPORTED_SEARCH_TYPES.contains("TIKTOK") ? "TIKTOK" : "MANUAL";
+        }
+        if (normalized.contains("LINKEDIN")) {
+            return SUPPORTED_SEARCH_TYPES.contains("LINKEDIN_AD_LIBRARY") ? "LINKEDIN_AD_LIBRARY" : "MANUAL";
+        }
+        if (normalized.contains("GOOGLE")) {
+            return "GOOGLE";
+        }
+        return "MANUAL";
     }
 
     /**

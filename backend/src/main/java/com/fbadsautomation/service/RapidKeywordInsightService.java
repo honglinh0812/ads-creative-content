@@ -126,7 +126,7 @@ public class RapidKeywordInsightService {
                 .queryParam("num", limit);
 
             ResponseEntity<String> response = restTemplate.exchange(
-                builder.build(true).toUri(),
+                builder.build().encode().toUri(),
                 HttpMethod.GET,
                 new HttpEntity<>(buildHeaders()),
                 String.class
