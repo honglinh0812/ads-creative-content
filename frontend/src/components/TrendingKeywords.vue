@@ -12,8 +12,8 @@
         </a-tooltip>
       </div>
     </template>
-    <a-row :gutter="16" class="search-row">
-      <a-col :span="10">
+    <div class="search-row">
+      <div class="search-field keyword-field">
         <a-form-item
           :validate-status="validationStatus.searchQuery"
           :help="validationMessages.searchQuery"
@@ -21,6 +21,7 @@
           <a-input-search
             v-model:value="searchQuery"
             :placeholder="$t('components.trendingKeywords.search.placeholder')"
+            :aria-label="$t('components.trendingKeywords.search.label')"
             @search="handleSearch"
             @input="validateSearchQuery"
             :loading="loading"
@@ -31,12 +32,13 @@
             </template>
           </a-input-search>
         </a-form-item>
-      </a-col>
-      <a-col :span="5">
-        <a-form-item :label="$t('components.trendingKeywords.location.label')">
+      </div>
+      <div class="search-field location-field">
+        <a-form-item>
           <a-select
             v-model:value="selectedLocation"
             :placeholder="$t('components.trendingKeywords.location.placeholder')"
+            :aria-label="$t('components.trendingKeywords.location.label')"
             style="width: 100%"
             :loading="locationsLoading"
             :disabled="locationsLoading || locationOptions.length === 0"
@@ -51,12 +53,13 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-      </a-col>
-      <a-col :span="5">
-        <a-form-item :label="$t('components.trendingKeywords.language.label')">
+      </div>
+      <div class="search-field language-field">
+        <a-form-item>
           <a-select
             v-model:value="selectedLanguage"
             :placeholder="$t('components.trendingKeywords.language.placeholder')"
+            :aria-label="$t('components.trendingKeywords.language.label')"
             style="width: 100%"
             :loading="languagesLoading"
             :disabled="languagesLoading || languageOptions.length === 0"
@@ -71,20 +74,21 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-      </a-col>
-      <a-col :span="4">
-        <a-form-item :label="$t('components.trendingKeywords.limit.label')">
+      </div>
+      <div class="search-field limit-field">
+        <a-form-item>
           <a-input-number
             v-model:value="keywordLimit"
             :min="1"
             :max="50"
             :placeholder="$t('components.trendingKeywords.limit.placeholder')"
+            :aria-label="$t('components.trendingKeywords.limit.label')"
             style="width: 100%"
             @change="handleLimitChange"
           />
         </a-form-item>
-      </a-col>
-    </a-row>
+      </div>
+    </div>
 
     <a-alert
       v-if="errorMessage"
@@ -299,7 +303,14 @@ export default {
       try {
         const response = await axios.get('/api/trends/locations');
         if (Array.isArray(response.data)) {
-          this.locationOptions = this.prioritizeLocations(response.data);
+          const normalized = response.data
+            .map(item => ({
+              ...item,
+              countryCode: (item.countryCode || item.country_code || '').toUpperCase(),
+              countryName: item.countryName || item.country_name || item.countryCode || item.country_code || ''
+            }))
+            .filter(item => item.countryCode);
+          this.locationOptions = this.prioritizeLocations(normalized);
         } else {
           this.locationOptions = [];
         }
@@ -318,7 +329,14 @@ export default {
       try {
         const response = await axios.get('/api/trends/languages');
         if (Array.isArray(response.data)) {
-          this.languageOptions = this.prioritizeLanguages(response.data);
+          const normalized = response.data
+            .map(item => ({
+              ...item,
+              languageCode: (item.languageCode || item.language_code || '').toLowerCase(),
+              languageName: item.languageName || item.language_name || item.languageCode || item.language_code || ''
+            }))
+            .filter(item => item.languageCode);
+          this.languageOptions = this.prioritizeLanguages(normalized);
         } else {
           this.languageOptions = [];
         }
@@ -597,25 +615,37 @@ export default {
       if (normalized.startsWith('fr')) return 'FR';
       return 'US';
     },
+    resolveCountryName(location) {
+      if (!location) return '';
+      return location.countryName || location.country_name || location.countryCode || '';
+    },
+    resolveLanguageName(language) {
+      if (!language) return '';
+      return language.languageName || language.language_name || language.languageCode || '';
+    },
     formatLocationOption(location) {
       if (!location) {
         return '';
       }
-      return `${location.countryName || location.countryCode} (${location.countryCode})`;
+      return `${this.resolveCountryName(location)} (${location.countryCode || location.country_code || ''})`;
     },
     formatLanguageOption(language) {
       if (!language) {
         return '';
       }
-      return `${language.languageName || language.languageCode} (${language.languageCode})`;
+      return `${this.resolveLanguageName(language)} (${language.languageCode || language.language_code || ''})`;
     },
     getLocationLabel(code) {
-      const option = this.locationOptions.find(loc => loc.countryCode === code);
-      return option ? `${option.countryName} (${option.countryCode})` : code;
+      const option = this.locationOptions.find(loc =>
+        (loc.countryCode && loc.countryCode === code) || (loc.country_code && loc.country_code === code)
+      );
+      return option ? `${this.resolveCountryName(option)} (${code})` : code;
     },
     getLanguageLabel(code) {
-      const option = this.languageOptions.find(lang => lang.languageCode === code);
-      return option ? `${option.languageName} (${option.languageCode})` : code;
+      const option = this.languageOptions.find(lang =>
+        (lang.languageCode && lang.languageCode === code) || (lang.language_code && lang.language_code === code)
+      );
+      return option ? `${this.resolveLanguageName(option)} (${code})` : code;
     }
   }
 };
@@ -638,7 +668,28 @@ export default {
 }
 
 .search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
   margin-bottom: 16px;
+}
+
+.search-field {
+  flex: 1 1 180px;
+}
+
+.keyword-field {
+  flex: 2 1 320px;
+}
+
+.limit-field {
+  flex: 0 0 140px;
+}
+
+.search-row :deep(.ant-form-item) {
+  margin-bottom: 0;
+  width: 100%;
 }
 
 .error-alert {

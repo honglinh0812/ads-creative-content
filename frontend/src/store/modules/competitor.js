@@ -3,13 +3,37 @@
  */
 
 import api from '@/services/api'
+import { findLocationPreset } from '@/constants/searchLocations'
 
 const WATCHLIST_STORAGE_KEY = 'competitorWatchlist'
+
+const normalizeWatchlistItem = (item = {}) => {
+  const preset = findLocationPreset(item.locationKey || item.country || item.location || 'global')
+  return {
+    ...item,
+    engine: item.engine || 'linkedin_ad_library',
+    advertiser: item.advertiser || item.query || '',
+    advertiserId: item.advertiserId || '',
+    sortBy: item.sortBy || '',
+    keyword: item.keyword || '',
+    locationKey: preset.key,
+    location: preset.location,
+    country: item.country || preset.country,
+    limit: item.limit || 10
+  }
+}
 
 const readWatchlist = () => {
   try {
     const raw = localStorage.getItem(WATCHLIST_STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
+    if (!raw) {
+      return []
+    }
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+    return parsed.map(normalizeWatchlistItem)
   } catch (error) {
     console.error('Failed to parse watchlist', error)
     return []
@@ -31,7 +55,7 @@ const defaultResults = () => ({
 })
 
 const state = {
-  engine: 'google',
+  engine: 'linkedin_ad_library',
   searchResults: defaultResults(),
   isSearching: false,
   searchError: null,
@@ -150,27 +174,56 @@ const mutations = {
 
 const actions = {
   async searchAcrossWeb({ commit }, payload) {
+    const engine = payload.engine || 'linkedin_ad_library'
+    const locationPreset = findLocationPreset(payload.locationKey || payload.country || 'global')
+    const advertiser = payload.advertiser || payload.query || ''
+    const keyword = payload.keyword || ''
+    const rawCountry = payload.country || locationPreset.country || ''
+    const normalizedCountry = engine === 'tiktok_ads_library' ? (rawCountry || 'ALL') : rawCountry
+    const searchPayload = {
+      engine,
+      query: payload.query || keyword || advertiser || '',
+      keyword,
+      advertiser,
+      advertiserId: payload.advertiserId || '',
+      sortBy: payload.sortBy || '',
+      country: normalizedCountry,
+      timePeriod: payload.timePeriod || '',
+      nextPageToken: payload.nextPageToken || '',
+      limit: payload.limit || 10
+    }
     commit('SET_SEARCHING', true)
     commit('SET_SEARCH_ERROR', null)
     try {
-      const response = await api.competitors.search(payload)
+      const response = await api.competitors.search(searchPayload)
       const data = response.data.data || {}
+      const engineUsed = data.engine || engine
       const normalized = {
         ads: (data.ads || []).map((item, index) => ({
           ...item,
-          id: item.link || `ad-${index}`,
-          adId: item.link || `ad-${index}`,
-          adName: item.title,
-          headline: item.title,
-          primaryText: item.description,
-          callToAction: item.displayed_link,
-          advertiserName: item.displayed_link,
-          adLibraryUrl: item.link
+          id: item.adId || item.id || item.link || `ad-${index}`,
+          adId: item.adId || item.id || item.link || `ad-${index}`,
+          adName: item.headline || item.title || item.advertiserName || item.advertiser || 'Ad',
+          headline: item.headline || item.title || item.advertiserName,
+          primaryText: item.description || item.cta || item.estimatedAudience || '',
+          imageUrl: item.image || item.coverImage,
+          coverImage: item.coverImage || item.image,
+          videoUrl: item.videoLink,
+          callToAction: item.cta || '',
+          advertiserName: item.advertiserName || item.advertiser,
+          advertiserThumbnail: item.advertiserThumbnail,
+          adLibraryUrl: item.link || item.videoLink,
+          firstShown: item.firstShown,
+          lastShown: item.lastShown,
+          estimatedAudience: item.estimatedAudience,
+          estimatedAudienceMin: item.estimatedAudienceMin,
+          estimatedAudienceMax: item.estimatedAudienceMax,
+          adType: item.adType || (engineUsed === 'tiktok_ads_library' ? 'TikTok Video' : 'LinkedIn Ad')
         })),
         videos: data.videos || [],
         content: data.content || []
       }
-      commit('SET_ENGINE', data.engine || payload.engine || 'google')
+      commit('SET_ENGINE', engineUsed)
       commit('SET_SEARCH_RESULTS', normalized)
       commit('CLEAR_SELECTED_ADS')
       return normalized
@@ -290,27 +343,35 @@ const actions = {
   },
 
   initWatchlist({ commit }) {
-    commit('SET_WATCHLIST', readWatchlist())
+    const items = readWatchlist()
+    commit('SET_WATCHLIST', items)
+    persistWatchlist(items)
   },
 
   addWatchlistItem({ commit, state }, payload) {
-    const item = {
+    const preset = findLocationPreset(payload.locationKey || payload.country || 'global')
+    const query = payload.query?.trim() || ''
+    const keyword = payload.keyword?.trim() || ''
+    if (!query && !keyword) {
+      throw new Error('Query or keyword is required')
+    }
+    const item = normalizeWatchlistItem({
       id: `watch-${Date.now()}`,
-      query: payload.query.trim(),
-      engine: payload.engine || 'google',
-      locationKey: payload.locationKey || 'global',
-      location: payload.locationLabel || payload.location || '',
-      gl: payload.gl || '',
-      hl: payload.hl || '',
+      query,
+      keyword,
+      advertiser: payload.advertiser?.trim() || query,
+      advertiserId: payload.advertiserId || '',
+      sortBy: payload.sortBy || '',
+      engine: payload.engine || 'linkedin_ad_library',
+      locationKey: preset.key,
+      location: preset.location,
+      country: preset.country,
       limit: payload.limit || 10,
       lastChecked: null,
       lastResultCount: null,
       hasNew: false,
       lastMessage: null
-    }
-    if (!item.query) {
-      throw new Error('Query is required')
-    }
+    })
     commit('ADD_WATCHLIST_ITEM', item)
     persistWatchlist(state.watchlist)
     return item
@@ -323,15 +384,31 @@ const actions = {
 
   async refreshWatchlistItem({ commit, state }, item) {
     if (!item) return null
+    const normalizedItem = normalizeWatchlistItem(item)
+    commit('UPDATE_WATCHLIST_ITEM', {
+      id: item.id,
+      changes: {
+        locationKey: normalizedItem.locationKey,
+        location: normalizedItem.location,
+        country: normalizedItem.country,
+        limit: normalizedItem.limit
+      }
+    })
+    persistWatchlist(state.watchlist)
     commit('SET_WATCHLIST_REFRESHING', item.id)
     try {
+      const requestCountry = normalizedItem.engine === 'tiktok_ads_library'
+        ? (normalizedItem.country || 'ALL')
+        : normalizedItem.country
       const response = await api.competitors.search({
-        query: item.query,
-        engine: item.engine,
-        location: item.location,
-        gl: item.gl,
-        hl: item.hl,
-        limit: item.limit
+        query: normalizedItem.query,
+        engine: normalizedItem.engine,
+        advertiser: normalizedItem.advertiser || normalizedItem.query,
+        keyword: normalizedItem.keyword || normalizedItem.query,
+        advertiserId: normalizedItem.advertiserId,
+        sortBy: normalizedItem.sortBy,
+        country: requestCountry,
+        limit: normalizedItem.limit
       })
       const data = response.data.data || {}
       const count = (data.ads?.length || 0) + (data.videos?.length || 0) + (data.content?.length || 0)
@@ -345,6 +422,7 @@ const actions = {
           lastMessage: response.data.message || ''
         }
       })
+      persistWatchlist(state.watchlist)
       commit('PUSH_WATCHLIST_ACTIVITY', {
         id: `${item.id}-${Date.now()}`,
         query: item.query,
@@ -354,7 +432,6 @@ const actions = {
         timestamp: new Date().toISOString(),
         message: response.data.message || 'Refreshed'
       })
-      persistWatchlist(state.watchlist)
       return response
     } catch (error) {
       commit('PUSH_WATCHLIST_ACTIVITY', {

@@ -1347,13 +1347,16 @@
       "facebook": "Facebook & Instagram",
       "google": "Google & YouTube",
       "tiktok": "TikTok",
-      "bing": "Bing Ads"
+      "bing": "Bing Ads",
+      "linkedin": "LinkedIn Ads"
     },
     "searchCard": {
-      "keywordLabel": "Từ khóa / Thương hiệu",
-      "keywordPlaceholder": "Ví dụ: VinFast xe điện",
+      "keywordLabel": "Nhà quảng cáo / Thương hiệu",
+      "keywordPlaceholder": "Ví dụ: Google Cloud",
+      "keywordSecondaryLabel": "Từ khóa bổ sung (không bắt buộc)",
+      "keywordSecondaryPlaceholder": "Ví dụ: AI agent",
       "engineLabel": "Công cụ tìm kiếm",
-      "locationLabel": "Khu vực quảng cáo"
+      "locationLabel": "Quốc gia / Khu vực"
     },
     "buttons": {
       "search": "Tìm kiếm",
@@ -1378,14 +1381,20 @@
       "tiktok": "Nội dung TikTok"
     },
     "messages": {
-      "keywordRequired": "Vui lòng nhập từ khóa hoặc thương hiệu.",
+      "keywordRequired": "Vui lòng nhập nhà quảng cáo hoặc từ khóa.",
       "searchFailed": "Không tìm được dữ liệu",
       "selectCompetitor": "Vui lòng chọn quảng cáo đối thủ",
       "suggestionGenerated": "Đã tạo gợi ý",
       "actionFailed": "Thao tác thất bại",
-      "watchlistKeywordRequired": "Vui lòng nhập thương hiệu để theo dõi.",
+      "watchlistKeywordRequired": "Vui lòng nhập nhà quảng cáo hoặc từ khóa để theo dõi.",
       "watchlistAdded": "Đã thêm vào danh sách theo dõi",
       "watchlistRemoved": "Đã xóa"
+    },
+    "cards": {
+      "flightRange": "Thời gian chạy: {start} → {end}",
+      "flightStart": "Bắt đầu: {start}",
+      "flightEnd": "Kết thúc: {end}",
+      "audience": "Ước tính phạm vi tiếp cận: {range}"
     },
     "searchPlaceholder": "Nhập tên thương hiệu đối thủ...",
     "selectRegion": "Chọn khu vực",
@@ -1408,8 +1417,10 @@
       "subtitle": "Lưu các lần tìm kiếm thường xuyên và làm mới nhanh chóng.",
       "brandLabel": "Thương hiệu",
       "brandPlaceholder": "Tên thương hiệu",
+      "keywordLabel": "Từ khóa lọc",
+      "keywordPlaceholder": "Không bắt buộc",
       "platformLabel": "Nền tảng",
-      "regionLabel": "Khu vực",
+      "regionLabel": "Quốc gia / Khu vực",
       "regionPlaceholder": "US",
       "limitLabel": "Giới hạn",
       "actions": {
@@ -2544,6 +2555,7 @@
     "trendingKeywords": {
       "title": "📈 Từ khóa thịnh hành",
       "search": {
+        "label": "Từ khóa",
         "placeholder": "Tìm kiếm xu hướng (vd., 'thiết bị công nghệ', 'thời trang')",
         "button": "Tìm kiếm"
       },

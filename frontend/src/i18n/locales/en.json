@@ -1137,13 +1137,16 @@
       "facebook": "Facebook & Instagram",
       "google": "Google & YouTube",
       "tiktok": "TikTok",
-      "bing": "Bing Ads"
+      "bing": "Bing Ads",
+      "linkedin": "LinkedIn Ads"
     },
     "searchCard": {
-      "keywordLabel": "Keyword / Brand",
-      "keywordPlaceholder": "e.g. VinFast electric car",
+      "keywordLabel": "Advertiser / Brand",
+      "keywordPlaceholder": "e.g. Google Cloud",
+      "keywordSecondaryLabel": "Keyword filter (optional)",
+      "keywordSecondaryPlaceholder": "e.g. AI agent",
       "engineLabel": "Search engine",
-      "locationLabel": "Ad location"
+      "locationLabel": "Country / Region"
     },
     "buttons": {
       "search": "Search",
@@ -1168,14 +1171,20 @@
       "tiktok": "TikTok content"
     },
     "messages": {
-      "keywordRequired": "Please enter a keyword or brand.",
+      "keywordRequired": "Please enter an advertiser or keyword.",
       "searchFailed": "Search failed",
       "selectCompetitor": "Select a competitor ad",
       "suggestionGenerated": "Suggestion generated",
       "actionFailed": "Action failed",
-      "watchlistKeywordRequired": "Please enter a keyword for the watchlist.",
+      "watchlistKeywordRequired": "Please enter an advertiser or keyword for the watchlist.",
       "watchlistAdded": "Added to watchlist",
       "watchlistRemoved": "Removed"
+    },
+    "cards": {
+      "flightRange": "Flight: {start} → {end}",
+      "flightStart": "Launch date: {start}",
+      "flightEnd": "Last shown: {end}",
+      "audience": "Estimated audience: {range}"
     },
     "searchPlaceholder": "Enter competitor brand name...",
     "selectRegion": "Select region",
@@ -1198,8 +1207,10 @@
       "subtitle": "Save frequent searches and refresh with one click.",
       "brandLabel": "Brand",
       "brandPlaceholder": "Brand name",
+      "keywordLabel": "Keyword filter",
+      "keywordPlaceholder": "Optional keyword",
       "platformLabel": "Platform",
-      "regionLabel": "Region",
+      "regionLabel": "Country / Region",
       "regionPlaceholder": "US",
       "limitLabel": "Limit",
       "actions": {
@@ -2465,6 +2476,7 @@
     "trendingKeywords": {
       "title": "📈 Trending Keywords",
       "search": {
+        "label": "Keyword",
         "placeholder": "Search trends (e.g., 'tech gadgets', 'fashion')",
         "button": "Search"
       },

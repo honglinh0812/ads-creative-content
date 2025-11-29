@@ -41,7 +41,9 @@ public class SearchApiService {
         try {
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("engine", engine);
-            params.add("q", query);
+            if (query != null && !query.isBlank()) {
+                params.add("q", query);
+            }
             params.add("api_key", apiKey);
             if (extraParams != null) {
                 extraParams.forEach((key, value) -> {

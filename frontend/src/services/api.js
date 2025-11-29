@@ -237,12 +237,27 @@ export default {
   // Competitor Insights endpoints (Phase 3)
   competitors: {
     // Search competitor ads by brand name
-    search: ({ query, engine = 'google', location = '', gl = '', hl = '', limit = 10 }) => apiClient.post('/competitors/search', {
+    search: ({
+      query = '',
+      keyword = '',
+      advertiser = '',
+      engine = 'linkedin_ad_library',
+      country = '',
+      timePeriod = '',
+      nextPageToken = '',
+      advertiserId = '',
+      sortBy = '',
+      limit = 10
+    }) => apiClient.post('/competitors/search', {
       query,
+      keyword,
+      advertiser,
       engine,
-      location,
-      gl,
-      hl,
+      country,
+      timePeriod,
+      nextPageToken,
+      advertiserId,
+      sortBy,
       limit
     }),
 
