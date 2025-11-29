@@ -1136,7 +1136,46 @@
     "platformLabels": {
       "facebook": "Facebook & Instagram",
       "google": "Google & YouTube",
-      "tiktok": "TikTok"
+      "tiktok": "TikTok",
+      "bing": "Bing Ads"
+    },
+    "searchCard": {
+      "keywordLabel": "Keyword / Brand",
+      "keywordPlaceholder": "e.g. VinFast electric car",
+      "engineLabel": "Search engine",
+      "locationLabel": "Ad location"
+    },
+    "buttons": {
+      "search": "Search",
+      "clearSelection": "Clear selection",
+      "watch": "Watch",
+      "open": "Open"
+    },
+    "locations": {
+      "global": "Global",
+      "us": "United States",
+      "gb": "United Kingdom",
+      "vn": "Vietnam",
+      "au": "Australia",
+      "de": "Germany",
+      "fr": "France",
+      "jp": "Japan",
+      "sg": "Singapore"
+    },
+    "sections": {
+      "ads": "Ad results",
+      "videos": "Video results",
+      "tiktok": "TikTok content"
+    },
+    "messages": {
+      "keywordRequired": "Please enter a keyword or brand.",
+      "searchFailed": "Search failed",
+      "selectCompetitor": "Select a competitor ad",
+      "suggestionGenerated": "Suggestion generated",
+      "actionFailed": "Action failed",
+      "watchlistKeywordRequired": "Please enter a keyword for the watchlist.",
+      "watchlistAdded": "Added to watchlist",
+      "watchlistRemoved": "Removed"
     },
     "searchPlaceholder": "Enter competitor brand name...",
     "selectRegion": "Select region",

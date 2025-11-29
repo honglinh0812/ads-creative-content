@@ -1,100 +1,108 @@
 <template>
   <div class="competitors-page">
-    <a-card title="Search Competitor Footprint" :bordered="false" class="search-card">
+    <a-card :title="$t('competitors.form.title')" :bordered="false" class="search-card">
       <a-form layout="vertical" @submit.prevent="handleSearch">
         <a-row :gutter="[12, 12]">
           <a-col :xs="24" :md="10">
-            <a-form-item label="Keyword / Brand">
+            <a-form-item :label="$t('competitors.searchCard.keywordLabel')">
               <a-input
                 v-model:value="searchForm.query"
-                placeholder="e.g. vinfast electric car"
+                :placeholder="$t('competitors.searchCard.keywordPlaceholder')"
                 size="large"
                 allow-clear
               />
             </a-form-item>
           </a-col>
-          <a-col :xs="24" :md="5">
-            <a-form-item label="Engine">
+          <a-col :xs="24" :md="7">
+            <a-form-item :label="$t('competitors.searchCard.engineLabel')">
               <a-select v-model:value="searchForm.engine" size="large">
-                <a-select-option value="google">Google Ads</a-select-option>
-                <a-select-option value="bing">Bing Ads</a-select-option>
+                <a-select-option value="google">{{ $t('competitors.platformLabels.google') }}</a-select-option>
+                <a-select-option value="bing">{{ $t('competitors.platformLabels.bing') }}</a-select-option>
                 <a-select-option value="youtube">YouTube</a-select-option>
                 <a-select-option value="tiktok">TikTok</a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :xs="24" :md="3">
-            <a-form-item label="Location">
-              <a-input v-model:value="searchForm.location" size="large" placeholder="United States" />
-            </a-form-item>
-          </a-col>
-          <a-col :xs="12" :md="3">
-            <a-form-item label="gl">
-              <a-input v-model:value="searchForm.gl" size="large" placeholder="US" />
-            </a-form-item>
-          </a-col>
-          <a-col :xs="12" :md="3">
-            <a-form-item label="hl">
-              <a-input v-model:value="searchForm.hl" size="large" placeholder="en" />
+          <a-col :xs="24" :md="7">
+            <a-form-item :label="$t('competitors.searchCard.locationLabel')">
+              <a-select v-model:value="searchForm.location" size="large">
+                <a-select-option
+                  v-for="option in locationOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </a-select-option>
+              </a-select>
             </a-form-item>
           </a-col>
         </a-row>
         <a-space>
           <a-button type="primary" size="large" :loading="isSearching" @click="handleSearch">
             <template #icon><SearchOutlined /></template>
-            Search
+            {{ $t('competitors.buttons.search') }}
           </a-button>
           <a-button size="large" @click="clearSelection" :disabled="!hasSelectedAds">
-            Clear Selection
+            {{ $t('competitors.buttons.clearSelection') }}
           </a-button>
         </a-space>
       </a-form>
     </a-card>
 
     <div class="watchlist-section">
-      <a-card title="Competitor Watchlist" :bordered="false">
+      <a-card :title="$t('competitors.watchlist.title')" :bordered="false">
+        <p class="watchlist-subtitle">{{ $t('competitors.watchlist.subtitle') }}</p>
         <a-form layout="vertical" class="watchlist-form" @submit.prevent="handleAddWatchlist">
           <a-row :gutter="[8, 8]" align="bottom">
             <a-col :xs="24" :md="10">
-              <a-form-item label="Query">
-                <a-input v-model:value="watchlistForm.query" allow-clear />
+              <a-form-item :label="$t('competitors.watchlist.brandLabel')">
+                <a-input
+                  v-model:value="watchlistForm.query"
+                  :placeholder="$t('competitors.watchlist.brandPlaceholder')"
+                  allow-clear
+                />
               </a-form-item>
             </a-col>
             <a-col :xs="12" :md="4">
-              <a-form-item label="Engine">
+              <a-form-item :label="$t('competitors.watchlist.platformLabel')">
                 <a-select v-model:value="watchlistForm.engine">
-                  <a-select-option value="google">Google</a-select-option>
+                  <a-select-option value="google">{{ $t('competitors.platformLabels.google') }}</a-select-option>
                   <a-select-option value="youtube">YouTube</a-select-option>
                   <a-select-option value="tiktok">TikTok</a-select-option>
-                  <a-select-option value="bing">Bing</a-select-option>
+                  <a-select-option value="bing">{{ $t('competitors.platformLabels.bing') }}</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
             <a-col :xs="12" :md="4">
-              <a-form-item label="Location">
-                <a-input v-model:value="watchlistForm.location" />
+              <a-form-item :label="$t('competitors.watchlist.regionLabel')">
+                <a-select v-model:value="watchlistForm.location">
+                  <a-select-option
+                    v-for="option in locationOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </a-select-option>
+                </a-select>
               </a-form-item>
             </a-col>
-            <a-col :xs="8" :md="2">
-              <a-form-item label="gl">
-                <a-input v-model:value="watchlistForm.gl" />
+            <a-col :xs="8" :md="3">
+              <a-form-item :label="$t('competitors.watchlist.limitLabel')">
+                <a-input-number v-model:value="watchlistForm.limit" :min="1" :max="50" style="width: 100%" />
               </a-form-item>
             </a-col>
-            <a-col :xs="8" :md="2">
-              <a-form-item label="hl">
-                <a-input v-model:value="watchlistForm.hl" />
-              </a-form-item>
-            </a-col>
-            <a-col :xs="8" :md="2">
+            <a-col :xs="8" :md="3">
               <a-form-item label=" ">
-                <a-button type="primary" block @click="handleAddWatchlist">Add</a-button>
+                <a-button type="primary" block @click="handleAddWatchlist">
+                  {{ $t('competitors.watchlist.actions.add') }}
+                </a-button>
               </a-form-item>
             </a-col>
           </a-row>
         </a-form>
         <div class="watchlist-actions">
           <a-button :disabled="!watchlist.length" @click="handleRefreshAllWatchlist">
-            Refresh all
+            {{ $t('competitors.watchlist.actions.refreshAll') }}
           </a-button>
         </div>
         <div v-if="watchlist.length" class="watchlist-grid">
@@ -102,27 +110,29 @@
             <div class="watchlist-card-header">
               <h4>{{ item.query }}</h4>
               <a-tag color="blue">{{ item.engine }}</a-tag>
-              <a-tag v-if="item.hasNew" color="green">New</a-tag>
+              <a-tag v-if="item.hasNew" color="green">{{ $t('competitors.watchlist.newLabel') }}</a-tag>
             </div>
             <p class="watchlist-meta">
-              {{ item.location || 'global' }} ·
-              {{ item.lastChecked ? formatWatchlistTimestamp(item.lastChecked) : 'Never checked' }}
+              {{ getLocationLabel(item) }} ·
+              {{ item.lastChecked ? formatWatchlistTimestamp(item.lastChecked) : $t('competitors.watchlist.neverChecked') }}
             </p>
-            <p class="watchlist-count">{{ item.lastResultCount ?? 0 }} results</p>
+            <p class="watchlist-count">
+              {{ $t('competitors.watchlist.adsTracked', { count: item.lastResultCount ?? 0 }) }}
+            </p>
             <p class="watchlist-hint" v-if="item.lastMessage">{{ item.lastMessage }}</p>
             <div class="watchlist-card-actions">
               <a-button type="link" size="small" :loading="isEntryRefreshing(item.id)" @click="handleRefreshWatchlist(item)">
-                Refresh
+                {{ $t('competitors.watchlist.actions.refresh') }}
               </a-button>
               <a-button type="link" size="small" danger @click="handleRemoveWatchlist(item)">
-                Remove
+                {{ $t('competitors.watchlist.actions.remove') }}
               </a-button>
             </div>
           </div>
         </div>
-        <a-empty v-else description="No brands in watchlist" />
+        <a-empty v-else :description="$t('competitors.watchlist.empty')" />
         <div v-if="watchlistActivity.length" class="watchlist-activity">
-          <p class="eyebrow">Recent activity</p>
+          <p class="eyebrow">{{ $t('competitors.watchlist.activityTitle') }}</p>
           <ul>
             <li v-for="activity in watchlistActivity" :key="activity.id">
               <strong>{{ activity.query }}</strong> · {{ activity.message }} ·
@@ -143,18 +153,20 @@
 
     <div v-if="isSearching" class="loading-section">
       <a-spin size="large" />
-      <p>Searching {{ searchForm.engine }}...</p>
+      <p>{{ $t('competitors.results.searching', { platform: searchForm.engine }) }}</p>
     </div>
 
     <div v-else>
       <div v-if="hasAds" class="results-section">
         <div class="section-header">
-          <h3>Ad Results</h3>
+          <h3>{{ $t('competitors.sections.ads') }}</h3>
           <a-space>
             <a-button type="primary" :disabled="!hasSelectedAds" @click="showComparisonModal = true">
-              Compare selected ({{ selectedCount }})
+              {{ $t('competitors.compareSelected', { count: selectedCount }) }}
             </a-button>
-            <a-button @click="clearSelection">Clear selection</a-button>
+            <a-button @click="clearSelection">
+              {{ $t('competitors.buttons.clearSelection') }}
+            </a-button>
           </a-space>
         </div>
         <a-row :gutter="[16, 16]">
@@ -183,7 +195,7 @@
 
       <div v-if="hasVideos" class="results-section">
         <div class="section-header">
-          <h3>Video Results</h3>
+          <h3>{{ $t('competitors.sections.videos') }}</h3>
         </div>
         <a-row :gutter="[16, 16]">
           <a-col
@@ -197,7 +209,7 @@
               <img :src="video.thumbnail" class="video-thumb" />
               <h4>{{ video.title }}</h4>
               <p class="hint">{{ video.channel }} · {{ video.views }}</p>
-              <a :href="video.link" target="_blank" rel="noopener">Watch</a>
+              <a :href="video.link" target="_blank" rel="noopener">{{ $t('competitors.buttons.watch') }}</a>
             </a-card>
           </a-col>
         </a-row>
@@ -205,7 +217,7 @@
 
       <div v-if="hasContent" class="results-section">
         <div class="section-header">
-          <h3>TikTok Content</h3>
+          <h3>{{ $t('competitors.sections.tiktok') }}</h3>
         </div>
         <a-row :gutter="[16, 16]">
           <a-col
@@ -219,76 +231,84 @@
               <img :src="item.thumbnail" class="video-thumb" />
               <h4>{{ item.title }}</h4>
               <p class="hint">{{ item.author }} · {{ item.stats }}</p>
-              <a :href="item.link" target="_blank" rel="noopener">Open</a>
+              <a :href="item.link" target="_blank" rel="noopener">{{ $t('competitors.buttons.open') }}</a>
             </a-card>
           </a-col>
         </a-row>
       </div>
 
-      <a-empty v-if="!hasAds && !hasVideos && !hasContent && !searchError" description="No data yet. Try another query." />
+      <a-empty
+        v-if="!hasAds && !hasVideos && !hasContent && !searchError"
+        :description="$t('competitors.noResults')"
+      />
     </div>
 
-    <!-- Comparison Modal -->
     <a-modal
       v-model:open="showComparisonModal"
-      title="AI-Powered Comparison"
+      :title="$t('competitors.modals.comparison.title')"
       width="80%"
       :footer="null"
     >
       <div class="comparison-content">
         <a-tabs v-model:activeKey="comparisonTab">
-          <a-tab-pane tab="Compare with my ad" key="compare">
+          <a-tab-pane key="compare" :tab="$t('competitors.modals.comparison.tabs.compare')">
             <a-form layout="vertical">
-              <a-form-item label="Your current ad">
-                <a-textarea v-model:value="myAdText" rows="4" />
+              <a-form-item :label="$t('competitors.modals.comparison.fields.myAd')">
+                <a-textarea v-model:value="myAdText" rows="4" :placeholder="$t('competitors.modals.comparison.fields.placeholderMyAd')" />
               </a-form-item>
-              <a-form-item label="Competitor ad">
+
+              <a-form-item :label="$t('competitors.modals.comparison.fields.selectAd')">
                 <a-select v-model:value="selectedCompetitorId">
                   <a-select-option v-for="ad in selectedCompetitorAds" :key="ad.id" :value="ad.id">
                     {{ ad.title }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
+
               <a-button
                 type="primary"
                 :loading="isAnalyzing"
                 :disabled="!selectedCompetitorId || !myAdText"
                 @click="generateComparison"
               >
-                Generate suggestion
+                {{ $t('competitors.modals.comparison.generate') }}
               </a-button>
             </a-form>
+
             <div v-if="aiSuggestion" class="ai-result-section">
               <pre>{{ aiSuggestion }}</pre>
             </div>
           </a-tab-pane>
-          <a-tab-pane tab="Identify patterns" key="patterns">
-            <p>Select at least two ads to identify patterns.</p>
+
+          <a-tab-pane key="patterns" :tab="$t('competitors.modals.comparison.tabs.patterns')">
+            <p>{{ $t('competitors.modals.comparison.patternsHint', { count: selectedCount }) }}</p>
             <a-button
               type="primary"
               :disabled="selectedCount < 2"
               :loading="isAnalyzing"
               @click="identifyPatterns"
             >
-              Analyze patterns
+              {{ $t('competitors.modals.comparison.patternsButton') }}
             </a-button>
             <div v-if="patterns" class="ai-result-section">
               <pre>{{ patterns }}</pre>
             </div>
+            <a-alert v-if="selectedCount < 2" type="info" :message="$t('competitors.modals.comparison.selectTwoNotice')" show-icon class="mt-4" />
           </a-tab-pane>
-          <a-tab-pane tab="A/B test ideas" key="abtest">
+
+          <a-tab-pane key="abtest" :tab="$t('competitors.modals.comparison.tabs.abtest')">
             <a-form layout="vertical">
-              <a-form-item label="Your current ad">
+              <a-form-item :label="$t('competitors.modals.abTest.myAd')">
                 <a-textarea v-model:value="myAdForABTest" rows="4" />
               </a-form-item>
-              <a-form-item label="Competitor reference">
+              <a-form-item :label="$t('competitors.modals.abTest.competitorAd')">
                 <a-select v-model:value="competitorForABTest">
                   <a-select-option v-for="ad in selectedCompetitorAds" :key="ad.id" :value="ad.id">
                     {{ ad.title }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
-              <a-form-item label="Variations">
+              <a-form-item :label="$t('competitors.modals.abTest.variationCount')">
                 <a-input-number v-model:value="abTestVariationCount" :min="1" :max="5" />
               </a-form-item>
               <a-button
@@ -297,13 +317,13 @@
                 :disabled="!myAdForABTest || !competitorForABTest"
                 @click="generateABTest"
               >
-                Generate variations
+                {{ $t('competitors.modals.abTest.button') }}
               </a-button>
             </a-form>
             <div v-if="abTestVariations.length" class="ai-result-section">
               <a-row :gutter="[16, 16]">
                 <a-col v-for="(variation, index) in abTestVariations" :key="index" :xs="24" :md="12">
-                  <a-card :title="`Variation ${index + 1}`">
+                  <a-card :title="$t('competitors.modals.abTest.variation', { index: index + 1 })">
                     <pre>{{ variation }}</pre>
                   </a-card>
                 </a-col>
@@ -323,6 +343,18 @@ import {
 } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 
+const LOCATION_PRESETS = [
+  { key: 'global', gl: '', hl: '', labelKey: 'competitors.locations.global', fallback: 'Global' },
+  { key: 'us', gl: 'us', hl: 'en', labelKey: 'competitors.locations.us', fallback: 'United States' },
+  { key: 'gb', gl: 'gb', hl: 'en', labelKey: 'competitors.locations.gb', fallback: 'United Kingdom' },
+  { key: 'vn', gl: 'vn', hl: 'vi', labelKey: 'competitors.locations.vn', fallback: 'Vietnam' },
+  { key: 'au', gl: 'au', hl: 'en', labelKey: 'competitors.locations.au', fallback: 'Australia' },
+  { key: 'de', gl: 'de', hl: 'de', labelKey: 'competitors.locations.de', fallback: 'Germany' },
+  { key: 'fr', gl: 'fr', hl: 'fr', labelKey: 'competitors.locations.fr', fallback: 'France' },
+  { key: 'jp', gl: 'jp', hl: 'ja', labelKey: 'competitors.locations.jp', fallback: 'Japan' },
+  { key: 'sg', gl: 'sg', hl: 'en', labelKey: 'competitors.locations.sg', fallback: 'Singapore' }
+]
+
 export default {
   name: 'CompetitorsView',
   components: {
@@ -333,17 +365,13 @@ export default {
       searchForm: {
         query: '',
         engine: 'google',
-        location: '',
-        gl: '',
-        hl: '',
+        location: 'global',
         limit: 10
       },
       watchlistForm: {
         query: '',
         engine: 'google',
-        location: '',
-        gl: '',
-        hl: '',
+        location: 'global',
         limit: 10
       },
       showComparisonModal: false,
@@ -378,7 +406,13 @@ export default {
       'hasSelectedAds',
       'selectedCount',
       'isWatchlistRefreshing'
-    ])
+    ]),
+    locationOptions() {
+      return LOCATION_PRESETS.map(preset => ({
+        value: preset.key,
+        label: this.$te(preset.labelKey) ? this.$t(preset.labelKey) : preset.fallback
+      }))
+    }
   },
   created() {
     this.initWatchlist()
@@ -397,15 +431,36 @@ export default {
       refreshAllWatchlistAction: 'refreshAllWatchlist',
       initWatchlist: 'initWatchlist'
     }),
+    resolveLocationPreset(key) {
+      return LOCATION_PRESETS.find(item => item.key === key) || LOCATION_PRESETS[0]
+    },
+    buildLocationPayload(key) {
+      const preset = this.resolveLocationPreset(key)
+      const label = this.$te(preset.labelKey) ? this.$t(preset.labelKey) : preset.fallback
+      return { ...preset, label }
+    },
+    getLocationLabel(item) {
+      const key = item.locationKey || item.location || 'global'
+      const preset = this.resolveLocationPreset(key)
+      return this.$te(preset.labelKey) ? this.$t(preset.labelKey) : (item.location || preset.fallback)
+    },
     async handleSearch() {
       if (!this.searchForm.query.trim()) {
-        message.warning('Please enter a keyword')
+        message.warning(this.$t('competitors.messages.keywordRequired'))
         return
       }
       try {
-        await this.searchAcrossWeb({ ...this.searchForm })
+        const preset = this.buildLocationPayload(this.searchForm.location)
+        await this.searchAcrossWeb({
+          query: this.searchForm.query.trim(),
+          engine: this.searchForm.engine,
+          location: preset.label,
+          gl: preset.gl,
+          hl: preset.hl,
+          limit: this.searchForm.limit
+        })
       } catch (error) {
-        message.error(error?.message || 'Search failed')
+        message.error(error?.message || this.$t('competitors.messages.searchFailed'))
       }
     },
     toggleAd(ad) {
@@ -419,7 +474,7 @@ export default {
     async generateComparison() {
       const competitor = this.selectedCompetitorAds.find(ad => ad.id === this.selectedCompetitorId)
       if (!competitor) {
-        message.warning('Select a competitor ad')
+        message.warning(this.$t('competitors.messages.selectCompetitor'))
         return
       }
       try {
@@ -427,9 +482,9 @@ export default {
           competitorAd: competitor,
           myAd: this.myAdText
         })
-        message.success('Suggestion generated')
+        message.success(this.$t('competitors.messages.suggestionGenerated'))
       } catch (error) {
-        message.error(error?.message || 'Unable to generate suggestion')
+        message.error(error?.message || this.$t('competitors.messages.actionFailed'))
       }
     },
     async identifyPatterns() {
@@ -438,13 +493,13 @@ export default {
           competitorAds: this.selectedCompetitorAds
         })
       } catch (error) {
-        message.error(error?.message || 'Unable to identify patterns')
+        message.error(error?.message || this.$t('competitors.messages.actionFailed'))
       }
     },
     async generateABTest() {
       const competitor = this.selectedCompetitorAds.find(ad => ad.id === this.competitorForABTest)
       if (!competitor) {
-        message.warning('Select a competitor ad')
+        message.warning(this.$t('competitors.messages.selectCompetitor'))
         return
       }
       try {
@@ -454,48 +509,42 @@ export default {
           variationCount: this.abTestVariationCount
         })
       } catch (error) {
-        message.error(error?.message || 'Unable to generate variations')
+        message.error(error?.message || this.$t('competitors.messages.actionFailed'))
       }
-    },
-    isAdSelected(ad) {
-      return this.selectedCompetitorAds.some(item => item.id === ad.id)
     },
     async handleAddWatchlist() {
       if (!this.watchlistForm.query.trim()) {
-        message.warning('Enter query')
+        message.warning(this.$t('competitors.messages.watchlistKeywordRequired'))
         return
       }
       try {
-        await this.addWatchlistItemAction({ ...this.watchlistForm })
+        const preset = this.buildLocationPayload(this.watchlistForm.location)
+        await this.addWatchlistItemAction({
+          query: this.watchlistForm.query.trim(),
+          engine: this.watchlistForm.engine,
+          locationKey: preset.key,
+          locationLabel: preset.label,
+          gl: preset.gl,
+          hl: preset.hl,
+          limit: this.watchlistForm.limit
+        })
         this.watchlistForm.query = ''
-        message.success('Added to watchlist')
+        message.success(this.$t('competitors.messages.watchlistAdded'))
       } catch (error) {
-        message.error(error?.message || 'Failed to add watchlist item')
+        message.error(error?.message || this.$t('competitors.messages.actionFailed'))
       }
     },
     handleRemoveWatchlist(item) {
       this.removeWatchlistItemAction(item.id)
-      message.info('Removed')
+      message.info(this.$t('competitors.messages.watchlistRemoved'))
     },
     handleRefreshWatchlist(item) {
       this.refreshWatchlistItemAction(item).catch(() => {
-        message.error('Failed to refresh item')
+        message.error(this.$t('competitors.messages.actionFailed'))
       })
     },
     handleRefreshAllWatchlist() {
       this.refreshAllWatchlistAction()
-    },
-    formatWatchlistTimestamp(value) {
-      if (!value) return ''
-      return new Intl.DateTimeFormat(undefined, {
-        day: '2-digit',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(new Date(value))
-    },
-    isEntryRefreshing(id) {
-      return this.isWatchlistRefreshing(id)
     }
   }
 }
@@ -552,6 +601,12 @@ export default {
 
 .watchlist-form {
   margin-bottom: 12px;
+}
+
+.watchlist-subtitle {
+  margin-top: -8px;
+  margin-bottom: 12px;
+  color: #6b7280;
 }
 
 .watchlist-actions {

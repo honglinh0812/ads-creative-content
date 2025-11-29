@@ -1346,7 +1346,46 @@
     "platformLabels": {
       "facebook": "Facebook & Instagram",
       "google": "Google & YouTube",
-      "tiktok": "TikTok"
+      "tiktok": "TikTok",
+      "bing": "Bing Ads"
+    },
+    "searchCard": {
+      "keywordLabel": "Từ khóa / Thương hiệu",
+      "keywordPlaceholder": "Ví dụ: VinFast xe điện",
+      "engineLabel": "Công cụ tìm kiếm",
+      "locationLabel": "Khu vực quảng cáo"
+    },
+    "buttons": {
+      "search": "Tìm kiếm",
+      "clearSelection": "Xóa lựa chọn",
+      "watch": "Xem",
+      "open": "Mở"
+    },
+    "locations": {
+      "global": "Toàn cầu",
+      "us": "Hoa Kỳ",
+      "gb": "Vương quốc Anh",
+      "vn": "Việt Nam",
+      "au": "Úc",
+      "de": "Đức",
+      "fr": "Pháp",
+      "jp": "Nhật Bản",
+      "sg": "Singapore"
+    },
+    "sections": {
+      "ads": "Kết quả quảng cáo",
+      "videos": "Video liên quan",
+      "tiktok": "Nội dung TikTok"
+    },
+    "messages": {
+      "keywordRequired": "Vui lòng nhập từ khóa hoặc thương hiệu.",
+      "searchFailed": "Không tìm được dữ liệu",
+      "selectCompetitor": "Vui lòng chọn quảng cáo đối thủ",
+      "suggestionGenerated": "Đã tạo gợi ý",
+      "actionFailed": "Thao tác thất bại",
+      "watchlistKeywordRequired": "Vui lòng nhập thương hiệu để theo dõi.",
+      "watchlistAdded": "Đã thêm vào danh sách theo dõi",
+      "watchlistRemoved": "Đã xóa"
     },
     "searchPlaceholder": "Nhập tên thương hiệu đối thủ...",
     "selectRegion": "Chọn khu vực",

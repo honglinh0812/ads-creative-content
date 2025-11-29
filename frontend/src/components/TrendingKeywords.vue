@@ -13,7 +13,7 @@
       </div>
     </template>
     <a-row :gutter="16" class="search-row">
-      <a-col :span="12">
+      <a-col :span="10">
         <a-form-item
           :validate-status="validationStatus.searchQuery"
           :help="validationMessages.searchQuery"
@@ -32,7 +32,7 @@
           </a-input-search>
         </a-form-item>
       </a-col>
-      <a-col :span="6">
+      <a-col :span="5">
         <a-form-item :label="$t('components.trendingKeywords.location.label')">
           <a-select
             v-model:value="selectedLocation"
@@ -52,7 +52,7 @@
           </a-select>
         </a-form-item>
       </a-col>
-      <a-col :span="6">
+      <a-col :span="5">
         <a-form-item :label="$t('components.trendingKeywords.language.label')">
           <a-select
             v-model:value="selectedLanguage"
@@ -72,9 +72,7 @@
           </a-select>
         </a-form-item>
       </a-col>
-    </a-row>
-    <a-row :gutter="16" class="search-row">
-      <a-col :span="6">
+      <a-col :span="4">
         <a-form-item :label="$t('components.trendingKeywords.limit.label')">
           <a-input-number
             v-model:value="keywordLimit"
