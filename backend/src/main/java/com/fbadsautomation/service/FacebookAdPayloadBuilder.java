@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 @Component
@@ -70,7 +71,7 @@ public class FacebookAdPayloadBuilder {
                 .publisherPlatforms("facebook,instagram")
                 .facebookPositions("feed")
                 .instagramPositions("stream")
-                .optimizationGoal(mapOptimizationGoal(campaign.getObjective()))
+                .optimizationGoal(resolveOptimizationGoal(campaign))
                 .billingEvent("IMPRESSIONS")
                 .build())
             .creative(FacebookAdPayload.CreativePayload.builder()
@@ -130,6 +131,13 @@ public class FacebookAdPayloadBuilder {
             case BRAND_AWARENESS -> "BRAND_AWARENESS";
             default -> "LINK_CLICKS";
         };
+    }
+
+    private String resolveOptimizationGoal(Campaign campaign) {
+        if (campaign != null && StringUtils.hasText(campaign.getPerformanceGoal())) {
+            return campaign.getPerformanceGoal().trim().toUpperCase(Locale.ROOT);
+        }
+        return mapOptimizationGoal(campaign != null ? campaign.getObjective() : null);
     }
 
     private String mapCreativeType(AdType adType, String imageUrl, String videoUrl) {

@@ -13,6 +13,7 @@ public class CampaignDTO {
     private Double totalBudget;
     private String targetAudience;
     private Double bidCap;
+    private String performanceGoal;
     private LocalDate startDate;
     private LocalDate endDate;
     private Integer totalAds;           // Total number of ads in this campaign
@@ -24,7 +25,7 @@ public class CampaignDTO {
 
     public CampaignDTO(Long id, String name, String status, String objective, String budgetType,
                        Double dailyBudget, Double totalBudget, String targetAudience, Double bidCap,
-                       LocalDate startDate, LocalDate endDate) {
+                       String performanceGoal, LocalDate startDate, LocalDate endDate) {
         this.id = id;
         this.name = name;
         this.status = status;
@@ -34,13 +35,14 @@ public class CampaignDTO {
         this.totalBudget = totalBudget;
         this.targetAudience = targetAudience;
         this.bidCap = bidCap;
+        this.performanceGoal = performanceGoal;
         this.startDate = startDate;
         this.endDate = endDate;
     }
 
     public CampaignDTO(Long id, String name, String status, String objective, String budgetType,
                        Double dailyBudget, Double totalBudget, String targetAudience, Double bidCap,
-                       LocalDate startDate, LocalDate endDate, Integer totalAds, LocalDateTime createdDate) {
+                       String performanceGoal, LocalDate startDate, LocalDate endDate, Integer totalAds, LocalDateTime createdDate) {
         this.id = id;
         this.name = name;
         this.status = status;
@@ -50,6 +52,7 @@ public class CampaignDTO {
         this.totalBudget = totalBudget;
         this.targetAudience = targetAudience;
         this.bidCap = bidCap;
+        this.performanceGoal = performanceGoal;
         this.startDate = startDate;
         this.endDate = endDate;
         this.totalAds = totalAds;
@@ -82,6 +85,8 @@ public class CampaignDTO {
     public void setTargetAudience(String targetAudience) { this.targetAudience = targetAudience; }
     public Double getBidCap() { return bidCap; }
     public void setBidCap(Double bidCap) { this.bidCap = bidCap; }
+    public String getPerformanceGoal() { return performanceGoal; }
+    public void setPerformanceGoal(String performanceGoal) { this.performanceGoal = performanceGoal; }
     
     public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }

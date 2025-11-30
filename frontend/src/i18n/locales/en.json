@@ -472,7 +472,8 @@
           "totalBudget": "Total Budget",
           "bidCap": "Bid Cap",
           "startDate": "Start Date & Time",
-          "endDate": "End Date & Time"
+          "endDate": "End Date & Time",
+          "performanceGoal": "Performance Goal"
         },
         "placeholder": {
           "campaignName": "Enter a memorable campaign name...",
@@ -482,10 +483,12 @@
           "totalBudget": "Enter total budget...",
           "bidCap": "Optional: limit your bid per auction...",
           "startDate": "Select start date and time...",
-          "endDate": "Select end date and time..."
+          "endDate": "Select end date and time...",
+          "performanceGoal": "Select a performance goal..."
         },
         "helper": {
-          "bidCap": "Facebook never bids more than this amount per auction. Leave empty to let the system manage bids automatically."
+          "bidCap": "Facebook never bids more than this amount per auction. Leave empty to let the system manage bids automatically.",
+          "performanceGoal": "Choose how Facebook should optimize delivery for this campaign."
         },
         "budgetType": {
           "daily": "Daily Budget",
@@ -499,7 +502,16 @@
           "create": "Create Campaign"
         },
         "validation": {
-          "bidCapPositive": "Bid cap must be greater than 0"
+          "bidCapPositive": "Bid cap must be greater than 0",
+          "performanceGoalRequired": "Performance goal is required"
+        },
+        "performanceGoal": {
+          "options": {
+            "LINK_CLICKS": "Link Clicks (recommended)",
+            "LANDING_PAGE_VIEWS": "Landing Page Views",
+            "LEAD_GENERATION": "Leads",
+            "OFFSITE_CONVERSIONS": "Website Conversions"
+          }
         }
       },
       "help": {
@@ -536,7 +548,6 @@
         "reset": "Reset",
         "viewDetails": "View Details",
         "edit": "Edit Campaign",
-        "cannotEdit": "Cannot edit exported campaign",
         "viewAds": "View Ads",
         "delete": "Delete Campaign",
         "confirmDelete": "Are you sure you want to delete this campaign?"
@@ -1171,14 +1182,34 @@
       "tiktok": "TikTok content"
     },
     "messages": {
-      "keywordRequired": "Please enter an advertiser or keyword.",
-      "searchFailed": "Search failed",
-      "selectCompetitor": "Select a competitor ad",
-      "suggestionGenerated": "Suggestion generated",
-      "actionFailed": "Action failed",
-      "watchlistKeywordRequired": "Please enter an advertiser or keyword for the watchlist.",
+      "enterBrand": "Please enter a brand name",
+      "searchSuccess": "Found {count} ads from {platform}",
+      "iframeMode": "Viewing {platform} ads in embedded mode",
+      "searchEmpty": "No ads found for this search",
+      "searchFailed": "Failed to search competitor ads",
+      "analysisComplete": "Ad analysis complete",
+      "analysisFailed": "Failed to analyze ad",
+      "selectCompetitor": "Please select a competitor ad",
+      "suggestionSuccess": "AI suggestion generated successfully",
+      "suggestionFailed": "Failed to generate suggestion",
+      "patternsNeedSelection": "Select at least 2 ads to identify patterns",
+      "patternsSuccess": "Patterns identified successfully",
+      "patternsError": "Failed to identify patterns",
+      "abTestSuccess": "A/B test variations generated successfully",
+      "abTestError": "Failed to generate A/B test variations",
+      "updatedSearch": "Updated search to: {query}",
+      "iframeUnavailable": "Iframe URL not available yet",
+      "retryDataMode": "Retrying search with structured data mode...",
       "watchlistAdded": "Added to watchlist",
-      "watchlistRemoved": "Removed"
+      "watchlistAddError": "Failed to add watchlist item",
+      "watchlistRefreshItem": "Updated {brand}",
+      "watchlistRefreshItemError": "Failed to refresh item",
+      "watchlistRefreshed": "Watchlist refreshed",
+      "watchlistRefreshAllError": "Unable to refresh all watchlist items",
+      "watchlistRemoved": "Removed {brand}",
+      "exportNoResults": "No results to export",
+      "exportSuccess": "Export completed",
+      "exportError": "Failed to export results"
     },
     "cards": {
       "flightRange": "Flight: {start} → {end}",
@@ -1374,36 +1405,6 @@
         "message": "Are you sure you want to auto-upload {count} selected ad(s) to Facebook Ads Manager?",
         "note": "This action will immediately start the upload and show instructions once complete."
       }
-    },
-    "messages": {
-      "enterBrand": "Please enter a brand name",
-      "searchSuccess": "Found {count} ads from {platform}",
-      "iframeMode": "Viewing {platform} ads in embedded mode",
-      "searchEmpty": "No ads found for this search",
-      "searchFailed": "Failed to search competitor ads",
-      "analysisComplete": "Ad analysis complete",
-      "analysisFailed": "Failed to analyze ad",
-      "selectCompetitor": "Please select a competitor ad",
-      "suggestionSuccess": "AI suggestion generated successfully",
-      "suggestionFailed": "Failed to generate suggestion",
-      "patternsNeedSelection": "Select at least 2 ads to identify patterns",
-      "patternsSuccess": "Patterns identified successfully",
-      "patternsError": "Failed to identify patterns",
-      "abTestSuccess": "A/B test variations generated successfully",
-      "abTestError": "Failed to generate A/B test variations",
-      "updatedSearch": "Updated search to: {query}",
-      "iframeUnavailable": "Iframe URL not available yet",
-      "retryDataMode": "Retrying search with structured data mode...",
-      "watchlistAdded": "Added to watchlist",
-      "watchlistAddError": "Failed to add watchlist item",
-      "watchlistRefreshItem": "Updated {brand}",
-      "watchlistRefreshItemError": "Failed to refresh item",
-      "watchlistRefreshed": "Watchlist refreshed",
-      "watchlistRefreshAllError": "Unable to refresh all watchlist items",
-      "watchlistRemoved": "Removed {brand}",
-      "exportNoResults": "No results to export",
-      "exportSuccess": "Export completed",
-      "exportError": "Failed to export results"
     }
   },
   "adCreate": {

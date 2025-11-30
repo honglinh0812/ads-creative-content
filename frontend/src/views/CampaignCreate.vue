@@ -71,6 +71,31 @@
             </a-form-item>
           </a-col>
 
+          <!-- Performance Goal -->
+          <a-col :xs="24" :md="12">
+            <a-form-item
+              :label="$t('campaign.create.form.label.performanceGoal')"
+              :validate-status="errors.performanceGoal ? 'error' : ''"
+              :help="errors.performanceGoal || $t('campaign.create.form.helper.performanceGoal')"
+              required
+            >
+              <a-select
+                v-model:value="form.performanceGoal"
+                size="large"
+                :placeholder="$t('campaign.create.form.placeholder.performanceGoal')"
+                :disabled="!availablePerformanceGoals.length"
+              >
+                <a-select-option
+                  v-for="goal in availablePerformanceGoals"
+                  :key="goal.value"
+                  :value="goal.value"
+                >
+                  {{ goal.label }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+
           <!-- Budget Type -->
           <a-col :xs="24" :md="12">
             <a-form-item
@@ -315,10 +340,11 @@ export default {
       
       form: {
         name: '',
-        objective: '',
+        objective: 'TRAFFIC',
         budgetType: 'DAILY',
         dailyBudget: null,
         totalBudget: null,
+        performanceGoal: 'LINK_CLICKS',
         bidCap: null,
         // Issue #9: Target audience at campaign level
         audienceSegment: {
@@ -365,17 +391,29 @@ export default {
 
     objectiveOptions() {
       return [
-        { value: 'BRAND_AWARENESS', label: this.$t('campaign.objective.brandAwareness') },
-        { value: 'REACH', label: this.$t('campaign.objective.reach') },
         { value: 'TRAFFIC', label: this.$t('campaign.objective.traffic') },
-        { value: 'ENGAGEMENT', label: this.$t('campaign.objective.engagement') },
-        { value: 'APP_INSTALLS', label: this.$t('campaign.objective.appInstalls') },
-        { value: 'VIDEO_VIEWS', label: this.$t('campaign.objective.videoViews') },
         { value: 'LEAD_GENERATION', label: this.$t('campaign.objective.leadGeneration') },
-        { value: 'CONVERSIONS', label: this.$t('campaign.objective.conversions') },
-        { value: 'CATALOG_SALES', label: this.$t('campaign.objective.catalogSales') },
-        { value: 'STORE_TRAFFIC', label: this.$t('campaign.objective.storeTraffic') }
+        { value: 'CONVERSIONS', label: this.$t('campaign.objective.conversions') }
       ]
+    },
+
+    performanceGoalOptions() {
+      return {
+        TRAFFIC: [
+          { value: 'LINK_CLICKS', label: this.$t('campaign.create.form.performanceGoal.options.linkClicks') },
+          { value: 'LANDING_PAGE_VIEWS', label: this.$t('campaign.create.form.performanceGoal.options.landingPageViews') }
+        ],
+        LEAD_GENERATION: [
+          { value: 'LEAD_GENERATION', label: this.$t('campaign.create.form.performanceGoal.options.leads') }
+        ],
+        CONVERSIONS: [
+          { value: 'OFFSITE_CONVERSIONS', label: this.$t('campaign.create.form.performanceGoal.options.offsite') }
+        ]
+      }
+    },
+
+    availablePerformanceGoals() {
+      return this.performanceGoalOptions[this.form.objective] || []
     },
 
     budgetTypeOptions() {
@@ -416,10 +454,31 @@ export default {
     console.log('Form data:', this.form)
     console.log('API object:', api)
   },
+
+  watch: {
+    'form.objective': {
+      handler() {
+        this.syncPerformanceGoal()
+      },
+      immediate: true
+    }
+  },
   
   methods: {
     ...mapActions('auth', ['logout']),
     ...mapActions('toast', ['showToast']),
+
+    syncPerformanceGoal() {
+      const options = this.availablePerformanceGoals
+      if (!options.length) {
+        this.form.performanceGoal = ''
+        return
+      }
+      const exists = options.some(option => option.value === this.form.performanceGoal)
+      if (!exists) {
+        this.form.performanceGoal = options[0].value
+      }
+    },
 
     formatCurrencyInput(value) {
       if (value === undefined || value === null || value === '') {
@@ -510,6 +569,10 @@ export default {
         if (!this.form.totalBudget || this.form.totalBudget < this.minBudgetAmount) {
           this.errors.totalBudget = `Total budget must be at least ${this.minBudgetLabel}`
         }
+      }
+
+      if (!this.form.performanceGoal) {
+        this.errors.performanceGoal = this.$t('campaign.create.form.validation.performanceGoalRequired')
       }
 
       if (this.form.bidCap !== null && this.form.bidCap !== undefined && this.form.bidCap !== '') {

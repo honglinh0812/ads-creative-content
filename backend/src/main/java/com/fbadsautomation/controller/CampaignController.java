@@ -54,6 +54,7 @@ public class CampaignController {
             campaign.getTotalBudget(),
             campaign.getTargetAudience(),
             campaign.getBidCap(),
+            campaign.getPerformanceGoal(),
             campaign.getStartDate(),
             campaign.getEndDate(),
             totalAds,

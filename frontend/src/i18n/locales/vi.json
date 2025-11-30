@@ -472,7 +472,8 @@
           "totalBudget": "Tổng ngân sách",
           "startDate": "Ngày & Giờ bắt đầu",
           "endDate": "Ngày & Giờ kết thúc",
-          "bidCap": "Giới hạn bid"
+          "bidCap": "Giới hạn bid",
+          "performanceGoal": "Mục tiêu tối ưu"
         },
         "placeholder": {
           "campaignName": "Nhập tên chiến dịch đáng nhớ...",
@@ -482,7 +483,8 @@
           "totalBudget": "Nhập tổng ngân sách...",
           "startDate": "Chọn ngày và giờ bắt đầu...",
           "endDate": "Chọn ngày và giờ kết thúc...",
-          "bidCap": "Tùy chọn: giới hạn số tiền Facebook có thể bid mỗi lần..."
+          "bidCap": "Tùy chọn: giới hạn số tiền Facebook có thể bid mỗi lần...",
+          "performanceGoal": "Chọn mục tiêu Facebook cần tối ưu..."
         },
         "budgetType": {
           "daily": "Ngân sách hàng ngày",
@@ -496,10 +498,20 @@
           "create": "Tạo chiến dịch"
         },
         "helper": {
-          "bidCap": "Facebook sẽ không bid cao hơn mức này trong mỗi phiên đấu giá. Bỏ trống nếu muốn hệ thống tự tối ưu."
+          "bidCap": "Facebook sẽ không bid cao hơn mức này trong mỗi phiên đấu giá. Bỏ trống nếu muốn hệ thống tự tối ưu.",
+          "performanceGoal": "Chọn cách Facebook tối ưu phân phối cho chiến dịch."
         },
         "validation": {
-          "bidCapPositive": "Giới hạn bid phải lớn hơn 0"
+          "bidCapPositive": "Giới hạn bid phải lớn hơn 0",
+          "performanceGoalRequired": "Vui lòng chọn mục tiêu tối ưu"
+        },
+        "performanceGoal": {
+          "options": {
+            "LINK_CLICKS": "Nhấp vào liên kết (khuyến nghị)",
+            "LANDING_PAGE_VIEWS": "Lượt xem trang đích",
+            "LEAD_GENERATION": "Khách hàng tiềm năng",
+            "OFFSITE_CONVERSIONS": "Chuyển đổi trên website"
+          }
         }
       },
       "help": {
@@ -536,7 +548,6 @@
         "reset": "Đặt lại",
         "viewDetails": "Xem chi tiết",
         "edit": "Chỉnh sửa chiến dịch",
-        "cannotEdit": "Không thể chỉnh sửa chiến dịch đã xuất",
         "viewAds": "Xem quảng cáo",
         "delete": "Xóa chiến dịch",
         "confirmDelete": "Bạn có chắc chắn muốn xóa chiến dịch này?"
@@ -1381,14 +1392,34 @@
       "tiktok": "Nội dung TikTok"
     },
     "messages": {
-      "keywordRequired": "Vui lòng nhập nhà quảng cáo hoặc từ khóa.",
-      "searchFailed": "Không tìm được dữ liệu",
+      "enterBrand": "Vui lòng nhập tên thương hiệu",
+      "searchSuccess": "Đã tìm thấy {count} quảng cáo từ {platform}",
+      "iframeMode": "Đang xem quảng cáo {platform} ở chế độ nhúng",
+      "searchEmpty": "Không tìm thấy quảng cáo cho lần tìm kiếm này",
+      "searchFailed": "Không thể tìm quảng cáo đối thủ",
+      "analysisComplete": "Đã phân tích quảng cáo",
+      "analysisFailed": "Không thể phân tích quảng cáo",
       "selectCompetitor": "Vui lòng chọn quảng cáo đối thủ",
-      "suggestionGenerated": "Đã tạo gợi ý",
-      "actionFailed": "Thao tác thất bại",
-      "watchlistKeywordRequired": "Vui lòng nhập nhà quảng cáo hoặc từ khóa để theo dõi.",
-      "watchlistAdded": "Đã thêm vào danh sách theo dõi",
-      "watchlistRemoved": "Đã xóa"
+      "suggestionSuccess": "Đã tạo gợi ý AI",
+      "suggestionFailed": "Không thể tạo gợi ý AI",
+      "patternsNeedSelection": "Chọn ít nhất 2 quảng cáo để phân tích mẫu",
+      "patternsSuccess": "Đã phân tích mẫu thành công",
+      "patternsError": "Không thể phân tích mẫu",
+      "abTestSuccess": "Đã tạo biến thể A/B",
+      "abTestError": "Không thể tạo biến thể A/B",
+      "updatedSearch": "Đã cập nhật tìm kiếm: {query}",
+      "iframeUnavailable": "Chưa có URL iframe",
+      "retryDataMode": "Đang thử lại bằng chế độ dữ liệu cấu trúc...",
+      "watchlistAdded": "Đã thêm vào watchlist",
+      "watchlistAddError": "Không thể thêm watchlist",
+      "watchlistRefreshItem": "Đã cập nhật {brand}",
+      "watchlistRefreshItemError": "Không thể làm mới mục này",
+      "watchlistRefreshed": "Đã làm mới watchlist",
+      "watchlistRefreshAllError": "Không thể làm mới toàn bộ watchlist",
+      "watchlistRemoved": "Đã xóa {brand}",
+      "exportNoResults": "Không có kết quả để xuất",
+      "exportSuccess": "Xuất dữ liệu thành công",
+      "exportError": "Không thể xuất kết quả"
     },
     "cards": {
       "flightRange": "Thời gian chạy: {start} → {end}",
@@ -1579,36 +1610,6 @@
           "invalidLabel": "Không hợp lệ"
         }
       }
-    },
-    "messages": {
-      "enterBrand": "Vui lòng nhập tên thương hiệu",
-      "searchSuccess": "Đã tìm thấy {count} quảng cáo từ {platform}",
-      "iframeMode": "Đang xem quảng cáo {platform} ở chế độ nhúng",
-      "searchEmpty": "Không tìm thấy quảng cáo cho lần tìm kiếm này",
-      "searchFailed": "Không thể tìm quảng cáo đối thủ",
-      "analysisComplete": "Đã phân tích quảng cáo",
-      "analysisFailed": "Không thể phân tích quảng cáo",
-      "selectCompetitor": "Vui lòng chọn quảng cáo đối thủ",
-      "suggestionSuccess": "Đã tạo gợi ý AI",
-      "suggestionFailed": "Không thể tạo gợi ý AI",
-      "patternsNeedSelection": "Chọn ít nhất 2 quảng cáo để phân tích mẫu",
-      "patternsSuccess": "Đã phân tích mẫu thành công",
-      "patternsError": "Không thể phân tích mẫu",
-      "abTestSuccess": "Đã tạo biến thể A/B",
-      "abTestError": "Không thể tạo biến thể A/B",
-      "updatedSearch": "Đã cập nhật tìm kiếm: {query}",
-      "iframeUnavailable": "Chưa có URL iframe",
-      "retryDataMode": "Đang thử lại bằng chế độ dữ liệu cấu trúc...",
-      "watchlistAdded": "Đã thêm vào watchlist",
-      "watchlistAddError": "Không thể thêm watchlist",
-      "watchlistRefreshItem": "Đã cập nhật {brand}",
-      "watchlistRefreshItemError": "Không thể làm mới mục này",
-      "watchlistRefreshed": "Đã làm mới watchlist",
-      "watchlistRefreshAllError": "Không thể làm mới toàn bộ watchlist",
-      "watchlistRemoved": "Đã xóa {brand}",
-      "exportNoResults": "Không có kết quả để xuất",
-      "exportSuccess": "Xuất dữ liệu thành công",
-      "exportError": "Không thể xuất kết quả"
     }
   },
   "adCreate": {

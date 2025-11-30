@@ -57,6 +57,9 @@ public class Campaign {
 
     @Column(name = "bid_cap")
     private Double bidCap;
+
+    @Column(name = "performance_goal")
+    private String performanceGoal;
     
     @Column(name = "start_date")
     private LocalDate startDate;
@@ -109,6 +112,7 @@ public class Campaign {
     public Double getTotalBudget() { return totalBudget; }
     public String getTargetAudience() { return targetAudience; }
     public Double getBidCap() { return bidCap; }
+    public String getPerformanceGoal() { return performanceGoal; }
     public LocalDate getStartDate() { return startDate; }
     public LocalDate getEndDate() { return endDate; }
     public User getUser() { return user; }
@@ -127,6 +131,7 @@ public class Campaign {
     public void setTotalBudget(Double totalBudget) { this.totalBudget = totalBudget; }
     public void setTargetAudience(String targetAudience) { this.targetAudience = targetAudience; }
     public void setBidCap(Double bidCap) { this.bidCap = bidCap; }
+    public void setPerformanceGoal(String performanceGoal) { this.performanceGoal = performanceGoal; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
     public void setUser(User user) { this.user = user; }
@@ -141,7 +146,7 @@ public class Campaign {
 
     public Campaign(Long id, String name, CampaignStatus status, CampaignObjective objective, 
                    Double budget, BudgetType budgetType, Double dailyBudget, Double totalBudget,
-                   String targetAudience, Double bidCap, LocalDate startDate, LocalDate endDate, User user,
+                   String targetAudience, Double bidCap, String performanceGoal, LocalDate startDate, LocalDate endDate, User user,
                    Set<Ad> ads, LocalDateTime createdDate, LocalDateTime updatedAt) {
         this.id = id;
         this.name = name;
@@ -153,6 +158,7 @@ public class Campaign {
         this.totalBudget = totalBudget;
         this.targetAudience = targetAudience;
         this.bidCap = bidCap;
+        this.performanceGoal = performanceGoal;
         this.startDate = startDate;
         this.endDate = endDate;
         this.user = user;
@@ -177,6 +183,7 @@ public class Campaign {
         private Double totalBudget;
         private String targetAudience;
         private Double bidCap;
+        private String performanceGoal;
         private LocalDate startDate;
         private LocalDate endDate;
         private User user;
@@ -194,6 +201,7 @@ public class Campaign {
         public CampaignBuilder totalBudget(Double totalBudget) { this.totalBudget = totalBudget; return this; }
         public CampaignBuilder targetAudience(String targetAudience) { this.targetAudience = targetAudience; return this; }
         public CampaignBuilder bidCap(Double bidCap) { this.bidCap = bidCap; return this; }
+        public CampaignBuilder performanceGoal(String performanceGoal) { this.performanceGoal = performanceGoal; return this; }
         public CampaignBuilder startDate(LocalDate startDate) { this.startDate = startDate; return this; }
         public CampaignBuilder endDate(LocalDate endDate) { this.endDate = endDate; return this; }
         public CampaignBuilder user(User user) { this.user = user; return this; }
@@ -203,7 +211,7 @@ public class Campaign {
 
         public Campaign build() {
             return new Campaign(id, name, status, objective, budget, budgetType, dailyBudget, 
-                              totalBudget, targetAudience, bidCap, startDate, endDate, user, ads, 
+                              totalBudget, targetAudience, bidCap, performanceGoal, startDate, endDate, user, ads, 
                               createdDate, updatedAt);
         }
     }

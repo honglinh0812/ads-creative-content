@@ -16,7 +16,7 @@ public class CampaignCreateRequest {
 
     @NotBlank(message = "Campaign objective is required")
     @Pattern(
-        regexp = "^(BRAND_AWARENESS|REACH|TRAFFIC|ENGAGEMENT|APP_INSTALLS|VIDEO_VIEWS|LEAD_GENERATION|CONVERSIONS|CATALOG_SALES|STORE_TRAFFIC)$",
+        regexp = "^(TRAFFIC|LEAD_GENERATION|CONVERSIONS)$",
         message = "Invalid campaign objective"
     )
     private String objective;
@@ -38,6 +38,12 @@ public class CampaignCreateRequest {
 
     @DecimalMin(value = "0.0", inclusive = false, message = "Bid cap must be greater than 0")
     private Double bidCap;
+
+    @Pattern(
+        regexp = "^(LINK_CLICKS|LANDING_PAGE_VIEWS|LEAD_GENERATION|OFFSITE_CONVERSIONS)?$",
+        message = "Invalid performance goal"
+    )
+    private String performanceGoal;
 
     @Future(message = "Start date must be in the future")
     private LocalDate startDate;
@@ -63,7 +69,7 @@ public class CampaignCreateRequest {
 
     public CampaignCreateRequest(String name, String objective, String budgetType, 
                                Double dailyBudget, Double totalBudget, String targetAudience,
-                               Double bidCap,
+                               Double bidCap, String performanceGoal,
                                LocalDate startDate, LocalDate endDate) {
         this.name = name;
         this.objective = objective;
@@ -72,6 +78,7 @@ public class CampaignCreateRequest {
         this.totalBudget = totalBudget;
         this.targetAudience = targetAudience;
         this.bidCap = bidCap;
+        this.performanceGoal = performanceGoal;
         this.startDate = startDate;
         this.endDate = endDate;
     }
@@ -102,6 +109,9 @@ public class CampaignCreateRequest {
     }
     public Double getBidCap() { return bidCap; }
     public void setBidCap(Double bidCap) { this.bidCap = bidCap;
+    }
+    public String getPerformanceGoal() { return performanceGoal; }
+    public void setPerformanceGoal(String performanceGoal) { this.performanceGoal = performanceGoal;
     }
 
     public LocalDate getStartDate() { return startDate; }

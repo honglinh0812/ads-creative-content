@@ -166,7 +166,7 @@ public class FacebookMarketingApiClient {
             payload.put("end_time", formatDateTime(campaign.getEndDate()));
         }
         payload.put("billing_event", "IMPRESSIONS");
-        payload.put("optimization_goal", mapOptimizationGoal(campaign.getObjective()));
+        payload.put("optimization_goal", resolveOptimizationGoal(campaign));
         payload.put("status", "PAUSED");
         payload.put("promoted_object", buildPromotedObject(ad));
         payload.put("targeting", buildTargeting(campaign));
@@ -309,18 +309,8 @@ public class FacebookMarketingApiClient {
     private String mapOptimizationGoal(Campaign.CampaignObjective objective) {
         if (objective == null) return "LINK_CLICKS";
         switch (objective) {
-            case BRAND_AWARENESS:
-            case REACH:
-            case STORE_TRAFFIC:
-                return "REACH";
             case TRAFFIC:
                 return "LINK_CLICKS";
-            case ENGAGEMENT:
-                return "POST_ENGAGEMENT";
-            case VIDEO_VIEWS:
-                return "THRUPLAY";
-            case APP_INSTALLS:
-                return "APP_INSTALLS";
             case LEAD_GENERATION:
                 return "LEAD_GENERATION";
             case CONVERSIONS:
@@ -329,6 +319,13 @@ public class FacebookMarketingApiClient {
             default:
                 return "LINK_CLICKS";
         }
+    }
+
+    private String resolveOptimizationGoal(Campaign campaign) {
+        if (campaign != null && StringUtils.hasText(campaign.getPerformanceGoal())) {
+            return campaign.getPerformanceGoal().trim().toUpperCase(Locale.ROOT);
+        }
+        return mapOptimizationGoal(campaign != null ? campaign.getObjective() : null);
     }
 
     private String mapCallToAction(FacebookCTA cta) {

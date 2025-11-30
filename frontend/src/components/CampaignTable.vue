@@ -190,10 +190,9 @@
                 </a-button>
               </a-tooltip>
 
-              <a-tooltip :title="record.status === 'EXPORTED' ? $t('campaign.table.action.cannotEdit') : $t('campaign.table.action.edit')">
+              <a-tooltip :title="$t('campaign.table.action.edit')">
                 <a-button
                   size="small"
-                  :disabled="record.status === 'EXPORTED'"
                   aria-label="Edit {{ record.name }}"
                   @click="$emit('edit-campaign', record)"
                 >
@@ -295,7 +294,6 @@
                 <a-space size="small">
                   <a-button
                     size="small"
-                    :disabled="campaign.status === 'EXPORTED'"
                     @click="$emit('edit-campaign', campaign)"
                   >
                     <template #icon>

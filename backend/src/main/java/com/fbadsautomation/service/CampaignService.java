@@ -129,6 +129,10 @@ import org.springframework.util.StringUtils;
        if (campaign.getBidCap() != null && campaign.getBidCap() <= 0) {
            errors.add("Bid cap phải lớn hơn 0");
        }
+
+       if (!StringUtils.hasText(campaign.getPerformanceGoal())) {
+           errors.add("Performance goal là bắt buộc cho Facebook");
+       }
        
        return errors;
    }
@@ -172,6 +176,7 @@ import org.springframework.util.StringUtils;
                .totalBudget(request.getTotalBudget())
                .targetAudience(request.getTargetAudience())
                .bidCap(request.getBidCap())
+               .performanceGoal(request.getPerformanceGoal())
                .startDate(request.getStartDate())
                .endDate(request.getEndDate())
                .user(user)
@@ -205,6 +210,7 @@ import org.springframework.util.StringUtils;
        campaign.setTotalBudget(request.getTotalBudget());
        campaign.setTargetAudience(request.getTargetAudience());
        campaign.setBidCap(request.getBidCap());
+       campaign.setPerformanceGoal(request.getPerformanceGoal());
        campaign.setStartDate(request.getStartDate());
        campaign.setEndDate(request.getEndDate());
        
@@ -267,6 +273,7 @@ import org.springframework.util.StringUtils;
                campaign.getTotalBudget(),
                campaign.getTargetAudience(),
                campaign.getBidCap(),
+               campaign.getPerformanceGoal(),
                campaign.getStartDate(),
                campaign.getEndDate(),
                adCount.intValue(),
