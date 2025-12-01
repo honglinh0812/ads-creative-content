@@ -209,9 +209,6 @@ import { ArrowUpOutlined, PlusOutlined, InfoCircleOutlined } from '@ant-design/i
 import axios from 'axios';
 import { TRENDING_LOCATIONS, TRENDING_LANGUAGES } from '@/constants/trendingLocales';
 
-const PREFERRED_LOCATIONS = ['VN', 'US', 'SG', 'TH', 'JP', 'KR', 'AU', 'GB', 'FR', 'CN'];
-const PREFERRED_LANGUAGES = ['vi', 'en', 'ja', 'ko', 'zh', 'th', 'fr', 'de'];
-
 export default {
   name: 'TrendingKeywords',
   components: {
@@ -236,7 +233,7 @@ export default {
       languageOptions: [...TRENDING_LANGUAGES],
       hasManualLocationSelection: false,
       hasManualLanguageSelection: false,
-      pendingLanguageFromProp: this.language || 'en',
+      pendingLanguageFromProp: this.language || 'vi',
       trends: [],
       loading: false,
       hasSearched: false,
@@ -271,7 +268,7 @@ export default {
     language: {
       immediate: true,
       handler(newLanguage) {
-        this.pendingLanguageFromProp = newLanguage || 'en';
+        this.pendingLanguageFromProp = newLanguage || 'vi';
         this.applyLanguagePreference();
         this.applyLocationPreference();
       }
@@ -479,7 +476,7 @@ export default {
       if (this.hasManualLanguageSelection) {
         return;
       }
-      const desired = (this.pendingLanguageFromProp || 'en').toLowerCase();
+      const desired = (this.pendingLanguageFromProp || 'vi').toLowerCase();
       if (!this.languageOptions.length) {
         this.selectedLanguage = desired;
         return;
@@ -515,7 +512,7 @@ export default {
       if (normalized.startsWith('zh')) return 'CN';
       if (normalized.startsWith('th')) return 'TH';
       if (normalized.startsWith('fr')) return 'FR';
-      return 'US';
+      return 'VN';
     },
     resolveCountryName(location) {
       if (!location) return '';
