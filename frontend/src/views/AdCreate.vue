@@ -388,8 +388,8 @@
                         :value="provider.value"
                       >
                         <div class="provider-option">
-                          <span class="provider-icon-small">{{ getProviderIcon(provider.value, 'text') }}</span>
-                          <span class="provider-name-small">{{ provider.name }}</span>
+                          <div class="provider-option-name">{{ provider.name }}</div>
+                          <div class="provider-option-description">{{ provider.description }}</div>
                         </div>
                       </a-select-option>
                     </a-select>
@@ -412,8 +412,8 @@
                           :value="provider.value"
                         >
                           <div class="provider-option">
-                            <span class="provider-icon-small">{{ getProviderIcon(provider.value, 'image') }}</span>
-                            <span class="provider-name-small">{{ provider.name }}</span>
+                            <div class="provider-option-name">{{ provider.name }}</div>
+                            <div class="provider-option-description">{{ provider.description }}</div>
                           </div>
                         </a-select-option>
                       </a-select>
@@ -491,19 +491,9 @@
                       :class="{ disabled: !provider.enabled }"
                     >
                       <div class="info-header">
-                        <span class="info-icon">{{ getProviderIcon(provider.value, 'text') }}</span>
                         <h4 class="info-name">{{ provider.name }}</h4>
                       </div>
                       <p class="info-description">{{ provider.description }}</p>
-                      <div class="info-features">
-                        <span
-                          v-for="(feature, idx) in provider.features"
-                          :key="idx"
-                          class="info-feature-badge"
-                        >
-                          {{ feature }}
-                        </span>
-                      </div>
                     </div>
                   </div>
                 </a-collapse-panel>
@@ -517,19 +507,9 @@
                       :class="{ disabled: !provider.enabled }"
                     >
                       <div class="info-header">
-                        <span class="info-icon">{{ getProviderIcon(provider.value, 'image') }}</span>
                         <h4 class="info-name">{{ provider.name }}</h4>
                       </div>
                       <p class="info-description">{{ provider.description }}</p>
-                      <div class="info-features">
-                        <span
-                          v-for="(feature, idx) in provider.features"
-                          :key="idx"
-                          class="info-feature-badge"
-                        >
-                          {{ feature }}
-                        </span>
-                      </div>
                     </div>
                   </div>
                 </a-collapse-panel>
@@ -922,7 +902,7 @@
     <!-- Async Progress Modal for Preview Generation -->
     <a-modal
       v-model:visible="showAsyncProgressModal"
-      title="Generating Preview Variations"
+      :title="$t('adCreate.async.modalTitle')"
       :closable="false"
       :footer="null"
       :maskClosable="false"
@@ -930,14 +910,17 @@
     >
       <div class="async-progress-container">
         <!-- Progress Icon -->
-        <div class="progress-icon" style="text-align: center; margin-bottom: 20px;">
+        <div class="progress-icon">
           <a-spin size="large" />
+        </div>
+        <div v-if="asyncJobStatus" class="progress-status">
+          <span class="status-pill">{{ getAsyncStatusLabel(asyncJobStatus) }}</span>
         </div>
 
         <!-- Current Step -->
         <div class="progress-info">
           <h3 style="font-size: 16px; margin-bottom: 10px; color: #1890ff;">
-            {{ asyncJobCurrentStep || 'Initializing preview generation...' }}
+            {{ asyncJobCurrentStep || $t('adCreate.async.initializing') }}
           </h3>
 
           <!-- Progress Bar -->
@@ -952,24 +935,24 @@
           />
 
           <!-- Details -->
-          <p class="progress-details" style="margin-top: 15px; color: #666; font-size: 14px;">
-            This may take 30 seconds to 5 minutes depending on complexity and number of variations.
+          <p class="progress-details">
+            {{ $t('adCreate.async.hint') }}
           </p>
 
           <!-- Job ID (for debugging) -->
-          <p style="margin-top: 10px; font-size: 12px; color: #999;">
-            Job ID: {{ asyncJobId }}
+          <p v-if="asyncJobId" class="progress-jobid">
+            {{ $t('adCreate.async.jobIdLabel', { id: asyncJobId }) }}
           </p>
         </div>
 
         <!-- Cancel Button -->
-        <div class="progress-actions" style="text-align: center; margin-top: 20px;">
+        <div class="progress-actions">
           <a-button
             @click="cancelAsyncJob"
             danger
             :loading="asyncJobStatus === 'CANCELLING'"
           >
-            Cancel Generation
+            {{ $t('adCreate.async.cancel') }}
           </a-button>
         </div>
       </div>
@@ -1095,22 +1078,12 @@ export default {
           value: 'openai',
           name: this.$t('adCreate.providers.text.openai.name'),
           description: this.$t('adCreate.providers.text.openai.description'),
-          features: [
-            this.$t('adCreate.providers.text.openai.features.0'),
-            this.$t('adCreate.providers.text.openai.features.1'),
-            this.$t('adCreate.providers.text.openai.features.2')
-          ],
           enabled: true
         },
         {
           value: 'claude',
           name: this.$t('adCreate.providers.text.claude.name'),
           description: this.$t('adCreate.providers.text.claude.description'),
-          features: [
-            this.$t('adCreate.providers.text.claude.features.0'),
-            this.$t('adCreate.providers.text.claude.features.1'),
-            this.$t('adCreate.providers.text.claude.features.2')
-          ],
           enabled: true
         }
       ],
@@ -1119,44 +1092,24 @@ export default {
           value: 'openai',
           name: this.$t('adCreate.providers.image.openai.name'),
           description: this.$t('adCreate.providers.image.openai.description'),
-          features: [
-            this.$t('adCreate.providers.image.openai.features.0'),
-            this.$t('adCreate.providers.image.openai.features.1'),
-            this.$t('adCreate.providers.image.openai.features.2')
-          ],
           enabled: true
         },
         {
           value: 'gemini',
           name: this.$t('adCreate.providers.image.gemini.name'),
           description: this.$t('adCreate.providers.image.gemini.description'),
-          features: [
-            this.$t('adCreate.providers.image.gemini.features.0'),
-            this.$t('adCreate.providers.image.gemini.features.1'),
-            this.$t('adCreate.providers.image.gemini.features.2')
-          ],
           enabled: true
         },
         {
           value: 'fal-ai',
           name: this.$t('adCreate.providers.image.falai.name'),
           description: this.$t('adCreate.providers.image.falai.description'),
-          features: [
-            this.$t('adCreate.providers.image.falai.features.0'),
-            this.$t('adCreate.providers.image.falai.features.1'),
-            this.$t('adCreate.providers.image.falai.features.2')
-          ],
           enabled: false
         },
         {
           value: 'stable-diffusion',
           name: this.$t('adCreate.providers.image.stableDiffusion.name'),
           description: this.$t('adCreate.providers.image.stableDiffusion.description'),
-          features: [
-            this.$t('adCreate.providers.image.stableDiffusion.features.0'),
-            this.$t('adCreate.providers.image.stableDiffusion.features.1'),
-            this.$t('adCreate.providers.image.stableDiffusion.features.2')
-          ],
           enabled: false
         }
       ],
@@ -1610,8 +1563,7 @@ export default {
           value: provider.id,
           name: provider.name,
           description: provider.description,
-          features: ['AI-powered content', 'Multiple languages', 'High quality'],
-          enabled: true
+          enabled: provider.enabled !== false
         }))
         
         // Load image providers
@@ -1620,8 +1572,7 @@ export default {
           value: provider.id,
           name: provider.name,
           description: provider.description,
-          features: ['AI-generated images', 'High resolution', 'Creative styles'],
-          enabled: true
+          enabled: provider.enabled !== false
         }))
         
         // Set default providers if not already set
@@ -1634,7 +1585,7 @@ export default {
         
       } catch (error) {
         console.error('Error loading providers:', error)
-        this.$message.warning(this.$t('adCreate.messages.warning.loadProvidersFailed'))
+        this.$message.warning(this.$t('adCreate.messages.warning.providersLoadFailed'))
         // Keep the hardcoded providers as fallback
       }
     },
@@ -2020,7 +1971,7 @@ export default {
 
       } catch (error) {
         console.error('[ASYNC] Failed, falling back to sync:', error)
-        this.$message.warning('Async service unavailable, using standard mode')
+        this.$message.warning(this.$t('adCreate.messages.warning.asyncUnavailable'))
         await this.generateAdSync(requestData)
       }
     },
@@ -2093,7 +2044,7 @@ export default {
         console.warn('[ASYNC] Polling timeout after 10 minutes')
         this.stopJobPolling()
         this.$message.warning({
-          content: 'Job is taking longer than expected. Please check status manually or try again later.',
+          content: this.$t('adCreate.async.timeout'),
           duration: 10
         })
         return
@@ -2111,7 +2062,7 @@ export default {
         // Update UI state
         this.asyncJobStatus = job.status
         this.asyncJobProgress = job.progress || 0
-        this.asyncJobCurrentStep = job.currentStep || 'Processing...'
+        this.asyncJobCurrentStep = job.currentStep || this.$t('adCreate.async.processing')
 
         // Handle terminal states
         if (job.status === 'COMPLETED') {
@@ -2142,7 +2093,7 @@ export default {
           console.error('[ASYNC] Max retries exceeded, stopping polling')
           this.stopJobPolling()
           this.$message.error({
-            content: 'Failed to check job status after multiple retries. The job may still be running in the background.',
+            content: this.$t('adCreate.async.statusFailed'),
             duration: 10
           })
         }
@@ -2175,14 +2126,18 @@ export default {
         this.currentStep = 3
 
         // Show success
-        this.$message.success(`Generated ${this.adVariations.length} variations!`)
+        this.$message.success(
+          this.$t('adCreate.async.completed', { count: this.adVariations.length })
+        )
 
         // Load quality scores for variations
         await this.loadQualityScoresForVariations()
 
       } catch (error) {
         console.error('[ASYNC] Error fetching job result:', error)
-        this.$message.error('Failed to fetch preview result: ' + error.message)
+        this.$message.error(
+          this.$t('adCreate.async.fetchResultFailed', { message: error.message })
+        )
         this.showAsyncProgressModal = false
       }
     },
@@ -2196,7 +2151,7 @@ export default {
       this.showAsyncProgressModal = false
 
       this.$message.error({
-        content: errorMessage || 'Preview generation failed. Please try again.',
+        content: errorMessage || this.$t('adCreate.async.failed'),
         duration: 5
       })
 
@@ -2211,7 +2166,7 @@ export default {
       this.stopJobPolling()
       this.showAsyncProgressModal = false
 
-      this.$message.info('Preview generation cancelled')
+      this.$message.info(this.$t('adCreate.async.cancelled'))
       this.asyncJobId = null
     },
 
@@ -2240,7 +2195,7 @@ export default {
         console.error('[ASYNC] Error cancelling job:', error)
 
         // Extract error message from response
-        let errorMessage = 'Failed to cancel job'
+        let errorMessage = this.$t('adCreate.async.cancelFailed')
         if (error.response && error.response.data && error.response.data.error) {
           errorMessage = error.response.data.error
         } else if (error.message) {
@@ -2250,21 +2205,21 @@ export default {
         // Show appropriate message based on error
         if (errorMessage.includes('already completed')) {
           this.$message.success({
-            content: 'Job has already completed successfully! Fetching results...',
+            content: this.$t('adCreate.async.alreadyCompleted'),
             duration: 5
           })
           // Attempt to fetch the result
           this.handleJobCompleted()
         } else if (errorMessage.includes('already failed')) {
           this.$message.warning({
-            content: 'Job has already failed. Closing dialog.',
+            content: this.$t('adCreate.async.alreadyFailed'),
             duration: 5
           })
           this.showAsyncProgressModal = false
           this.stopJobPolling()
         } else if (errorMessage.includes('already been cancelled')) {
           this.$message.info({
-            content: 'Job was already cancelled.',
+            content: this.$t('adCreate.async.alreadyCancelled'),
             duration: 3
           })
           this.handleJobCancelled()
@@ -2657,6 +2612,16 @@ export default {
         huggingface: this.$t('adCreate.providers.ratings.openSource')
       }
       return texts[provider] || this.$t('adCreate.providers.ratings.goodChoice')
+    },
+
+    getAsyncStatusLabel(status) {
+      if (!status) {
+        return this.$t('adCreate.async.status.pending')
+      }
+      const normalized = status.toLowerCase()
+      const key = `adCreate.async.status.${normalized}`
+      const translated = this.$t(key)
+      return translated === key ? status : translated
     },
 
     calculateAIPowerLevel() {
@@ -4156,17 +4121,21 @@ export default {
 
 .provider-option {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.provider-icon-small {
-  font-size: 18px;
-}
-
-.provider-name-small {
+.provider-option-name {
   font-size: 14px;
+  font-weight: 600;
   color: #262626;
+}
+
+.provider-option-description {
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 1.3;
+  white-space: normal;
 }
 
 /* Provider Info Section */
@@ -4211,10 +4180,6 @@ export default {
   margin-bottom: 12px;
 }
 
-.info-icon {
-  font-size: 24px;
-}
-
 .info-name {
   font-size: 16px;
   font-weight: 600;
@@ -4226,22 +4191,44 @@ export default {
   font-size: 13px;
   color: #595959;
   line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.async-progress-container {
+  text-align: center;
+}
+
+.async-progress-container .progress-icon {
+  margin-bottom: 20px;
+}
+
+.progress-status {
+  text-align: center;
   margin-bottom: 12px;
 }
 
-.info-features {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #f0f5ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
-.info-feature-badge {
-  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
-  color: #0958d9;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
+.async-progress-container .progress-details,
+.async-progress-container .progress-jobid {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.async-progress-container .progress-actions {
+  margin-top: 20px;
 }
 
 /* Per-Variation Upload Section */

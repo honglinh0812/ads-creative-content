@@ -114,26 +114,6 @@
               <div class="keyword-row">
                 <div class="keyword-info">
                   <span class="keyword-text">{{ item.keyword }}</span>
-                  <div class="keyword-tags">
-                    <a-tag v-if="item.source" color="blue" class="source-tag">
-                      {{ item.source }}
-                    </a-tag>
-                    <a-tag
-                      v-if="item.category && item.category !== 'General'"
-                      color="purple"
-                      class="category-tag"
-                    >
-                      {{ item.category }}
-                    </a-tag>
-                  </div>
-                </div>
-                <div class="keyword-metrics">
-                  <a-tag color="green" class="growth-tag">
-                    <arrow-up-outlined /> +{{ item.growth }}%
-                  </a-tag>
-                  <span class="search-volume" v-if="item.searchVolume">
-                    {{ $t('components.trendingKeywords.list.searches', { volume: formatSearchVolume(item.searchVolume) }) }}
-                  </span>
                 </div>
               </div>
             </a-checkbox>
@@ -205,14 +185,13 @@
 </template>
 
 <script>
-import { ArrowUpOutlined, PlusOutlined, InfoCircleOutlined } from '@ant-design/icons-vue';
+import { PlusOutlined, InfoCircleOutlined } from '@ant-design/icons-vue';
 import axios from 'axios';
 import { TRENDING_LOCATIONS, TRENDING_LANGUAGES } from '@/constants/trendingLocales';
 
 export default {
   name: 'TrendingKeywords',
   components: {
-    ArrowUpOutlined,
     PlusOutlined,
     InfoCircleOutlined
   },
@@ -612,29 +591,6 @@ export default {
 
 .keyword-text {
   font-weight: 500;
-}
-
-.keyword-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.keyword-metrics {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-
-.growth-tag {
-  margin-right: 8px;
-}
-
-.search-volume {
-  font-size: 12px;
-  color: #8c8c8c;
 }
 
 .selection-warning {

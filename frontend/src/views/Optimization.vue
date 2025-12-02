@@ -27,7 +27,7 @@
 
       <a-table
         :columns="tableColumns"
-        :data-source="filteredAds"
+        :data-source="paginatedAds"
         :loading="adsLoading"
         :pagination="false"
         :row-selection="rowSelection"
@@ -50,6 +50,19 @@
           </template>
         </template>
       </a-table>
+
+      <div class="table-pagination">
+        <a-pagination
+          :current="currentPage"
+          :total="filteredAds.length"
+          :page-size="pageSize"
+          :hide-on-single-page="filteredAds.length <= pageSize"
+          :page-size-options="pageSizeOptions"
+          show-size-changer
+          @change="handlePaginationChange"
+          @showSizeChange="handlePageSizeChange"
+        />
+      </div>
 
       <div class="table-footer">
         <a-button v-if="hasMoreAds" @click="loadMoreAds" :loading="adsLoading">
@@ -181,7 +194,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import api from '@/services/api'
@@ -194,6 +207,9 @@ export default {
     const adsLoading = ref(false)
     const searchTerm = ref('')
     const pagination = ref({ page: 0, size: 25, total: 0 })
+    const currentPage = ref(1)
+    const pageSize = ref(5)
+    const pageSizeOptions = ['5', '10']
     const selectedRowKeys = ref([])
     const analyzedInsights = ref([])
     const analyzeLoading = ref(false)
@@ -245,6 +261,11 @@ export default {
       )
     })
 
+    const paginatedAds = computed(() => {
+      const start = (currentPage.value - 1) * pageSize.value
+      return filteredAds.value.slice(start, start + pageSize.value)
+    })
+
     const hasMoreAds = computed(() => ads.value.length < pagination.value.total)
 
     const categoryOrder = ['copy', 'visual', 'cta', 'hook', 'length', 'target']
@@ -271,6 +292,7 @@ export default {
         pagination.value.page = 0
         ads.value = []
         selectedRowKeys.value = []
+        currentPage.value = 1
       }
       adsLoading.value = true
       error.value = null
@@ -403,10 +425,34 @@ export default {
       loadHistory(true)
     })
 
+    watch([filteredAds, pageSize], () => {
+      const maxPage = Math.max(1, Math.ceil(filteredAds.value.length / pageSize.value) || 1)
+      if (currentPage.value > maxPage) {
+        currentPage.value = maxPage
+      }
+    })
+
+    watch(searchTerm, () => {
+      currentPage.value = 1
+    })
+
+    const handlePaginationChange = (page, size) => {
+      currentPage.value = page
+      if (size && size !== pageSize.value) {
+        pageSize.value = Number(size)
+      }
+    }
+
+    const handlePageSizeChange = (_, size) => {
+      pageSize.value = Number(size)
+      currentPage.value = 1
+    }
+
     return {
       t,
       adsLoading,
       filteredAds,
+      paginatedAds,
       tableColumns,
       rowSelection,
       selectedRowKeys,
@@ -430,7 +476,12 @@ export default {
       onSearch,
       formatDate,
       adInsightsSupported,
-      historySupported
+      historySupported,
+      currentPage,
+      pageSize,
+      pageSizeOptions,
+      handlePaginationChange,
+      handlePageSizeChange
     }
   }
 }
@@ -485,6 +536,12 @@ export default {
 .table-footer {
   margin-top: 16px;
   text-align: center;
+}
+
+.table-pagination {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .insights-grid {

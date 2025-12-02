@@ -2,7 +2,7 @@
   <div class="personas-view">
     <section class="hero-card surface-card">
       <div class="hero-text">
-        <p class="eyebrow">{{ $t('personas.title') }}</p>
+        <p class="eyebrow">{{ $t('personas.sections.createTitle') }}</p>
         <div class="hero-actions">     
           <a-button type="primary" size="large" @click="showCreateModal = true">
             <template #icon><plus-outlined /></template>
@@ -15,7 +15,7 @@
     <section class="surface-card section-card">
       <div class="section-heading">
         <div>
-          <h2>{{ $t('personas.title') }}</h2>
+          <h2>{{ $t('personas.sections.listTitle') }}</h2>
         </div>
         <div class="section-controls">
           <a-select

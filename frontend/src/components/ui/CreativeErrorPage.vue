@@ -104,7 +104,7 @@
             <p>{{ getEasterEggMessage() }}</p>
             <div class="mini-game">
               <button @click="playMiniGame" class="mini-game-btn">
-                Play "Guess the HTTP Status" 🎯
+                Play "Guess the HTTP Status" 
               </button>
               <div v-if="miniGameActive" class="mini-game-content">
                 <p>{{ miniGameQuestion }}</p>

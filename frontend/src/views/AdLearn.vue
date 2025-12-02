@@ -284,6 +284,9 @@
         <div class="progress-icon">
           <a-spin size="large" />
         </div>
+        <div v-if="asyncJobStatus" class="progress-status">
+          <span class="status-pill">{{ getAsyncStatusLabel(asyncJobStatus) }}</span>
+        </div>
         <div class="progress-info">
           <h3>{{ asyncJobCurrentStep || $t('adLearn.async.initializing') }}</h3>
           <a-progress
@@ -294,12 +297,12 @@
           <p class="progress-details">
             {{ $t('adLearn.async.hint') }}
           </p>
-          <p class="progress-jobid">
-            {{ $t('adLearn.async.jobId') }}: {{ asyncJobId }}
+          <p v-if="asyncJobId" class="progress-jobid">
+            {{ $t('adLearn.async.jobIdLabel', { id: asyncJobId }) }}
           </p>
         </div>
         <div class="progress-actions">
-          <a-button @click="cancelAsyncJob" danger>
+          <a-button @click="cancelAsyncJob" danger :loading="asyncJobStatus === 'CANCELLING'">
             {{ $t('adLearn.async.cancel') }}
           </a-button>
         </div>
@@ -767,7 +770,7 @@ export default {
         const job = response.data
         this.asyncJobStatus = job.status
         this.asyncJobProgress = job.progress || 0
-        this.asyncJobCurrentStep = job.currentStep || ''
+        this.asyncJobCurrentStep = job.currentStep || this.$t('adLearn.async.processing')
 
         if (job.status === 'COMPLETED') {
           await this.handleJobCompleted()
@@ -843,6 +846,15 @@ export default {
           imageUrl: variation.imageUrl || variation.uploadedFileUrl || variation.mediaFileUrl || ''
         }
       })
+    },
+    getAsyncStatusLabel(status) {
+      if (!status) {
+        return this.$t('adLearn.async.status.pending')
+      }
+      const normalized = status.toLowerCase()
+      const key = `adLearn.async.status.${normalized}`
+      const translated = this.$t(key)
+      return translated === key ? status : translated
     },
     getVariationIdentifier(variation) {
       if (!variation) return null
@@ -1085,6 +1097,24 @@ export default {
   margin-top: 12px;
   font-size: 13px;
   color: #64748b;
+}
+
+.progress-status {
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #f0f5ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
 .async-progress-container .progress-actions {

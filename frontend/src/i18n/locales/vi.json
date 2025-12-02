@@ -1229,6 +1229,10 @@
       "last7Days": "7 ngày gần nhất",
       "notAvailable": "Không có sẵn"
     },
+    "sections": {
+      "createTitle": "Chân dung khách hàng mục tiêu",
+      "listTitle": "Các chân dung đã tạo"
+    },
     "name": "Tên chân dung",
     "age": "Tuổi",
     "gender": "Giới tính",
@@ -1788,8 +1792,8 @@
         "selectImageProvider": "Chọn nhà cung cấp hình ảnh"
       },
       "info": {
-        "textProvidersTitle": "📝 Thông tin nhà cung cấp văn bản",
-        "imageProvidersTitle": "🎨 Thông tin nhà cung cấp hình ảnh"
+        "textProvidersTitle": "Tổng quan nhà cung cấp văn bản",
+        "imageProvidersTitle": "Tổng quan nhà cung cấp hình ảnh"
       },
       "textGeneration": {
         "title": "Tạo văn bản",
@@ -1834,21 +1838,21 @@
       "text": {
         "openai": {
           "name": "OpenAI GPT-4",
-          "description": "Tốt nhất cho nội dung sáng tạo dài với ngôn ngữ tự nhiên",
+          "description": "GPT-4o viết tiếng Việt/Anh tự nhiên, giữ mạch nội dung dù prompt dài và dễ dàng chuyển đổi giọng điệu từ kể chuyện đến bán hàng.",
           "feature1": "Viết sáng tạo",
           "feature2": "Đa ngôn ngữ",
           "feature3": "Ngữ cảnh dài"
         },
         "claude": {
           "name": "Claude",
-          "description": "Logic, an toàn, tuân thủ hướng dẫn thương hiệu nghiêm ngặt",
+          "description": "Claude 3.5 Sonnet giữ cấu trúc gọn gàng, kiểm tra thông tin cẩn thận và phù hợp khi bạn cần nội dung chuẩn chỉ, an toàn thương hiệu.",
           "feature1": "Giọng điệu chuyên nghiệp",
           "feature2": "Tập trung vào an toàn",
           "feature3": "Phản hồi chi tiết"
         },
         "gemini": {
           "name": "Google Gemini",
-          "description": "Nhanh, có gói miễn phí, đa phương thức",
+          "description": "Gemini 1.5 Pro phản hồi cực nhanh, phù hợp để nghĩ thật nhiều hook và bám sát phong cách quảng cáo tham khảo trong Meta Ad Library.",
           "feature1": "Tạo nhanh",
           "feature2": "Gói miễn phí",
           "feature3": "Đa phương thức"
@@ -1857,14 +1861,14 @@
       "image": {
         "openai": {
           "name": "OpenAI DALL-E",
-          "description": "Hình ảnh nghệ thuật chất lượng cao, tốt cho ý tưởng trừu tượng",
+          "description": "DALL·E 3 tạo ảnh mang chất điện ảnh với ánh sáng nổi bật, lý tưởng cho các concept nghệ thuật hoặc tương lai.",
           "feature1": "Chất lượng nghệ thuật",
           "feature2": "Phong cách sáng tạo",
           "feature3": "Ý tưởng trừu tượng"
         },
         "gemini": {
           "name": "Google Gemini Imagen",
-          "description": "Tạo nhanh, tốt cho hình ảnh sản phẩm/phong cách sống",
+          "description": "Imagen được tối ưu cho thương mại điện tử: biến prompt ngắn thành ảnh lifestyle/sản phẩm mà vẫn giữ đúng màu sắc thương hiệu.",
           "feature1": "Tốc độ nhanh",
           "feature2": "Ảnh sản phẩm",
           "feature3": "Hình phong cách sống"
@@ -1892,14 +1896,14 @@
         },
         "falai": {
           "name": "FAL AI",
-          "description": "Tạo hình ảnh AI tiên tiến (hiện không khả dụng)",
+          "description": "FAL AI kết nối các checkpoint SDXL chọn lọc để tạo ảnh chân thực và hỗ trợ upscale ngay trong luồng (đang triển khai dần).",
           "feature1": "Độ phân giải cao",
           "feature2": "Tạo nhanh",
           "feature3": "Nhiều mô hình"
         },
         "stableDiffusion": {
           "name": "Stable Diffusion",
-          "description": "Tạo hình ảnh mã nguồn mở (hiện không khả dụng)",
+          "description": "Stable Diffusion cho phép tùy biến tối đa với mô hình mã nguồn mở; workspace này tạm khóa cho tới khi có gateway quản lý.",
           "feature1": "Mã nguồn mở",
           "feature2": "Có thể tùy chỉnh",
           "feature3": "Tạo nhanh"
@@ -2099,6 +2103,32 @@
     },
     "promptEnhancement": {
       "ctaInstruction": "Lưu ý: Chỉ sử dụng một trong các Call to Action sau cho quảng cáo: {ctaList}. Không tạo CTA khác."
+    },
+    "async": {
+      "modalTitle": "Đang tạo các biến thể xem trước",
+      "initializing": "Đang khởi tạo trợ lý AI...",
+      "hint": "Bước này thường mất 30 giây đến vài phút tùy số lượng biến thể và nhà cung cấp bạn chọn.",
+      "jobIdLabel": "Mã tác vụ: {id}",
+      "cancel": "Hủy quá trình tạo",
+      "timeout": "Tác vụ mất quá nhiều thời gian. Vui lòng thử lại sau.",
+      "statusFailed": "Không thể kiểm tra trạng thái. Có thể tác vụ vẫn đang chạy nền.",
+      "processing": "Đang xử lý...",
+      "failed": "Không thể tạo bản xem trước. Vui lòng thử lại.",
+      "cancelled": "Đã hủy quá trình tạo xem trước",
+      "cancelFailed": "Không thể hủy tác vụ này lúc này.",
+      "alreadyCompleted": "Tác vụ đã hoàn tất trước đó. Đang tải kết quả...",
+      "alreadyFailed": "Tác vụ đã bị lỗi trước đó. Đóng hộp thoại.",
+      "alreadyCancelled": "Tác vụ đã được hủy.",
+      "completed": "Đã tạo {count} biến thể!",
+      "fetchResultFailed": "Không thể tải kết quả: {message}",
+      "status": {
+        "pending": "Đang xếp hàng",
+        "running": "Đang xử lý",
+        "completed": "Hoàn tất",
+        "failed": "Thất bại",
+        "cancelling": "Đang hủy",
+        "cancelled": "Đã hủy"
+      }
     }
   },
   "adLearn": {
@@ -2222,16 +2252,26 @@
       "guardrail": "Không được sao chép nguyên văn quảng cáo tham khảo; tạo nội dung mới, phù hợp với nhu cầu đã mô tả."
     },
     "async": {
-      "modalTitle": "Đang tạo quảng cáo cải thiện",
-      "initializing": "Đang khởi chạy AI...",
-      "hint": "Quá trình có thể mất 30 giây đến vài phút tùy độ phức tạp và số lượng biến thể.",
+      "modalTitle": "AI đang cải thiện quảng cáo của bạn",
+      "initializing": "Đang khởi chạy pipeline viết lại...",
+      "hint": "Bước này thường mất 30 giây đến vài phút tùy quảng cáo tham khảo và số biến thể.",
       "jobId": "Mã tác vụ",
+      "jobIdLabel": "Mã tác vụ: {id}",
       "cancel": "Hủy tác vụ",
       "started": "Đã khởi chạy chế độ async. Vui lòng giữ nguyên tab để xem kết quả.",
       "timeout": "Tác vụ mất quá nhiều thời gian. Vui lòng thử lại sau.",
       "statusFailed": "Không thể theo dõi trạng thái async. Tác vụ có thể vẫn đang chạy.",
       "cancelled": "Đã hủy quá trình tạo",
-      "cancelFailed": "Không thể hủy tác vụ. Vui lòng thử lại."
+      "cancelFailed": "Không thể hủy tác vụ. Vui lòng thử lại.",
+      "processing": "Đang xử lý...",
+      "status": {
+        "pending": "Đang xếp hàng",
+        "running": "Đang xử lý",
+        "completed": "Hoàn tất",
+        "failed": "Thất bại",
+        "cancelling": "Đang hủy",
+        "cancelled": "Đã hủy"
+      }
     }
   },
   "adTable": {

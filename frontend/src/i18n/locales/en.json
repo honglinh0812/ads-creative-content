@@ -1019,6 +1019,10 @@
       "last7Days": "Last 7 days",
       "notAvailable": "N/A"
     },
+    "sections": {
+      "createTitle": "Target personas",
+      "listTitle": "Saved personas"
+    },
     "name": "Persona Name",
     "age": "Age",
     "gender": "Gender",
@@ -1583,8 +1587,8 @@
         "selectImageProvider": "Select image provider"
       },
       "info": {
-        "textProvidersTitle": "📝 Text Provider Information",
-        "imageProvidersTitle": "🎨 Image Provider Information"
+        "textProvidersTitle": "Text providers overview",
+        "imageProvidersTitle": "Image providers overview"
       },
       "textGeneration": {
         "title": "Text Generation",
@@ -1629,21 +1633,21 @@
       "text": {
         "openai": {
           "name": "OpenAI GPT-4",
-          "description": "Best for long-form creative copy with natural language",
+          "description": "GPT-4o writes fluent Vietnamese and English copy, keeps long prompts coherent, and adapts tone from storytelling to performance-focused ads.",
           "feature1": "Creative writing",
           "feature2": "Multilingual",
           "feature3": "Long context"
         },
         "claude": {
           "name": "Claude",
-          "description": "Logical, safe, follows brand guidelines strictly",
+          "description": "Claude 3.5 Sonnet keeps structure tidy, cites facts carefully, and is ideal for brand-safe copy or regulated industries.",
           "feature1": "Professional tone",
           "feature2": "Safety focused",
           "feature3": "Detailed responses"
         },
         "gemini": {
           "name": "Google Gemini",
-          "description": "Fast, free tier available, multimodal",
+          "description": "Gemini 1.5 Pro responds fast, brainstorms many hooks, and mirrors reference visuals well when rewriting from Meta Ad Library links.",
           "feature1": "Fast generation",
           "feature2": "Free tier",
           "feature3": "Multimodal"
@@ -1652,14 +1656,14 @@
       "image": {
         "openai": {
           "name": "OpenAI DALL-E",
-          "description": "High-quality artistic images, great for abstract concepts",
+          "description": "DALL·E 3 produces cinematic, stylized shots with bold lighting—perfect for conceptual or futuristic campaigns.",
           "feature1": "Artistic quality",
           "feature2": "Creative styles",
           "feature3": "Abstract concepts"
         },
         "gemini": {
           "name": "Google Gemini Imagen",
-          "description": "Fast generation, good for product/lifestyle imagery",
+          "description": "Imagen focuses on ecommerce-ready visuals, turning short prompts into lifestyle or product renders while respecting brand colors.",
           "feature1": "Fast speed",
           "feature2": "Product photos",
           "feature3": "Lifestyle images"
@@ -1687,14 +1691,14 @@
         },
         "falai": {
           "name": "FAL AI",
-          "description": "Advanced AI image generation (currently unavailable)",
+          "description": "FAL AI routes prompts through curated SDXL checkpoints for photo-realistic portraits and can upscale results (rolling out gradually).",
           "feature1": "High resolution",
           "feature2": "Fast generation",
           "feature3": "Multiple models"
         },
         "stableDiffusion": {
           "name": "Stable Diffusion",
-          "description": "Open-source image generation (currently unavailable)",
+          "description": "Stable Diffusion gives full control via open-source models—ideal for bespoke looks, though it remains disabled here until we ship a managed gateway.",
           "feature1": "Open source",
           "feature2": "Customizable",
           "feature3": "Fast generation"
@@ -1894,6 +1898,32 @@
     },
     "promptEnhancement": {
       "ctaInstruction": "Note: Only use one of the following Call to Actions for the ad: {ctaList}. Do not create other CTAs."
+    },
+    "async": {
+      "modalTitle": "Generating preview variations",
+      "initializing": "Initializing AI copilots…",
+      "hint": "This usually takes 30 seconds to a few minutes depending on how many variations and providers you selected.",
+      "jobIdLabel": "Job ID: {id}",
+      "cancel": "Cancel generation",
+      "timeout": "Job is taking longer than expected. Please try again later.",
+      "statusFailed": "Failed to check job status. The job may still be running in the background.",
+      "processing": "Processing…",
+      "failed": "Preview generation failed. Please try again.",
+      "cancelled": "Preview generation cancelled",
+      "cancelFailed": "Unable to cancel this job right now.",
+      "alreadyCompleted": "Job already finished successfully. Fetching the result…",
+      "alreadyFailed": "Job already failed earlier. Closing the dialog.",
+      "alreadyCancelled": "Job was already cancelled.",
+      "completed": "Generated {count} variation(s)!",
+      "fetchResultFailed": "Failed to fetch preview result: {message}",
+      "status": {
+        "pending": "Queued",
+        "running": "In progress",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelling": "Cancelling",
+        "cancelled": "Cancelled"
+      }
     }
   },
   "adLearn": {
@@ -2017,16 +2047,26 @@
       "guardrail": "Do not copy the reference text exactly; create fresh, original copy suitable for the requested product/service."
     },
     "async": {
-      "modalTitle": "Generating improved ads",
-      "initializing": "Initializing AI copilots…",
-      "hint": "This may take from 30 seconds to a few minutes depending on complexity and variation count.",
+      "modalTitle": "AI is improving your ads",
+      "initializing": "Spinning up rewriting copilots…",
+      "hint": "This step usually takes 30 seconds to a few minutes depending on the reference ad and number of variations.",
       "jobId": "Job ID",
+      "jobIdLabel": "Job ID: {id}",
       "cancel": "Cancel generation",
       "started": "Started async generation. Keep this tab open to see results.",
       "timeout": "Job is taking longer than expected. Please try again later.",
       "statusFailed": "Failed to fetch async status. Job may continue running in the background.",
       "cancelled": "Generation cancelled",
-      "cancelFailed": "Unable to cancel generation. Please try again."
+      "cancelFailed": "Unable to cancel generation. Please try again.",
+      "processing": "Processing…",
+      "status": {
+        "pending": "Queued",
+        "running": "In progress",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelling": "Cancelling",
+        "cancelled": "Cancelled"
+      }
     }
   },
   "ads": {

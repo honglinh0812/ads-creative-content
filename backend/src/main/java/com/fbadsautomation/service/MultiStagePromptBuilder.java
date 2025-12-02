@@ -146,7 +146,7 @@ public class MultiStagePromptBuilder {
         StringBuilder section = new StringBuilder();
 
         if (isVietnamese) {
-            section.append("🎯 ĐỐI TƯỢNG MỤC TIÊU:\n");
+            section.append("ĐỐI TƯỢNG MỤC TIÊU:\n");
 
             if (audienceSegment.getGender() != null) {
                 section.append("• Giới tính: ").append(audienceSegment.getGender().getDisplayName()).append("\n");
@@ -169,7 +169,7 @@ public class MultiStagePromptBuilder {
 
             section.append("\n💡 Tạo nội dung phù hợp với đối tượng này!");
         } else {
-            section.append("🎯 TARGET AUDIENCE:\n");
+            section.append("TARGET AUDIENCE:\n");
 
             if (audienceSegment.getGender() != null) {
                 section.append("• Gender: ").append(audienceSegment.getGender().getDisplayName()).append("\n");
@@ -204,11 +204,11 @@ public class MultiStagePromptBuilder {
         StringBuilder section = new StringBuilder();
 
         if (isVietnamese) {
-            section.append("🎯 ĐỐI TƯỢNG MỤC TIÊU (CẤP CHIẾN DỊCH):\n");
+            section.append("ĐỐI TƯỢNG MỤC TIÊU (CẤP CHIẾN DỊCH):\n");
             section.append(targetAudience);
             section.append("\n\n💡 Tạo nội dung phù hợp với đối tượng này!");
         } else {
-            section.append("🎯 TARGET AUDIENCE (CAMPAIGN LEVEL):\n");
+            section.append("TARGET AUDIENCE (CAMPAIGN LEVEL):\n");
             section.append(targetAudience);
             section.append("\n\n💡 Create content suitable for this audience!");
         }

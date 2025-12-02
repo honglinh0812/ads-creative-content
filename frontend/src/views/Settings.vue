@@ -40,10 +40,6 @@
                 <span class="static-label">{{ $t('profilePage.fields.email') }}</span>
                 <p>{{ profileMeta.email }}</p>
               </div>
-              <div>
-                <span class="static-label">{{ $t('profilePage.fields.memberSince', { date: memberSince }) }}</span>
-                <p>{{ memberSince }}</p>
-              </div>
             </div>
 
             <div class="panel-actions">
