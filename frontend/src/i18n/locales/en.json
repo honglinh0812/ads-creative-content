@@ -380,6 +380,13 @@
       "subtitle": "Manage your advertising campaigns and monitor their performance",
       "action": {
         "newCampaign": "New Campaign"
+      },
+      "filters": {
+        "eyebrow": "Campaign library",
+        "title": "Keep campaigns organized",
+        "subtitle": "Search and filter by status or objective before drilling into details.",
+        "hint": "Filters apply to the campaigns currently loaded.",
+        "activeBadge": "Filters active"
       }
     },
     "modal": {
@@ -2196,6 +2203,16 @@
     }
   },
   "adTable": {
+    "header": {
+      "eyebrow": "Creative library",
+      "title": "Ad performance overview",
+      "subtitle": "Track all generated ads, filter quickly, and export the best performers."
+    },
+    "view": {
+      "table": "Table view",
+      "cards": "Card view",
+      "compactHint": "Card view is auto-enabled on small screens"
+    },
     "filters": {
       "searchPlaceholder": "Search ads...",
       "searchLabel": "Search ads",
@@ -2211,6 +2228,10 @@
       "viewToggleCards": "Switch to table view",
       "cardsButton": "Cards",
       "tableButton": "Table"
+    },
+    "summary": {
+      "syncHint": "Live data synced with Facebook every few minutes.",
+      "filtersActive": "Filters active"
     },
     "filterOptions": {
       "allStatus": "All Status",
@@ -2263,9 +2284,13 @@
       "campaignNumber": "Campaign #{id}",
       "headline": "Headline:",
       "text": "Text:",
+      "cta": "CTA",
+      "noContent": "No content available",
+      "viewFullContent": "View full content",
       "noMedia": "No Media"
     },
     "actions": {
+      "more": "More",
       "viewDetails": "View Details",
       "viewDetailsLabel": "View details for {name}",
       "edit": "Edit",
@@ -2274,8 +2299,9 @@
       "duplicate": "Duplicate",
       "duplicateAd": "Duplicate Ad",
       "duplicateLabel": "Duplicate {name}",
-      "exportToFacebook": "Export to Facebook",
-      "exportLabel": "Export {name} to Facebook",
+      "exportToFacebook": "Export",
+      "exportLabel": "Export {name}",
+      "download": "Download",
       "delete": "Delete",
       "deleteAd": "Delete Ad",
       "deleteLabel": "Delete {name}",
@@ -2284,6 +2310,7 @@
       "deleteNo": "No"
     },
     "card": {
+      "emptyDescription": "No ads match the selected filters.",
       "untitledAd": "Untitled Ad",
       "unknown": "Unknown",
       "campaign": "Campaign: {name}",
@@ -2298,7 +2325,12 @@
       "deleteNo": "No"
     },
     "pagination": {
-      "perPage": "{value} / page"
+      "perPage": "{value} / page",
+      "range": "{start}-{end} of {total} ads"
+    },
+    "contentModal": {
+      "title": "Ad content",
+      "name": "Ad name"
     }
   },
   "adDetail": {

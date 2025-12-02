@@ -1,7 +1,7 @@
 <template>
   <div class="campaign-table-container">
     <!-- Advanced Filters -->
-    <div class="filters-section">
+    <div v-if="showFilters" class="filters-section">
       <a-row :gutter="[16, 16]" align="middle">
         <a-col :xs="24" :sm="12" :md="6">
           <a-input
@@ -105,8 +105,20 @@
     <div id="results-summary" class="results-summary" role="status" aria-live="polite">
       <a-typography-text type="secondary">
         {{ $t('campaign.table.results.showing', { filtered: filteredCampaigns.length, total: totalCampaigns }) }}
-        <span v-if="hasActiveFilters"> {{ $t('campaign.table.results.filtered') }}</span>
+        <span v-if="filtersBadgeVisible"> {{ $t('campaign.table.results.filtered') }}</span>
       </a-typography-text>
+      <div v-if="!showFilters" class="results-summary__actions">
+        <a-button
+          type="default"
+          size="middle"
+          @click="toggleView"
+        >
+          <template #icon>
+            <component :is="viewMode === 'table' ? 'AppstoreOutlined' : 'TableOutlined'" aria-hidden="true" />
+          </template>
+          {{ viewMode === 'table' ? $t('campaign.table.view.cards') : $t('campaign.table.view.table') }}
+        </a-button>
+      </div>
     </div>
 
     <!-- Table View -->
@@ -414,6 +426,14 @@ export default {
     pageSize: {
       type: Number,
       default: 20
+    },
+    showFilters: {
+      type: Boolean,
+      default: true
+    },
+    externalFiltersApplied: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['view-details', 'edit-campaign', 'delete-campaign', 'view-ads', 'page-change', 'page-size-change'],
@@ -553,6 +573,8 @@ export default {
       return searchQuery.value || statusFilter.value || objectiveFilter.value || 
              (dateRange.value && dateRange.value.length === 2)
     })
+
+    const filtersBadgeVisible = computed(() => props.externalFiltersApplied || hasActiveFilters.value)
     
     // Methods
     const handleSearch = () => {
@@ -694,6 +716,7 @@ export default {
       totalPages,
       paginatedCampaigns,
       hasActiveFilters,
+      filtersBadgeVisible,
       handleSearch,
       handleFilterChange,
       handleDateRangeChange,
@@ -725,6 +748,10 @@ export default {
 
 .results-summary {
   @apply flex justify-between items-center;
+}
+
+.results-summary__actions {
+  @apply flex items-center gap-2;
 }
 
 .table-section {

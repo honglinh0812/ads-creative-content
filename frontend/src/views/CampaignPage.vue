@@ -19,14 +19,103 @@
       </div>
     </div>
     
+    <!-- Campaign Filters -->
+    <div class="campaign-filters-stack">
+      <a-card class="campaign-panel" :bordered="false" :body-style="{ padding: '24px' }">
+        <div class="campaign-panel__header">
+          <div>
+            <p class="panel-eyebrow">{{ $t('campaign.page.filters.eyebrow') }}</p>
+            <h2 class="panel-title">{{ $t('campaign.page.filters.title') }}</h2>
+            <p class="panel-subtitle">{{ $t('campaign.page.filters.subtitle') }}</p>
+          </div>
+        </div>
+
+        <a-form layout="vertical" class="campaign-filter-form">
+          <a-row :gutter="[16, 16]">
+            <a-col :xs="24" :md="10">
+              <a-form-item :label="$t('campaign.table.placeholder.search')">
+                <a-input
+                  v-model:value="filterSearch"
+                  allow-clear
+                  :placeholder="$t('campaign.table.placeholder.search')"
+                  @input="onCampaignFiltersChange"
+                  @pressEnter="onCampaignFiltersChange"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :md="7">
+              <a-form-item :label="$t('campaign.table.placeholder.status')">
+                <a-select
+                  v-model:value="filterStatus"
+                  allow-clear
+                  :placeholder="$t('campaign.table.placeholder.status')"
+                  @change="onCampaignFiltersChange"
+                >
+                  <a-select-option value="">{{ $t('campaign.table.filter.allStatus') }}</a-select-option>
+                  <a-select-option value="ACTIVE">{{ $t('campaign.status.active') }}</a-select-option>
+                  <a-select-option value="PAUSED">{{ $t('campaign.status.paused') }}</a-select-option>
+                  <a-select-option value="DRAFT">{{ $t('campaign.status.draft') }}</a-select-option>
+                  <a-select-option value="COMPLETED">{{ $t('campaign.status.completed') }}</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :md="7">
+              <a-form-item :label="$t('campaign.table.placeholder.objective')">
+                <a-select
+                  v-model:value="filterObjective"
+                  allow-clear
+                  :placeholder="$t('campaign.table.placeholder.objective')"
+                  @change="onCampaignFiltersChange"
+                >
+                  <a-select-option value="">{{ $t('campaign.table.filter.allObjectives') }}</a-select-option>
+                  <a-select-option
+                    v-for="option in objectiveOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :md="6">
+              <a-form-item :label="$t('campaign.table.action.reset')">
+                <a-button block ghost @click="resetCampaignFilters">
+                  {{ $t('campaign.table.action.reset') }}
+                </a-button>
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-form>
+      </a-card>
+
+      <a-card class="campaign-summary" :bordered="false" :body-style="{ padding: '20px' }">
+        <div class="campaign-summary__content">
+          <div>
+            <p class="summary-title">
+              {{ $t('campaign.table.results.showing', { filtered: filteredCampaigns.length, total: hasCampaignFilters ? filteredCampaigns.length : totalItems }) }}
+            </p>
+            <p class="summary-muted">{{ $t('campaign.page.filters.hint') }}</p>
+          </div>
+          <div class="summary-badges">
+            <a-tag color="blue" v-if="hasCampaignFilters">
+              {{ $t('campaign.page.filters.activeBadge') }}
+            </a-tag>
+          </div>
+        </div>
+      </a-card>
+    </div>
+
     <!-- Campaign Table with Advanced Filtering -->
     <div>
       <CampaignTable
-        :campaigns="campaigns"
+        :campaigns="filteredCampaigns"
         :loading="loading"
-        :total-items="totalItems"
+        :total-items="hasCampaignFilters ? filteredCampaigns.length : totalItems"
         :current-page="currentPage"
         :page-size="size"
+        :show-filters="false"
+        :external-filters-applied="hasCampaignFilters"
         @view-details="showCampaignDetails"
         @edit-campaign="showEditCampaignModal"
         @delete-campaign="confirmDeleteCampaign"
@@ -280,8 +369,9 @@ export default {
       selectedCampaign: null,
       showEditModal: false,
       editingCampaign: null,
-      searchQuery: '',
-      filteredCampaigns: [],
+      filterSearch: '',
+      filterStatus: '',
+      filterObjective: '',
       errors: {},
     }
   },
@@ -292,15 +382,38 @@ export default {
       error: state => state.error,
       campaignTotalItems: state => state.totalItems
     }),
-    displayedCampaigns() {
-      if (!this.searchQuery.trim()) {
-        return this.campaigns
-      }
-      return this.filteredCampaigns
-    },
-
     totalItems() {
       return this.campaignTotalItems ?? this.campaigns.length
+    },
+
+    filteredCampaigns() {
+      const campaigns = Array.isArray(this.campaigns) ? [...this.campaigns] : []
+      const keyword = this.filterSearch.trim().toLowerCase()
+
+      let results = campaigns
+      if (keyword) {
+        results = results.filter((campaign) => {
+          return (
+            campaign.name?.toLowerCase().includes(keyword) ||
+            campaign.id?.toString().includes(keyword) ||
+            campaign.status?.toLowerCase().includes(keyword)
+          )
+        })
+      }
+
+      if (this.filterStatus) {
+        results = results.filter(campaign => campaign.status === this.filterStatus)
+      }
+
+      if (this.filterObjective) {
+        results = results.filter(campaign => campaign.objective === this.filterObjective)
+      }
+
+      return results
+    },
+
+    hasCampaignFilters() {
+      return Boolean(this.filterSearch.trim() || this.filterStatus || this.filterObjective)
     },
 
     objectiveOptions() {
@@ -417,22 +530,14 @@ export default {
         }
       });
     },
-    handleSearch() {
-      if (!this.searchQuery.trim()) {
-        this.filteredCampaigns = []
-        return
-      }
-      const query = this.searchQuery.toLowerCase()
-      this.filteredCampaigns = this.campaigns.filter(campaign => {
-        return (
-          campaign.name?.toLowerCase().includes(query) ||
-          campaign.status?.toLowerCase().includes(query) ||
-          (campaign.budget + '').includes(query)
-        )
-      })
+    onCampaignFiltersChange() {
+      this.currentPage = 1
     },
-    handleLogout() {
-      this.$store.dispatch('auth/logout')
+    resetCampaignFilters() {
+      this.filterSearch = ''
+      this.filterStatus = ''
+      this.filterObjective = ''
+      this.onCampaignFiltersChange()
     },
     validateEditCampaign() {
       const errors = {};
@@ -671,5 +776,72 @@ export default {
     width: 100%;
     margin-bottom: 8px;
   }
+}
+
+.campaign-filters-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  margin-bottom: 24px;
+}
+
+.campaign-panel,
+.campaign-summary {
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.campaign-panel__header {
+  margin-bottom: 16px;
+}
+
+.panel-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.panel-subtitle {
+  margin-top: 4px;
+  color: #475569;
+}
+
+.campaign-filter-form {
+  margin-top: 12px;
+}
+
+.campaign-summary__content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.summary-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #0f172a;
+}
+
+.summary-muted {
+  color: #64748b;
+  margin: 0;
+}
+
+.summary-badges {
+  display: flex;
+  gap: 8px;
 }
 </style>

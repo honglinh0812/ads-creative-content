@@ -380,6 +380,13 @@
       "subtitle": "Quản lý các chiến dịch quảng cáo và theo dõi hiệu suất của chúng",
       "action": {
         "newCampaign": "Chiến dịch mới"
+      },
+      "filters": {
+        "eyebrow": "Thư viện chiến dịch",
+        "title": "Quản lý chiến dịch gọn gàng",
+        "subtitle": "Tìm kiếm, lọc theo trạng thái hoặc mục tiêu trước khi xem chi tiết.",
+        "hint": "Bộ lọc chỉ áp dụng cho dữ liệu chiến dịch đang tải.",
+        "activeBadge": "Đang lọc"
       }
     },
     "modal": {
@@ -615,7 +622,7 @@
   },
   "ads": {
     "pageTitle": "Quảng cáo",
-    "pageSubtitle": "Quản lý nội dung quảng cáo của bạn",
+    "pageSubtitle": "Các nội dung quảng cáo bạn đã tạo",
     "buttons": {
       "newAd": "Quảng cáo mới",
       "tryAgain": "Thử lại",
@@ -720,7 +727,7 @@
     },
     "pageHeader": {
       "title": "Quảng cáo",
-      "subtitle": "Quản lý nội dung quảng cáo của bạn",
+      "subtitle": "Các nội dung quảng cáo bạn đã tạo",
       "newAdButton": "Quảng cáo mới"
     },
     "table": {
@@ -826,7 +833,7 @@
   "ad": {
     "page": {
       "title": "Quảng cáo",
-      "subtitle": "Quản lý nội dung quảng cáo của bạn",
+      "subtitle": "Các nội dung quảng cáo bạn đã tạo",
       "action": {
         "newAd": "Quảng cáo mới"
       }
@@ -2275,6 +2282,16 @@
     }
   },
   "adTable": {
+    "header": {
+      "eyebrow": "Thư viện creative",
+      "title": "Tổng quan hiệu suất quảng cáo",
+      "subtitle": "Theo dõi toàn bộ quảng cáo đã tạo, lọc nhanh và xuất các mẫu hiệu quả."
+    },
+    "view": {
+      "table": "Chế độ bảng",
+      "cards": "Chế độ thẻ",
+      "compactHint": "Chế độ thẻ tự bật trên màn hình nhỏ"
+    },
     "filters": {
       "searchPlaceholder": "Tìm kiếm quảng cáo...",
       "searchLabel": "Tìm kiếm quảng cáo",
@@ -2290,6 +2307,10 @@
       "viewToggleCards": "Chuyển sang chế độ bảng",
       "cardsButton": "Thẻ",
       "tableButton": "Bảng"
+    },
+    "summary": {
+      "syncHint": "Dữ liệu đồng bộ với Facebook vài phút một lần.",
+      "filtersActive": "Đang bật bộ lọc"
     },
     "filterOptions": {
       "allStatus": "Tất cả trạng thái",
@@ -2342,9 +2363,13 @@
       "campaignNumber": "Chiến dịch #{id}",
       "headline": "Tiêu đề:",
       "text": "Văn bản:",
+      "cta": "CTA",
+      "noContent": "Chưa có nội dung",
+      "viewFullContent": "Xem toàn bộ nội dung",
       "noMedia": "Không có phương tiện"
     },
     "actions": {
+      "more": "Thêm",
       "viewDetails": "Xem chi tiết",
       "viewDetailsLabel": "Xem chi tiết cho {name}",
       "edit": "Sửa",
@@ -2353,8 +2378,9 @@
       "duplicate": "Sao chép",
       "duplicateAd": "Sao chép quảng cáo",
       "duplicateLabel": "Sao chép {name}",
-      "exportToFacebook": "Xuất lên Facebook",
-      "exportLabel": "Xuất {name} lên Facebook",
+      "exportToFacebook": "Xuất",
+      "exportLabel": "Xuất {name}",
+      "download": "Tải xuống",
       "delete": "Xóa",
       "deleteAd": "Xóa quảng cáo",
       "deleteLabel": "Xóa {name}",
@@ -2363,6 +2389,7 @@
       "deleteNo": "Không"
     },
     "card": {
+      "emptyDescription": "Không có quảng cáo nào khớp với bộ lọc.",
       "untitledAd": "Quảng cáo chưa đặt tên",
       "unknown": "Không rõ",
       "campaign": "Chiến dịch: {name}",
@@ -2377,7 +2404,12 @@
       "deleteNo": "Không"
     },
     "pagination": {
-      "perPage": "{value} / trang"
+      "perPage": "{value} / trang",
+      "range": "{start}-{end} / {total} quảng cáo"
+    },
+    "contentModal": {
+      "title": "Nội dung quảng cáo",
+      "name": "Tên quảng cáo"
     }
   },
   "adDetail": {
