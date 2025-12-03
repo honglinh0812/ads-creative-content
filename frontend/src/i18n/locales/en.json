@@ -514,10 +514,10 @@
         },
         "performanceGoal": {
           "options": {
-            "LINK_CLICKS": "Link Clicks (recommended)",
-            "LANDING_PAGE_VIEWS": "Landing Page Views",
-            "LEAD_GENERATION": "Leads",
-            "OFFSITE_CONVERSIONS": "Website Conversions"
+            "linkClicks": "Link Clicks (recommended)",
+            "landingPageViews": "Landing Page Views",
+            "leads": "Leads",
+            "offsite": "Website Conversions"
           }
         }
       },
@@ -2267,10 +2267,12 @@
         "actions": "Actions"
       },
       "statusFilters": {
+        "ready": "Ready",
         "active": "Active",
         "paused": "Paused",
-        "draft": "Draft",
-        "archived": "Archived"
+        "completed": "Completed",
+        "failed": "Failed",
+        "draft": "Draft"
       },
       "ariaLabel": "Ads table"
     },

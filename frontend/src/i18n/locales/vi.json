@@ -399,7 +399,7 @@
           "budgetType": "Loại ngân sách",
           "dailyBudget": "Ngân sách hàng ngày",
           "totalBudget": "Tổng ngân sách",
-          "bidCap": "Giới hạn bid",
+          "bidCap": "Giới hạn giá thầu",
           "targetAudience": "Đối tượng mục tiêu",
           "startDate": "Ngày bắt đầu",
           "endDate": "Ngày kết thúc",
@@ -415,7 +415,7 @@
           "budgetType": "Chọn loại ngân sách",
           "dailyBudget": "Nhập ngân sách hàng ngày",
           "totalBudget": "Nhập tổng ngân sách",
-          "bidCap": "Nhập giới hạn bid (tùy chọn)",
+          "bidCap": "Nhập giới hạn giá thầu (tùy chọn)",
           "startDate": "Chọn ngày bắt đầu",
           "endDate": "Chọn ngày kết thúc",
           "targetAudience": "Mô tả đối tượng mục tiêu của bạn"
@@ -426,7 +426,7 @@
           "budgetTypeRequired": "Loại ngân sách là bắt buộc",
           "dailyBudgetRequired": "Vui lòng nhập ngân sách hàng ngày hợp lệ",
           "totalBudgetRequired": "Vui lòng nhập tổng ngân sách hợp lệ",
-          "bidCapPositive": "Giới hạn bid phải lớn hơn 0",
+          "bidCapPositive": "Giới hạn giá thầu phải lớn hơn 0",
           "startDateRequired": "Ngày bắt đầu là bắt buộc",
           "endDateRequired": "Ngày kết thúc là bắt buộc",
           "endDateAfterStart": "Ngày kết thúc phải sau ngày bắt đầu",
@@ -479,7 +479,7 @@
           "totalBudget": "Tổng ngân sách",
           "startDate": "Ngày & Giờ bắt đầu",
           "endDate": "Ngày & Giờ kết thúc",
-          "bidCap": "Giới hạn bid",
+          "bidCap": "Giới hạn giá thầu",
           "performanceGoal": "Mục tiêu tối ưu"
         },
         "placeholder": {
@@ -490,7 +490,7 @@
           "totalBudget": "Nhập tổng ngân sách...",
           "startDate": "Chọn ngày và giờ bắt đầu...",
           "endDate": "Chọn ngày và giờ kết thúc...",
-          "bidCap": "Tùy chọn: giới hạn số tiền Facebook có thể bid mỗi lần...",
+          "bidCap": "Tùy chọn: giới hạn số tiền Facebook có thể đặt giá thầu mỗi lần...",
           "performanceGoal": "Chọn mục tiêu Facebook cần tối ưu..."
         },
         "budgetType": {
@@ -505,19 +505,19 @@
           "create": "Tạo chiến dịch"
         },
         "helper": {
-          "bidCap": "Facebook sẽ không bid cao hơn mức này trong mỗi phiên đấu giá. Bỏ trống nếu muốn hệ thống tự tối ưu.",
+          "bidCap": "Facebook sẽ không đặt giá thầu cao hơn mức này trong mỗi phiên đấu giá. Bỏ trống nếu muốn hệ thống tự tối ưu.",
           "performanceGoal": "Chọn cách Facebook tối ưu phân phối cho chiến dịch."
         },
         "validation": {
-          "bidCapPositive": "Giới hạn bid phải lớn hơn 0",
+          "bidCapPositive": "Giới hạn giá thầu phải lớn hơn 0",
           "performanceGoalRequired": "Vui lòng chọn mục tiêu tối ưu"
         },
         "performanceGoal": {
           "options": {
-            "LINK_CLICKS": "Nhấp vào liên kết (khuyến nghị)",
-            "LANDING_PAGE_VIEWS": "Lượt xem trang đích",
-            "LEAD_GENERATION": "Khách hàng tiềm năng",
-            "OFFSITE_CONVERSIONS": "Chuyển đổi trên website"
+            "linkClicks": "Nhấp vào liên kết (khuyến nghị)",
+            "landingPageViews": "Lượt xem trang đích",
+            "leads": "Khách hàng tiềm năng",
+            "offsite": "Chuyển đổi trên website"
           }
         }
       },
@@ -2283,9 +2283,9 @@
   },
   "adTable": {
     "header": {
-      "eyebrow": "Thư viện creative",
-      "title": "Tổng quan hiệu suất quảng cáo",
-      "subtitle": "Theo dõi toàn bộ quảng cáo đã tạo, lọc nhanh và xuất các mẫu hiệu quả."
+      "eyebrow": "",
+      "title": "Bộ lọc",
+      "subtitle": ""
     },
     "view": {
       "table": "Chế độ bảng",
@@ -2346,10 +2346,12 @@
         "actions": "Thao tác"
       },
       "statusFilters": {
+        "ready": "Sẵn sàng",
         "active": "Đang hoạt động",
         "paused": "Tạm dừng",
-        "draft": "Bản nháp",
-        "archived": "Đã lưu trữ"
+        "completed": "Hoàn tất",
+        "failed": "Thất bại",
+        "draft": "Bản nháp"
       },
       "ariaLabel": "Bảng quảng cáo"
     },

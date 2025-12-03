@@ -443,24 +443,25 @@ export default {
       if (props.statusOptions && props.statusOptions.length) {
         return props.statusOptions
       }
-      return Array.from(
-        new Set(safeAds.value.map(ad => ad.status).filter(Boolean))
-      ).map(status => ({
-        label: formatStatusLabel(status),
-        value: status
-      }))
+      return [
+        { label: t('adTable.table.statusFilters.ready'), value: 'READY' },
+        { label: t('adTable.table.statusFilters.active'), value: 'ACTIVE' },
+        { label: t('adTable.table.statusFilters.paused'), value: 'PAUSED' },
+        { label: t('adTable.table.statusFilters.completed'), value: 'COMPLETED' },
+        { label: t('adTable.table.statusFilters.failed'), value: 'FAILED' },
+        { label: t('adTable.table.statusFilters.draft'), value: 'DRAFT' }
+      ]
     })
 
     const adTypeSelectOptions = computed(() => {
       if (props.adTypeOptions && props.adTypeOptions.length) {
         return props.adTypeOptions
       }
-      return Array.from(
-        new Set(safeAds.value.map(ad => ad.adType).filter(Boolean))
-      ).map(type => ({
-        label: formatAdType(type),
-        value: type
-      }))
+      return [
+        { label: t('ads.adTypeLabel.websiteConversion'), value: 'WEBSITE_CONVERSION_AD' },
+        { label: t('ads.adTypeLabel.pagePost'), value: 'PAGE_POST_AD' },
+        { label: t('ads.adTypeLabel.leadForm'), value: 'LEAD_FORM_AD' }
+      ]
     })
 
     const safeCampaigns = computed(() => (Array.isArray(props.campaigns) ? props.campaigns : []))

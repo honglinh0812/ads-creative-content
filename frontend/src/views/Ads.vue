@@ -332,20 +332,20 @@ export default {
 
     statusOptions() {
       return [
-        { label: this.$t('ads.filter.status.ready'), value: 'READY' },
-        { label: this.$t('ads.filter.status.active'), value: 'ACTIVE' },
-        { label: this.$t('ads.filter.status.paused'), value: 'PAUSED' },
-        { label: this.$t('ads.filter.status.completed'), value: 'COMPLETED' },
-        { label: this.$t('ads.filter.status.failed'), value: 'FAILED' },
-        { label: this.$t('ads.filter.status.draft'), value: 'DRAFT' }
+        { label: this.$t('adTable.table.statusFilters.ready'), value: 'READY' },
+        { label: this.$t('adTable.table.statusFilters.active'), value: 'ACTIVE' },
+        { label: this.$t('adTable.table.statusFilters.paused'), value: 'PAUSED' },
+        { label: this.$t('adTable.table.statusFilters.completed'), value: 'COMPLETED' },
+        { label: this.$t('adTable.table.statusFilters.failed'), value: 'FAILED' },
+        { label: this.$t('adTable.table.statusFilters.draft'), value: 'DRAFT' }
       ]
     },
 
     adTypeOptions() {
       return [
-        { label: this.$t('ads.filter.types.website'), value: 'WEBSITE_CONVERSION_AD' },
-        { label: this.$t('ads.filter.types.pagePost'), value: 'PAGE_POST_AD' },
-        { label: this.$t('ads.filter.types.leadForm'), value: 'LEAD_FORM_AD' }
+        { label: this.$t('ads.adTypeLabel.websiteConversion'), value: 'WEBSITE_CONVERSION_AD' },
+        { label: this.$t('ads.adTypeLabel.pagePost'), value: 'PAGE_POST_AD' },
+        { label: this.$t('ads.adTypeLabel.leadForm'), value: 'LEAD_FORM_AD' }
       ]
     },
 
