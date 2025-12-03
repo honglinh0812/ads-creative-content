@@ -91,14 +91,22 @@ export default {
     // Main menu items
     const menu = computed(() => [
       { label: translate('navigation.dashboard', 'Dashboard'), path: '/dashboard', icon: HomeOutlined, match: ['dashboard'] },
-      { label: translate('navigation.campaigns', 'Campaigns'), path: '/campaigns', icon: ThunderboltOutlined, match: ['campaign', 'campaigns'] },
+      {
+        label: translate('navigation.campaigns', 'Campaigns'),
+        path: '/campaigns',
+        icon: ThunderboltOutlined,
+        match: ['campaign', 'campaigns'],
+        children: [
+          { label: translate('navigation.allCampaigns', 'Campaign list'), path: '/campaigns' },
+          { label: translate('navigation.createCampaign', 'Create campaign'), path: '/campaign/create' }
+        ]
+      },
       {
         label: translate('navigation.ads', 'Ads'),
         path: '/ads',
         icon: FileTextOutlined,
         match: ['/ads'],
         children: [
-          { label: translate('navigation.allAds', 'All ads'), path: '/ads' },
           { label: translate('navigation.createAd', 'Create ad'), path: '/ad/create' },
           { label: translate('navigation.mimicAds', 'Mimic ads'), path: '/ads/learn' }
         ]

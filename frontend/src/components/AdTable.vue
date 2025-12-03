@@ -913,6 +913,22 @@ export default {
   align-items: center;
 }
 
+.summary-card__actions .ant-btn-primary[disabled] {
+  background: #e2e8f0 !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+.filter-form :deep(.ant-form-item-label > label) {
+  font-weight: 600;
+}
+
+.filter-form :deep(.ant-btn[disabled]) {
+  color: #94a3b8 !important;
+  border-color: #e2e8f0 !important;
+  background: #f8fafc !important;
+}
+
 .badge {
   padding: 4px 12px;
   border-radius: 999px;

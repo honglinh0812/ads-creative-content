@@ -302,6 +302,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 16px;
+  margin-left: auto;
 }
 
 .trigger {

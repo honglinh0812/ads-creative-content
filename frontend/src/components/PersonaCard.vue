@@ -84,13 +84,6 @@
       <a-tooltip :title="$t('personas.actions.edit')">
         <edit-outlined key="edit" @click="handleEdit" />
       </a-tooltip>
-      <a-tooltip :title="$t('personas.selectForAd')">
-        <check-circle-outlined
-          key="select"
-          :class="{ 'selected-icon': isSelected }"
-          @click="handleSelect"
-        />
-      </a-tooltip>
       <a-popconfirm
         :title="$t('personas.deleteConfirm')"
         :ok-text="$t('common.action.yes')"

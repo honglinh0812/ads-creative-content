@@ -53,22 +53,22 @@ export function detectLanguage(text) {
 export const i18nTemplates = {
   trendingKeywords: {
     vi: {
-      title: '📈 TỪ KHÓA THỊNH HÀNH',
-      instruction: '💡 Hãy kết hợp các từ khóa này một cách tự nhiên vào nội dung quảng cáo.'
+      title: 'TỪ KHÓA THỊNH HÀNH',
+      instruction: 'Hãy kết hợp các từ khóa này một cách tự nhiên vào nội dung quảng cáo.'
     },
     en: {
-      title: '📈 TRENDING KEYWORDS',
-      instruction: '💡 Incorporate these trending topics naturally into the ad content.'
+      title: 'TRENDING KEYWORDS',
+      instruction: 'Incorporate these trending topics naturally into the ad content.'
     }
   },
   adReference: {
     vi: {
-      title: '📄 THAM KHẢO TỪ QUẢNG CÁO',
-      instruction: '💡 Học phong cách viết, KHÔNG sao chép nội dung.'
+      title: 'THAM KHẢO TỪ QUẢNG CÁO',
+      instruction: 'Học phong cách viết, KHÔNG sao chép nội dung.'
     },
     en: {
-      title: '📄 AD REFERENCE',
-      instruction: '💡 Learn the writing style, DO NOT copy content.'
+      title: 'AD REFERENCE',
+      instruction: 'Learn the writing style, DO NOT copy content.'
     }
   }
 }

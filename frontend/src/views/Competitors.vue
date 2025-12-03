@@ -1,5 +1,11 @@
 <template>
   <div class="competitors-page">
+    <a-page-header
+      class="competitors-page-header"
+      :title="$t('competitors.title')"
+      :sub-title="$t('competitors.subtitle')"
+    />
+
     <a-card :title="$t('competitors.form.title')" :bordered="false" class="search-card">
       <a-form layout="vertical" @submit.prevent="handleSearch">
         <a-row :gutter="[12, 12]">
@@ -56,107 +62,6 @@
         </a-space>
       </a-form>
     </a-card>
-
-    <div class="watchlist-section">
-      <a-card :title="$t('competitors.watchlist.title')" :bordered="false">
-        <p class="watchlist-subtitle">{{ $t('competitors.watchlist.subtitle') }}</p>
-        <a-form layout="vertical" class="watchlist-form" @submit.prevent="handleAddWatchlist">
-          <a-row :gutter="[8, 8]" align="bottom">
-            <a-col :xs="24" :md="8">
-              <a-form-item :label="$t('competitors.watchlist.brandLabel')">
-                <a-input
-                  v-model:value="watchlistForm.query"
-                  :placeholder="$t('competitors.watchlist.brandPlaceholder')"
-                  allow-clear
-                />
-              </a-form-item>
-            </a-col>
-            <a-col :xs="24" :md="6">
-              <a-form-item :label="$t('competitors.watchlist.keywordLabel')">
-                <a-input
-                  v-model:value="watchlistForm.keyword"
-                  :placeholder="$t('competitors.watchlist.keywordPlaceholder')"
-                  allow-clear
-                />
-              </a-form-item>
-            </a-col>
-            <a-col :xs="12" :md="4">
-              <a-form-item :label="$t('competitors.watchlist.platformLabel')">
-                <a-select v-model:value="watchlistForm.engine">
-                  <a-select-option value="linkedin_ad_library">{{ $t('competitors.platformLabels.linkedin') }}</a-select-option>
-                  <a-select-option value="tiktok_ads_library">{{ $t('competitors.platformLabels.tiktok') }}</a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :xs="12" :md="4">
-              <a-form-item :label="$t('competitors.watchlist.regionLabel')">
-                <a-select v-model:value="watchlistForm.location">
-                  <a-select-option
-                    v-for="option in locationOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
-                    {{ option.label }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :xs="8" :md="3">
-              <a-form-item :label="$t('competitors.watchlist.limitLabel')">
-                <a-input-number v-model:value="watchlistForm.limit" :min="1" :max="50" style="width: 100%" />
-              </a-form-item>
-            </a-col>
-            <a-col :xs="8" :md="3">
-              <a-form-item label=" ">
-                <a-button type="primary" block @click="handleAddWatchlist">
-                  {{ $t('competitors.watchlist.actions.add') }}
-                </a-button>
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </a-form>
-        <div class="watchlist-actions">
-          <a-button :disabled="!watchlist.length" @click="handleRefreshAllWatchlist">
-            {{ $t('competitors.watchlist.actions.refreshAll') }}
-          </a-button>
-        </div>
-        <div v-if="watchlist.length" class="watchlist-grid">
-          <div v-for="item in watchlist" :key="item.id" class="watchlist-card">
-            <div class="watchlist-card-header">
-              <h4>{{ item.query || item.keyword }}</h4>
-              <a-tag color="blue">{{ getEngineLabel(item.engine) }}</a-tag>
-              <a-tag v-if="item.hasNew" color="green">{{ $t('competitors.watchlist.newLabel') }}</a-tag>
-            </div>
-            <p class="watchlist-meta">
-              {{ getLocationLabel(item) }} ·
-              {{ item.lastChecked ? formatWatchlistTimestamp(item.lastChecked) : $t('competitors.watchlist.neverChecked') }}
-            </p>
-            <p class="watchlist-count">
-              {{ $t('competitors.watchlist.adsTracked', { count: item.lastResultCount ?? 0 }) }}
-            </p>
-            <p class="watchlist-hint" v-if="item.lastMessage">{{ item.lastMessage }}</p>
-            <div class="watchlist-card-actions">
-              <a-button type="link" size="small" :loading="isEntryRefreshing(item.id)" @click="handleRefreshWatchlist(item)">
-                {{ $t('competitors.watchlist.actions.refresh') }}
-              </a-button>
-              <a-button type="link" size="small" danger @click="handleRemoveWatchlist(item)">
-                {{ $t('competitors.watchlist.actions.remove') }}
-              </a-button>
-            </div>
-          </div>
-        </div>
-        <a-empty v-else :description="$t('competitors.watchlist.empty')" />
-        <div v-if="watchlistActivity.length" class="watchlist-activity">
-          <p class="eyebrow">{{ $t('competitors.watchlist.activityTitle') }}</p>
-          <ul>
-            <li v-for="activity in watchlistActivity" :key="activity.id">
-              <strong>{{ activity.query }}</strong> · {{ activity.message }} ·
-              <span class="watchlist-time">{{ formatWatchlistTimestamp(activity.timestamp) }}</span>
-            </li>
-          </ul>
-        </div>
-      </a-card>
-    </div>
 
     <a-alert
       v-if="searchError"
@@ -296,6 +201,107 @@
         v-if="!hasAds && !hasVideos && !hasContent && !searchError"
         :description="$t('competitors.noResults')"
       />
+    </div>
+
+    <div class="watchlist-section">
+      <a-card :title="$t('competitors.watchlist.title')" :bordered="false">
+        <p class="watchlist-subtitle">{{ $t('competitors.watchlist.subtitle') }}</p>
+        <a-form layout="vertical" class="watchlist-form" @submit.prevent="handleAddWatchlist">
+          <a-row :gutter="[8, 8]" align="bottom">
+            <a-col :xs="24" :md="8">
+              <a-form-item :label="$t('competitors.watchlist.brandLabel')">
+                <a-input
+                  v-model:value="watchlistForm.query"
+                  :placeholder="$t('competitors.watchlist.brandPlaceholder')"
+                  allow-clear
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="24" :md="6">
+              <a-form-item :label="$t('competitors.watchlist.keywordLabel')">
+                <a-input
+                  v-model:value="watchlistForm.keyword"
+                  :placeholder="$t('competitors.watchlist.keywordPlaceholder')"
+                  allow-clear
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="12" :md="4">
+              <a-form-item :label="$t('competitors.watchlist.platformLabel')">
+                <a-select v-model:value="watchlistForm.engine">
+                  <a-select-option value="linkedin_ad_library">{{ $t('competitors.platformLabels.linkedin') }}</a-select-option>
+                  <a-select-option value="tiktok_ads_library">{{ $t('competitors.platformLabels.tiktok') }}</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :xs="12" :md="4">
+              <a-form-item :label="$t('competitors.watchlist.regionLabel')">
+                <a-select v-model:value="watchlistForm.location">
+                  <a-select-option
+                    v-for="option in locationOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :xs="8" :md="3">
+              <a-form-item :label="$t('competitors.watchlist.limitLabel')">
+                <a-input-number v-model:value="watchlistForm.limit" :min="1" :max="50" style="width: 100%" />
+              </a-form-item>
+            </a-col>
+            <a-col :xs="8" :md="3">
+              <a-form-item label=" ">
+                <a-button type="primary" block @click="handleAddWatchlist">
+                  {{ $t('competitors.watchlist.actions.add') }}
+                </a-button>
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-form>
+        <div class="watchlist-actions">
+          <a-button :disabled="!watchlist.length" @click="handleRefreshAllWatchlist">
+            {{ $t('competitors.watchlist.actions.refreshAll') }}
+          </a-button>
+        </div>
+        <div v-if="watchlist.length" class="watchlist-grid">
+          <div v-for="item in watchlist" :key="item.id" class="watchlist-card">
+            <div class="watchlist-card-header">
+              <h4>{{ item.query || item.keyword }}</h4>
+              <a-tag color="blue">{{ getEngineLabel(item.engine) }}</a-tag>
+              <a-tag v-if="item.hasNew" color="green">{{ $t('competitors.watchlist.newLabel') }}</a-tag>
+            </div>
+            <p class="watchlist-meta">
+              {{ getLocationLabel(item) }} ·
+              {{ item.lastChecked ? formatWatchlistTimestamp(item.lastChecked) : $t('competitors.watchlist.neverChecked') }}
+            </p>
+            <p class="watchlist-count">
+              {{ $t('competitors.watchlist.adsTracked', { count: item.lastResultCount ?? 0 }) }}
+            </p>
+            <p class="watchlist-hint" v-if="item.lastMessage">{{ item.lastMessage }}</p>
+            <div class="watchlist-card-actions">
+              <a-button type="link" size="small" :loading="isEntryRefreshing(item.id)" @click="handleRefreshWatchlist(item)">
+                {{ $t('competitors.watchlist.actions.refresh') }}
+              </a-button>
+              <a-button type="link" size="small" danger @click="handleRemoveWatchlist(item)">
+                {{ $t('competitors.watchlist.actions.remove') }}
+              </a-button>
+            </div>
+          </div>
+        </div>
+        <a-empty v-else :description="$t('competitors.watchlist.empty')" />
+        <div v-if="watchlistActivity.length" class="watchlist-activity">
+          <p class="eyebrow">{{ $t('competitors.watchlist.activityTitle') }}</p>
+          <ul>
+            <li v-for="activity in watchlistActivity" :key="activity.id">
+              <strong>{{ activity.query }}</strong> · {{ activity.message }} ·
+              <span class="watchlist-time">{{ formatWatchlistTimestamp(activity.timestamp) }}</span>
+            </li>
+          </ul>
+        </div>
+      </a-card>
     </div>
 
     <a-modal
@@ -677,6 +683,23 @@ export default {
   gap: 24px;
 }
 
+.competitors-page-header {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  margin-bottom: 4px;
+}
+
+.competitors-page-header .ant-page-header-heading-title {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.competitors-page-header .ant-page-header-heading-sub-title {
+  color: #475569;
+}
+
 .search-card {
   background: #fff;
 }
@@ -813,6 +836,14 @@ export default {
 @media (max-width: 768px) {
   .competitors-page {
     padding: 12px;
+  }
+
+  .competitors-page-header {
+    padding: 16px;
+  }
+
+  .competitors-page-header .ant-page-header-heading-title {
+    font-size: 1.5rem;
   }
 }
 </style>

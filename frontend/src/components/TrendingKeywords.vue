@@ -129,14 +129,6 @@
           <span style="font-size: 48px">🔍</span>
         </template>
       </a-empty>
-
-      <a-alert
-        v-else-if="!loading && !hasSearched"
-        :message="$t('components.trendingKeywords.help.message')"
-        :description="$t('components.trendingKeywords.help.description')"
-        type="info"
-        show-icon
-      />
     </a-spin>
 
     <a-alert

@@ -399,7 +399,7 @@
           "budgetType": "Loại ngân sách",
           "dailyBudget": "Ngân sách hàng ngày",
           "totalBudget": "Tổng ngân sách",
-          "bidCap": "Giới hạn giá thầu",
+          "bidCap": "Giới hạn mức chi / 1 khách hàng",
           "targetAudience": "Đối tượng mục tiêu",
           "startDate": "Ngày bắt đầu",
           "endDate": "Ngày kết thúc",
@@ -505,7 +505,7 @@
           "create": "Tạo chiến dịch"
         },
         "helper": {
-          "bidCap": "Facebook sẽ không đặt giá thầu cao hơn mức này trong mỗi phiên đấu giá. Bỏ trống nếu muốn hệ thống tự tối ưu.",
+          "bidCap": "",
           "performanceGoal": "Chọn cách Facebook tối ưu phân phối cho chiến dịch."
         },
         "validation": {
@@ -1078,8 +1078,8 @@
   "trending": {
     "card": {
       "title": {
-        "vi": "📈 Từ khóa thịnh hành",
-        "en": "📈 Trending Keywords"
+        "vi": "Từ khóa thịnh hành",
+        "en": "Trending keywords"
       }
     },
     "search": {
@@ -1284,7 +1284,8 @@
       "reset": "Khôi phục giá trị ban đầu",
       "close": "Đóng",
       "edit": "Chỉnh sửa",
-      "delete": "Xóa"
+      "delete": "Xóa",
+      "view": "Xem chi tiết"
     },
     "form": {
       "namePlaceholder": "Ví dụ: Người trẻ yêu môi trường",
@@ -1738,14 +1739,14 @@
         "feature3": "Tối ưu hóa lưu lượng truy cập"
       },
       "leadGeneration": {
-        "label": "Phiếu thu thập thông tin khách hàng",
+        "label": "Quảng cáo thu thập thông tin",
         "description": "Thu thập khách hàng tiềm năng trực tiếp thông qua biểu mẫu Facebook",
         "feature1": "Câu hỏi biểu mẫu tùy chỉnh",
         "feature2": "Thu thập khách hàng tiềm năng",
         "feature3": "Thông tin liên hệ"
       },
       "pagePost": {
-        "label": "Quảng cáo bài đăng trên trang",
+        "label": "Quảng cáo với ảnh đơn",
         "description": "Quảng bá các bài đăng trên trang của bạn để tăng tương tác",
         "feature1": "Quảng bá bài đăng",
         "feature2": "Tăng cường tương tác",
@@ -2185,18 +2186,18 @@
       },
       "baseContent": {
         "label": "Nội dung cần quảng cáo",
-        "placeholder": "Mô tả sản phẩm/dịch vụ, khách hàng mục tiêu, lợi ích chính..."
+        "placeholder": "Nêu chi tiết về sản phẩm/dịch vụ bạn muốn quảng cáo..."
       },
       "referenceLink": {
-        "label": "Link quảng cáo tham khảo (Meta Ad Library)",
-        "placeholder": "Dán 1 link Meta Ad Library",
+        "label": "Link quảng cáo tham khảo từ Meta Ad Library",
+        "placeholder": "Dán link tại đây",
         "previewReady": "Đã phân tích quảng cáo tham khảo. AI sẽ gợi ý phong cách & CTA phù hợp.",
         "fallbackSummary": "Đã phân tích quảng cáo tham khảo"
       },
       "websiteUrl": {
         "label": "Website (không bắt buộc)",
-        "placeholder": "https://trang-dich.com",
-        "helper": "Điền link đích nếu khác với website đã lưu trong chiến dịch."
+        "placeholder": "https://trang-web-cua-ban.com",
+        "helper": ""
       },
       "next": "Tiếp tục"
     },
@@ -2309,8 +2310,8 @@
       "tableButton": "Bảng"
     },
     "summary": {
-      "syncHint": "Dữ liệu đồng bộ với Facebook vài phút một lần.",
-      "filtersActive": "Đang bật bộ lọc"
+      "syncHint": "",
+      "filtersActive": ""
     },
     "filterOptions": {
       "allStatus": "Tất cả trạng thái",
@@ -2566,19 +2567,19 @@
       }
     },
     "personaSelector": {
-      "title": "🎭 Chân dung khách hàng mục tiêu (Tùy chọn)",
+      "title": "Chân dung khách hàng mục tiêu",
       "createNew": "Tạo mới",
-      "createModalTitle": "Tạo chân dung khách hàng mà không rời khỏi bước hiện tại",
+      "createModalTitle": "Tạo chân dung khách hàng",
       "form": {
-        "label": "Chọn chân dung khách hàng để điều chỉnh quảng cáo của bạn",
-        "placeholder": "Chọn chân dung khách hàng mục tiêu (tùy chọn)"
+        "label": "Chọn chân dung khách hàng",
+        "placeholder": "Chọn chân dung khách hàng mục tiêu"
       },
       "empty": {
         "description": "Không tìm thấy chân dung khách hàng",
         "action": "Tạo chân dung khách hàng đầu tiên của bạn"
       },
       "preview": {
-        "title": "Xem trước Chân dung khách hàng",
+        "title": "Xem trước chân dung khách hàng",
         "years": "{age} tuổi",
         "interests": "{count} Sở thích",
         "painPoints": "{count} Điểm khó khăn",
@@ -2628,7 +2629,7 @@
       }
     },
     "trendingKeywords": {
-      "title": "📈 Từ khóa thịnh hành",
+      "title": "Từ khóa thịnh hành",
       "search": {
         "label": "Từ khóa",
         "placeholder": "Tìm kiếm xu hướng (vd., 'thiết bị công nghệ', 'thời trang')",

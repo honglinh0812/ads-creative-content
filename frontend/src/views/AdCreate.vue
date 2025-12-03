@@ -3,12 +3,22 @@
     <div class="ad-create-content">
 
       <!-- Page Header -->
-      <a-page-header :title="$t('adCreate.pageHeader.title')" :sub-title="$t('adCreate.pageHeader.subtitle')">
+      <a-page-header
+        class="ad-create-page-header"
+        :title="$t('adCreate.pageHeader.title')"
+        :sub-title="$t('adCreate.pageHeader.subtitle')"
+      >
         <template #extra>
-          <a-button @click="$router.push('/dashboard')">
-            <template #icon><arrow-left-outlined /></template>
-            {{ $t('adCreate.pageHeader.backToDashboard') }}
-          </a-button>
+          <a-space size="small">
+            <a-button @click="$router.push('/ad/learn')">
+              <template #icon><bulb-outlined /></template>
+              {{ $t('adCreate.pageHeader.learnAds') }}
+            </a-button>
+            <a-button type="default" @click="$router.push('/dashboard')">
+              <template #icon><arrow-left-outlined /></template>
+              {{ $t('adCreate.pageHeader.backToDashboard') }}
+            </a-button>
+          </a-space>
         </template>
       </a-page-header>
 
@@ -107,7 +117,7 @@
             </a-card>
 
             <!-- Ad Type Selection -->
-            <a-form-item>
+            <a-form-item class="creative-style-item">
               <template #label>
                 <span>{{ $t('adCreate.step1.adType.label') }}</span>
                 <a-button type="text" size="small" @click="showAdTypeHelp = true">
@@ -2735,6 +2745,25 @@ export default {
   margin: 0 auto;
 }
 
+.ad-create-page-header {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.ad-create-page-header .ant-page-header-heading-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ad-create-page-header .ant-page-header-heading-sub-title {
+  color: #475569;
+  font-size: 16px;
+}
+
 /* Creative Progress Container */
 .creative-progress-container {
   background: white;
@@ -4021,6 +4050,13 @@ export default {
 /* Issue #8: Creative Style Dropdown and Preview */
 .style-option {
   padding: 8px 0;
+}
+
+.creative-style-item :deep(.ant-form-item-label > label) {
+  display: flex;
+  align-items: center;
+  line-height: 1.5;
+  padding-bottom: 4px;
 }
 
 .style-label {
