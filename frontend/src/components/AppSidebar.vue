@@ -8,7 +8,6 @@
     </button>
     <div v-if="sidebarOpen" class="sidebar-content">
       <nav class="sidebar-menu" aria-label="Main navigation">
-        <p class="menu-label">Workspace</p>
         <div
           v-for="item in menu"
           :key="item.path"
@@ -63,11 +62,11 @@ export default {
     ThunderboltOutlined,
     FileTextOutlined,
     MenuOutlined,
-    ArrowLeftOutlined,
     TeamOutlined,
     FundOutlined,
     BulbOutlined,
-    BarChartOutlined
+    BarChartOutlined,
+    ArrowLeftOutlined
   },
   props: {
     sidebarOpen: {
@@ -122,10 +121,9 @@ export default {
     function isChildActive(child) {
       return route.path.startsWith(child.path)
     }
-    // Check if current page is dashboard
     const isDashboard = computed(() => route.path === '/dashboard')
-    // Navigate back to dashboard
-    function goDashboard() {
+
+    const goDashboard = () => {
       router.push('/dashboard')
     }
 

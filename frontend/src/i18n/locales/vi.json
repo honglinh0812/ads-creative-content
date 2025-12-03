@@ -382,9 +382,9 @@
         "newCampaign": "Chiến dịch mới"
       },
       "filters": {
-        "eyebrow": "Thư viện chiến dịch",
-        "title": "Quản lý chiến dịch gọn gàng",
-        "subtitle": "Tìm kiếm, lọc theo trạng thái hoặc mục tiêu trước khi xem chi tiết.",
+        "eyebrow": "",
+        "title": "Quản lý chiến dịch",
+        "subtitle": "",
         "hint": "Bộ lọc chỉ áp dụng cho dữ liệu chiến dịch đang tải.",
         "activeBadge": "Đang lọc"
       }

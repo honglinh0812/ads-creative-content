@@ -22,15 +22,6 @@
         <a-layout class="content-layout" :class="{ 'sidebar-open': sidebarOpen }">
           <!-- Header -->
           <a-layout-header class="header">
-            <div class="header-left">
-              <a-breadcrumb class="breadcrumb">
-                <a-breadcrumb-item v-for="item in breadcrumbs" :key="item.path">
-                  <router-link v-if="item.path" :to="item.path">{{ item.name }}</router-link>
-                  <span v-else>{{ item.name }}</span>
-                </a-breadcrumb-item>
-              </a-breadcrumb>
-            </div>
-            
             <div class="header-right">
               <!-- Language Switcher -->
               <LanguageSwitcher />
@@ -133,9 +124,6 @@ export default {
     return {
       sidebarOpen: true,
       isMobile: false,
-      breadcrumbs: [
-        { name: 'Dashboard', path: '/dashboard' }
-      ],
       showNotificationDropdown: false
     }
   },
@@ -310,12 +298,6 @@ export default {
   backdrop-filter: blur(8px);
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
 .header-right {
   display: flex;
   align-items: center;
@@ -361,10 +343,6 @@ export default {
 .notification-badge svg {
   width: 18px;
   height: 18px;
-}
-
-.breadcrumb {
-  margin: 0;
 }
 
 .notification-badge {

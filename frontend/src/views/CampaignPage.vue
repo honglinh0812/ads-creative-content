@@ -1,23 +1,18 @@
 <template>
   <div class="page-container">
-    <!-- Standardized Page Header -->
-    <div class="page-header-standard">
-      <div class="page-header-content">
-        <h1 class="page-title-standard">{{ $t('campaign.page.title') }}</h1>
-        <p class="page-subtitle-standard">
-          {{ $t('campaign.page.subtitle') }}
-        </p>
-      </div>
-
-      <div class="page-actions-standard">
-        <router-link to="/campaign/create">
-          <button class="btn-primary-standard">
-            <PlusOutlined />
-            {{ $t('campaign.page.action.newCampaign') }}
-          </button>
-        </router-link>
-      </div>
-    </div>
+    <!-- Page Header -->
+    <a-page-header
+      class="campaign-page-header"
+      :title="$t('campaign.page.title')"
+      :sub-title="$t('campaign.page.subtitle')"
+    >
+      <template #extra>
+        <a-button type="primary" size="large" @click="$router.push('/campaign/create')">
+          <template #icon><PlusOutlined /></template>
+          {{ $t('campaign.page.action.newCampaign') }}
+        </a-button>
+      </template>
+    </a-page-header>
     
     <!-- Campaign Filters -->
     <div class="campaign-filters-stack">
@@ -78,31 +73,8 @@
                 </a-select>
               </a-form-item>
             </a-col>
-            <a-col :xs="24" :md="6">
-              <a-form-item :label="$t('campaign.table.action.reset')">
-                <a-button block ghost @click="resetCampaignFilters">
-                  {{ $t('campaign.table.action.reset') }}
-                </a-button>
-              </a-form-item>
-            </a-col>
           </a-row>
         </a-form>
-      </a-card>
-
-      <a-card class="campaign-summary" :bordered="false" :body-style="{ padding: '20px' }">
-        <div class="campaign-summary__content">
-          <div>
-            <p class="summary-title">
-              {{ $t('campaign.table.results.showing', { filtered: filteredCampaigns.length, total: hasCampaignFilters ? filteredCampaigns.length : totalItems }) }}
-            </p>
-            <p class="summary-muted">{{ $t('campaign.page.filters.hint') }}</p>
-          </div>
-          <div class="summary-badges">
-            <a-tag color="blue" v-if="hasCampaignFilters">
-              {{ $t('campaign.page.filters.activeBadge') }}
-            </a-tag>
-          </div>
-        </div>
       </a-card>
     </div>
 
@@ -717,21 +689,50 @@ export default {
   min-height: 100vh;
 }
 
+.campaign-page-header {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+}
+
+.campaign-page-header .ant-page-header-heading-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.campaign-page-header .ant-page-header-heading-sub-title {
+  color: #475569;
+}
+
+.campaign-page-header .ant-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
 /* Mobile Responsiveness - Phase 2 Implementation */
 @media (max-width: 768px) {
   .campaign-page {
     padding: 12px;
   }
 
-  .ant-page-header {
-    padding: 12px;
+  .campaign-page-header {
+    padding: 16px;
   }
 
-  .ant-page-header-heading-title {
+  .campaign-page-header .ant-btn {
+    width: 100%;
+  }
+
+  .campaign-page-header .ant-page-header-heading-title {
     font-size: 1.5rem;
   }
 
-  .ant-page-header-heading-sub-title {
+  .campaign-page-header .ant-page-header-heading-sub-title {
     font-size: 0.9rem;
   }
 
@@ -756,15 +757,15 @@ export default {
     padding: 8px;
   }
 
-  .ant-page-header {
-    padding: 8px;
+  .campaign-page-header {
+    padding: 12px;
   }
 
-  .ant-page-header-heading-title {
+  .campaign-page-header .ant-page-header-heading-title {
     font-size: 1.25rem;
   }
 
-  .ant-page-header-heading-sub-title {
+  .campaign-page-header .ant-page-header-heading-sub-title {
     font-size: 0.825rem;
   }
 

@@ -3,7 +3,7 @@
     <div class="header-left">
       <div class="header-brand" @click="handleBrandClick">
         <h1 class="brand-text text-neutral-900 dark:text-neutral-100" :class="{ 'brand-sparkle': brandClicks >= 5 }">
-          Ads Creative
+          Creative AI Ads Generator
           <span v-if="brandClicks >= 3" class="brand-easter-egg">{{ getBrandEasterEgg() }}</span>
         </h1>
         <div v-if="showDeveloperSignature" class="developer-signature-popup">
