@@ -114,7 +114,6 @@ import {
   FileTextOutlined,
   EyeOutlined,
   EditOutlined,
-  CheckCircleOutlined,
   DeleteOutlined,
   ClockCircleOutlined
 } from '@ant-design/icons-vue'
@@ -128,7 +127,6 @@ export default {
     FileTextOutlined,
     EyeOutlined,
     EditOutlined,
-    CheckCircleOutlined,
     DeleteOutlined,
     ClockCircleOutlined
   },
