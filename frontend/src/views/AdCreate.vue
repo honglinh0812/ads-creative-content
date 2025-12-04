@@ -982,8 +982,7 @@ import {
   RobotOutlined,
   InfoCircleOutlined,
   LoadingOutlined,
-  WarningOutlined,
-  BulbOutlined
+  WarningOutlined
 } from '@ant-design/icons-vue'
 import api from '@/services/api'
 import PersonaSelector from '@/components/PersonaSelector.vue'
@@ -1010,7 +1009,6 @@ export default {
     InfoCircleOutlined,
     LoadingOutlined,
     WarningOutlined,
-    BulbOutlined,
     PersonaSelector,
     TrendingKeywords,
     FieldError,
