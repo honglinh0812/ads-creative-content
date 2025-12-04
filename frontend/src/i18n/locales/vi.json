@@ -468,7 +468,7 @@
       },
       "card": {
         "title": "Thông tin chiến dịch",
-        "subtitle": "Cấu hình cài đặt chiến dịch và ngân sách của bạn"
+        "subtitle": ""
       },
       "form": {
         "label": {
@@ -479,7 +479,7 @@
           "totalBudget": "Tổng ngân sách",
           "startDate": "Ngày & Giờ bắt đầu",
           "endDate": "Ngày & Giờ kết thúc",
-          "bidCap": "Giới hạn giá thầu",
+          "bidCap": "Mức chi tối đa / khách hàng",
           "performanceGoal": "Mục tiêu tối ưu"
         },
         "placeholder": {
@@ -1628,7 +1628,8 @@
     "pageHeader": {
       "title": "Tạo quảng cáo mới",
       "subtitle": "Tạo quảng cáo hấp dẫn với sự hỗ trợ của AI",
-      "backToDashboard": "Quay lại Dashboard"
+      "backToDashboard": "Quay lại Dashboard",
+      "learnAds": "Học từ quảng cáo mẫu"
     },
     "progress": {
       "headerTitle": "Tạo quảng cáo mới",
@@ -1669,6 +1670,12 @@
       }
     },
     "step1": {
+      "hero": {
+        "eyebrow": "Bước 1 • Thông tin cơ bản",
+        "title": "Mô tả quảng cáo bạn muốn tạo",
+        "subtitle": "Bối cảnh chiến dịch, giọng điệu và mục tiêu sẽ giúp AI viết nội dung thuyết phục hơn.",
+        "tip": "Hãy bắt đầu với chiến dịch bạn cần ưu tiên"
+      },
       "cardTitle": "Thông tin cơ bản",
       "campaign": {
         "label": "Chiến dịch",
@@ -2142,7 +2149,7 @@
   "adLearn": {
     "pageHeader": {
       "title": "Cải thiện quảng cáo từ mẫu",
-      "subtitle": "Học phong cách từ quảng cáo trong Meta Ad Library",
+      "subtitle": "",
       "backToAds": "Quay lại"
     },
     "progress": {

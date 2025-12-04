@@ -353,6 +353,17 @@ export default {
   margin-bottom: 16px;
 }
 
+.persona-selector-card :deep(.ant-card-head-title) {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f1f1f;
+  margin: 0;
+}
+
+.dark .persona-selector-card :deep(.ant-card-head-title) {
+  color: #f0f0f0;
+}
+
 .persona-option {
   display: flex;
   align-items: center;

@@ -1422,7 +1422,8 @@
     "pageHeader": {
       "title": "Create New Ad",
       "subtitle": "Generate compelling ads with AI assistance",
-      "backToDashboard": "Back to Dashboard"
+      "backToDashboard": "Back to Dashboard",
+      "learnAds": "Learn from examples"
     },
     "progress": {
       "headerTitle": "Let's create your ad",
@@ -1463,6 +1464,12 @@
       }
     },
     "step1": {
+      "hero": {
+        "eyebrow": "Step 1 • Basic info",
+        "title": "Tell us about the ad you want to create",
+        "subtitle": "Campaign context, tone, and goals help the AI craft compelling copy.",
+        "tip": "Start with the campaign you want to boost"
+      },
       "cardTitle": "Basic Information",
       "campaign": {
         "label": "Campaign",

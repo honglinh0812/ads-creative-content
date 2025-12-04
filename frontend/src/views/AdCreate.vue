@@ -8,18 +8,6 @@
         :title="$t('adCreate.pageHeader.title')"
         :sub-title="$t('adCreate.pageHeader.subtitle')"
       >
-        <template #extra>
-          <a-space size="small">
-            <a-button @click="$router.push('/ad/learn')">
-              <template #icon><bulb-outlined /></template>
-              {{ $t('adCreate.pageHeader.learnAds') }}
-            </a-button>
-            <a-button type="default" @click="$router.push('/dashboard')">
-              <template #icon><arrow-left-outlined /></template>
-              {{ $t('adCreate.pageHeader.backToDashboard') }}
-            </a-button>
-          </a-space>
-        </template>
       </a-page-header>
 
       <!-- Creative Progress Steps -->
@@ -75,6 +63,15 @@
 
       <!-- Step 1: Basic Information -->
       <div v-if="currentStep === 1" class="step-content">
+        <div class="step-hero-card">
+          <div class="hero-eyebrow">{{ $t('adCreate.step1.hero.eyebrow') }}</div>
+          <h2 class="hero-title">{{ $t('adCreate.step1.hero.title') }}</h2>
+          <p class="hero-subtitle">{{ $t('adCreate.step1.hero.subtitle') }}</p>
+          <div class="hero-tip-pill">
+            {{ $t('adCreate.step1.hero.tip') }}
+          </div>
+        </div>
+
         <a-card :title="$t('adCreate.step1.cardTitle')" class="enhanced-card">
           <a-form layout="vertical">
             <!-- Campaign Selection -->
@@ -985,7 +982,8 @@ import {
   RobotOutlined,
   InfoCircleOutlined,
   LoadingOutlined,
-  WarningOutlined
+  WarningOutlined,
+  BulbOutlined
 } from '@ant-design/icons-vue'
 import api from '@/services/api'
 import PersonaSelector from '@/components/PersonaSelector.vue'
@@ -1012,6 +1010,7 @@ export default {
     InfoCircleOutlined,
     LoadingOutlined,
     WarningOutlined,
+    BulbOutlined,
     PersonaSelector,
     TrendingKeywords,
     FieldError,
@@ -2764,6 +2763,48 @@ export default {
   font-size: 16px;
 }
 
+.step-hero-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 24px;
+}
+
+.hero-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.hero-title {
+  font-size: 30px;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.hero-subtitle {
+  margin: 0 0 16px 0;
+  color: #475569;
+  font-size: 16px;
+}
+
+.hero-tip-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 600;
+  font-size: 14px;
+}
+
 /* Creative Progress Container */
 .creative-progress-container {
   background: white;
@@ -3281,6 +3322,18 @@ export default {
 @media (max-width: 768px) {
   .ad-create-page {
     padding: 16px;
+  }
+
+  .step-hero-card {
+    padding: 18px;
+  }
+
+  .hero-title {
+    font-size: 24px;
+  }
+
+  .hero-subtitle {
+    font-size: 14px;
   }
 
   .creative-progress-container {
