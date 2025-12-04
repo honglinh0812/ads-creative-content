@@ -138,18 +138,6 @@
           </a-space>
         </div>
       </div>
-
-      <!-- Prompt Enhancement Info -->
-      <a-alert
-        type="info"
-        show-icon
-        class="enhancement-alert"
-      >
-        <template #message>
-          <strong>{{ $t('components.personaSelector.enhancement.title') }}:</strong>
-          {{ $t('components.personaSelector.enhancement.description') }}
-        </template>
-      </a-alert>
     </div>
 
     <!-- Empty State Help -->

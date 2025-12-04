@@ -144,8 +144,17 @@ import org.springframework.util.StringUtils;
     * @return true if campaign is ready for export
     * @throws ApiException if campaign is not ready with validation errors
     */
+   @Transactional
    public boolean isCampaignReadyForFacebookExport(Long campaignId, Long userId) {
        Campaign campaign = getCampaignByIdAndUser(campaignId, userId);
+       if (!StringUtils.hasText(campaign.getPerformanceGoal())) {
+           String fallbackGoal = determineFallbackPerformanceGoal(campaign);
+           if (StringUtils.hasText(fallbackGoal)) {
+               campaign.setPerformanceGoal(fallbackGoal);
+               campaignRepository.save(campaign);
+               log.warn("Campaign {} missing performance goal. Applied fallback value: {}", campaignId, fallbackGoal);
+           }
+       }
        List<String> errors = validateCampaignForFacebook(campaign);
        
        if (!errors.isEmpty()) {
@@ -168,15 +177,21 @@ import org.springframework.util.StringUtils;
        
        User user = userRepository.findById(userId)
                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
+       Campaign.CampaignObjective objective = request.getObjective() != null
+               ? Campaign.CampaignObjective.valueOf(request.getObjective())
+               : null;
+       String performanceGoal = StringUtils.hasText(request.getPerformanceGoal())
+               ? request.getPerformanceGoal()
+               : determineFallbackPerformanceGoal(objective);
        Campaign campaign = Campaign.builder()
                .name(request.getName())
-               .objective(request.getObjective() != null ? Campaign.CampaignObjective.valueOf(request.getObjective()) : null)
+               .objective(objective)
                .budgetType(request.getBudgetType() != null ? Campaign.BudgetType.valueOf(request.getBudgetType()) : Campaign.BudgetType.DAILY)
                .dailyBudget(request.getDailyBudget())
                .totalBudget(request.getTotalBudget())
                .targetAudience(request.getTargetAudience())
                .bidCap(request.getBidCap())
-               .performanceGoal(request.getPerformanceGoal())
+               .performanceGoal(performanceGoal)
                .startDate(request.getStartDate())
                .endDate(request.getEndDate())
                .user(user)
@@ -201,20 +216,46 @@ import org.springframework.util.StringUtils;
                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found"));
        Campaign campaign = campaignRepository.findByIdAndUser(id, user)
                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Campaign not found"));
+       Campaign.CampaignObjective objective = request.getObjective() != null
+               ? Campaign.CampaignObjective.valueOf(request.getObjective())
+               : null;
+       String performanceGoal = StringUtils.hasText(request.getPerformanceGoal())
+               ? request.getPerformanceGoal()
+               : (StringUtils.hasText(campaign.getPerformanceGoal())
+                   ? campaign.getPerformanceGoal()
+                   : determineFallbackPerformanceGoal(objective));
        
        // Update fields
        campaign.setName(request.getName());
-       campaign.setObjective(request.getObjective() != null ? Campaign.CampaignObjective.valueOf(request.getObjective()) : null);
+       campaign.setObjective(objective);
        campaign.setBudgetType(request.getBudgetType() != null ? Campaign.BudgetType.valueOf(request.getBudgetType()) : null);
        campaign.setDailyBudget(request.getDailyBudget());
        campaign.setTotalBudget(request.getTotalBudget());
        campaign.setTargetAudience(request.getTargetAudience());
        campaign.setBidCap(request.getBidCap());
-       campaign.setPerformanceGoal(request.getPerformanceGoal());
+       campaign.setPerformanceGoal(performanceGoal);
        campaign.setStartDate(request.getStartDate());
        campaign.setEndDate(request.getEndDate());
        
        return campaignRepository.save(campaign);
+   }
+
+   private String determineFallbackPerformanceGoal(Campaign campaign) {
+       if (campaign == null) {
+           return null;
+       }
+       return determineFallbackPerformanceGoal(campaign.getObjective());
+   }
+
+   private String determineFallbackPerformanceGoal(Campaign.CampaignObjective objective) {
+       if (objective == null) {
+           return "LINK_CLICKS";
+       }
+       return switch (objective) {
+           case LEAD_GENERATION -> "LEAD_GENERATION";
+           case CONVERSIONS -> "OFFSITE_CONVERSIONS";
+           default -> "LINK_CLICKS";
+       };
    }
 
    /**

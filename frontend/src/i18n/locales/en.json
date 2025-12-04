@@ -144,6 +144,15 @@
       "start": "Getting Started",
       "tryAgain": "Try Again",
       "createFirstAd": "Create Your First Ad"
+    },
+    "asyncSteps": {
+      "starting": "Starting AI content generation",
+      "preparing": "Preparing content generation",
+      "generating": "Generating content with AI",
+      "processing": "Processing generated content",
+      "validating": "Validating content",
+      "completed": "Completed",
+      "failed": "Generation failed"
     }
   },
   "profilePage": {

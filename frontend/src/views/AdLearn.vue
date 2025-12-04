@@ -288,7 +288,7 @@
           <span class="status-pill">{{ getAsyncStatusLabel(asyncJobStatus) }}</span>
         </div>
         <div class="progress-info">
-          <h3>{{ asyncJobCurrentStep || $t('adLearn.async.initializing') }}</h3>
+          <h3>{{ getLocalizedAsyncStep(asyncJobCurrentStep) || $t('adLearn.async.initializing') }}</h3>
           <a-progress
             :percent="asyncJobProgress"
             :status="asyncJobStatus === 'FAILED' ? 'exception' : 'active'"
@@ -316,6 +316,7 @@ import { mapGetters, mapActions } from 'vuex'
 import api from '@/services/api'
 import FieldError from '@/components/FieldError.vue'
 import { detectLanguage, i18nTemplates } from '@/utils/languageDetector'
+import { getAsyncStepTranslationKey } from '@/utils/asyncStepTranslator'
 
 export default {
   name: 'AdLearn',
@@ -855,6 +856,17 @@ export default {
       const key = `adLearn.async.status.${normalized}`
       const translated = this.$t(key)
       return translated === key ? status : translated
+    },
+    getLocalizedAsyncStep(step) {
+      if (!step) {
+        return ''
+      }
+      const key = getAsyncStepTranslationKey(step)
+      if (key) {
+        const translated = this.$t(key)
+        return translated === key ? step : translated
+      }
+      return step
     },
     getVariationIdentifier(variation) {
       if (!variation) return null

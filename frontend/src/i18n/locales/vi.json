@@ -144,6 +144,15 @@
       "start": "Bắt đầu",
       "tryAgain": "Thử lại",
       "createFirstAd": "Tạo quảng cáo đầu tiên"
+    },
+    "asyncSteps": {
+      "starting": "Bắt đầu tạo nội dung bằng AI",
+      "preparing": "Chuẩn bị tạo nội dung",
+      "generating": "Đang tạo nội dung bằng AI",
+      "processing": "Đang xử lý nội dung đã tạo",
+      "validating": "Đang kiểm tra nội dung",
+      "completed": "Hoàn tất",
+      "failed": "Tạo nội dung thất bại"
     }
   },
   "profilePage": {
@@ -1687,6 +1696,7 @@
       },
       "adType": {
         "label": "Loại quảng cáo"
+        
       },
       "adName": {
         "label": "Tên quảng cáo",

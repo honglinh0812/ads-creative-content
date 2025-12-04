@@ -63,16 +63,21 @@
 
       <!-- Step 1: Basic Information -->
       <div v-if="currentStep === 1" class="step-content">
-        <div class="step-hero-card">
-          <div class="hero-eyebrow">{{ $t('adCreate.step1.hero.eyebrow') }}</div>
-          <h2 class="hero-title">{{ $t('adCreate.step1.hero.title') }}</h2>
-          <p class="hero-subtitle">{{ $t('adCreate.step1.hero.subtitle') }}</p>
-          <div class="hero-tip-pill">
-            {{ $t('adCreate.step1.hero.tip') }}
+        <div class="step-section-header">
+          <div class="section-eyebrow">{{ $t('adCreate.step1.hero.eyebrow') }}</div>
+          <div class="section-heading-row">
+            <h2 class="section-title">{{ $t('adCreate.step1.hero.title') }}</h2>
+            <span class="section-tip-pill">
+              {{ $t('adCreate.step1.hero.tip') }}
+            </span>
           </div>
+          <p class="section-description">{{ $t('adCreate.step1.hero.subtitle') }}</p>
         </div>
 
-        <a-card :title="$t('adCreate.step1.cardTitle')" class="enhanced-card">
+        <a-card class="enhanced-card step-form-card">
+          <div class="step-form-heading">
+            <h3>{{ $t('adCreate.step1.cardTitle') }}</h3>
+          </div>
           <a-form layout="vertical">
             <!-- Campaign Selection -->
             <a-form-item :label="$t('adCreate.step1.campaign.label')" required>
@@ -485,43 +490,6 @@
                 </template>
               </a-table>
             </div>
-
-            <!-- Provider Info Cards -->
-            <div class="provider-info-section">
-              <a-collapse v-model:activeKey="activeInfoPanels" ghost>
-                <a-collapse-panel key="text" :header="$t('adCreate.step2.info.textProvidersTitle')">
-                  <div class="provider-info-grid">
-                    <div
-                      v-for="provider in textProviders"
-                      :key="provider.value"
-                      class="provider-info-card"
-                      :class="{ disabled: !provider.enabled }"
-                    >
-                      <div class="info-header">
-                        <h4 class="info-name">{{ provider.name }}</h4>
-                      </div>
-                      <p class="info-description">{{ provider.description }}</p>
-                    </div>
-                  </div>
-                </a-collapse-panel>
-
-                <a-collapse-panel key="image" :header="$t('adCreate.step2.info.imageProvidersTitle')">
-                  <div class="provider-info-grid">
-                    <div
-                      v-for="provider in imageProviders"
-                      :key="provider.value"
-                      class="provider-info-card"
-                      :class="{ disabled: !provider.enabled }"
-                    >
-                      <div class="info-header">
-                        <h4 class="info-name">{{ provider.name }}</h4>
-                      </div>
-                      <p class="info-description">{{ provider.description }}</p>
-                    </div>
-                  </div>
-                </a-collapse-panel>
-              </a-collapse>
-            </div>
           </div>
         </a-card>
 
@@ -927,7 +895,7 @@
         <!-- Current Step -->
         <div class="progress-info">
           <h3 style="font-size: 16px; margin-bottom: 10px; color: #1890ff;">
-            {{ asyncJobCurrentStep || $t('adCreate.async.initializing') }}
+            {{ getLocalizedAsyncStep(asyncJobCurrentStep) || $t('adCreate.async.initializing') }}
           </h3>
 
           <!-- Progress Bar -->
@@ -992,6 +960,7 @@ import QualityScore from '@/components/QualityScore.vue'
 import ExtractedContentPreview from '@/components/ExtractedContentPreview.vue'
 import qualityApi from '@/services/qualityApi'
 import { detectLanguage, i18nTemplates, getKeywordSuccessMessage } from '@/utils/languageDetector'
+import { getAsyncStepTranslationKey } from '@/utils/asyncStepTranslator'
 
 export default {
   name: 'AdCreate',
@@ -1052,9 +1021,9 @@ export default {
           label: this.$t('adCreate.adTypes.websiteConversion.label'),
           description: this.$t('adCreate.adTypes.websiteConversion.description'),
           features: [
-            this.$t('adCreate.adTypes.websiteConversion.features.0'),
-            this.$t('adCreate.adTypes.websiteConversion.features.1'),
-            this.$t('adCreate.adTypes.websiteConversion.features.2')
+            this.$t('adCreate.adTypes.websiteConversion.feature1'),
+            this.$t('adCreate.adTypes.websiteConversion.feature2'),
+            this.$t('adCreate.adTypes.websiteConversion.feature3')
           ]
         },
         {
@@ -1062,9 +1031,9 @@ export default {
           label: this.$t('adCreate.adTypes.leadGeneration.label'),
           description: this.$t('adCreate.adTypes.leadGeneration.description'),
           features: [
-            this.$t('adCreate.adTypes.leadGeneration.features.0'),
-            this.$t('adCreate.adTypes.leadGeneration.features.1'),
-            this.$t('adCreate.adTypes.leadGeneration.features.2')
+            this.$t('adCreate.adTypes.leadGeneration.feature1'),
+            this.$t('adCreate.adTypes.leadGeneration.feature2'),
+            this.$t('adCreate.adTypes.leadGeneration.feature3')
           ]
         },
         {
@@ -1072,9 +1041,9 @@ export default {
           label: this.$t('adCreate.adTypes.pagePost.label'),
           description: this.$t('adCreate.adTypes.pagePost.description'),
           features: [
-            this.$t('adCreate.adTypes.pagePost.features.0'),
-            this.$t('adCreate.adTypes.pagePost.features.1'),
-            this.$t('adCreate.adTypes.pagePost.features.2')
+            this.$t('adCreate.adTypes.pagePost.feature1'),
+            this.$t('adCreate.adTypes.pagePost.feature2'),
+            this.$t('adCreate.adTypes.pagePost.feature3')
           ]
         }
       ],
@@ -2630,6 +2599,18 @@ export default {
       const translated = this.$t(key)
       return translated === key ? status : translated
     },
+    
+    getLocalizedAsyncStep(step) {
+      if (!step) {
+        return ''
+      }
+      const key = getAsyncStepTranslationKey(step)
+      if (key) {
+        const translated = this.$t(key)
+        return translated === key ? step : translated
+      }
+      return step
+    },
 
     calculateAIPowerLevel() {
       let power = 0
@@ -2761,46 +2742,51 @@ export default {
   font-size: 16px;
 }
 
-.step-hero-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
-  border: 1px solid #e2e8f0;
-  margin-bottom: 24px;
+.step-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.hero-eyebrow {
+.section-eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 12px;
   color: #94a3b8;
-  margin-bottom: 8px;
   font-weight: 600;
 }
 
-.hero-title {
-  font-size: 30px;
-  margin: 0 0 8px 0;
+.section-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.section-title {
+  font-size: 28px;
+  margin: 0;
   font-weight: 700;
   color: #0f172a;
 }
 
-.hero-subtitle {
-  margin: 0 0 16px 0;
+.section-description {
+  margin: 0;
   color: #475569;
   font-size: 16px;
 }
 
-.hero-tip-pill {
+.section-tip-pill {
   display: inline-flex;
   align-items: center;
-  padding: 8px 16px;
+  padding: 8px 18px;
   border-radius: 999px;
   background: #eef2ff;
-  color: #4338ca;
+  color: #1d4ed8;
   font-weight: 600;
   font-size: 14px;
+  box-shadow: inset 0 0 0 1px rgba(29, 78, 216, 0.08);
 }
 
 /* Creative Progress Container */
@@ -3256,11 +3242,15 @@ export default {
 
 /* Step Content Styling */
 .step-content {
-  background: white;
-  border-radius: 20px;
+  background: #fff;
+  border-radius: 24px;
   padding: 32px;
-  box-shadow: 0 4px 20px rgba(45, 90, 160, 0.08);
-  border: 1px solid #f0f2f5;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .enhanced-card {
@@ -3282,6 +3272,30 @@ export default {
 
 .enhanced-card :deep(.ant-card-body) {
   padding: 0;
+}
+
+.step-form-card {
+  background: #f8fafc;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.step-form-card :deep(.ant-card-body) {
+  padding: 24px;
+}
+
+.step-form-heading {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.step-form-heading h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 /* Step Navigation */
@@ -3322,15 +3336,16 @@ export default {
     padding: 16px;
   }
 
-  .step-hero-card {
-    padding: 18px;
+  .section-heading-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .hero-title {
-    font-size: 24px;
+  .section-title {
+    font-size: 22px;
   }
 
-  .hero-subtitle {
+  .section-description {
     font-size: 14px;
   }
 
@@ -3352,7 +3367,7 @@ export default {
   }
 
   .step-content {
-    max-width: 90px;
+    padding: 24px;
   }
 
   .step-title {
