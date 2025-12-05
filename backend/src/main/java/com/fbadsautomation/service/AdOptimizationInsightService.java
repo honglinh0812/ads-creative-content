@@ -3,6 +3,9 @@ package com.fbadsautomation.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fbadsautomation.dto.AdCopyReviewDTO;
+import com.fbadsautomation.dto.AdCopyRewriteRequest;
+import com.fbadsautomation.dto.AdCopyRewriteResponse;
 import com.fbadsautomation.dto.AdOptimizationAnalyzeRequest;
 import com.fbadsautomation.dto.AdOptimizationInsightDTO;
 import com.fbadsautomation.dto.AdOptimizationInsightDTO.LengthMetrics;
@@ -16,6 +19,7 @@ import com.fbadsautomation.model.User;
 import com.fbadsautomation.repository.AdOptimizationSnapshotRepository;
 import com.fbadsautomation.repository.AdRepository;
 import com.fbadsautomation.repository.UserRepository;
+import com.fbadsautomation.model.Persona;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +55,7 @@ public class AdOptimizationInsightService {
     private final AdRepository adRepository;
     private final AdOptimizationSnapshotRepository snapshotRepository;
     private final AdQualityScoringService adQualityScoringService;
+    private final AdCopyReviewService adCopyReviewService;
     private final ObjectMapper objectMapper;
 
     @Value("${app.optimization.default-language:en}")
@@ -61,11 +66,13 @@ public class AdOptimizationInsightService {
                                         AdRepository adRepository,
                                         AdOptimizationSnapshotRepository snapshotRepository,
                                         AdQualityScoringService adQualityScoringService,
+                                        AdCopyReviewService adCopyReviewService,
                                         ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.adRepository = adRepository;
         this.snapshotRepository = snapshotRepository;
         this.adQualityScoringService = adQualityScoringService;
+        this.adCopyReviewService = adCopyReviewService;
         this.objectMapper = objectMapper;
     }
 
@@ -140,7 +147,9 @@ public class AdOptimizationInsightService {
     // Mapping helpers
     // ----------------------------------------------------------------------
 
-    private AdOptimizationInsightDTO buildInsight(Ad ad, User user, String language) {
+    private AdOptimizationInsightDTO buildInsight(Ad ad,
+                                                  User user,
+                                                  String language) {
         AdOptimizationInsightDTO dto = new AdOptimizationInsightDTO();
         dto.setAdId(ad.getId());
         dto.setAdName(Optional.ofNullable(ad.getName()).orElse("Untitled Ad"));
@@ -171,6 +180,14 @@ public class AdOptimizationInsightService {
 
         dto.setSuggestions(suggestionBuckets);
         dto.setSaved(snapshotRepository.existsByUserAndAdId(user, ad.getId()));
+
+        Persona adPersona = ad.getPersona();
+        dto.setPersona(toPersonaContext(adPersona));
+
+        Long personaId = adPersona != null ? adPersona.getId() : null;
+        adCopyReviewService.reviewAdCopy(ad, user, adPersona, personaId, null, language)
+            .ifPresent(dto::setCopyReview);
+
         return dto;
     }
 
@@ -292,6 +309,31 @@ public class AdOptimizationInsightService {
         return lang.toLowerCase().startsWith("vi") ? "vi" : "en";
     }
 
+    public Optional<AdCopyRewriteResponse> rewriteSection(Long userId,
+                                                          Long adId,
+                                                          AdCopyRewriteRequest request) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Ad ad = adRepository.findByIdAndUserWithRelations(adId, user)
+            .orElseThrow(() -> new RuntimeException("Ad not found or not owned by user"));
+
+        String language = resolveLanguage(request.getLanguage());
+        Persona persona = ad.getPersona();
+        Long personaId = persona != null ? persona.getId() : null;
+        return adCopyReviewService.rewriteSection(
+                ad,
+                user,
+                persona,
+                personaId,
+                null,
+                language,
+                request.getSection(),
+                request.getAdditionalGuidance()
+            )
+            .map(text -> new AdCopyRewriteResponse(request.getSection(), text));
+    }
+
     private Locale resolveLocale(String language) {
         return "vi".equals(language) ? VI_LOCALE : EN_LOCALE;
     }
@@ -344,6 +386,23 @@ public class AdOptimizationInsightService {
         dto.setSuggestions(readSuggestions(snapshot.getSuggestionsJson()));
         dto.setScorecard(readScorecard(snapshot.getScorecardJson()));
         return dto;
+    }
+
+    private AdOptimizationInsightDTO.PersonaContext toPersonaContext(Persona persona) {
+        if (persona == null) {
+            return null;
+        }
+        AdOptimizationInsightDTO.PersonaContext ctx = new AdOptimizationInsightDTO.PersonaContext();
+        ctx.setId(persona.getId());
+        ctx.setName(persona.getName());
+        ctx.setAge(persona.getAge());
+        ctx.setGender(persona.getGender() != null ? persona.getGender().name() : null);
+        ctx.setTone(persona.getTone());
+        ctx.setInterests(persona.getInterests() != null ? new ArrayList<>(persona.getInterests()) : List.of());
+        ctx.setPainPoints(persona.getPainPoints() != null ? new ArrayList<>(persona.getPainPoints()) : List.of());
+        ctx.setDesiredOutcome(persona.getDesiredOutcome());
+        ctx.setDescription(persona.getDescription());
+        return ctx;
     }
 
     private Map<String, List<String>> readSuggestions(String json) {

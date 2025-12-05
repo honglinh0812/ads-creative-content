@@ -79,7 +79,7 @@ public interface AdRepository extends JpaRepository<Ad, Long> {
     /**
      * Find ad by ID with campaign and user eagerly loaded
      */
-    @Query("SELECT a FROM Ad a JOIN FETCH a.campaign JOIN FETCH a.user WHERE a.id = :id AND a.user = :user")
+    @Query("SELECT a FROM Ad a JOIN FETCH a.campaign JOIN FETCH a.user LEFT JOIN FETCH a.persona WHERE a.id = :id AND a.user = :user")
     Optional<Ad> findByIdAndUserWithRelations(@Param("id") Long id, @Param("user") User user);
 
     /**
@@ -117,6 +117,6 @@ public interface AdRepository extends JpaRepository<Ad, Long> {
     /**
      * Fetch a batch of ads for a user (including campaign) to support bulk optimization.
      */
-    @Query("SELECT a FROM Ad a LEFT JOIN FETCH a.campaign WHERE a.user = :user AND a.id IN :adIds")
+    @Query("SELECT DISTINCT a FROM Ad a LEFT JOIN FETCH a.campaign LEFT JOIN FETCH a.persona WHERE a.user = :user AND a.id IN :adIds")
     List<Ad> findByUserAndIdInWithCampaign(@Param("user") User user, @Param("adIds") List<Long> adIds);
 }

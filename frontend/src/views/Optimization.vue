@@ -25,6 +25,14 @@
         </a-space>
       </div>
 
+      <a-alert
+        class="persona-hint"
+        type="info"
+        show-icon
+        :message="t('optimizationLite.persona.autoTitle')"
+        :description="t('optimizationLite.persona.autoDescription')"
+      />
+
       <a-table
         :columns="tableColumns"
         :data-source="paginatedAds"
@@ -101,6 +109,34 @@
           </div>
         </div>
 
+        <div v-if="insight.persona" class="persona-summary">
+          <div class="persona-summary-header">
+            <p class="eyebrow">{{ t('optimizationLite.persona.attachedTitle') }}</p>
+            <a-tag color="cyan">{{ t('optimizationLite.persona.autoApplied') }}</a-tag>
+          </div>
+          <h4>{{ insight.persona.name }}</h4>
+          <div class="persona-tags">
+            <a-tag color="blue" v-if="insight.persona.age">
+              {{ t('optimizationLite.persona.age', { age: insight.persona.age }) }}
+            </a-tag>
+            <a-tag color="purple" v-if="insight.persona.tone">
+              {{ formatPersonaTone(insight.persona.tone) }}
+            </a-tag>
+            <a-tag color="green" v-if="insight.persona.gender">
+              {{ formatPersonaGender(insight.persona.gender) }}
+            </a-tag>
+          </div>
+          <p class="hint" v-if="insight.persona.desiredOutcome">{{ insight.persona.desiredOutcome }}</p>
+          <div class="persona-interests" v-if="insight.persona.interests?.length">
+            <a-tag v-for="interest in insight.persona.interests.slice(0, 4)" :key="interest">
+              {{ interest }}
+            </a-tag>
+          </div>
+        </div>
+        <p class="hint persona-missing" v-else>
+          {{ t('optimizationLite.persona.noPersona') }}
+        </p>
+
         <div class="suggestions">
           <div
             v-for="category in categoryOrder"
@@ -113,6 +149,51 @@
                 {{ suggestion }}
               </li>
             </ul>
+          </div>
+        </div>
+
+        <div v-if="insight.copyReview" class="copy-review">
+          <div class="copy-review-header">
+            <h4>{{ t('optimizationLite.copyReview.title') }}</h4>
+            <a-tag color="purple">{{ Math.round(insight.copyReview.overallScore || insight.scorecard?.total || 0) }}/100</a-tag>
+          </div>
+          <p class="hint" v-if="insight.copyReview.personaSummary">
+            {{ t('optimizationLite.copyReview.persona', { persona: insight.copyReview.personaSummary }) }}
+          </p>
+          <div
+            v-for="section in insight.copyReview.sections"
+            :key="section.section"
+            class="copy-review-section"
+          >
+            <div class="section-header">
+              <h5>{{ formatSectionLabel(section.section) }}</h5>
+              <a-tag>{{ Math.round(section.score || 0) }}/100</a-tag>
+            </div>
+            <p class="verdict">{{ section.verdict }}</p>
+            <div v-if="section.strengths?.length" class="strengths">
+              <strong>{{ t('optimizationLite.copyReview.strengths') }}</strong>
+              <ul>
+                <li v-for="(item, index) in section.strengths" :key="index">{{ item }}</li>
+              </ul>
+            </div>
+            <div v-if="section.improvements?.length" class="improvements">
+              <strong>{{ t('optimizationLite.copyReview.improvements') }}</strong>
+              <ul>
+                <li v-for="(item, index) in section.improvements" :key="index">{{ item }}</li>
+              </ul>
+            </div>
+            <div v-if="section.rewrite" class="rewrite-preview">
+              <strong>{{ t('optimizationLite.copyReview.rewritePreview') }}</strong>
+              <p>{{ section.rewrite }}</p>
+            </div>
+            <a-button
+              type="link"
+              size="small"
+              :loading="isRewriteLoading(insight.adId, section.section)"
+              @click="handleRewriteSection(insight, section)"
+            >
+              {{ t('optimizationLite.actions.rewrite') }}
+            </a-button>
           </div>
         </div>
 
@@ -221,6 +302,7 @@ export default {
     const error = ref(null)
     const adInsightsSupported = ref(true)
     const historySupported = ref(true)
+    const rewriteLoading = ref({})
 
     const tableColumns = computed(() => [
       {
@@ -420,6 +502,27 @@ export default {
       }).format(new Date(value))
     }
 
+    const formatPersonaGender = (gender) => {
+      switch ((gender || '').toUpperCase()) {
+        case 'MALE':
+          return t('personas.male')
+        case 'FEMALE':
+          return t('personas.female')
+        case 'ALL':
+          return t('personas.all')
+        default:
+          return gender || '—'
+      }
+    }
+
+    const formatPersonaTone = (tone) => {
+      if (!tone) return '—'
+      const toneKey = tone.toLowerCase()
+      const translationKey = `personas.toneLabels.${toneKey}`
+      const translated = t(translationKey, tone)
+      return translated || tone
+    }
+
     onMounted(() => {
       loadAds(true)
       loadHistory(true)
@@ -446,6 +549,47 @@ export default {
     const handlePageSizeChange = (_, size) => {
       pageSize.value = Number(size)
       currentPage.value = 1
+    }
+
+    const formatSectionLabel = (section) => {
+      switch ((section || '').toUpperCase()) {
+        case 'HEADLINE':
+          return t('optimizationLite.copyReview.sections.headline')
+        case 'DESCRIPTION':
+          return t('optimizationLite.copyReview.sections.description')
+        default:
+          return t('optimizationLite.copyReview.sections.primaryText')
+      }
+    }
+
+    const rewriteKey = (adId, section) => `${adId}-${section}`
+
+    const isRewriteLoading = (adId, section) => {
+      return !!rewriteLoading.value[rewriteKey(adId, section)]
+    }
+
+    const handleRewriteSection = async (insight, section) => {
+      const key = rewriteKey(insight.adId, section.section)
+      rewriteLoading.value = { ...rewriteLoading.value, [key]: true }
+      try {
+        const response = await api.optimizationAPI.rewriteAdCopy(insight.adId, {
+          section: section.section,
+          additionalGuidance: section.improvements?.join(' ') || '',
+          language: locale.value
+        })
+        const rewritten = response.data?.data?.rewrittenText || response.data?.rewrittenText
+        if (rewritten) {
+          section.rewrite = rewritten
+          message.success(t('optimizationLite.messages.rewriteSuccess'))
+        } else {
+          throw new Error('Missing rewrite text')
+        }
+      } catch (error) {
+        console.error('Rewrite failed', error)
+        message.error(t('optimizationLite.messages.rewriteFailed'))
+      } finally {
+        rewriteLoading.value = { ...rewriteLoading.value, [key]: false }
+      }
     }
 
     return {
@@ -481,7 +625,12 @@ export default {
       pageSize,
       pageSizeOptions,
       handlePaginationChange,
-      handlePageSizeChange
+      handlePageSizeChange,
+      formatSectionLabel,
+      handleRewriteSection,
+      isRewriteLoading,
+      formatPersonaGender,
+      formatPersonaTone
     }
   }
 }
@@ -544,6 +693,36 @@ export default {
   justify-content: flex-end;
 }
 
+.persona-hint {
+  margin-bottom: 16px;
+}
+
+.persona-tags,
+.persona-interests {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.persona-summary {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+  background: #f8fafc;
+}
+
+.persona-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.persona-missing {
+  margin: 12px 0;
+}
+
 .insights-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -573,6 +752,51 @@ export default {
   padding: 16px;
   border-radius: 12px;
   text-align: center;
+}
+
+.copy-review {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.copy-review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.copy-review-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 12px;
+  background: #f9fafb;
+}
+
+.copy-review-section .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.copy-review-section .verdict {
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.copy-review-section ul {
+  padding-left: 18px;
+  margin: 4px 0 8px;
+}
+
+.rewrite-preview {
+  padding: 8px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px dashed #cbd5f5;
+  margin-bottom: 8px;
 }
 
 .score-pill span {

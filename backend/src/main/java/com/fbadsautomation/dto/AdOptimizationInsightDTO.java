@@ -23,6 +23,8 @@ public class AdOptimizationInsightDTO {
     private Scorecard scorecard;
     private Map<String, List<String>> suggestions;
     private boolean saved;
+    private AdCopyReviewDTO copyReview;
+    private PersonaContext persona;
 
     public Long getAdId() {
         return adId;
@@ -110,6 +112,22 @@ public class AdOptimizationInsightDTO {
 
     public void setSaved(boolean saved) {
         this.saved = saved;
+    }
+
+    public AdCopyReviewDTO getCopyReview() {
+        return copyReview;
+    }
+
+    public void setCopyReview(AdCopyReviewDTO copyReview) {
+        this.copyReview = copyReview;
+    }
+
+    public PersonaContext getPersona() {
+        return persona;
+    }
+
+    public void setPersona(PersonaContext persona) {
+        this.persona = persona;
     }
 
     // Inner DTOs -------------------------------------------------------------
@@ -206,6 +224,90 @@ public class AdOptimizationInsightDTO {
 
         public void setPrimaryTextLength(int primaryTextLength) {
             this.primaryTextLength = primaryTextLength;
+        }
+    }
+
+    public static class PersonaContext {
+        private Long id;
+        private String name;
+        private Integer age;
+        private String gender;
+        private String tone;
+        private List<String> interests;
+        private List<String> painPoints;
+        private String desiredOutcome;
+        private String description;
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public Integer getAge() {
+            return age;
+        }
+
+        public void setAge(Integer age) {
+            this.age = age;
+        }
+
+        public String getGender() {
+            return gender;
+        }
+
+        public void setGender(String gender) {
+            this.gender = gender;
+        }
+
+        public String getTone() {
+            return tone;
+        }
+
+        public void setTone(String tone) {
+            this.tone = tone;
+        }
+
+        public List<String> getInterests() {
+            return interests;
+        }
+
+        public void setInterests(List<String> interests) {
+            this.interests = interests;
+        }
+
+        public List<String> getPainPoints() {
+            return painPoints;
+        }
+
+        public void setPainPoints(List<String> painPoints) {
+            this.painPoints = painPoints;
+        }
+
+        public String getDesiredOutcome() {
+            return desiredOutcome;
+        }
+
+        public void setDesiredOutcome(String desiredOutcome) {
+            this.desiredOutcome = desiredOutcome;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
         }
     }
 }

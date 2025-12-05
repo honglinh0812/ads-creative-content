@@ -335,7 +335,28 @@
       "save": "Save",
       "saved": "Saved",
       "refreshHistory": "Refresh",
-      "loadMoreHistory": "Load more"
+      "loadMoreHistory": "Load more",
+      "rewrite": "Rewrite with AI"
+    },
+    "persona": {
+      "autoTitle": "Persona context",
+      "autoDescription": "Each ad already stores its target persona from creation, so AI automatically applies it here.",
+      "attachedTitle": "Persona focus",
+      "autoApplied": "Auto-applied",
+      "age": "{age} yrs",
+      "noPersona": "No persona was saved for this ad"
+    },
+    "copyReview": {
+      "title": "AI copy review",
+      "persona": "Persona context: {persona}",
+      "strengths": "Strengths",
+      "improvements": "Opportunities",
+      "rewritePreview": "AI rewrite preview",
+      "sections": {
+        "headline": "Headline",
+        "description": "Description",
+        "primaryText": "Primary text"
+      }
     },
     "noMoreAds": "No more ads",
     "table": {
@@ -377,7 +398,9 @@
       "saved": "Results saved",
       "noInsights": "No AI suggestions",
       "insightsUnavailable": "AI feature unavailable",
-      "historyUnavailable": "History unavailable"
+      "historyUnavailable": "History unavailable",
+      "rewriteSuccess": "Rewrite ready",
+      "rewriteFailed": "Unable to rewrite right now"
     },
     "error": {
       "title": "Unable to analyze"

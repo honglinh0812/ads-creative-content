@@ -1,5 +1,7 @@
 package com.fbadsautomation.controller;
 
+import com.fbadsautomation.dto.AdCopyRewriteRequest;
+import com.fbadsautomation.dto.AdCopyRewriteResponse;
 import com.fbadsautomation.dto.AdOptimizationAnalyzeRequest;
 import com.fbadsautomation.dto.AdOptimizationInsightDTO;
 import com.fbadsautomation.dto.AdOptimizationSnapshotDTO;
@@ -17,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -115,6 +118,25 @@ public class OptimizationController {
             log.error("Error fetching optimization history", e);
             return ResponseEntity.internalServerError()
                 .body(ApiResponse.error("Failed to fetch optimization history"));
+        }
+    }
+
+    @PostMapping("/ad-insights/{adId}/rewrite")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<AdCopyRewriteResponse>> rewriteAdCopy(
+            @PathVariable Long adId,
+            @RequestBody AdCopyRewriteRequest request,
+            Authentication authentication) {
+        try {
+            Long userId = getUserIdFromAuthentication(authentication);
+            return adOptimizationInsightService.rewriteSection(userId, adId, request)
+                .map(response -> ResponseEntity.ok(ApiResponse.success("Rewrite generated", response)))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(ApiResponse.error("Unable to generate rewrite right now")));
+        } catch (Exception e) {
+            log.error("Error rewriting ad copy", e);
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("Failed to rewrite ad copy"));
         }
     }
 

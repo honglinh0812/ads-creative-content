@@ -335,7 +335,28 @@
       "save": "Lưu",
       "saved": "Đã lưu",
       "refreshHistory": "Làm mới",
-      "loadMoreHistory": "Xem thêm"
+      "loadMoreHistory": "Xem thêm",
+      "rewrite": "Viết lại bằng AI"
+    },
+    "persona": {
+      "autoTitle": "Ngữ cảnh persona",
+      "autoDescription": "Persona đã chọn khi tạo quảng cáo sẽ được áp dụng tự động trong bước phân tích.",
+      "attachedTitle": "Đối tượng đang nhắm tới",
+      "autoApplied": "Áp dụng tự động",
+      "age": "{age} tuổi",
+      "noPersona": "Quảng cáo này chưa gắn persona nào"
+    },
+    "copyReview": {
+      "title": "Đánh giá nội dung AI",
+      "persona": "Ngữ cảnh chân dung khách hàng: {persona}",
+      "strengths": "Điểm mạnh",
+      "improvements": "Cần cải thiện",
+      "rewritePreview": "Gợi ý viết lại",
+      "sections": {
+        "headline": "Tiêu đề",
+        "description": "Mô tả",
+        "primaryText": "Nội dung chính"
+      }
     },
     "noMoreAds": "Đã hết quảng cáo",
     "table": {
@@ -377,7 +398,9 @@
       "saved": "Đã lưu kết quả",
       "noInsights": "AI chưa có gợi ý",
       "insightsUnavailable": "Tính năng AI chưa khả dụng",
-      "historyUnavailable": "Lịch sử chưa khả dụng"
+      "historyUnavailable": "Lịch sử chưa khả dụng",
+      "rewriteSuccess": "Đã tạo bản viết lại",
+      "rewriteFailed": "Chưa thể viết lại, thử lại sau"
     },
     "error": {
       "title": "Không thể phân tích"

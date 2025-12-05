@@ -21,4 +21,5 @@ public class AdOptimizationAnalyzeRequest {
     public void setLanguage(String language) {
         this.language = language;
     }
+
 }

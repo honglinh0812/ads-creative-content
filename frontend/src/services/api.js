@@ -217,6 +217,7 @@ export default {
     updateRecommendationSettings: (settings) => apiClient.put('/optimization/settings', settings),
     analyzeAds: (payload) => apiClient.post('/optimization/ad-insights/analyze', payload),
     saveAdInsights: (payload) => apiClient.post('/optimization/ad-insights/save', payload),
+    rewriteAdCopy: (adId, payload) => apiClient.post(`/optimization/ad-insights/${adId}/rewrite`, payload),
     getInsightHistory: (page = 0, size = 10) => apiClient.get('/optimization/ad-insights/history', {
       params: { page, size }
     })

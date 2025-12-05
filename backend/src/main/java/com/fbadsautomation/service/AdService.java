@@ -162,6 +162,7 @@ public class AdService {
         ad.setPrompt(prompt);
         ad.setCampaign(campaign);
         ad.setUser(user);
+        ad.setPersona(userSelectedPersona);
         ad.setStatus("GENERATING");
         ad.setCreatedBy(user.getId().toString());
         ad.setCreatedDate(LocalDateTime.now());

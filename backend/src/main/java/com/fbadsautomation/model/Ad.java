@@ -16,7 +16,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "ads")
-@ToString(exclude = {"campaign", "user"}) // Includes getters, setters, toString, equals, hashCode
+@ToString(exclude = {"campaign", "user", "persona"}) // Includes getters, setters, toString, equals, hashCode
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -37,6 +37,11 @@ public class Ad {
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnoreProperties({"campaigns", "ads", "adContents"})
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "persona_id")
+    @JsonIgnoreProperties({"user", "interests", "painPoints"})
+    private Persona persona;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "ad_type")
@@ -112,6 +117,8 @@ public class Ad {
     public void setCampaign(Campaign campaign) { this.campaign = campaign; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
+    public Persona getPersona() { return persona; }
+    public void setPersona(Persona persona) { this.persona = persona; }
     public AdType getAdType() { return adType; }
     public void setAdType(AdType adType) { this.adType = adType; }
     public AdStyle getAdStyle() { return adStyle; }
