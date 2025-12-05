@@ -382,7 +382,8 @@
       "score": "Điểm",
       "compliance": "Tuân thủ",
       "linguistic": "Dễ đọc",
-      "persuasiveness": "Thuyết phục"
+      "persuasiveness": "Thuyết phục",
+      "completeness": "Đầy đủ"
     },
     "empty": {
       "title": "Chọn quảng cáo để bắt đầu",
@@ -392,7 +393,13 @@
       "title": "Lịch sử phân tích",
       "subtitle": "Kết quả phân tích trước đây",
       "empty": "Chưa có lịch sử",
-      "end": "Đã hết"
+      "end": "Đã hết",
+      "viewDetails": "Xem chi tiết",
+      "drawerTitle": "Chi tiết phân tích",
+      "language": "Ngôn ngữ: {language}",
+      "scorecardTitle": "Điểm đánh giá",
+      "suggestionsTitle": "Gợi ý tối ưu",
+      "noSuggestions": "Không có gợi ý nào"
     },
     "messages": {
       "saved": "Đã lưu kết quả",

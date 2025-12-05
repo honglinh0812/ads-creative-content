@@ -240,6 +240,9 @@
                 {{ categoryLabels[category] }} · {{ items.length }}
               </a-tag>
             </div>
+            <a-button type="link" size="small" @click="openHistoryDetail(entry)">
+              {{ t('optimizationLite.history.viewDetails') }}
+            </a-button>
           </div>
           <p class="score">{{ Math.round(entry.scorecard?.total || 0) }}</p>
         </div>
@@ -255,6 +258,67 @@
       </p>
       <p v-else class="empty-text">{{ t('optimizationLite.history.empty') }}</p>
     </div>
+
+    <a-drawer
+      v-model:visible="historyDrawerVisible"
+      :title="t('optimizationLite.history.drawerTitle')"
+      width="520"
+      @close="closeHistoryDetail"
+    >
+      <div v-if="historyDetailEntry" class="history-detail-content">
+        <div class="history-detail-header">
+          <h3>{{ historyDetailEntry.adName }}</h3>
+          <p class="hint">
+            {{ historyDetailEntry.campaignName || t('optimizationLite.table.noCampaign') }}
+            · {{ formatDate(historyDetailEntry.createdAt) }}
+          </p>
+          <p class="hint">
+            {{ t('optimizationLite.history.language', { language: (historyDetailEntry.language || 'en').toUpperCase() }) }}
+          </p>
+        </div>
+        <div class="history-detail-scorecard" v-if="historyDetailEntry.scorecard">
+          <h4>{{ t('optimizationLite.history.scorecardTitle') }}</h4>
+          <div class="scorecard-grid">
+            <div>
+              <p class="label">{{ t('optimizationLite.card.compliance') }}</p>
+              <p class="value">{{ Math.round(historyDetailEntry.scorecard.compliance || 0) }}</p>
+            </div>
+            <div>
+              <p class="label">{{ t('optimizationLite.card.linguistic') }}</p>
+              <p class="value">{{ Math.round(historyDetailEntry.scorecard.linguistic || 0) }}</p>
+            </div>
+            <div>
+              <p class="label">{{ t('optimizationLite.card.persuasiveness') }}</p>
+              <p class="value">{{ Math.round(historyDetailEntry.scorecard.persuasiveness || 0) }}</p>
+            </div>
+            <div>
+              <p class="label">{{ t('optimizationLite.card.completeness') }}</p>
+              <p class="value">{{ Math.round(historyDetailEntry.scorecard.completeness || 0) }}</p>
+            </div>
+            <div>
+              <p class="label">{{ t('optimizationLite.card.score') }}</p>
+              <p class="value">{{ Math.round(historyDetailEntry.scorecard.total || 0) }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="history-detail-suggestions">
+          <h4>{{ t('optimizationLite.history.suggestionsTitle') }}</h4>
+          <div
+            v-for="category in categoryOrder"
+            :key="category"
+            class="suggestion-column"
+          >
+            <h5>{{ categoryLabels[category] }}</h5>
+            <ul v-if="historyDetailEntry.suggestions?.[category]?.length">
+              <li v-for="(item, index) in historyDetailEntry.suggestions[category]" :key="index">
+                {{ item }}
+              </li>
+            </ul>
+            <p v-else class="hint">{{ t('optimizationLite.history.noSuggestions') }}</p>
+          </div>
+        </div>
+      </div>
+    </a-drawer>
 
     <a-alert
       v-if="error"
@@ -291,6 +355,8 @@ export default {
     const historyPage = ref(0)
     const historyHasMore = ref(true)
     const historyLoading = ref(false)
+    const historyDrawerVisible = ref(false)
+    const historyDetailEntry = ref(null)
     const error = ref(null)
     const adInsightsSupported = ref(true)
     const historySupported = ref(true)
@@ -431,7 +497,7 @@ export default {
           adId: insight.adId,
           adName: insight.adName,
           campaignName: insight.campaignName,
-          language: locale.value,
+          language: insight.language || locale.value,
           suggestions: insight.suggestions,
           scorecard: insight.scorecard
         })
@@ -567,7 +633,7 @@ export default {
         const response = await api.optimizationAPI.rewriteAdCopy(insight.adId, {
           section: section.section,
           additionalGuidance: section.improvements?.join(' ') || '',
-          language: locale.value
+          language: insight.language || locale.value
         })
         const rewritten = response.data?.data?.rewrittenText || response.data?.rewrittenText
         if (rewritten) {
@@ -583,6 +649,21 @@ export default {
         rewriteLoading.value = { ...rewriteLoading.value, [key]: false }
       }
     }
+
+    const openHistoryDetail = (entry) => {
+      historyDetailEntry.value = entry
+      historyDrawerVisible.value = true
+    }
+
+    const closeHistoryDetail = () => {
+      historyDrawerVisible.value = false
+    }
+
+    watch(historyDrawerVisible, (visible) => {
+      if (!visible) {
+        historyDetailEntry.value = null
+      }
+    })
 
     return {
       t,
@@ -602,6 +683,8 @@ export default {
       history,
       historyLoading,
       historyHasMore,
+      historyDrawerVisible,
+      historyDetailEntry,
       error,
       loadMoreAds,
       refreshAds,
@@ -621,6 +704,8 @@ export default {
       formatSectionLabel,
       handleRewriteSection,
       isRewriteLoading,
+      openHistoryDetail,
+      closeHistoryDetail,
       formatPersonaGender,
       formatPersonaTone
     }
@@ -750,6 +835,48 @@ export default {
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid #e2e8f0;
+}
+
+.history-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.history-detail-header h3 {
+  margin-bottom: 4px;
+}
+
+.history-detail-scorecard {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  background: #f8fafc;
+}
+
+.scorecard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.scorecard-grid .label {
+  font-size: 12px;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.scorecard-grid .value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.history-detail-suggestions .suggestion-column {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
 }
 
 .copy-review-header {

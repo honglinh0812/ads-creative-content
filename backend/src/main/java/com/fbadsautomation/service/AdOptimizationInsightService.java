@@ -30,7 +30,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +52,7 @@ public class AdOptimizationInsightService {
     private static final int IDEAL_PRIMARY_TEXT_MAX = 280;
     private static final Locale EN_LOCALE = Locale.US;
     private static final Locale VI_LOCALE = new Locale("vi", "VN");
+    private static final Pattern VIETNAMESE_CHAR_PATTERN = Pattern.compile("[ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]", Pattern.CASE_INSENSITIVE);
 
     private final UserRepository userRepository;
     private final AdRepository adRepository;
@@ -86,7 +89,7 @@ public class AdOptimizationInsightService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String language = resolveLanguage(request.getLanguage());
+        String requestedLanguage = resolveLanguage(request.getLanguage());
         List<Ad> ads = adRepository.findByUserAndIdInWithCampaign(user, adIds);
         if (ads.isEmpty()) {
             return Collections.emptyList();
@@ -99,7 +102,7 @@ public class AdOptimizationInsightService {
         return adIds.stream()
             .map(adMap::get)
             .filter(Objects::nonNull)
-            .map(ad -> buildInsight(ad, user, language))
+            .map(ad -> buildInsight(ad, user, requestedLanguage))
             .collect(Collectors.toList());
     }
 
@@ -149,7 +152,7 @@ public class AdOptimizationInsightService {
 
     private AdOptimizationInsightDTO buildInsight(Ad ad,
                                                   User user,
-                                                  String language) {
+                                                  String requestedLanguage) {
         AdOptimizationInsightDTO dto = new AdOptimizationInsightDTO();
         dto.setAdId(ad.getId());
         dto.setAdName(Optional.ofNullable(ad.getName()).orElse("Untitled Ad"));
@@ -166,17 +169,20 @@ public class AdOptimizationInsightService {
         );
         dto.setLengthMetrics(lengths);
 
+        String analysisLanguage = detectAdLanguage(ad, requestedLanguage);
+        dto.setLanguage(analysisLanguage);
+
         AdQualityScoringService.AdQualityScore score = adQualityScoringService.calculateQualityScore(asAdContent(ad));
         dto.setScorecard(toScorecard(score));
 
         Map<String, List<String>> suggestionBuckets = new LinkedHashMap<>();
-        enrichCopySuggestions(ad, suggestionBuckets, language, lengths);
-        enrichVisualSuggestions(ad, suggestionBuckets, language);
-        enrichCtaSuggestions(ad, suggestionBuckets, language);
-        enrichHookSuggestions(ad, suggestionBuckets, language);
-        enrichLengthSuggestions(lengths, suggestionBuckets, language);
-        enrichTargetSuggestions(ad, suggestionBuckets, language);
-        ensureFallbacks(suggestionBuckets, language);
+        enrichCopySuggestions(ad, suggestionBuckets, analysisLanguage, lengths);
+        enrichVisualSuggestions(ad, suggestionBuckets, analysisLanguage);
+        enrichCtaSuggestions(ad, suggestionBuckets, analysisLanguage);
+        enrichHookSuggestions(ad, suggestionBuckets, analysisLanguage);
+        enrichLengthSuggestions(lengths, suggestionBuckets, analysisLanguage);
+        enrichTargetSuggestions(ad, suggestionBuckets, analysisLanguage);
+        ensureFallbacks(suggestionBuckets, analysisLanguage);
 
         dto.setSuggestions(suggestionBuckets);
         dto.setSaved(snapshotRepository.existsByUserAndAdId(user, ad.getId()));
@@ -185,7 +191,7 @@ public class AdOptimizationInsightService {
         dto.setPersona(toPersonaContext(adPersona));
 
         Long personaId = adPersona != null ? adPersona.getId() : null;
-        adCopyReviewService.reviewAdCopy(ad, user, adPersona, personaId, null, language)
+        adCopyReviewService.reviewAdCopy(ad, user, adPersona, personaId, null, analysisLanguage)
             .ifPresent(dto::setCopyReview);
 
         return dto;
@@ -318,7 +324,8 @@ public class AdOptimizationInsightService {
         Ad ad = adRepository.findByIdAndUserWithRelations(adId, user)
             .orElseThrow(() -> new RuntimeException("Ad not found or not owned by user"));
 
-        String language = resolveLanguage(request.getLanguage());
+        String fallbackLanguage = resolveLanguage(request.getLanguage());
+        String language = detectAdLanguage(ad, fallbackLanguage);
         Persona persona = ad.getPersona();
         Long personaId = persona != null ? persona.getId() : null;
         return adCopyReviewService.rewriteSection(
@@ -403,6 +410,18 @@ public class AdOptimizationInsightService {
         ctx.setDesiredOutcome(persona.getDesiredOutcome());
         ctx.setDescription(persona.getDescription());
         return ctx;
+    }
+
+    private String detectAdLanguage(Ad ad, String fallbackLanguage) {
+        String normalizedFallback = resolveLanguage(fallbackLanguage);
+        String combined = Stream.of(ad.getHeadline(), ad.getDescription(), ad.getPrimaryText())
+            .filter(text -> text != null && !text.isBlank())
+            .map(text -> text.toLowerCase(Locale.ROOT))
+            .collect(Collectors.joining(" "));
+        if (!combined.isBlank() && VIETNAMESE_CHAR_PATTERN.matcher(combined).find()) {
+            return "vi";
+        }
+        return normalizedFallback;
     }
 
     private Map<String, List<String>> readSuggestions(String json) {

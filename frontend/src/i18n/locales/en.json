@@ -382,7 +382,8 @@
       "score": "Score",
       "compliance": "Compliance",
       "linguistic": "Readability",
-      "persuasiveness": "Persuasion"
+      "persuasiveness": "Persuasion",
+      "completeness": "Completeness"
     },
     "empty": {
       "title": "Select ads to begin",
@@ -392,7 +393,13 @@
       "title": "Analysis history",
       "subtitle": "Previous analysis results",
       "empty": "No history yet",
-      "end": "End of history"
+      "end": "End of history",
+      "viewDetails": "View details",
+      "drawerTitle": "Saved analysis",
+      "language": "Language: {language}",
+      "scorecardTitle": "Scorecard",
+      "suggestionsTitle": "AI suggestions",
+      "noSuggestions": "No suggestions saved"
     },
     "messages": {
       "saved": "Results saved",

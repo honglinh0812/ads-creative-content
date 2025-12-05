@@ -25,6 +25,7 @@ public class AdOptimizationInsightDTO {
     private boolean saved;
     private AdCopyReviewDTO copyReview;
     private PersonaContext persona;
+    private String language;
 
     public Long getAdId() {
         return adId;
@@ -128,6 +129,14 @@ public class AdOptimizationInsightDTO {
 
     public void setPersona(PersonaContext persona) {
         this.persona = persona;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
     }
 
     // Inner DTOs -------------------------------------------------------------
