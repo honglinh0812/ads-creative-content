@@ -25,14 +25,6 @@
         </a-space>
       </div>
 
-      <a-alert
-        class="persona-hint"
-        type="info"
-        show-icon
-        :message="t('optimizationLite.persona.autoTitle')"
-        :description="t('optimizationLite.persona.autoDescription')"
-      />
-
       <a-table
         :columns="tableColumns"
         :data-source="paginatedAds"

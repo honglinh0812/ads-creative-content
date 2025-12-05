@@ -2,7 +2,7 @@ package com.fbadsautomation.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fbadsautomation.ai.OpenAIProvider;
+import com.fbadsautomation.ai.AIProvider;
 import com.fbadsautomation.dto.AdCopyReviewDTO;
 import com.fbadsautomation.dto.AdCopyReviewDTO.SectionReview;
 import com.fbadsautomation.model.Ad;
@@ -41,7 +41,7 @@ public class AdCopyReviewService {
                                                   Long personaId,
                                                   String personaBrief,
                                                   String languageCode) {
-        OpenAIProvider provider = (OpenAIProvider) aiProviderService.getProvider("openai");
+        AIProvider provider = aiProviderService.getProvider("openai");
         if (provider == null) {
             log.warn("OpenAI provider not available for ad copy review");
             return Optional.empty();
@@ -75,7 +75,7 @@ public class AdCopyReviewService {
                                            String languageCode,
                                            String sectionName,
                                            String additionalGuidance) {
-        OpenAIProvider provider = (OpenAIProvider) aiProviderService.getProvider("openai");
+        AIProvider provider = aiProviderService.getProvider("openai");
         if (provider == null) {
             return Optional.empty();
         }
