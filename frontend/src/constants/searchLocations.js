@@ -1,4 +1,4 @@
-export const SEARCH_LOCATION_PRESETS = [
+const LINKEDIN_PRESETS = [
   {
     key: 'global',
     location: '',
@@ -82,12 +82,65 @@ export const SEARCH_LOCATION_PRESETS = [
   }
 ]
 
-export const findLocationPreset = (value) => {
+const TIKTOK_PRESETS = [
+  { key: 'all', location: '', country: 'all', labelKey: 'competitors.locations.global', fallback: 'All Regions' },
+  { key: 'at', location: 'Austria', country: 'AT', labelKey: '', fallback: 'Austria' },
+  { key: 'be', location: 'Belgium', country: 'BE', labelKey: '', fallback: 'Belgium' },
+  { key: 'bg', location: 'Bulgaria', country: 'BG', labelKey: '', fallback: 'Bulgaria' },
+  { key: 'hr', location: 'Croatia', country: 'HR', labelKey: '', fallback: 'Croatia' },
+  { key: 'cy', location: 'Cyprus', country: 'CY', labelKey: '', fallback: 'Cyprus' },
+  { key: 'cz', location: 'Czech Republic', country: 'CZ', labelKey: '', fallback: 'Czech Republic' },
+  { key: 'dk', location: 'Denmark', country: 'DK', labelKey: '', fallback: 'Denmark' },
+  { key: 'ee', location: 'Estonia', country: 'EE', labelKey: '', fallback: 'Estonia' },
+  { key: 'fi', location: 'Finland', country: 'FI', labelKey: '', fallback: 'Finland' },
+  { key: 'fr', location: 'France', country: 'FR', labelKey: 'competitors.locations.fr', fallback: 'France' },
+  { key: 'de', location: 'Germany', country: 'DE', labelKey: 'competitors.locations.de', fallback: 'Germany' },
+  { key: 'gr', location: 'Greece', country: 'GR', labelKey: '', fallback: 'Greece' },
+  { key: 'hu', location: 'Hungary', country: 'HU', labelKey: '', fallback: 'Hungary' },
+  { key: 'is', location: 'Iceland', country: 'IS', labelKey: '', fallback: 'Iceland' },
+  { key: 'ie', location: 'Ireland', country: 'IE', labelKey: '', fallback: 'Ireland' },
+  { key: 'it', location: 'Italy', country: 'IT', labelKey: '', fallback: 'Italy' },
+  { key: 'lv', location: 'Latvia', country: 'LV', labelKey: '', fallback: 'Latvia' },
+  { key: 'li', location: 'Liechtenstein', country: 'LI', labelKey: '', fallback: 'Liechtenstein' },
+  { key: 'lt', location: 'Lithuania', country: 'LT', labelKey: '', fallback: 'Lithuania' },
+  { key: 'lu', location: 'Luxembourg', country: 'LU', labelKey: '', fallback: 'Luxembourg' },
+  { key: 'mt', location: 'Malta', country: 'MT', labelKey: '', fallback: 'Malta' },
+  { key: 'nl', location: 'Netherlands', country: 'NL', labelKey: '', fallback: 'Netherlands' },
+  { key: 'no', location: 'Norway', country: 'NO', labelKey: '', fallback: 'Norway' },
+  { key: 'pl', location: 'Poland', country: 'PL', labelKey: '', fallback: 'Poland' },
+  { key: 'pt', location: 'Portugal', country: 'PT', labelKey: '', fallback: 'Portugal' },
+  { key: 'ro', location: 'Romania', country: 'RO', labelKey: '', fallback: 'Romania' },
+  { key: 'sk', location: 'Slovakia', country: 'SK', labelKey: '', fallback: 'Slovakia' },
+  { key: 'si', location: 'Slovenia', country: 'SI', labelKey: '', fallback: 'Slovenia' },
+  { key: 'es', location: 'Spain', country: 'ES', labelKey: '', fallback: 'Spain' },
+  { key: 'se', location: 'Sweden', country: 'SE', labelKey: '', fallback: 'Sweden' },
+  { key: 'ch', location: 'Switzerland', country: 'CH', labelKey: '', fallback: 'Switzerland' },
+  { key: 'tr', location: 'Turkey', country: 'TR', labelKey: '', fallback: 'Turkey' },
+  { key: 'gb', location: 'United Kingdom', country: 'GB', labelKey: 'competitors.locations.gb', fallback: 'United Kingdom' }
+]
+
+const DEFAULT_ENGINE = 'linkedin_ad_library'
+
+const PRESET_MAP = {
+  linkedin_ad_library: LINKEDIN_PRESETS,
+  tiktok_ads_library: TIKTOK_PRESETS
+}
+
+export const SEARCH_LOCATION_PRESETS = LINKEDIN_PRESETS
+
+export const getLocationPresets = (engine = DEFAULT_ENGINE) => {
+  return PRESET_MAP[engine] || LINKEDIN_PRESETS
+}
+
+export const findLocationPreset = (value, engine = DEFAULT_ENGINE) => {
+  const presets = getLocationPresets(engine)
   if (!value) {
-    return SEARCH_LOCATION_PRESETS[0]
+    return presets[0]
   }
   const normalized = String(value).toLowerCase()
-  return SEARCH_LOCATION_PRESETS.find(preset =>
-    preset.key === normalized || (preset.country && preset.country.toLowerCase() === normalized)
-  ) || SEARCH_LOCATION_PRESETS[0]
+  return presets.find(preset =>
+    preset.key === normalized ||
+    (preset.country && preset.country.toLowerCase() === normalized) ||
+    (preset.location && preset.location.toLowerCase() === normalized)
+  ) || presets[0]
 }

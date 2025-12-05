@@ -8,10 +8,11 @@ import { findLocationPreset } from '@/constants/searchLocations'
 const WATCHLIST_STORAGE_KEY = 'competitorWatchlist'
 
 const normalizeWatchlistItem = (item = {}) => {
-  const preset = findLocationPreset(item.locationKey || item.country || item.location || 'global')
+  const engine = item.engine || 'linkedin_ad_library'
+  const preset = findLocationPreset(item.locationKey || item.country || item.location || 'global', engine)
   return {
     ...item,
-    engine: item.engine || 'linkedin_ad_library',
+    engine,
     advertiser: item.advertiser || item.query || '',
     advertiserId: item.advertiserId || '',
     sortBy: item.sortBy || '',
@@ -175,7 +176,7 @@ const mutations = {
 const actions = {
   async searchAcrossWeb({ commit }, payload) {
     const engine = payload.engine || 'linkedin_ad_library'
-    const locationPreset = findLocationPreset(payload.locationKey || payload.country || 'global')
+    const locationPreset = findLocationPreset(payload.locationKey || payload.country || 'global', engine)
     const advertiser = payload.advertiser || payload.query || ''
     const keyword = payload.keyword || ''
     const rawCountry = payload.country || locationPreset.country || ''
@@ -349,7 +350,7 @@ const actions = {
   },
 
   addWatchlistItem({ commit, state }, payload) {
-    const preset = findLocationPreset(payload.locationKey || payload.country || 'global')
+    const preset = findLocationPreset(payload.locationKey || payload.country || 'global', payload.engine || 'linkedin_ad_library')
     const query = payload.query?.trim() || ''
     const keyword = payload.keyword?.trim() || ''
     if (!query && !keyword) {

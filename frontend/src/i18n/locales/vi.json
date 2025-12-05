@@ -323,9 +323,9 @@
     }
   },
   "optimizationLite": {
-    "title": "Tối ưu quảng cáo",
-    "subtitle": "Nhận gợi ý để cải thiện nội dung quảng cáo",
-    "description": "AI sẽ phân tích quảng cáo đã chọn và cung cấp gợi ý để nâng cao hiệu suất",
+    "title": "",
+    "subtitle": "Tối ưu nội dung quảng cáo",
+    "description": "Phân tích quảng cáo để nâng cao hiệu suất",
     "searchPlaceholder": "Tìm tên quảng cáo hoặc chiến dịch",
     "selectionCount": "{count} quảng cáo",
     "actions": {

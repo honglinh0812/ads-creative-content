@@ -41,7 +41,7 @@
             <a-form-item :label="$t('competitors.searchCard.locationLabel')">
               <a-select v-model:value="searchForm.location" size="large">
                 <a-select-option
-                  v-for="option in locationOptions"
+                  v-for="option in searchLocationOptions"
                   :key="option.value"
                   :value="option.value"
                 >
@@ -237,13 +237,13 @@
             <a-col :xs="12" :md="4">
               <a-form-item :label="$t('competitors.watchlist.regionLabel')">
                 <a-select v-model:value="watchlistForm.location">
-                  <a-select-option
-                    v-for="option in locationOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
-                    {{ option.label }}
-                  </a-select-option>
+                <a-select-option
+                  v-for="option in watchlistLocationOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -404,7 +404,7 @@ import {
 } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 
-import { SEARCH_LOCATION_PRESETS, findLocationPreset } from '@/constants/searchLocations'
+import { findLocationPreset, getLocationPresets } from '@/constants/searchLocations'
 
 export default {
   name: 'CompetitorsView',
@@ -460,8 +460,14 @@ export default {
       'selectedCount',
       'isWatchlistRefreshing'
     ]),
-    locationOptions() {
-      return SEARCH_LOCATION_PRESETS.map(preset => ({
+    searchLocationOptions() {
+      return getLocationPresets(this.searchForm.engine).map(preset => ({
+        value: preset.key,
+        label: this.$te(preset.labelKey) ? this.$t(preset.labelKey) : preset.fallback
+      }))
+    },
+    watchlistLocationOptions() {
+      return getLocationPresets(this.watchlistForm.engine).map(preset => ({
         value: preset.key,
         label: this.$te(preset.labelKey) ? this.$t(preset.labelKey) : preset.fallback
       }))
@@ -469,6 +475,16 @@ export default {
   },
   created() {
     this.initWatchlist()
+  },
+  watch: {
+    'searchForm.engine'(newEngine) {
+      const preset = this.resolveLocationPreset(this.searchForm.location, newEngine)
+      this.searchForm.location = preset.key
+    },
+    'watchlistForm.engine'(newEngine) {
+      const preset = this.resolveLocationPreset(this.watchlistForm.location, newEngine)
+      this.watchlistForm.location = preset.key
+    }
   },
   methods: {
     ...mapActions('competitor', {
@@ -484,24 +500,28 @@ export default {
       refreshAllWatchlistAction: 'refreshAllWatchlist',
       initWatchlist: 'initWatchlist'
     }),
-    resolveLocationPreset(value) {
-      const presetFromKey = findLocationPreset(value)
+    resolveLocationPreset(value, engine = 'linkedin_ad_library') {
+      const presetFromKey = findLocationPreset(value, engine)
       const normalizedValue = value ? String(value).toLowerCase() : ''
-      if (normalizedValue && normalizedValue === presetFromKey.key) {
+      if (
+        normalizedValue &&
+        (normalizedValue === presetFromKey.key || (presetFromKey.country && normalizedValue === presetFromKey.country.toLowerCase()))
+      ) {
         return presetFromKey
       }
-      const fallback = SEARCH_LOCATION_PRESETS.find(preset =>
+      const presets = getLocationPresets(engine)
+      const fallback = presets.find(preset =>
         preset.location === value || (preset.country && preset.country.toLowerCase() === normalizedValue)
       )
       return fallback || presetFromKey
     },
-    buildLocationPayload(key) {
-      const preset = this.resolveLocationPreset(key)
+    buildLocationPayload(key, engine) {
+      const preset = this.resolveLocationPreset(key, engine)
       const label = this.$te(preset.labelKey) ? this.$t(preset.labelKey) : preset.fallback
       return { ...preset, label }
     },
     getLocationLabel(item) {
-      const preset = this.resolveLocationPreset(item.locationKey || item.location || 'global')
+      const preset = this.resolveLocationPreset(item.locationKey || item.location || 'global', item.engine || 'linkedin_ad_library')
       return this.$te(preset.labelKey) ? this.$t(preset.labelKey) : preset.fallback
     },
     isAdSelected(ad) {
@@ -526,7 +546,7 @@ export default {
         return
       }
       try {
-        const preset = this.buildLocationPayload(this.searchForm.location)
+        const preset = this.buildLocationPayload(this.searchForm.location, this.searchForm.engine)
         await this.searchAcrossWeb({
           query,
           advertiser: query,
@@ -597,7 +617,7 @@ export default {
         return
       }
       try {
-        const preset = this.buildLocationPayload(this.watchlistForm.location)
+        const preset = this.buildLocationPayload(this.watchlistForm.location, this.watchlistForm.engine)
         await this.addWatchlistItemAction({
           query,
           keyword,
