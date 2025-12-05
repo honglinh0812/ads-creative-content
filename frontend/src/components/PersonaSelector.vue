@@ -140,18 +140,6 @@
       </div>
     </div>
 
-    <!-- Empty State Help -->
-    <a-alert
-      v-else
-      type="info"
-      show-icon
-      class="help-alert"
-    >
-      <template #message>
-        <strong>{{ $t('components.personaSelector.help.title') }}:</strong> {{ $t('components.personaSelector.help.description') }}
-      </template>
-    </a-alert>
-
     <!-- Inline Persona Creation Modal -->
     <a-modal
       v-model:visible="showCreateModal"

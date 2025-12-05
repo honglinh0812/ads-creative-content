@@ -1227,8 +1227,8 @@
     }
   },
   "personas": {
-    "title": "",
-    "subtitle": "Quản lý chân dung khách hàng mục tiêu",
+    "title": "Quản lý chân dung khách hàng",
+    "subtitle": "Tại đây, bạn có thể quản lý chân dung khách hàng mục tiêu",
     "createPersona": "Tạo chân dung",
     "createNew": "Tạo mới",
     "editPersona": "Sửa chân dung",
@@ -1696,7 +1696,7 @@
       },
       "adType": {
         "label": "Loại quảng cáo"
-        
+
       },
       "adName": {
         "label": "Tên quảng cáo",

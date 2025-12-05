@@ -2,7 +2,8 @@
   <div class="personas-view">
     <section class="hero-card surface-card">
       <div class="hero-text">
-        <p class="eyebrow">{{ $t('personas.sections.createTitle') }}</p>
+        <h1>{{ $t('personas.title') }}</h1>
+        <p class="hero-description">{{ $t('personas.subtitle') }}</p>
         <div class="hero-actions">     
           <a-button type="primary" size="large" @click="showCreateModal = true">
             <template #icon><plus-outlined /></template>
