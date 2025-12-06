@@ -47,6 +47,8 @@ public class AdImprovementRequest {
 
     private ReferenceInsights referenceInsights;
 
+    private ReferenceStyleProfile referenceStyle;
+
     @NotBlank(message = "Text provider là bắt buộc")
     private String textProvider;
 

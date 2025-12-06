@@ -347,7 +347,7 @@
       "noPersona": "Quảng cáo này chưa gắn persona nào"
     },
     "copyReview": {
-      "title": "Đánh giá nội dung AI",
+      "title": "Đánh giá nội dung",
       "persona": "Ngữ cảnh chân dung khách hàng: {persona}",
       "strengths": "Điểm mạnh",
       "improvements": "Cần cải thiện",
@@ -2256,6 +2256,24 @@
       "fallback": "Đã phân tích quảng cáo tham khảo",
       "notDetected": "Chưa xác định",
       "details": "{words} từ • {sentences} câu • CTA: {cta} • Đề cập giá: {price}"
+    },
+    "referenceStyle": {
+      "title": "Dấu vết phong cách",
+      "hook": "Hook mở đầu",
+      "tone": "Tông giọng",
+      "pacing": "Nhịp viết",
+      "emoji": "Emoji",
+      "emojiPresent": "Có emoji {samples}",
+      "emojiAbsent": "Không dùng emoji",
+      "questions": "Câu hỏi",
+      "secondPerson": "Xưng hô trực tiếp",
+      "ctaVerb": "Sắc thái CTA",
+      "notes": "Ghi chú",
+      "unknown": "Chưa rõ",
+      "boolean": {
+        "yes": "Có",
+        "no": "Không"
+      }
     },
     "step2": {
       "cardTitle": "Chọn nhà cung cấp AI",

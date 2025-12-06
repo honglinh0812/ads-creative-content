@@ -91,9 +91,10 @@ public class AdCopyReviewService {
 
     private String buildReviewPrompt(Ad ad, String personaSummary, String languageCode) {
         Locale locale = resolveLocale(languageCode);
-        String languageHint = locale.getLanguage().equalsIgnoreCase("vi")
-            ? "Trả lời bằng tiếng Việt."
-            : "Respond in English.";
+        boolean isVietnamese = "vi".equalsIgnoreCase(locale.getLanguage());
+        String languageHint = isVietnamese
+            ? "Trả lời toàn bộ bằng tiếng Việt. Các trường overallVerdict, strengths, improvements và rewrite phải bằng tiếng Việt – không được sử dụng tiếng Anh."
+            : "Respond entirely in English. Fields overallVerdict, strengths, improvements, and rewrite must be written in English only.";
 
         return """
             %s
@@ -134,9 +135,10 @@ public class AdCopyReviewService {
                                       String guidance,
                                       String languageCode) {
         Locale locale = resolveLocale(languageCode);
-        String languageHint = locale.getLanguage().equalsIgnoreCase("vi")
-            ? "Viết câu trả lời bằng tiếng Việt."
-            : "Respond in English.";
+        boolean isVietnamese = "vi".equalsIgnoreCase(locale.getLanguage());
+        String languageHint = isVietnamese
+            ? "Viết câu trả lời bằng tiếng Việt. Không sử dụng tiếng Anh trong nội dung mới."
+            : "Respond in English only. Do not use other languages in the rewritten text.";
 
         String currentText = switch (section != null ? section.toUpperCase(Locale.ROOT) : "") {
             case "HEADLINE" -> safe(ad.getHeadline());
@@ -181,7 +183,9 @@ public class AdCopyReviewService {
             }
         }
         if (summary.length() == 0) {
-            summary.append("General audience of busy social media users looking for helpful offers.");
+            summary.append("vi".equalsIgnoreCase(languageCode)
+                ? "Khán giả phổ thông bận rộn trên mạng xã hội, thích các ưu đãi ngắn gọn và hữu ích."
+                : "General audience of busy social media users looking for helpful offers.");
         }
         return summary.toString();
     }

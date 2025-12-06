@@ -7,6 +7,7 @@ import com.fbadsautomation.dto.AdImprovementRequest;
 import com.fbadsautomation.dto.ReferenceAdData;
 import com.fbadsautomation.dto.ReferenceAnalysisRequest;
 import com.fbadsautomation.dto.ReferenceAnalysisResponse;
+import com.fbadsautomation.dto.ReferenceStyleProfile;
 import com.fbadsautomation.exception.ApiException;
 import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.AdContent;
@@ -16,10 +17,14 @@ import com.fbadsautomation.model.AsyncJobStatus;
 import com.fbadsautomation.model.FacebookCTA;
 import com.fbadsautomation.util.ValidationMessages.Language;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -67,6 +72,18 @@ public class AdImprovementService {
 
     private static final Pattern PRICE_PATTERN = Pattern.compile("(\\$|usd|đ|vnđ|% off|discount|giảm giá|chỉ còn)");
 
+    private static final Set<String> SECOND_PERSON_KEYWORDS = Set.of(
+            "you", "your", "yours", "yourself", "bạn", "của bạn", "anh", "chị", "em", "quý khách"
+    );
+
+    private static final Map<String, List<String>> TONE_KEYWORD_MAP = Map.of(
+            "UPBEAT", List.of("!", "🔥", "wow", "đừng bỏ lỡ", "limited", "hot", "ưu đãi"),
+            "INSPIRATIONAL", List.of("imagine", "transform", "hành trình", "cảm hứng", "dream"),
+            "LUXURY", List.of("cao cấp", "premium", "đẳng cấp", "sang trọng", "bespoke"),
+            "EDUCATIONAL", List.of("bí quyết", "tips", "how to", "mẹo", "insight", "guide"),
+            "EMOTIONAL", List.of("yêu", "thương", "trân trọng", "love", "care")
+    );
+
     /**
      * Kiểm tra link quảng cáo tham chiếu và lấy nội dung nếu có access token.
      */
@@ -110,6 +127,7 @@ public class AdImprovementService {
         ReferenceAnalysisResponse.ReferenceInsights insights = buildInsights(referenceContent);
         String detectedStyle = detectStyle(referenceContent);
         FacebookCTA detectedCTA = detectCallToAction(referenceContent);
+        ReferenceStyleProfile styleProfile = analyzeStyleProfile(referenceContent, detectedCTA);
 
         return ReferenceAnalysisResponse.builder()
                 .success(true)
@@ -121,6 +139,7 @@ public class AdImprovementService {
                 .suggestedCallToAction(detectedCTA)
                 .referenceAdData(referenceAdData)
                 .insights(insights)
+                .styleProfile(styleProfile)
                 .build();
     }
 
@@ -375,6 +394,7 @@ public class AdImprovementService {
         boolean enforceCharacterLimits = !Boolean.TRUE.equals(request.getAllowUnlimitedLength());
 
         ChainOfThoughtPromptBuilder.ReferenceMetrics referenceMetrics = buildReferenceMetrics(request);
+        ReferenceStyleProfile styleProfile = resolveStyleProfile(request);
 
         return chainOfThoughtPromptBuilder.buildCoTPrompt(
                 StringUtils.hasText(request.getProductDescription()) ? request.getProductDescription() : "N/A",
@@ -389,7 +409,8 @@ public class AdImprovementService {
                 request.getReferenceContent(),
                 request.getReferenceLink(),
                 enforceCharacterLimits,
-                referenceMetrics
+                referenceMetrics,
+                styleProfile
         );
     }
 
@@ -429,6 +450,19 @@ public class AdImprovementService {
         }
 
         return new ChainOfThoughtPromptBuilder.ReferenceMetrics(wordCount, sentenceCount, containsCTA, containsPrice);
+    }
+
+    private ReferenceStyleProfile resolveStyleProfile(AdImprovementRequest request) {
+        if (request.getReferenceStyle() != null) {
+            return request.getReferenceStyle();
+        }
+        if (StringUtils.hasText(request.getReferenceContent())) {
+            FacebookCTA fallbackCTA = request.getCallToAction() != null
+                    ? request.getCallToAction()
+                    : detectCallToAction(request.getReferenceContent());
+            return analyzeStyleProfile(request.getReferenceContent(), fallbackCTA);
+        }
+        return null;
     }
 
     private AdGenerationResponse.AdVariation convertToAdVariation(AdContent content, String languageCode) {
@@ -545,6 +579,206 @@ public class AdImprovementService {
             }
         }
         return bestCTA;
+    }
+
+    private ReferenceStyleProfile analyzeStyleProfile(String content, FacebookCTA detectedCTA) {
+        if (!StringUtils.hasText(content)) {
+            return null;
+        }
+        String normalized = content.trim();
+        String firstSentence = extractFirstSentence(normalized);
+        String hookType = classifyHook(firstSentence);
+        String tone = classifyTone(normalized);
+        String pacing = determinePacing(normalized);
+        boolean usesEmoji = containsEmoji(normalized);
+        boolean usesQuestions = normalized.contains("?");
+        boolean usesSecondPerson = containsSecondPerson(normalized);
+        List<String> emojiSamples = usesEmoji ? extractEmojiSamples(normalized) : Collections.emptyList();
+        List<String> styleNotes = deriveStyleNotes(normalized, usesEmoji, usesQuestions);
+        List<String> punctuation = detectPunctuationPatterns(normalized);
+        String ctaVerb = detectedCTA != null ? describeCTA(detectedCTA) : detectCTAFromText(normalized);
+
+        return ReferenceStyleProfile.builder()
+                .hookType(hookType)
+                .tone(tone)
+                .pacing(pacing)
+                .usesEmoji(usesEmoji)
+                .usesQuestions(usesQuestions)
+                .usesSecondPerson(usesSecondPerson)
+                .emojiSamples(emojiSamples.isEmpty() ? null : emojiSamples)
+                .styleNotes(styleNotes.isEmpty() ? null : styleNotes)
+                .punctuation(punctuation.isEmpty() ? null : punctuation)
+                .ctaVerb(ctaVerb)
+                .build();
+    }
+
+    private String extractFirstSentence(String text) {
+        String[] split = text.split("[\\n]|(?<=[.!?])\\s+");
+        return split.length > 0 ? split[0] : text;
+    }
+
+    private String classifyHook(String firstSentence) {
+        if (!StringUtils.hasText(firstSentence)) {
+            return "STATEMENT";
+        }
+        String lowered = firstSentence.trim();
+        if (lowered.endsWith("?")) {
+            return "QUESTION";
+        }
+        if (lowered.contains("!")) {
+            return "EXCLAMATION";
+        }
+        if (lowered.matches("^(\\d+|[0-9]+%|save|giảm|chỉ trong|only).*")) {
+            return "PROMOTION";
+        }
+        if (lowered.matches("(?i).*(imagine|khi bạn|hãy thử|once).*")) {
+            return "STORY";
+        }
+        return "STATEMENT";
+    }
+
+    private String classifyTone(String content) {
+        String lower = content.toLowerCase();
+        for (Map.Entry<String, List<String>> entry : TONE_KEYWORD_MAP.entrySet()) {
+            for (String keyword : entry.getValue()) {
+                if (lower.contains(keyword)) {
+                    return entry.getKey();
+                }
+            }
+        }
+        return "BALANCED";
+    }
+
+    private String determinePacing(String content) {
+        if (!StringUtils.hasText(content)) {
+            return "BALANCED";
+        }
+        String[] sentences = content.split("[.!?\\n]+");
+        if (sentences.length == 0) {
+            return "BALANCED";
+        }
+        int totalWords = Arrays.stream(sentences)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .mapToInt(s -> s.split("\\s+").length)
+                .sum();
+        if (totalWords == 0) {
+            return "BALANCED";
+        }
+        double avg = (double) totalWords / sentences.length;
+        if (avg < 10) {
+            return "SNAPPY";
+        }
+        if (avg > 22) {
+            return "STORYTELLING";
+        }
+        return "BALANCED";
+    }
+
+    private boolean containsEmoji(String text) {
+        return text.codePoints().anyMatch(this::isEmojiCodePoint);
+    }
+
+    private List<String> extractEmojiSamples(String text) {
+        return text.codePoints()
+                .filter(this::isEmojiCodePoint)
+                .mapToObj(cp -> new String(Character.toChars(cp)))
+                .distinct()
+                .limit(3)
+                .collect(Collectors.toList());
+    }
+
+    private boolean isEmojiCodePoint(int codePoint) {
+        Character.UnicodeBlock block = Character.UnicodeBlock.of(codePoint);
+        if (block == null) {
+            return false;
+        }
+        return Character.getType(codePoint) == Character.OTHER_SYMBOL
+                || block == Character.UnicodeBlock.EMOTICONS
+                || block == Character.UnicodeBlock.MISCELLANEOUS_SYMBOLS
+                || block == Character.UnicodeBlock.MISCELLANEOUS_SYMBOLS_AND_PICTOGRAPHS
+                || block == Character.UnicodeBlock.SUPPLEMENTAL_SYMBOLS_AND_PICTOGRAPHS
+                || block == Character.UnicodeBlock.TRANSPORT_AND_MAP_SYMBOLS
+                || block == Character.UnicodeBlock.DINGBATS;
+    }
+
+    private boolean containsSecondPerson(String content) {
+        String lower = content.toLowerCase();
+        return SECOND_PERSON_KEYWORDS.stream().anyMatch(lower::contains);
+    }
+
+    private List<String> deriveStyleNotes(String content, boolean usesEmoji, boolean usesQuestions) {
+        List<String> notes = new ArrayList<>();
+        if (usesEmoji) {
+            notes.add("Uses emoji as inline separators");
+        }
+        if (usesQuestions) {
+            notes.add("Opens curiosity gaps with questions");
+        }
+        if (content.lines().filter(line -> line.trim().startsWith("-") || line.trim().startsWith("•")).count() >= 2) {
+            notes.add("Relies on bullet/line breaks for scannability");
+        }
+        long uppercaseWords = Arrays.stream(content.split("\\s+"))
+                .filter(word -> word.length() > 3 && word.equals(word.toUpperCase()))
+                .count();
+        if (uppercaseWords >= 3) {
+            notes.add("Emphasizes key benefits with uppercase words");
+        }
+        if (content.contains("...")) {
+            notes.add("Uses ellipsis for dramatic pauses");
+        }
+        return notes;
+    }
+
+    private List<String> detectPunctuationPatterns(String content) {
+        List<String> cues = new ArrayList<>();
+        long exclamations = content.chars().filter(ch -> ch == '!').count();
+        if (exclamations >= 2) {
+            cues.add("Multiple exclamation points");
+        }
+        long questions = content.chars().filter(ch -> ch == '?').count();
+        if (questions >= 2) {
+            cues.add("Question-heavy copy");
+        }
+        if (content.contains("...")) {
+            cues.add("Ellipsis pacing");
+        }
+        return cues;
+    }
+
+    private String describeCTA(FacebookCTA cta) {
+        if (cta == null) {
+            return null;
+        }
+        return switch (cta) {
+            case SHOP_NOW -> "Encourage immediate purchase";
+            case LEARN_MORE -> "Invite readers to learn more";
+            case SIGN_UP -> "Invite sign-up";
+            case APPLY_NOW -> "Prompt to apply";
+            case DOWNLOAD -> "Encourage download";
+            case GET_OFFER -> "Highlight limited offer";
+            default -> cta.name();
+        };
+    }
+
+    private String detectCTAFromText(String content) {
+        if (!StringUtils.hasText(content)) {
+            return null;
+        }
+        String lower = content.toLowerCase();
+        if (lower.contains("đăng ký ngay") || lower.contains("sign up")) {
+            return "Invite sign-up";
+        }
+        if (lower.contains("mua ngay") || lower.contains("shop now")) {
+            return "Encourage purchase";
+        }
+        if (lower.contains("tìm hiểu thêm") || lower.contains("learn more")) {
+            return "Invite readers to learn more";
+        }
+        if (lower.contains("đặt lịch") || lower.contains("book now")) {
+            return "Prompt to book";
+        }
+        return null;
     }
 
     private int countMatches(String content, List<String> keywords) {

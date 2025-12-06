@@ -131,23 +131,50 @@
               size="small"
               :bordered="false"
             >
-              <a-descriptions
-                :column="1"
-                size="small"
-                :title="$t('adLearn.referenceSummary.title')"
+            <a-descriptions
+              :column="1"
+              size="small"
+              :title="$t('adLearn.referenceSummary.title')"
+            >
+              <a-descriptions-item :label="$t('adLearn.referenceSummary.summary')">
+                {{ referenceSummaryText || $t('adLearn.referenceSummary.fallback') }}
+              </a-descriptions-item>
+              <a-descriptions-item :label="$t('adLearn.referenceSummary.detectedStyle')">
+                {{ detectedStyleLabel }}
+              </a-descriptions-item>
+              <a-descriptions-item :label="$t('adLearn.referenceSummary.detectedCTA')">
+                {{ detectedCTALabel }}
+              </a-descriptions-item>
+            </a-descriptions>
+          </a-card>
+
+          <a-card
+            v-if="referenceStyleProfile"
+            class="style-profile-card"
+            size="small"
+            :bordered="false"
+          >
+            <div class="style-profile-header">
+              {{ $t('adLearn.referenceStyle.title') }}
+            </div>
+            <div class="style-profile-grid">
+              <div
+                v-for="chip in styleCueChips"
+                :key="chip.key"
+                class="style-chip"
               >
-                <a-descriptions-item :label="$t('adLearn.referenceSummary.summary')">
-                  {{ referenceSummaryText || $t('adLearn.referenceSummary.fallback') }}
-                </a-descriptions-item>
-                <a-descriptions-item :label="$t('adLearn.referenceSummary.detectedStyle')">
-                  {{ detectedStyleLabel }}
-                </a-descriptions-item>
-                <a-descriptions-item :label="$t('adLearn.referenceSummary.detectedCTA')">
-                  {{ detectedCTALabel }}
-                </a-descriptions-item>
-              </a-descriptions>
-            </a-card>
-          </a-form>
+                <div class="chip-label">{{ chip.label }}</div>
+                <div class="chip-value">{{ chip.value }}</div>
+              </div>
+            </div>
+            <div v-if="styleNotes.length" class="style-notes">
+              <div class="notes-label">{{ $t('adLearn.referenceStyle.notes') }}</div>
+              <ul>
+                <li v-for="note in styleNotes" :key="note">{{ note }}</li>
+              </ul>
+            </div>
+          </a-card>
+        </a-form>
 
           <div class="form-actions">
             <a-button
@@ -349,6 +376,7 @@ export default {
       referenceContent: '',
       referenceSummaryText: '',
       referenceInsights: null,
+      referenceStyleProfile: null,
       detectedStyle: null,
       detectedCallToAction: null,
       adId: null,
@@ -449,6 +477,65 @@ export default {
         return this.$t('adLearn.referenceSummary.notDetected')
       }
       return this.getCTALabel(this.detectedCallToAction) || this.detectedCallToAction
+    },
+    styleCueChips() {
+      if (!this.referenceStyleProfile) {
+        return []
+      }
+      const profile = this.referenceStyleProfile
+      return [
+        {
+          key: 'hook',
+          label: this.$t('adLearn.referenceStyle.hook'),
+          value: profile.hookType || this.$t('adLearn.referenceStyle.unknown')
+        },
+        {
+          key: 'tone',
+          label: this.$t('adLearn.referenceStyle.tone'),
+          value: profile.tone || this.$t('adLearn.referenceStyle.unknown')
+        },
+        {
+          key: 'pacing',
+          label: this.$t('adLearn.referenceStyle.pacing'),
+          value: profile.pacing || this.$t('adLearn.referenceStyle.unknown')
+        },
+        {
+          key: 'emoji',
+          label: this.$t('adLearn.referenceStyle.emoji'),
+          value: profile.usesEmoji
+            ? this.$t('adLearn.referenceStyle.emojiPresent', {
+                samples: (profile.emojiSamples && profile.emojiSamples.length)
+                  ? ` (${profile.emojiSamples.join(' ')})`
+                  : ''
+              })
+            : this.$t('adLearn.referenceStyle.emojiAbsent')
+        },
+        {
+          key: 'questions',
+          label: this.$t('adLearn.referenceStyle.questions'),
+          value: profile.usesQuestions
+            ? this.$t('adLearn.referenceStyle.boolean.yes')
+            : this.$t('adLearn.referenceStyle.boolean.no')
+        },
+        {
+          key: 'secondPerson',
+          label: this.$t('adLearn.referenceStyle.secondPerson'),
+          value: profile.usesSecondPerson
+            ? this.$t('adLearn.referenceStyle.boolean.yes')
+            : this.$t('adLearn.referenceStyle.boolean.no')
+        },
+        {
+          key: 'ctaVerb',
+          label: this.$t('adLearn.referenceStyle.ctaVerb'),
+          value: profile.ctaVerb || this.$t('adLearn.referenceStyle.unknown')
+        }
+      ]
+    },
+    styleNotes() {
+      if (!this.referenceStyleProfile || !this.referenceStyleProfile.styleNotes?.length) {
+        return []
+      }
+      return this.referenceStyleProfile.styleNotes
     }
   },
   created() {
@@ -562,6 +649,7 @@ export default {
         this.referenceInsights = response.data.insights || null
         this.detectedStyle = response.data.detectedStyle || null
         this.detectedCallToAction = response.data.suggestedCallToAction || null
+        this.referenceStyleProfile = response.data.styleProfile || null
         this.referenceSummaryText = this.formatInsights(this.referenceInsights, response.data.message)
         this.hasReferenceInsights = true
         this.$message.success(this.$t('adLearn.messages.success.extracted'))
@@ -571,6 +659,7 @@ export default {
         this.$message.warning(this.$t('adLearn.messages.error.extractContentFailed'))
         this.referenceSummaryText = ''
         this.hasReferenceInsights = false
+        this.referenceStyleProfile = null
         return false
       } finally {
         this.extracting = false
@@ -647,6 +736,7 @@ export default {
           referenceLink: this.formData.referenceLink,
           referenceContent: this.referenceContent || this.formData.baseContent,
           referenceInsights: this.referenceInsights || null,
+          referenceStyle: this.referenceStyleProfile || null,
           textProvider: this.formData.textProvider,
           imageProvider: this.formData.imageProvider,
           numberOfVariations: this.formData.numberOfVariations,
@@ -988,6 +1078,60 @@ export default {
   margin-top: 12px;
   background: #f8fbff;
   border: 1px solid #e0edff;
+}
+
+.style-profile-card {
+  margin-top: 12px;
+  background: #fdfefe;
+  border: 1px solid #e2e8f0;
+}
+
+.style-profile-header {
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.style-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.style-chip {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.chip-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+
+.chip-value {
+  margin-top: 6px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.style-notes {
+  margin-top: 14px;
+}
+
+.style-notes ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #475569;
+}
+
+.notes-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 .form-actions {

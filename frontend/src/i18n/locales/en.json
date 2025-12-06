@@ -2050,6 +2050,24 @@
       "notDetected": "Not detected",
       "details": "{words} words • {sentences} sentences • CTA: {cta} • Price mention: {price}"
     },
+    "referenceStyle": {
+      "title": "Reference style cues",
+      "hook": "Hook",
+      "tone": "Tone",
+      "pacing": "Pacing",
+      "emoji": "Emoji usage",
+      "emojiPresent": "Emoji present {samples}",
+      "emojiAbsent": "No emoji",
+      "questions": "Questions",
+      "secondPerson": "Direct address",
+      "ctaVerb": "CTA vibe",
+      "notes": "Additional cues",
+      "unknown": "Not detected",
+      "boolean": {
+        "yes": "Yes",
+        "no": "No"
+      }
+    },
     "step2": {
       "cardTitle": "AI provider selection",
       "sectionTitle": "Pick your AI copilots",

@@ -39,6 +39,7 @@ class ChainOfThoughtPromptBuilderTest {
             null,
             null,
             true,
+            null,
             null
         );
 
@@ -63,6 +64,7 @@ class ChainOfThoughtPromptBuilderTest {
             null,
             null,
             true,
+            null,
             null
         );
 

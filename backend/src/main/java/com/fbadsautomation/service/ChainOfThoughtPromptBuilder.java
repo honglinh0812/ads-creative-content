@@ -1,5 +1,6 @@
 package com.fbadsautomation.service;
 
+import com.fbadsautomation.dto.ReferenceStyleProfile;
 import com.fbadsautomation.model.AdStyle;
 import com.fbadsautomation.model.AdType;
 import com.fbadsautomation.model.FacebookCTA;
@@ -99,7 +100,8 @@ public class ChainOfThoughtPromptBuilder {
         String referenceContent,
         String referenceLink,
         boolean enforceCharacterLimits,
-        ReferenceMetrics referenceMetrics
+        ReferenceMetrics referenceMetrics,
+        ReferenceStyleProfile styleProfile
     ) {
         log.info("[Phase 3] Building CoT prompt: language={}, adType={}, variations={}, persona={}, keywords={}",
                 language, adType, numberOfVariations,
@@ -116,7 +118,16 @@ public class ChainOfThoughtPromptBuilder {
         prompt.append(buildStage2_AudienceAnalysis(persona, targetAudience, isVietnamese));
 
         // Stage 3: Creative Direction
-        prompt.append(buildStage3_CreativeDirection(adStyle, trendingKeywords, referenceContent, referenceLink, userPrompt, isVietnamese, referenceMetrics, !enforceCharacterLimits));
+        prompt.append(buildStage3_CreativeDirection(
+                adStyle,
+                trendingKeywords,
+                referenceContent,
+                referenceLink,
+                userPrompt,
+                isVietnamese,
+                referenceMetrics,
+                !enforceCharacterLimits,
+                styleProfile));
 
         // Stage 4: Constraints & Requirements
         prompt.append(buildStage4_Constraints(callToAction, language, isVietnamese, enforceCharacterLimits));
@@ -125,7 +136,13 @@ public class ChainOfThoughtPromptBuilder {
         prompt.append(buildStage5_ReasoningProcess(persona, adStyle, isVietnamese, enforceCharacterLimits));
 
         // Stage 6: Generation Instruction
-        prompt.append(buildStage6_GenerationInstruction(numberOfVariations, language, isVietnamese, enforceCharacterLimits, referenceMetrics));
+        prompt.append(buildStage6_GenerationInstruction(
+                numberOfVariations,
+                language,
+                isVietnamese,
+                enforceCharacterLimits,
+                referenceMetrics,
+                styleProfile != null));
 
         log.debug("[Phase 3] CoT prompt built successfully (length: {} chars)", prompt.length());
         return prompt.toString();
@@ -270,7 +287,8 @@ public class ChainOfThoughtPromptBuilder {
                                                  String baseDescription,
                                                  boolean isVietnamese,
                                                  ReferenceMetrics referenceMetrics,
-                                                 boolean allowLongForm) {
+                                                 boolean allowLongForm,
+                                                 ReferenceStyleProfile styleProfile) {
         StringBuilder stage = new StringBuilder();
 
         if (isVietnamese) {
@@ -287,6 +305,7 @@ public class ChainOfThoughtPromptBuilder {
                 stage.append("\n");
             }
             appendReferenceSection(stage, referenceContent, referenceLink, baseDescription, true);
+            appendStyleProfile(stage, styleProfile, true);
             stage.append(buildReferenceMirrorCue(referenceMetrics, true, allowLongForm));
         } else {
             stage.append("🎨 CREATIVE DIRECTION\n\n");
@@ -302,6 +321,7 @@ public class ChainOfThoughtPromptBuilder {
                 stage.append("\n");
             }
             appendReferenceSection(stage, referenceContent, referenceLink, baseDescription, false);
+            appendStyleProfile(stage, styleProfile, false);
             stage.append(buildReferenceMirrorCue(referenceMetrics, false, allowLongForm));
         }
 
@@ -578,12 +598,18 @@ public class ChainOfThoughtPromptBuilder {
                                                      Language language,
                                                      boolean isVietnamese,
                                                      boolean enforceCharacterLimits,
-                                                     ReferenceMetrics referenceMetrics) {
+                                                     ReferenceMetrics referenceMetrics,
+                                                     boolean hasStyleProfile) {
         String headlineConstraint = "";
         String descriptionConstraint = "";
         String primaryConstraint = "";
         String depthRequirement = "";
         String mirrorLengthNote = "";
+        String styleReminder = hasStyleProfile
+                ? ""
+                : (isVietnamese
+                    ? " (hãy dựa vào phần phong cách phía trên)"
+                    : " (lean on the reference cues above)");
         Integer guidedSentences = getGuidedSentenceCount(referenceMetrics, !enforceCharacterLimits);
         Integer guidedWords = getGuidedWordCount(referenceMetrics, !enforceCharacterLimits);
 
@@ -640,6 +666,7 @@ public class ChainOfThoughtPromptBuilder {
                 2. Format: Chỉ trả về JSON object hợp lệ cho từng biến thể
                 3. Tính độc đáo: Mỗi biến thể phải khác biệt có ý nghĩa
                 4. Tuân thủ: Mọi quảng cáo phải đáp ứng tất cả yêu cầu Facebook
+                5. Phong cách: Bám sát các dấu vết phong cách ở trên%s
                 %s
                 %s
 
@@ -653,7 +680,7 @@ public class ChainOfThoughtPromptBuilder {
                 }
 
                 Tạo ngay bây giờ và CHỈ trả về JSON object hợp lệ như mẫu trên cho mỗi biến thể:
-                """, numberOfVariations, depthRequirement, mirrorLengthNote, headlineConstraint, descriptionConstraint, primaryConstraint);
+                """, numberOfVariations, depthRequirement, mirrorLengthNote, styleReminder, headlineConstraint, descriptionConstraint, primaryConstraint);
         } else {
             return String.format("""
                 ✍️ GENERATION INSTRUCTIONS
@@ -665,6 +692,7 @@ public class ChainOfThoughtPromptBuilder {
                 2. Format: Return ONLY a valid JSON object per variation
                 3. Uniqueness: Each variation must be meaningfully different
                 4. Compliance: Every ad must pass all Facebook requirements
+                5. Style: Mirror the cues listed above%s
                 %s
                 %s
 
@@ -678,7 +706,8 @@ public class ChainOfThoughtPromptBuilder {
                 }
 
                 Generate now and ONLY return a valid JSON object matching the schema above for each variation:
-                """, numberOfVariations, depthRequirement, mirrorLengthNote, headlineConstraint, descriptionConstraint, primaryConstraint);
+                """, numberOfVariations, depthRequirement, mirrorLengthNote,
+                styleReminder, headlineConstraint, descriptionConstraint, primaryConstraint);
         }
     }
 
@@ -721,6 +750,76 @@ public class ChainOfThoughtPromptBuilder {
             stage.append("⚠️ Use the reference ONLY for tone & structure. NEVER mention the brands/locations/promotions from the reference text.\n");
             stage.append("Always replace them with details about your product: ").append(productCue).append("\n\n");
         }
+    }
+
+    private void appendStyleProfile(StringBuilder stage,
+                                    ReferenceStyleProfile styleProfile,
+                                    boolean isVietnamese) {
+        if (styleProfile == null) {
+            return;
+        }
+        if (isVietnamese) {
+            stage.append("🧬 DẤU VẾT PHONG CÁCH\n");
+            stage.append(String.format("- Hook mở đầu: %s%n", safeValue(styleProfile.getHookType(), "Câu khẳng định")));
+            stage.append(String.format("- Tông giọng: %s%n", safeValue(styleProfile.getTone(), "Cân bằng")));
+            stage.append(String.format("- Nhịp viết: %s%n", safeValue(styleProfile.getPacing(), "Cân bằng")));
+            if (Boolean.TRUE.equals(styleProfile.getUsesEmoji())) {
+                stage.append("- Có sử dụng emoji để dẫn dắt cảm xúc");
+                if (styleProfile.getEmojiSamples() != null && !styleProfile.getEmojiSamples().isEmpty()) {
+                    stage.append(": ").append(String.join(" ", styleProfile.getEmojiSamples()));
+                }
+                stage.append("\n");
+            }
+            if (Boolean.TRUE.equals(styleProfile.getUsesSecondPerson())) {
+                stage.append("- Trực tiếp xưng hô với người đọc (\"bạn\")\n");
+            }
+            if (Boolean.TRUE.equals(styleProfile.getUsesQuestions())) {
+                stage.append("- Đặt nhiều câu hỏi để tạo tò mò\n");
+            }
+            appendListIfPresent(stage, "Ghi chú thêm", styleProfile.getStyleNotes());
+            appendListIfPresent(stage, "Dấu câu nổi bật", styleProfile.getPunctuation());
+            if (styleProfile.getCtaVerb() != null) {
+                stage.append("Gợi ý CTA: ").append(styleProfile.getCtaVerb()).append("\n");
+            }
+            stage.append("\n");
+        } else {
+            stage.append("🧬 STYLE FINGERPRINT\n");
+            stage.append(String.format("- Hook type: %s%n", safeValue(styleProfile.getHookType(), "Statement")));
+            stage.append(String.format("- Tone: %s%n", safeValue(styleProfile.getTone(), "Balanced")));
+            stage.append(String.format("- Pacing: %s%n", safeValue(styleProfile.getPacing(), "Balanced")));
+            if (Boolean.TRUE.equals(styleProfile.getUsesEmoji())) {
+                stage.append("- Uses emoji for emphasis");
+                if (styleProfile.getEmojiSamples() != null && !styleProfile.getEmojiSamples().isEmpty()) {
+                    stage.append(": ").append(String.join(" ", styleProfile.getEmojiSamples()));
+                }
+                stage.append("\n");
+            }
+            if (Boolean.TRUE.equals(styleProfile.getUsesSecondPerson())) {
+                stage.append("- Speaks directly to the reader (\"you\")\n");
+            }
+            if (Boolean.TRUE.equals(styleProfile.getUsesQuestions())) {
+                stage.append("- Relies on questions to spark curiosity\n");
+            }
+            appendListIfPresent(stage, "Additional cues", styleProfile.getStyleNotes());
+            appendListIfPresent(stage, "Punctuation cues", styleProfile.getPunctuation());
+            if (styleProfile.getCtaVerb() != null) {
+                stage.append("CTA vibe: ").append(styleProfile.getCtaVerb()).append("\n");
+            }
+            stage.append("\n");
+        }
+    }
+
+    private void appendListIfPresent(StringBuilder stage, String label, List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return;
+        }
+        stage.append(label).append(": ");
+        stage.append(String.join(", ", values));
+        stage.append("\n");
+    }
+
+    private String safeValue(String value, String fallback) {
+        return StringUtils.hasText(value) ? value : fallback;
     }
 
     private Integer getGuidedSentenceCount(ReferenceMetrics referenceMetrics, boolean allowLongForm) {

@@ -645,6 +645,7 @@ public class AIContentServiceImpl {
                     null,
                     null,
                     true,
+                    null,
                     null
                 );
 
