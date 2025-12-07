@@ -1,7 +1,6 @@
 <template>
   <div class="login-container">
     <div class="login-background">
-      <!-- Removed AI-generated floating orbs -->
     </div>
     <a-card class="login-card glass-effect">
       <template #title>
@@ -50,7 +49,6 @@
 
             <a-divider>{{ $t('auth.loginForm.or') }}</a-divider>
 
-            <!-- Login Error Display -->
             <FieldError :error="loginError" />
 
             <form @submit.prevent="handleLoginApp" class="login-form">
@@ -98,7 +96,6 @@
         </div>
 
         <div v-else-if="mode === 'register'" class="register-form-wrapper">
-          <!-- Register Error Display -->
           <FieldError :error="registerError" />
 
           <form @submit.prevent="handleRegister" class="register-form">
@@ -163,7 +160,6 @@
         </div>
 
         <div v-else-if="mode === 'forgot'" class="forgot-form-wrapper">
-          <!-- Forgot Password Error Display -->
           <FieldError :error="forgotError" />
 
           <form @submit.prevent="handleForgotPassword" class="forgot-form">
@@ -200,47 +196,6 @@
             show-icon
             style="margin-top: 16px;"
           />
-        </div>
-
-        <div class="login-features">
-          <a-typography-title :level="3" class="features-title">{{ $t('auth.features.title') }}</a-typography-title>
-          <a-row :gutter="[16, 16]" class="features-grid">
-            <a-col :span="12">
-              <div class="feature-item">
-                <div class="feature-icon">
-                  <thunderbolt-outlined />
-                </div>
-                <span>{{ $t('auth.features.aiPowered') }}</span>
-              </div>
-            </a-col>
-
-            <a-col :span="12">
-              <div class="feature-item">
-                <div class="feature-icon">
-                  <line-chart-outlined />
-                </div>
-                <span>{{ $t('auth.features.automated') }}</span>
-              </div>
-            </a-col>
-
-            <a-col :span="12">
-              <div class="feature-item">
-                <div class="feature-icon">
-                  <picture-outlined />
-                </div>
-                <span>{{ $t('auth.features.multiFormat') }}</span>
-              </div>
-            </a-col>
-
-            <a-col :span="12">
-              <div class="feature-item">
-                <div class="feature-icon">
-                  <safety-outlined />
-                </div>
-                <span>{{ $t('auth.features.secure') }}</span>
-              </div>
-            </a-col>
-          </a-row>
         </div>
       </div>
     </a-card>
