@@ -1,6 +1,9 @@
 <template>
   <div class="login-container">
     <div class="login-background">
+      <div class="background-gradient"></div>
+      <div class="background-blur background-blur--one"></div>
+      <div class="background-blur background-blur--two"></div>
     </div>
     <a-card class="login-card glass-effect">
       <template #title>
@@ -455,33 +458,65 @@ export default {
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-  background: #fafafa;
+  padding: 48px 16px;
+  background: linear-gradient(180deg, #f4f7fb 0%, #eef2ff 100%);
   
   .login-background {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     z-index: 1;
+    pointer-events: none;
+
+    .background-gradient {
+      width: min(92vw, 960px);
+      height: 320px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #dbeafe 0%, #c7d2fe 45%, #f5f3ff 100%);
+      border-radius: 36px;
+      box-shadow: 0 30px 80px rgba(51, 65, 85, 0.25);
+    }
+
+    .background-blur {
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      filter: blur(25px);
+      opacity: 0.7;
+    }
+
+    .background-blur--one {
+      top: 120px;
+      left: 8%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.35), transparent 60%);
+    }
+
+    .background-blur--two {
+      top: 30px;
+      right: 6%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.35), transparent 60%);
+    }
   }
   
   .login-card {
     position: relative;
     z-index: 2;
     width: 100%;
-    max-width: 500px;
+    max-width: 520px;
     background: #ffffff;
     border: 1px solid #e0e6eb;
-    box-shadow: 0 4px 16px rgba(45, 90, 160, 0.08);
+    border-radius: 28px;
+    box-shadow:
+      0 30px 80px rgba(15, 23, 42, 0.15),
+      0 10px 25px rgba(59, 130, 246, 0.08);
     
     :deep(.ant-card-head) {
       border-bottom: none;
-      padding: 24px 24px 0;
+      padding: 32px 32px 0;
     }
     
     :deep(.ant-card-body) {
-      padding: 0 24px 24px;
+      padding: 0 32px 32px 32px;
     }
     
     .login-header {
@@ -493,28 +528,27 @@ export default {
       .logo-container {
         width: 80px;
         height: 80px;
-        background: #2d5aa0;
-        border-radius: 20px;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        border-radius: 24px;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-bottom: 1.5rem;
-        box-shadow: 0 3px 12px rgba(45, 90, 160, 0.15);
+        box-shadow: 0 15px 30px rgba(37, 99, 235, 0.25);
         
         .facebook-logo {
-          width: 50px;
-          height: 50px;
+          width: 48px;
+          height: 48px;
           filter: brightness(0) invert(1);
         }
       }
       
       .login-title {
         margin: 0;
-        color: #1877f2;
+        color: #1d4ed8;
         font-size: 2rem;
         font-weight: 700;
         text-align: center;
-        color: #2d5aa0;
       }
     }
     
@@ -526,7 +560,7 @@ export default {
       .login-description {
         text-align: center;
         margin-bottom: 2rem;
-        color: #65676b;
+        color: #475569;
         font-size: 1.1rem;
         line-height: 1.6;
       }
@@ -540,91 +574,33 @@ export default {
       }
       
       .facebook-login-button {
-        background: #2d5aa0;
-        border: 1px solid #274d89;
-        font-size: 1.1rem;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        border: none;
+        font-size: 1.05rem;
         height: 48px;
-        border-radius: 12px;
-        transition: all 0.2s ease;
+        border-radius: 14px;
+        box-shadow: 0 12px 24px rgba(37, 99, 235, 0.25);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
 
         &:hover {
-          background: #274d89;
-          border-color: #1f3d6b;
-        }
-
-        &:focus {
-          background: #274d89;
-          border-color: #1f3d6b;
+          transform: translateY(-1px);
+          box-shadow: 0 16px 32px rgba(37, 99, 235, 0.3);
         }
       }
 
       .google-login-button {
         background: #fff;
-        color: #1c1e21;
-        border: 1px solid #dcdfe6;
-        font-size: 1.1rem;
+        color: #1f2937;
+        border: 1px solid #e2e8f0;
+        font-size: 1.05rem;
         height: 48px;
-        border-radius: 12px;
-        transition: all 0.2s ease;
+        border-radius: 14px;
+        transition: box-shadow 0.2s ease;
 
         &:hover,
         &:focus {
-          color: #1c1e21;
-          border-color: #c6cbd4;
-          box-shadow: 0 2px 8px rgba(60, 64, 67, 0.15);
-        }
-      }
-      
-      .login-features {
-        margin-top: 3rem;
-        width: 100%;
-        
-        .features-title {
-          font-size: 1.3rem;
-          font-weight: 600;
-          margin-bottom: 1.5rem;
-          color: #1c1e21;
-          text-align: center;
-        }
-        
-        .features-grid {
-          .feature-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            background: #f7f9fc;
-            border-radius: 8px;
-            border: 1px solid #e8eff5;
-            height: 100%;
-
-            &:hover {
-              background: #f0f4f7;
-              border-color: #d6e2eb;
-            }
-            
-            .feature-icon {
-              width: 40px;
-              height: 40px;
-              background: #2d5aa0;
-              border-radius: 10px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              margin-right: 0.75rem;
-              flex-shrink: 0;
-              
-              .anticon {
-                color: white;
-                font-size: 1.2rem;
-              }
-            }
-            
-            span {
-              color: #1c1e21;
-              font-size: 0.9rem;
-              font-weight: 500;
-            }
-          }
+          border-color: #cbd5f5;
+          box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
         }
       }
     }
@@ -640,7 +616,7 @@ export default {
 
 .login-methods {
   width: 100%;
-  max-width: 350px;
+  max-width: 360px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -660,36 +636,47 @@ export default {
   margin-bottom: 1rem;
 }
 
-/* Clean, authentic styling without AI-generated patterns */
-
 @media (width <= 768px) {
   .login-container {
-    padding: 1rem;
+    padding: 20px;
+    
+    .login-background {
+      .background-gradient {
+        width: 100%;
+        height: 220px;
+        border-radius: 24px;
+      }
+
+      .background-blur {
+        width: 200px;
+        height: 200px;
+      }
+    }
     
     .login-card {
+      border-radius: 22px;
+      
+      :deep(.ant-card-head) {
+        padding: 24px 24px 0;
+      }
+      
+      :deep(.ant-card-body) {
+        padding: 0 24px 24px 24px;
+      }
+      
       .login-header {
         .logo-container {
-          width: 60px;
-          height: 60px;
+          width: 64px;
+          height: 64px;
           
           .facebook-logo {
-            width: 35px;
-            height: 35px;
+            width: 36px;
+            height: 36px;
           }
         }
         
         .login-title {
-          font-size: 1.5rem;
-        }
-      }
-      
-      .login-content {
-        .login-features {
-          .features-grid {
-            :deep(.ant-col) {
-              span: 24 !important;
-            }
-          }
+          font-size: 1.6rem;
         }
       }
     }
