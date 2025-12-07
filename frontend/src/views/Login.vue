@@ -211,11 +211,7 @@ import {
   GoogleOutlined,
   UserOutlined,
   LockOutlined,
-  MailOutlined,
-  ThunderboltOutlined,
-  LineChartOutlined,
-  PictureOutlined,
-  SafetyOutlined
+  MailOutlined
 } from '@ant-design/icons-vue'
 
 export default {
@@ -226,11 +222,7 @@ export default {
     GoogleOutlined,
     UserOutlined,
     LockOutlined,
-    MailOutlined,
-    ThunderboltOutlined,
-    LineChartOutlined,
-    PictureOutlined,
-    SafetyOutlined
+    MailOutlined
   },
   data() {
     return {
