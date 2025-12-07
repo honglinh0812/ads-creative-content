@@ -6,6 +6,7 @@ import com.fbadsautomation.model.CompetitorSearch;
 import com.fbadsautomation.model.User;
 import com.fbadsautomation.repository.CompetitorSearchRepository;
 import com.fbadsautomation.repository.UserRepository;
+import com.fbadsautomation.service.security.PromptSecurityService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +52,7 @@ public class CompetitorService {
     private final MetaAdLibraryService metaAdLibraryService;
     private final CompetitorSearchRepository competitorSearchRepository;
     private final UserRepository userRepository;
+    private final PromptSecurityService promptSecurityService;
 
     static {
         SUPPORTED_SEARCH_TYPES.add("BRAND");
@@ -276,8 +278,9 @@ public class CompetitorService {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> ResourceException.notFound("User", String.valueOf(userId)));
             String sanitized = sanitizeBrandName(brandName);
+            String sanitizedRegion = region == null ? null : promptSecurityService.sanitizeUserInput(region);
             String searchType = normalizeSearchType(platform);
-            saveSearchHistoryInternal(sanitized, region, user, searchType, resultCount, success);
+            saveSearchHistoryInternal(sanitized, sanitizedRegion, user, searchType, resultCount, success);
         } catch (Exception e) {
             log.error("Failed to record search history for user {}: {}", userId, e.getMessage());
         }
@@ -313,9 +316,8 @@ public class CompetitorService {
     private String sanitizeBrandName(String brandName) {
         if (brandName == null) return "";
 
-        // Remove special characters that could be used for injection
-        String sanitized = brandName.replaceAll("[<>\"'%;)(&+]", "")
-                                     .trim();
+        String sanitized = promptSecurityService.sanitizeUserInput(brandName);
+        sanitized = sanitized.replaceAll("[<>\"'%;)(&+]", "").trim();
 
         // Limit length
         if (sanitized.length() > 100) {

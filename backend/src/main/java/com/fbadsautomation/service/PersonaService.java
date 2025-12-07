@@ -8,6 +8,7 @@ import com.fbadsautomation.model.Persona;
 import com.fbadsautomation.model.User;
 import com.fbadsautomation.repository.PersonaRepository;
 import com.fbadsautomation.repository.UserRepository;
+import com.fbadsautomation.service.security.PromptSecurityService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ public class PersonaService {
 
     private final PersonaRepository personaRepository;
     private final UserRepository userRepository;
+    private final PromptSecurityService promptSecurityService;
 
     /**
      * Create a new persona for a user.
@@ -247,14 +249,14 @@ public class PersonaService {
      */
     private Persona mapRequestToEntity(PersonaRequest request, User user) {
         return Persona.builder()
-            .name(request.getName())
+            .name(promptSecurityService.sanitizeUserInput(request.getName()))
             .age(request.getAge())
             .gender(Gender.valueOf(request.getGender()))
-            .interests(request.getInterests())
-            .tone(request.getTone())
-            .painPoints(request.getPainPoints())
-            .desiredOutcome(request.getDesiredOutcome())
-            .description(request.getDescription())
+            .interests(sanitizeList(request.getInterests()))
+            .tone(promptSecurityService.sanitizeUserInput(request.getTone()))
+            .painPoints(sanitizeList(request.getPainPoints()))
+            .desiredOutcome(sanitizeNullable(request.getDesiredOutcome()))
+            .description(sanitizeNullable(request.getDescription()))
             .user(user)
             .build();
     }
@@ -264,14 +266,28 @@ public class PersonaService {
      * Performance: O(n) where n is list sizes.
      */
     private void updateEntityFromRequest(Persona persona, PersonaRequest request) {
-        persona.setName(request.getName());
+        persona.setName(promptSecurityService.sanitizeUserInput(request.getName()));
         persona.setAge(request.getAge());
         persona.setGender(Gender.valueOf(request.getGender()));
-        persona.setInterests(request.getInterests());
-        persona.setTone(request.getTone());
-        persona.setPainPoints(request.getPainPoints());
-        persona.setDesiredOutcome(request.getDesiredOutcome());
-        persona.setDescription(request.getDescription());
+        persona.setInterests(sanitizeList(request.getInterests()));
+        persona.setTone(promptSecurityService.sanitizeUserInput(request.getTone()));
+        persona.setPainPoints(sanitizeList(request.getPainPoints()));
+        persona.setDesiredOutcome(sanitizeNullable(request.getDesiredOutcome()));
+        persona.setDescription(sanitizeNullable(request.getDescription()));
+    }
+
+    private List<String> sanitizeList(List<String> values) {
+        if (values == null) {
+            return null;
+        }
+        return values.stream()
+            .filter(value -> value != null && !value.isBlank())
+            .map(promptSecurityService::sanitizeUserInput)
+            .toList();
+    }
+
+    private String sanitizeNullable(String value) {
+        return value == null ? null : promptSecurityService.sanitizeUserInput(value);
     }
 
     /**

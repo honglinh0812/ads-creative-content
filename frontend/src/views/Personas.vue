@@ -199,6 +199,7 @@ import {
 import PersonaCard from '@/components/PersonaCard.vue'
 import PersonaForm from '@/components/PersonaForm.vue'
 import api from '@/services/api'
+import { sanitizePromptInput } from '@/utils/promptSanitizer'
 
 export default {
   name: 'PersonasView',
@@ -344,14 +345,33 @@ export default {
         this.$message.error(this.$t('personas.messages.deleteError', { error: error.message }))
       }
     },
+    sanitizePersonaPayload(data) {
+      if (!data || typeof data !== 'object') {
+        return data
+      }
+      const safePayload = { ...data }
+      const sanitizeField = value => (value ? sanitizePromptInput(value) : value)
+      const sanitizeArray = list => Array.isArray(list)
+        ? list
+            .map(item => sanitizeField(item))
+            .filter(item => item && item.length)
+        : []
+      safePayload.name = sanitizeField(data.name)
+      safePayload.description = sanitizeField(data.description)
+      safePayload.desiredOutcome = sanitizeField(data.desiredOutcome)
+      safePayload.interests = sanitizeArray(data.interests)
+      safePayload.painPoints = sanitizeArray(data.painPoints)
+      return safePayload
+    },
     async handleSubmitPersona(personaData) {
       this.submitting = true
       try {
+        const sanitizedPayload = this.sanitizePersonaPayload(personaData)
         if (this.editingPersona?.id) {
-          await api.personas.update(this.editingPersona.id, personaData)
+          await api.personas.update(this.editingPersona.id, sanitizedPayload)
           this.$message.success(this.$t('personas.updatedSuccess'))
         } else {
-          await api.personas.create(personaData)
+          await api.personas.create(sanitizedPayload)
           this.$message.success(this.$t('personas.createdSuccess'))
         }
         this.showCreateModal = false

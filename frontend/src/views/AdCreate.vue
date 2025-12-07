@@ -919,6 +919,7 @@ import QualityScore from '@/components/QualityScore.vue'
 import ExtractedContentPreview from '@/components/ExtractedContentPreview.vue'
 import qualityApi from '@/services/qualityApi'
 import { detectLanguage, i18nTemplates, getKeywordSuccessMessage } from '@/utils/languageDetector'
+import { sanitizePromptInput } from '@/utils/promptSanitizer'
 import { getAsyncStepTranslationKey } from '@/utils/asyncStepTranslator'
 
 export default {
@@ -1852,16 +1853,17 @@ export default {
           }),
           isPreview: true
         }
+        const secureRequestData = this.securePromptPayload(requestData)
 
         // ASYNC-FIRST: Try async, fallback to sync
         const shouldUseAsync = this.useAsyncGeneration && this.asyncHealthy
 
         if (shouldUseAsync) {
           console.log('[ASYNC] Starting async preview generation')
-          await this.generateAdAsync(requestData)
+          await this.generateAdAsync(secureRequestData)
         } else {
           console.log('[SYNC] Using sync fallback for preview')
-          await this.generateAdSync(requestData)
+          await this.generateAdSync(secureRequestData)
         }
 
       } catch (error) {
@@ -2340,7 +2342,7 @@ export default {
           callToAction: this.formData.callToAction || null
         }
 
-        const response = await api.ads.saveExisting(requestData)
+        const response = await api.ads.saveExisting(this.securePromptPayload(requestData))
 
         if (response.data.status === 'success') {
           this.$message.success(this.$t('adCreate.messages.success.adSaved'))
@@ -2448,7 +2450,7 @@ export default {
           isPreview: true
         }
         
-        const response = await api.post('/ads/generate', requestData)
+        const response = await api.post('/ads/generate', this.securePromptPayload(requestData))
         
         if (response.data.status === 'success') {
           this.adVariations = this.normalizeVariations(response.data.variations)
@@ -2569,6 +2571,20 @@ export default {
         return translated === key ? step : translated
       }
       return step
+    },
+
+    securePromptPayload(payload) {
+      if (!payload || typeof payload !== 'object') {
+        return payload
+      }
+      const safePayload = { ...payload }
+      if (Object.prototype.hasOwnProperty.call(safePayload, 'prompt')) {
+        safePayload.prompt = sanitizePromptInput(safePayload.prompt || '')
+      }
+      if (safePayload.extractedContent) {
+        safePayload.extractedContent = sanitizePromptInput(safePayload.extractedContent)
+      }
+      return safePayload
     },
 
     calculateAIPowerLevel() {

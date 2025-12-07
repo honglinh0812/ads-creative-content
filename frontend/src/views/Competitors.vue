@@ -399,12 +399,11 @@
 
 <script>
 import { mapState, mapGetters, mapActions } from 'vuex'
-import {
-  SearchOutlined
-} from '@ant-design/icons-vue'
+import { SearchOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 
 import { findLocationPreset, getLocationPresets } from '@/constants/searchLocations'
+import { sanitizePromptInput } from '@/utils/promptSanitizer'
 
 export default {
   name: 'CompetitorsView',
@@ -500,6 +499,12 @@ export default {
       refreshAllWatchlistAction: 'refreshAllWatchlist',
       initWatchlist: 'initWatchlist'
     }),
+    sanitizeText(value) {
+      if (!value) {
+        return ''
+      }
+      return sanitizePromptInput(value)
+    },
     resolveLocationPreset(value, engine = 'linkedin_ad_library') {
       const presetFromKey = findLocationPreset(value, engine)
       const normalizedValue = value ? String(value).toLowerCase() : ''
@@ -539,8 +544,8 @@ export default {
       return engine
     },
     async handleSearch() {
-      const query = this.searchForm.query.trim()
-      const keyword = (this.searchForm.keyword || '').trim()
+      const query = this.sanitizeText(this.searchForm.query).trim()
+      const keyword = this.sanitizeText(this.searchForm.keyword || '').trim()
       if (!query && !keyword) {
         message.warning(this.$t('competitors.messages.keywordRequired'))
         return
@@ -577,7 +582,7 @@ export default {
       try {
         await this.generateSuggestionAction({
           competitorAd: competitor,
-          myAd: this.myAdText
+          myAd: this.sanitizeText(this.myAdText)
         })
         message.success(this.$t('competitors.messages.suggestionGenerated'))
       } catch (error) {
@@ -602,7 +607,7 @@ export default {
       try {
         await this.generateABTestAction({
           competitorAd: competitor,
-          myAd: this.myAdForABTest,
+          myAd: this.sanitizeText(this.myAdForABTest),
           variationCount: this.abTestVariationCount
         })
       } catch (error) {
@@ -610,8 +615,8 @@ export default {
       }
     },
     async handleAddWatchlist() {
-      const query = this.watchlistForm.query.trim()
-      const keyword = (this.watchlistForm.keyword || '').trim()
+      const query = this.sanitizeText(this.watchlistForm.query).trim()
+      const keyword = this.sanitizeText(this.watchlistForm.keyword || '').trim()
       if (!query && !keyword) {
         message.warning(this.$t('competitors.messages.watchlistKeywordRequired'))
         return

@@ -343,6 +343,7 @@ import { mapGetters, mapActions } from 'vuex'
 import api from '@/services/api'
 import FieldError from '@/components/FieldError.vue'
 import { detectLanguage, i18nTemplates } from '@/utils/languageDetector'
+import { sanitizePromptInput } from '@/utils/promptSanitizer'
 import { getAsyncStepTranslationKey } from '@/utils/asyncStepTranslator'
 
 export default {
@@ -748,12 +749,13 @@ export default {
           allowUnlimitedLength: this.formData.allowUnlimitedLength
         }
 
-        const startedAsync = await this.startAsyncGeneration(requestData)
+        const secureRequestData = this.securePromptPayload(requestData)
+        const startedAsync = await this.startAsyncGeneration(secureRequestData)
         if (startedAsync) {
           return
         }
 
-        await this.generateAdSync(requestData)
+        await this.generateAdSync(secureRequestData)
       } catch (error) {
         console.error('Generate ad error:', error)
         this.generateError = error
@@ -788,7 +790,7 @@ export default {
           websiteUrl: this.determineWebsiteUrl(),
           allowUnlimitedLength: this.formData.allowUnlimitedLength
         }
-        const response = await api.post('/ads/learn/save', requestData)
+        const response = await api.post('/ads/learn/save', this.securePromptPayload(requestData))
         if (response.data.status === 'success') {
           this.$message.success(this.$t('adLearn.messages.success.saved'))
           this.$router.push('/ads')
@@ -803,8 +805,9 @@ export default {
       }
     },
     async startAsyncGeneration(requestData) {
+      const securePayload = this.securePromptPayload(requestData)
       try {
-        const response = await api.post('/ads/learn/async/generate', requestData)
+        const response = await api.post('/ads/learn/async/generate', securePayload)
         if (!response.data || !response.data.jobId) {
           return false
         }
@@ -827,7 +830,8 @@ export default {
       }
     },
     async generateAdSync(requestData) {
-      const response = await api.post('/ads/learn/generate', requestData)
+      const securePayload = this.securePromptPayload(requestData)
+      const response = await api.post('/ads/learn/generate', securePayload)
       if (response.data.status === 'success') {
         this.adVariations = this.normalizeVariations(response.data.variations)
         this.selectedVariations = [...this.adVariations]
@@ -957,6 +961,23 @@ export default {
         return translated === key ? step : translated
       }
       return step
+    },
+
+    securePromptPayload(payload) {
+      if (!payload || typeof payload !== 'object') {
+        return payload
+      }
+      const safePayload = { ...payload }
+      if (Object.prototype.hasOwnProperty.call(safePayload, 'prompt')) {
+        safePayload.prompt = sanitizePromptInput(safePayload.prompt || '')
+      }
+      if (safePayload.referenceSummary) {
+        safePayload.referenceSummary = sanitizePromptInput(safePayload.referenceSummary)
+      }
+      if (safePayload.referenceInsights) {
+        safePayload.referenceInsights = sanitizePromptInput(JSON.stringify(safePayload.referenceInsights))
+      }
+      return safePayload
     },
     getVariationIdentifier(variation) {
       if (!variation) return null

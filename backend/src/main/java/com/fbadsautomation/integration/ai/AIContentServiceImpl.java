@@ -11,6 +11,8 @@ import com.fbadsautomation.service.AIContentValidationService;
 import com.fbadsautomation.service.AIProviderService;
 import com.fbadsautomation.service.MetaAdLibraryService;
 import com.fbadsautomation.service.MinIOStorageService;
+import com.fbadsautomation.service.security.ContentModerationService;
+import com.fbadsautomation.service.security.PromptSecurityService;
 import com.fbadsautomation.util.ByteArrayMultipartFile;
 import com.fbadsautomation.util.ValidationMessages;
 import com.fbadsautomation.util.ValidationMessages.Language;
@@ -25,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 /**
@@ -38,6 +41,8 @@ public class AIContentServiceImpl {
     private final MetaAdLibraryService metaAdLibraryService;
     private final AIContentValidationService validationService;
     private final MinIOStorageService minIOStorageService;
+    private final PromptSecurityService promptSecurityService;
+    private final ContentModerationService contentModerationService;
 
     @Value("${ai.default.image-provider:gemini}")
     private String defaultImageProvider;
@@ -58,11 +63,15 @@ public class AIContentServiceImpl {
     public AIContentServiceImpl(AIProviderService aiProviderService,
                                MetaAdLibraryService metaAdLibraryService,
                                AIContentValidationService validationService,
-                               MinIOStorageService minIOStorageService) {
+                               MinIOStorageService minIOStorageService,
+                               PromptSecurityService promptSecurityService,
+                               ContentModerationService contentModerationService) {
         this.aiProviderService = aiProviderService;
         this.metaAdLibraryService = metaAdLibraryService;
         this.validationService = validationService;
         this.minIOStorageService = minIOStorageService;
+        this.promptSecurityService = promptSecurityService;
+        this.contentModerationService = contentModerationService;
     }
 
     /**
@@ -126,8 +135,8 @@ public class AIContentServiceImpl {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported AI provider: " + providerId);
         }
 
-        // Build base prompt (user prompt + reference data)
-        String finalPrompt = buildFinalPrompt(prompt, adLinks, extractedContent);
+        // Build base prompt (user prompt + reference data) with sanitization
+        String finalPrompt = buildFinalPrompt(prompt, adLinks, extractedContent, language);
 
         try {
             AdType adType = convertContentTypeToAdType(contentType);
@@ -157,6 +166,7 @@ public class AIContentServiceImpl {
             // Generate content
             List<AdContent> contents = aiProviderService.generateContentWithReliability(
                 enhancedPrompt, textProvider, numberOfVariations, language, adLinks, cta);
+            contentModerationService.enforceSafety(contents);
 
             final String imageSubject = deriveImageSubject(prompt);
 
@@ -324,7 +334,7 @@ public class AIContentServiceImpl {
         }
 
         // Build final prompt based on available inputs
-        String finalPrompt = buildFinalPrompt(prompt, adLinks, extractedContent);
+        String finalPrompt = buildFinalPrompt(prompt, adLinks, extractedContent, language);
 
         try {
             AdType adType = convertContentTypeToAdType(contentType);
@@ -337,6 +347,7 @@ public class AIContentServiceImpl {
             com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
             List<AdContent> contents = aiProviderService.generateContentWithReliability(
                 enhancedPrompt, textProvider, numberOfVariations, language, adLinks, cta);
+            contentModerationService.enforceSafety(contents);
 
             final String imageSubject = deriveImageSubject(prompt);
 
@@ -499,78 +510,94 @@ public class AIContentServiceImpl {
     /**
      * Build final prompt by combining original prompt and ad link content
      */
-    private String buildFinalPrompt(String originalPrompt, List<String> adLinks, String extractedContent) {
-        StringBuilder finalPrompt = new StringBuilder(); // Check if we have extracted content from Meta Ad Library
-        boolean hasExtractedContent = (extractedContent != null && !extractedContent.trim().isEmpty());
-        boolean hasAdLinks = (adLinks != null && !adLinks.isEmpty());
-        boolean hasOriginalPrompt = (originalPrompt != null && !originalPrompt.trim().isEmpty());
-        
+    private String buildFinalPrompt(String originalPrompt, List<String> adLinks, String extractedContent, String languageCode) {
+        String detectedLanguage = (languageCode == null || languageCode.isBlank())
+            ? promptSecurityService.detectLanguageCode(originalPrompt)
+            : languageCode.toLowerCase();
+        String sanitizedOriginal = promptSecurityService.sanitizeUserInput(originalPrompt);
+        String sanitizedExtracted = promptSecurityService.sanitizeUserInput(extractedContent);
+
+        StringBuilder finalPrompt = new StringBuilder();
+        finalPrompt.append("<<SYSTEM_RULES>>\n")
+            .append(promptSecurityService.applySystemDirectives(detectedLanguage))
+            .append("\n<<SYSTEM_RULES_END>>\n");
+
+        boolean hasOriginalPrompt = !sanitizedOriginal.isEmpty();
         if (hasOriginalPrompt) {
-            finalPrompt.append("YÊU CẦU TỪ NGƯỜI DÙNG:\n")
-                .append(originalPrompt.trim())
-                .append("\n");
+            finalPrompt.append(promptSecurityService.wrapUserBlock("USER_PROMPT", sanitizedOriginal, detectedLanguage));
         }
 
         boolean promptHasReferenceSection = hasOriginalPrompt &&
-            (originalPrompt.contains("📌 QUẢNG CÁO THAM CHIẾU") ||
-             originalPrompt.contains("📌 REFERENCE AD INPUT"));
+            (sanitizedOriginal.contains("📌 QUẢNG CÁO THAM CHIẾU") ||
+             sanitizedOriginal.contains("📌 REFERENCE AD INPUT"));
 
-        if (hasExtractedContent) {
-            log.info("Using extracted content from Meta Ad Library");
+        if (sanitizedExtracted != null && !sanitizedExtracted.isEmpty()) {
+            log.info("Using sanitized extracted content from Meta Ad Library");
             if (hasOriginalPrompt && promptHasReferenceSection) {
-                appendReferenceBlock(finalPrompt, extractedContent);
+                appendReferenceBlock(finalPrompt, sanitizedExtracted);
             } else if (hasOriginalPrompt) {
-                log.info("Combining original prompt with extracted content");
-                finalPrompt.append("DỮ LIỆU BỔ TRỢ:\n").append(extractedContent.trim()).append("\n");
+                finalPrompt.append("<<AUXILIARY_DATA>>\n")
+                    .append(sanitizedExtracted)
+                    .append("\n<<AUXILIARY_DATA_END>>\n");
             } else {
-                log.info("Prompt empty, using extracted content directly");
-                finalPrompt.append(extractedContent.trim());
+                finalPrompt.append(sanitizedExtracted);
             }
-        } else if (hasAdLinks) {
-            // Extract content from ad links
-            List<Map<String, Object>> adContents = metaAdLibraryService.extractAdsByAdIds(adLinks); // Lấy nội dung body của từng ad (nếu có)
+        } else if (adLinks != null && !adLinks.isEmpty()) {
+            List<Map<String, Object>> adContents = metaAdLibraryService.extractAdsByAdIds(adLinks);
             StringBuilder adLinkContentBuilder = new StringBuilder();
             for (int i = 0; i < adContents.size(); i++) {
                 Map<String, Object> ad = adContents.get(i);
                 String body = null;
                 if (ad.get("body") != null) {
-                    body = String.valueOf(ad.get("body")); } else if (ad.get("snapshot") instanceof Map) {
+                    body = String.valueOf(ad.get("body"));
+                } else if (ad.get("snapshot") instanceof Map) {
                     Object snapshotBody = ((Map<?, ?>) ad.get("snapshot")).get("body");
-                    if (snapshotBody != null) body = String.valueOf(snapshotBody); }
+                    if (snapshotBody != null) {
+                        body = String.valueOf(snapshotBody);
+                    }
+                }
                 if (body != null && !body.trim().isEmpty()) {
-                    adLinkContentBuilder.append("Quảng cáo ").append(i + 1).append(": ").append(body).append("\n");
+                    String sanitizedBody = promptSecurityService.sanitizeUserInput(body);
+                    adLinkContentBuilder.append("Quảng cáo ").append(i + 1).append(": ").append(sanitizedBody).append("\n");
                 }
             }
             String adLinkContent = adLinkContentBuilder.toString().trim();
-            boolean hasAdLinkContent = (adLinkContent != null && !adLinkContent.isEmpty());
-            if (hasAdLinkContent) {
+            if (!adLinkContent.isEmpty()) {
                 if (hasOriginalPrompt && promptHasReferenceSection) {
-                    log.info("Appending ad link content as style reference");
                     appendReferenceBlock(finalPrompt, adLinkContent);
                 } else if (hasOriginalPrompt) {
-                    log.info("Combining original prompt with ad link content");
-                    finalPrompt.append("Nội dung tham khảo từ quảng cáo:\n").append(adLinkContent);
+                    finalPrompt.append("<<REFERENCE_ADS>>\n")
+                        .append(adLinkContent)
+                        .append("\n<<REFERENCE_ADS_END>>\n");
                 } else {
-                    log.info("Using ad link content as standalone prompt");
                     finalPrompt.append(adLinkContent);
                 }
             } else if (!hasOriginalPrompt) {
-                log.error("No prompt and no content extracted from ad links");
                 throw new ApiException(HttpStatus.BAD_REQUEST,
                     "Could not generate content: Please provide a valid prompt or ad link");
             }
         } else if (!hasOriginalPrompt) {
-            log.error("No prompt provided and no fallback content available");
             throw new ApiException(HttpStatus.BAD_REQUEST,
                 "Could not generate content: Prompt is required when no reference content is available");
         }
-        
-        log.debug("Base prompt built: {}", finalPrompt.toString());
+
+        log.debug("Secure base prompt built: {}", finalPrompt);
         return finalPrompt.toString();
+    }
+
+    private String getSafeTargetAudience(com.fbadsautomation.model.Campaign campaign) {
+        if (campaign == null || campaign.getTargetAudience() == null) {
+            return null;
+        }
+        return promptSecurityService.sanitizeUserInput(campaign.getTargetAudience());
     }
 
     private void appendReferenceBlock(StringBuilder finalPrompt, String referenceContent) {
         if (referenceContent == null || referenceContent.trim().isEmpty()) {
+            return;
+        }
+        String sanitizedReference = promptSecurityService.sanitizeUserInput(referenceContent);
+        if (sanitizedReference.isEmpty()) {
             return;
         }
         finalPrompt.append("\n=== REFERENCE STYLE (DO NOT COPY) ===\n")
@@ -578,7 +605,7 @@ public class AIContentServiceImpl {
             .append("Always replace them with the user's product/service information.\n")
             .append("Chỉ dùng đoạn sau để học tone/nhịp. Tuyệt đối thay mọi thương hiệu, địa điểm, ưu đãi bằng thông tin sản phẩm của khách hàng.\n")
             .append("Luôn tạo nội dung mới cho sản phẩm hiện tại, không nhắc lại thương hiệu trong phần tham khảo.\n")
-            .append(referenceContent.trim())
+            .append(sanitizedReference)
             .append("\n=== END REFERENCE STYLE ===\n");
     }
 
@@ -627,9 +654,10 @@ public class AIContentServiceImpl {
                 log.info("[Phase 3] Using unified Chain-of-Thought prompt builder");
 
                 // Get campaign target audience
-                String targetAudience = (campaign != null && campaign.getTargetAudience() != null)
-                    ? campaign.getTargetAudience()
-                    : "General audience";
+                String targetAudience = getSafeTargetAudience(campaign);
+                if (!StringUtils.hasText(targetAudience)) {
+                    targetAudience = "General audience";
+                }
 
                 // Build CoT prompt with all parameters (persona can be null - will be handled by builder)
                 String cotPrompt = chainOfThoughtPromptBuilder.buildCoTPrompt(
@@ -684,12 +712,19 @@ public class AIContentServiceImpl {
                 }
 
                 // Build enhanced prompt with persona, campaign audience, and style (Issue #8 + #9)
+                com.fbadsautomation.model.Campaign sanitizedCampaign = campaign;
+                if (campaign != null) {
+                    sanitizedCampaign = new com.fbadsautomation.model.Campaign();
+                    sanitizedCampaign.setId(campaign.getId());
+                    sanitizedCampaign.setTargetAudience(getSafeTargetAudience(campaign));
+                }
+
                 String enhancedPrompt = multiStagePromptBuilder.buildEnhancedPrompt(
                     finalUserPrompt,  // Use enriched prompt with trending keywords
                     persona,
                     adType,
                     detectedLanguage,
-                    campaign,  // Use Campaign instead of AudienceSegment (Issue #9)
+                    sanitizedCampaign,  // Use sanitized Campaign audience
                     adStyle    // Include AdStyle (Issue #8)
                 );
 

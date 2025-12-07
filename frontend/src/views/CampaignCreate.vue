@@ -312,6 +312,7 @@ import {
 } from 'ant-design-vue';
 
 import { QuestionCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons-vue';
+import { sanitizePromptInput } from '@/utils/promptSanitizer'
 
 export default {
   name: 'CampaignCreate',
@@ -535,6 +536,18 @@ export default {
       return parts.join(', ');
     },
 
+    sanitizeCampaignPayload(payload) {
+      if (!payload || typeof payload !== 'object') {
+        return payload
+      }
+      const safePayload = { ...payload }
+      const sanitizeField = (value) => (value ? sanitizePromptInput(value) : value)
+      safePayload.name = sanitizeField(payload.name)
+      safePayload.targetAudience = sanitizeField(payload.targetAudience)
+      safePayload.performanceGoal = sanitizeField(payload.performanceGoal)
+      return safePayload
+    },
+
     validateForm() {
       console.log('validateForm called')
       this.errors = {}
@@ -634,10 +647,9 @@ export default {
         // Remove audienceSegment from payload (it's converted to targetAudience)
         delete campaignData.audienceSegment;
 
-        console.log('Submitting campaign form:', campaignData)
-        console.log('API object:', api)
-        console.log('API campaigns:', api.campaigns)
-        const response = await api.campaigns.create(campaignData)
+        const securePayload = this.sanitizeCampaignPayload(campaignData)
+        console.log('Submitting campaign form:', securePayload)
+        const response = await api.campaigns.create(securePayload)
         console.log('Campaign create response:', response)
         this.showToast({
           type: 'success',

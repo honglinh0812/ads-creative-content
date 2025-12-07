@@ -3,6 +3,8 @@ package com.fbadsautomation.service;
 import com.fbadsautomation.dto.CompetitorAdDTO;
 import com.fbadsautomation.exception.AIProviderException;
 import com.fbadsautomation.exception.ResourceException;
+import com.fbadsautomation.service.security.ContentModerationService;
+import com.fbadsautomation.service.security.PromptSecurityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -31,6 +33,8 @@ import java.util.regex.Matcher;
 public class ComparisonService {
 
     private final AIProviderService aiProviderService;
+    private final PromptSecurityService promptSecurityService;
+    private final ContentModerationService contentModerationService;
 
     /**
      * Generate suggested ad variation based on competitor analysis
@@ -71,6 +75,7 @@ public class ComparisonService {
 
             // Generate suggestion using AI - we'll get first variation's body text
             List<com.fbadsautomation.model.AdContent> results = aiProvider.generateAdContent(prompt, 1, "en", null);
+            contentModerationService.enforceSafety(results);
 
             if (results == null || results.isEmpty()) {
                 throw new RuntimeException("AI provider returned no results");
@@ -79,7 +84,7 @@ public class ComparisonService {
             String suggestion = results.get(0).getPrimaryText();
 
             // Validate and sanitize output
-            String sanitizedSuggestion = sanitizeAIOutput(suggestion);
+            String sanitizedSuggestion = promptSecurityService.sanitizeModelOutput(suggestion);
 
             log.info("Successfully generated ad variation suggestion");
             return sanitizedSuggestion;
@@ -120,8 +125,10 @@ public class ComparisonService {
                 if (results == null || results.isEmpty()) {
                     throw new RuntimeException("AI provider returned no results");
                 }
+                contentModerationService.enforceSafety(results);
                 return results.get(0).getPrimaryText();
             }, "analyzeCompetitorAd", 3);
+            analysis = promptSecurityService.sanitizeModelOutput(analysis);
 
             // Parse AI response with safe fallback handling
             return parseAnalysisResponseSafe(analysis, "competitor ad");
@@ -177,8 +184,10 @@ public class ComparisonService {
                 if (results == null || results.isEmpty()) {
                     throw new RuntimeException("AI provider returned no results");
                 }
+                contentModerationService.enforceSafety(results);
                 return results.get(0).getPrimaryText();
             }, "identifyCommonPatterns", 3);
+            analysis = promptSecurityService.sanitizeModelOutput(analysis);
 
             // Parse pattern analysis with validation
             Map<String, Object> patterns = parsePatternAnalysis(analysis);
@@ -231,6 +240,7 @@ public class ComparisonService {
 
             // Generate variations using AI provider
             List<com.fbadsautomation.model.AdContent> results = aiProvider.generateAdContent(prompt, safeVariations, "en", null);
+            contentModerationService.enforceSafety(results);
 
             // If we got structured results, convert them to AdVariationDTO
             if (results != null && !results.isEmpty()) {
@@ -256,6 +266,7 @@ public class ComparisonService {
             // Fallback: call AI provider's text completion directly and parse
             String systemPrompt = "You are an expert Facebook Ads copywriter. Generate A/B test variations in the exact format requested.";
             String response = aiProvider.generateTextCompletion(prompt, systemPrompt, 2000);
+            response = promptSecurityService.sanitizeModelOutput(response);
             return parseABTestVariations(response, safeVariations);
 
         } catch (Exception e) {
@@ -833,18 +844,13 @@ public class ComparisonService {
      * Security: Prevents prompt injection
      */
     private String sanitizeForPrompt(String input) {
-        if (input == null) return "";
-
-        // Remove potential prompt injection patterns
-        String sanitized = input.replaceAll("(?i)(ignore previous|ignore all|system:|assistant:|user:)", "")
-                                .replaceAll("<[^>]+>", "") // Remove HTML tags
-                                .trim();
-
-        // Limit length to prevent excessive token usage
+        if (input == null) {
+            return "";
+        }
+        String sanitized = promptSecurityService.sanitizeUserInput(input);
         if (sanitized.length() > 5000) {
             sanitized = sanitized.substring(0, 5000);
         }
-
         return sanitized;
     }
 
@@ -853,18 +859,13 @@ public class ComparisonService {
      * Security: Removes potentially harmful content
      */
     private String sanitizeAIOutput(String output) {
-        if (output == null) return "";
-
-        // Remove HTML/script tags
-        String sanitized = output.replaceAll("<script[^>]*>.*?</script>", "")
-                                 .replaceAll("<[^>]+>", "")
-                                 .trim();
-
-        // Limit output length
+        if (output == null) {
+            return "";
+        }
+        String sanitized = promptSecurityService.sanitizeModelOutput(output);
         if (sanitized.length() > 10000) {
             sanitized = sanitized.substring(0, 10000);
         }
-
         return sanitized;
     }
 }

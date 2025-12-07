@@ -7,6 +7,7 @@ import com.fbadsautomation.model.Campaign;
 import com.fbadsautomation.model.User;
 import com.fbadsautomation.repository.CampaignRepository;
 import com.fbadsautomation.repository.UserRepository;
+import com.fbadsautomation.service.security.PromptSecurityService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import org.springframework.util.StringUtils;
    
    private final CampaignRepository campaignRepository;
    private final UserRepository userRepository;
+   private final PromptSecurityService promptSecurityService;
 
    /**
     * Get campaign by ID and user
@@ -181,15 +183,15 @@ import org.springframework.util.StringUtils;
                ? Campaign.CampaignObjective.valueOf(request.getObjective())
                : null;
        String performanceGoal = StringUtils.hasText(request.getPerformanceGoal())
-               ? request.getPerformanceGoal()
+               ? promptSecurityService.sanitizeUserInput(request.getPerformanceGoal())
                : determineFallbackPerformanceGoal(objective);
        Campaign campaign = Campaign.builder()
-               .name(request.getName())
+               .name(promptSecurityService.sanitizeUserInput(request.getName()))
                .objective(objective)
                .budgetType(request.getBudgetType() != null ? Campaign.BudgetType.valueOf(request.getBudgetType()) : Campaign.BudgetType.DAILY)
                .dailyBudget(request.getDailyBudget())
                .totalBudget(request.getTotalBudget())
-               .targetAudience(request.getTargetAudience())
+               .targetAudience(promptSecurityService.sanitizeUserInput(request.getTargetAudience()))
                .bidCap(request.getBidCap())
                .performanceGoal(performanceGoal)
                .startDate(request.getStartDate())
@@ -226,12 +228,12 @@ import org.springframework.util.StringUtils;
                    : determineFallbackPerformanceGoal(objective));
        
        // Update fields
-       campaign.setName(request.getName());
+       campaign.setName(promptSecurityService.sanitizeUserInput(request.getName()));
        campaign.setObjective(objective);
        campaign.setBudgetType(request.getBudgetType() != null ? Campaign.BudgetType.valueOf(request.getBudgetType()) : null);
        campaign.setDailyBudget(request.getDailyBudget());
        campaign.setTotalBudget(request.getTotalBudget());
-       campaign.setTargetAudience(request.getTargetAudience());
+       campaign.setTargetAudience(promptSecurityService.sanitizeUserInput(request.getTargetAudience()));
        campaign.setBidCap(request.getBidCap());
        campaign.setPerformanceGoal(performanceGoal);
        campaign.setStartDate(request.getStartDate());
