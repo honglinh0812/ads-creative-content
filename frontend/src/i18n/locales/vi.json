@@ -10,8 +10,8 @@
     "logoutConfirmation": "Bạn có chắc chắn muốn đăng xuất?",
     "loginFailed": "Đăng nhập thất bại: Không lấy được thông tin người dùng.",
     "page": {
-      "title": "Facebook Ads Automation",
-      "description": "Tạo và quản lý quảng cáo Facebook với tạo nội dung hỗ trợ AI",
+      "title": "AI Creative Ads",
+      "description": "Đăng nhập để bắt đầu tạo nội dung quảng cáo",
       "logoAlt": "Logo Ads Creative"
     },
     "loginForm": {
