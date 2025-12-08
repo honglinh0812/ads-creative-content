@@ -236,7 +236,7 @@ export default {
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  background: linear-gradient(135deg, #1890ff, #722ed1);
+  background: #ffffff;
 }
 
 .loading-content {
@@ -252,7 +252,7 @@ export default {
 }
 
 .loading-text {
-  color: white;
+  color: #111827;
   font-size: 1.125rem;
   font-weight: 500;
   opacity: 0.9;

@@ -459,43 +459,24 @@ export default {
   position: relative;
   overflow: hidden;
   padding: 48px 16px;
-  background: linear-gradient(180deg, #f4f7fb 0%, #eef2ff 100%);
-  
+  background: #0a1d37;
+
   .login-background {
     position: absolute;
     inset: 0;
     z-index: 1;
     pointer-events: none;
+    background: url('/img/background.jpg') center/cover no-repeat, #0a1d37;
+    filter: blur(4px);
+    transform: scale(1.05);
+    opacity: 0.95;
+  }
 
-    .background-gradient {
-      width: min(92vw, 960px);
-      height: 320px;
-      margin: 0 auto;
-      background: linear-gradient(135deg, #dbeafe 0%, #c7d2fe 45%, #f5f3ff 100%);
-      border-radius: 36px;
-      box-shadow: 0 30px 80px rgba(51, 65, 85, 0.25);
-    }
-
-    .background-blur {
-      position: absolute;
-      width: 320px;
-      height: 320px;
-      border-radius: 50%;
-      filter: blur(25px);
-      opacity: 0.7;
-    }
-
-    .background-blur--one {
-      top: 120px;
-      left: 8%;
-      background: radial-gradient(circle, rgba(59, 130, 246, 0.35), transparent 60%);
-    }
-
-    .background-blur--two {
-      top: 30px;
-      right: 6%;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.35), transparent 60%);
-    }
+  .login-background::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(11, 25, 46, 0.15) 0%, rgba(10, 20, 38, 0.6) 85%);
   }
   
   .login-card {
@@ -639,18 +620,8 @@ export default {
 @media (width <= 768px) {
   .login-container {
     padding: 20px;
-    
     .login-background {
-      .background-gradient {
-        width: 100%;
-        height: 220px;
-        border-radius: 24px;
-      }
-
-      .background-blur {
-        width: 200px;
-        height: 200px;
-      }
+      filter: blur(6px);
     }
     
     .login-card {
