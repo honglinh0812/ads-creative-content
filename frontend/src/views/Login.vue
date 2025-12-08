@@ -468,18 +468,21 @@ export default {
   align-items: center;
   min-height: 100vh;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   padding: 48px 16px;
-  background: #0a1d37;
+  background: transparent;
+  z-index: 1;
 
   .login-background {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    z-index: 1;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
     pointer-events: none;
     background-color: #0a1d37;
     filter: blur(4px);
-    transform: scale(1.05);
+    transform: scale(1.02);
     opacity: 0.95;
   }
 
