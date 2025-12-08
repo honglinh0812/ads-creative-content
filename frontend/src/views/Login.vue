@@ -1,6 +1,6 @@
 <template>
   <div class="login-container">
-    <div class="login-background">
+    <div class="login-background" :style="loginBackgroundStyle">
       <div class="background-gradient"></div>
       <div class="background-blur background-blur--one"></div>
       <div class="background-blur background-blur--two"></div>
@@ -252,7 +252,8 @@ export default {
       },
       forgotForm: {
         email: ''
-      }
+      },
+      loginBackgroundUrl: `${process.env.BASE_URL || '/'}img/background.jpg`
     }
   },
   mounted() {
@@ -263,6 +264,16 @@ export default {
   beforeUnmount() {
     window.removeEventListener('pageshow', this.handlePageShow)
     document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+  },
+  computed: {
+    loginBackgroundStyle() {
+      return {
+        backgroundImage: `url(${this.loginBackgroundUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }
+    }
   },
   methods: {
     ...mapActions('toast', ['showSuccess', 'showError', 'showInfo']),
@@ -466,7 +477,7 @@ export default {
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    background: url('/img/background.jpg') center/cover no-repeat, #0a1d37;
+    background-color: #0a1d37;
     filter: blur(4px);
     transform: scale(1.05);
     opacity: 0.95;
