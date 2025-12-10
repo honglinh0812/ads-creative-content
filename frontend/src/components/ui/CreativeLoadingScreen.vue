@@ -284,7 +284,8 @@ export default {
   justify-content: center;
   min-height: 200px;
   padding: var(--space-8);
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: var(--radius-xl);
   position: relative;
   overflow: hidden;
@@ -297,7 +298,7 @@ export default {
   right: 0;
   bottom: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: #ffffff;
   z-index: 9999;
   border-radius: 0;
 }
@@ -336,7 +337,7 @@ export default {
 .character-shadow {
   width: 60px;
   height: 20px;
-  background: radial-gradient(ellipse, rgba(45, 90, 160, 0.2) 0%, transparent 70%);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 50%;
   margin: var(--space-2) auto 0;
   animation: shadow-pulse 2s ease-in-out infinite;
@@ -350,21 +351,22 @@ export default {
 .loading-title {
   font-size: var(--text-2xl);
   font-weight: var(--font-bold);
-  color: var(--brand-primary);
+  color: #111827;
   margin: 0 0 var(--space-3) 0;
-  animation: title-glow 3s ease-in-out infinite;
+  text-shadow: none;
+  animation: none;
 }
 
 .loading-message {
   font-size: var(--text-lg);
-  color: var(--color-text);
+  color: #1f2937;
   margin: 0 0 var(--space-2) 0;
   font-weight: var(--font-medium);
 }
 
 .loading-submessage {
   font-size: var(--text-base);
-  color: var(--color-text-secondary);
+  color: #4b5563;
   margin: 0;
   font-style: italic;
 }
@@ -391,7 +393,7 @@ export default {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--brand-primary) 0%, var(--accent-orange) 100%);
+  background: #111827;
   border-radius: var(--radius-full);
   transition: width 0.5s ease;
   position: relative;
@@ -403,7 +405,7 @@ export default {
   right: -10px;
   width: 20px;
   height: 12px;
-  background: radial-gradient(ellipse, rgba(244, 162, 97, 0.8) 0%, transparent 70%);
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 50%;
   animation: progress-glow 2s ease-in-out infinite;
 }
@@ -424,14 +426,14 @@ export default {
 }
 
 .progress-dot.active {
-  background: var(--brand-primary);
+  background: #111827;
   transform: scale(1.2);
-  box-shadow: 0 2px 8px rgba(45, 90, 160, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .progress-text {
   font-size: var(--text-sm);
-  color: var(--brand-primary);
+  color: #111827;
   font-weight: var(--font-semibold);
 }
 
