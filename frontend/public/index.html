@@ -38,7 +38,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #ffffff;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -55,7 +55,7 @@
       }
       
       .loading-text {
-        color: white;
+        color: #111827;
         font-family: 'Inter', sans-serif;
         font-size: 18px;
         font-weight: 500;
@@ -65,8 +65,8 @@
       .loading-spinner {
         width: 40px;
         height: 40px;
-        border: 3px solid rgba(255, 255, 255, 0.3);
-        border-top: 3px solid white;
+        border: 3px solid rgba(0, 0, 0, 0.15);
+        border-top: 3px solid #111827;
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }
@@ -111,9 +111,9 @@
     <!-- Loading Screen -->
     <div id="loading-screen">
       <svg class="loading-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M2 17L12 22L22 17" stroke="white" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#111827" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M2 17L12 22L22 17" stroke="#111827" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M2 12L12 17L22 12" stroke="#111827" stroke-width="2" stroke-linejoin="round"/>
       </svg>
       <div class="loading-text">Đang tải ứng dụng...</div>
       <div class="loading-spinner"></div>
