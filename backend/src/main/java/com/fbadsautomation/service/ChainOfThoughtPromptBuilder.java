@@ -133,7 +133,12 @@ public class ChainOfThoughtPromptBuilder {
         prompt.append(buildStage4_Constraints(callToAction, language, isVietnamese, enforceCharacterLimits));
 
         // Stage 5: Reasoning Process
-        prompt.append(buildStage5_ReasoningProcess(persona, adStyle, isVietnamese, enforceCharacterLimits));
+        prompt.append(buildStage5_ReasoningProcess(
+                persona,
+                adStyle,
+                isVietnamese,
+                enforceCharacterLimits,
+                styleProfile != null));
 
         // Stage 6: Generation Instruction
         prompt.append(buildStage6_GenerationInstruction(
@@ -306,6 +311,7 @@ public class ChainOfThoughtPromptBuilder {
             }
             appendReferenceSection(stage, referenceContent, referenceLink, baseDescription, true);
             appendStyleProfile(stage, styleProfile, true);
+            appendStyleCommitment(stage, true);
             stage.append(buildReferenceMirrorCue(referenceMetrics, true, allowLongForm));
         } else {
             stage.append("🎨 CREATIVE DIRECTION\n\n");
@@ -322,6 +328,7 @@ public class ChainOfThoughtPromptBuilder {
             }
             appendReferenceSection(stage, referenceContent, referenceLink, baseDescription, false);
             appendStyleProfile(stage, styleProfile, false);
+            appendStyleCommitment(stage, false);
             stage.append(buildReferenceMirrorCue(referenceMetrics, false, allowLongForm));
         }
 
@@ -430,7 +437,8 @@ public class ChainOfThoughtPromptBuilder {
     private String buildStage5_ReasoningProcess(Persona persona,
                                                 AdStyle adStyle,
                                                 boolean isVietnamese,
-                                                boolean enforceCharacterLimits) {
+                                                boolean enforceCharacterLimits,
+                                                boolean hasStyleProfile) {
         if (!enforceCharacterLimits) {
             if (isVietnamese) {
                 return """
@@ -439,6 +447,7 @@ public class ChainOfThoughtPromptBuilder {
                 - Bắt đầu bằng 1 câu mở đầu giống nhịp điệu quảng cáo tham chiếu (nêu vấn đề + lợi ích).
                 - Triển khai 2-3 câu thân bài kể chuyện tự nhiên, nêu cảm xúc và ưu đãi cụ thể của sản phẩm này.
                 - Kết thúc bằng CTA rõ ràng, thúc đẩy hành động tương tự tinh thần quảng cáo mẫu.
+                - Dù sản phẩm thuộc lĩnh vực khác, không được từ chối việc mô phỏng phong cách quảng cáo tham chiếu.
 
                 """;
             } else {
@@ -448,6 +457,7 @@ public class ChainOfThoughtPromptBuilder {
                 - Open with a hook that mirrors the reference cadence (problem + promise).
                 - Write 2-3 body sentences packed with concrete benefits and sensory details from the current offer.
                 - Close with a decisive CTA that channels the urgency/tempo of the reference ad.
+                - Even if the product category changes, never refuse to mimic the reference style.
 
                 """;
             }
@@ -495,6 +505,9 @@ public class ChainOfThoughtPromptBuilder {
             } else {
                 stage.append("   - Phong cách nào phù hợp nhất với đối tượng?\n");
             }
+            if (hasStyleProfile) {
+                stage.append("   - Ghi chú phong cách tham chiếu đã được cung cấp, hãy nhắc lại câu hỏi: \"Tôi đã dùng hook, emoji, nhịp câu giống mẫu chưa?\"\n");
+            }
 
             stage.append("""
                    - Từ khóa trending nào khớp tự nhiên?
@@ -512,10 +525,14 @@ public class ChainOfThoughtPromptBuilder {
                    - Có 100% tiếng Việt không?
                    - Call-to-action có rõ ràng không?
 
-                5. TỐI ƯU HÓA HIỆU SUẤT
-                   - Tiêu đề có thu hút chú ý không?
-                   - Mô tả có tạo tò mò không?
-                   - Văn bản chính có xây dựng niềm tin và kêu gọi hành động không?
+               5. TỐI ƯU HÓA HIỆU SUẤT
+                  - Tiêu đề có thu hút chú ý không?
+                  - Mô tả có tạo tò mò không?
+                  - Văn bản chính có xây dựng niềm tin và kêu gọi hành động không?
+
+                6. CAM KẾT PHONG CÁCH
+                   - Luôn rà soát để chắc chắn nhịp câu, icon, mức độ cảm xúc trùng với quảng cáo tham chiếu.
+                   - KHÔNG ĐƯỢC TỪ CHỐI yêu cầu vì khác ngành hàng; chỉ được thay đổi dữ kiện sản phẩm.
 
                 """);
 
@@ -562,6 +579,9 @@ public class ChainOfThoughtPromptBuilder {
             } else {
                 stage.append("   - Which style best suits the audience?\n");
             }
+            if (hasStyleProfile) {
+                stage.append("   - Reference style cues are provided; confirm the hook, emoji, and pacing mirror the sample.\n");
+            }
 
             stage.append("""
                    - Which trending keywords fit naturally?
@@ -579,10 +599,14 @@ public class ChainOfThoughtPromptBuilder {
                    - Is the language 100% English?
                    - Is the call-to-action clear?
 
-                5. OPTIMIZE FOR PERFORMANCE
-                   - Is the headline attention-grabbing?
-                   - Does the description create curiosity?
-                   - Does the primary text build trust and drive action?
+               5. OPTIMIZE FOR PERFORMANCE
+                  - Is the headline attention-grabbing?
+                  - Does the description create curiosity?
+                  - Does the primary text build trust and drive action?
+
+                6. STYLE TRIAGE (MANDATORY)
+                   - Double-check cadence, emoji usage, and storytelling tempo match the reference.
+                   - NEVER refuse the task because the product differs—the style mirroring is still required.
 
                 """);
 
@@ -676,7 +700,8 @@ public class ChainOfThoughtPromptBuilder {
                   "description": "Mô tả cuốn hút ở đây%s",
                   "primaryText": "Văn bản chính đầy đủ với giá trị đề xuất rõ ràng và kêu gọi hành động%s",
                   "callToAction": "Phải khớp với CTA được yêu cầu ở trên",
-                  "imagePrompt": "Mô tả ngắn gọn cho ảnh minh họa phù hợp phong cách"
+                  "imagePrompt": "Mô tả ngắn gọn cho ảnh minh họa phù hợp phong cách",
+                  "styleNotes": "Tóm tắt 1-2 câu cho biết biến thể này bám phong cách tham chiếu như thế nào"
                 }
 
                 Tạo ngay bây giờ và CHỈ trả về JSON object hợp lệ như mẫu trên cho mỗi biến thể:
@@ -702,7 +727,8 @@ public class ChainOfThoughtPromptBuilder {
                   "description": "Engaging description here%s",
                   "primaryText": "Full primary text with value proposition and CTA%s",
                   "callToAction": "Must match the CTA specified above",
-                  "imagePrompt": "Short scene description for the image generation model"
+                  "imagePrompt": "Short scene description for the image generation model",
+                  "styleNotes": "1-2 short sentences explaining exactly how this variation mirrors the reference style"
                 }
 
                 Generate now and ONLY return a valid JSON object matching the schema above for each variation:
@@ -806,6 +832,26 @@ public class ChainOfThoughtPromptBuilder {
                 stage.append("CTA vibe: ").append(styleProfile.getCtaVerb()).append("\n");
             }
             stage.append("\n");
+        }
+    }
+
+    private void appendStyleCommitment(StringBuilder stage, boolean isVietnamese) {
+        if (isVietnamese) {
+            stage.append("""
+🚨 CAM KẾT PHONG CÁCH BẮT BUỘC
+- Luôn tái tạo chính xác nhịp điệu, cách xuống dòng, emoji và mức độ cảm xúc như quảng cáo tham khảo, dù sản phẩm khác ngành.
+- Bạn KHÔNG được từ chối yêu cầu này vì nội dung mới hoàn toàn khác dữ kiện của quảng cáo mẫu.
+- Chỉ thay đổi dữ liệu sản phẩm/dịch vụ – phong cách, tone và nhịp viết phải giữ nguyên tinh thần tham chiếu.
+
+""");
+        } else {
+            stage.append("""
+🚨 NON-NEGOTIABLE STYLE COMMITMENT
+- You MUST replicate the cadence, emoji usage, emotional energy, and sentence rhythm from the reference ad even if the product category is different.
+- Do NOT refuse this request—the new copy remains original because only the facts change.
+- Swap in the new offer details but keep the reference tone, pacing, and structure intact.
+
+""");
         }
     }
 
