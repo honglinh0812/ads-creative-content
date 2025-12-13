@@ -1516,7 +1516,13 @@
       },
       "targetAudience": {
         "title": "Target Audience (Campaign Level)",
-        "info": "All ads in this campaign target this audience. To change, edit the campaign settings."
+        "info": "All ads in this campaign target this audience. To change, edit the campaign settings.",
+        "fields": {
+          "gender": "Gender",
+          "age": "Age",
+          "location": "Location",
+          "interests": "Interests"
+        }
       },
       "adType": {
         "label": "Ad Type"

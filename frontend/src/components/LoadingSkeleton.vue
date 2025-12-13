@@ -59,14 +59,8 @@ export default {
 .skeleton.animate-pulse .skeleton-bar,
 .skeleton.animate-pulse .skeleton-bar-sm,
 .skeleton.animate-pulse .skeleton-avatar {
-  background: linear-gradient(
-    90deg,
-    theme('colors.gray.200') 25%,
-    theme('colors.gray.100') 50%,
-    theme('colors.gray.200') 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.8s ease-in-out infinite;
+  background-color: theme('colors.gray.200');
+  animation: subtle-pulse 1.6s ease-in-out infinite;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -74,22 +68,16 @@ export default {
   .skeleton.animate-pulse .skeleton-bar,
   .skeleton.animate-pulse .skeleton-bar-sm,
   .skeleton.animate-pulse .skeleton-avatar {
-    background: linear-gradient(
-      90deg,
-      theme('colors.gray.700') 25%,
-      theme('colors.gray.600') 50%,
-      theme('colors.gray.700') 75%
-    );
+    background-color: theme('colors.gray.700');
   }
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
+@keyframes subtle-pulse {
+  0%, 100% {
+    opacity: 1;
   }
-
-  100% {
-    background-position: -200% 0;
+  50% {
+    opacity: 0.6;
   }
 }
 

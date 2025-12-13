@@ -1721,8 +1721,14 @@
         "placeholder": "Chọn một chiến dịch"
       },
       "targetAudience": {
-        "title": "Đối tượng mục tiêu (Cấp chiến dịch)",
-        "info": "Tất cả quảng cáo trong chiến dịch này nhắm đến đối tượng này. Để thay đổi, chỉnh sửa cài đặt chiến dịch."
+        "title": "Đối tượng trong chiến dịch này:",
+        "info": "",
+        "fields": {
+          "gender": "Giới tính",
+          "age": "Độ tuổi",
+          "location": "Khu vực",
+          "interests": "Sở thích"
+        }
       },
       "adType": {
         "label": "Loại quảng cáo"
@@ -2160,16 +2166,16 @@
       "ctaInstruction": "Lưu ý: Chỉ sử dụng một trong các Call to Action sau cho quảng cáo: {ctaList}. Không tạo CTA khác."
     },
     "async": {
-      "modalTitle": "Đang tạo các biến thể xem trước",
-      "initializing": "Đang khởi tạo trợ lý AI...",
-      "hint": "Bước này thường mất 30 giây đến vài phút tùy số lượng biến thể và nhà cung cấp bạn chọn.",
-      "jobIdLabel": "Mã tác vụ: {id}",
-      "cancel": "Hủy quá trình tạo",
+      "modalTitle": "Đang tạo quảng cáo",
+      "initializing": "Đang khởi tạo...",
+      "hint": "Hãy kiên nhẫn, quá trình tạo quảng cáo cần mất từ khoảng 30 giây cho tới ít phút tùy vào số lượng quảng cáo và nhà cung cấp AI bạn chọn",
+      "jobIdLabel": "Mã nhiệm vụ: {id}",
+      "cancel": "Hủy",
       "timeout": "Tác vụ mất quá nhiều thời gian. Vui lòng thử lại sau.",
       "statusFailed": "Không thể kiểm tra trạng thái. Có thể tác vụ vẫn đang chạy nền.",
       "processing": "Đang xử lý...",
       "failed": "Không thể tạo bản xem trước. Vui lòng thử lại.",
-      "cancelled": "Đã hủy quá trình tạo xem trước",
+      "cancelled": "Đã hủy tạo quảng cáo.",
       "cancelFailed": "Không thể hủy tác vụ này lúc này.",
       "alreadyCompleted": "Tác vụ đã hoàn tất trước đó. Đang tải kết quả...",
       "alreadyFailed": "Tác vụ đã bị lỗi trước đó. Đóng hộp thoại.",

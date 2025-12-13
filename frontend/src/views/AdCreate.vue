@@ -67,13 +67,8 @@
               <template #title>
                 <span style="color: #1890ff;">{{ $t('adCreate.step1.targetAudience.title') }}</span>
               </template>
-              <div style="padding: 12px;">
-                <div style="font-size: 14px; color: #262626; margin-bottom: 8px; white-space: pre-wrap;">
-                  {{ selectedCampaign.targetAudience }}
-                </div>
-                <div style="font-size: 12px; color: #8c8c8c; margin-top: 12px;">
-                  {{ $t('adCreate.step1.targetAudience.info') }}
-                </div>
+              <div style="font-size: 14px; color: #262626; margin-bottom: 8px; white-space: pre-wrap;">
+                {{ localizedTargetAudience }}
               </div>
             </a-card>
 
@@ -847,9 +842,6 @@
         <div class="progress-icon">
           <a-spin size="large" />
         </div>
-        <div v-if="asyncJobStatus" class="progress-status">
-          <span class="status-pill">{{ getAsyncStatusLabel(asyncJobStatus) }}</span>
-        </div>
 
         <!-- Current Step -->
         <div class="progress-info">
@@ -1166,6 +1158,13 @@ export default {
       return this.uploadedFileUrl && this.uploadedFileUrl.trim() !== ''
     },
 
+    localizedTargetAudience() {
+      if (!this.selectedCampaign || !this.selectedCampaign.targetAudience) {
+        return ''
+      }
+      return this.getLocalizedAudienceText(this.selectedCampaign.targetAudience)
+    },
+
     // Issue #8: Reactive multilingual ad style options
     adStyleOptions() {
       return [
@@ -1295,6 +1294,34 @@ export default {
   },
   methods: {
     ...mapActions('cta', ['loadCTAs']),
+
+    getLocalizedAudienceText(audienceDescription) {
+      if (!audienceDescription || typeof audienceDescription !== 'string') {
+        return ''
+      }
+
+      const fieldTranslations = {
+        gender: this.$t('adCreate.step1.targetAudience.fields.gender'),
+        age: this.$t('adCreate.step1.targetAudience.fields.age'),
+        location: this.$t('adCreate.step1.targetAudience.fields.location'),
+        interests: this.$t('adCreate.step1.targetAudience.fields.interests')
+      }
+
+      return audienceDescription
+        .split(',')
+        .map(part => part.trim())
+        .filter(Boolean)
+        .map(part => {
+          const [rawKey, ...rest] = part.split(':')
+          if (!rest.length) return part
+
+          const key = rawKey.trim().toLowerCase()
+          const localizedLabel = fieldTranslations[key] || rawKey.trim()
+          const value = rest.join(':').trim()
+          return `${localizedLabel}: ${value}`
+        })
+        .join(', ')
+    },
 
     // Issue #9: Handle campaign selection to display target audience
     handleCampaignChange(campaignId) {

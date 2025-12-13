@@ -375,7 +375,7 @@ export default {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #2d5aa0 0%, #1890ff 100%);
+  background: #111827;
   border-radius: 4px;
   transition: width 0.3s ease;
 }
