@@ -974,9 +974,6 @@ export default {
       if (safePayload.referenceSummary) {
         safePayload.referenceSummary = sanitizePromptInput(safePayload.referenceSummary)
       }
-      if (safePayload.referenceInsights) {
-        safePayload.referenceInsights = sanitizePromptInput(JSON.stringify(safePayload.referenceInsights))
-      }
       return safePayload
     },
     getVariationIdentifier(variation) {
