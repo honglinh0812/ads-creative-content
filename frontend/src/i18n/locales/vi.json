@@ -77,7 +77,7 @@
     "adLearning": "Tạo quảng cáo theo mẫu",
     "allAds": "Tất cả quảng cáo",
     "createAd": "Tạo quảng cáo",
-    "personas": "Chân dung khách hàng mục tiêu",
+    "personas": "Mô tả khách hàng mục tiêu",
     "analytics": "Phân tích",
     "optimization": "Tối ưu hóa",
     "competitors": "Phân tích đối thủ",
@@ -1276,7 +1276,7 @@
       "notAvailable": "Không có sẵn"
     },
     "sections": {
-      "createTitle": "Chân dung khách hàng mục tiêu",
+      "createTitle": "Mô tả khách hàng mục tiêu",
       "listTitle": "Các chân dung đã tạo"
     },
     "name": "Tên chân dung",
@@ -2638,7 +2638,7 @@
       }
     },
     "personaSelector": {
-      "title": "Chân dung khách hàng mục tiêu",
+      "title": "Mô tả khách hàng mục tiêu",
       "createNew": "Tạo mới",
       "createModalTitle": "Tạo chân dung khách hàng",
       "form": {
