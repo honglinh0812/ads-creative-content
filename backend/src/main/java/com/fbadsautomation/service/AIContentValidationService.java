@@ -50,6 +50,10 @@ public class AIContentValidationService {
      * Validate and filter AI-generated content with quality scoring
      */
     public List<AdContent> validateAndFilterContent(List<AdContent> contents) {
+        return validateAndFilterContent(contents, true);
+    }
+
+    public List<AdContent> validateAndFilterContent(List<AdContent> contents, boolean enforceLengthLimits) {
         if (contents == null || contents.isEmpty()) {
             return contents;
         }
@@ -57,7 +61,7 @@ public class AIContentValidationService {
         List<AdContent> validatedContents = new ArrayList<>();
 
         for (AdContent content : contents) {
-            ValidationResult result = validateContent(content);
+            ValidationResult result = validateContent(content, enforceLengthLimits);
 
             // Attach quality metrics to content
             content.setQualityScore(result.getQualityScore());
@@ -96,7 +100,7 @@ public class AIContentValidationService {
                     AdContent fixedContent = attemptContentFix(content, result);
                     if (fixedContent != null) {
                         // Re-validate fixed content
-                        ValidationResult fixedResult = validateContent(fixedContent);
+                        ValidationResult fixedResult = validateContent(fixedContent, enforceLengthLimits);
                         fixedContent.setQualityScore(fixedResult.getQualityScore());
                         fixedContent.setHasWarnings(!fixedResult.getViolations().isEmpty());
 
@@ -131,6 +135,10 @@ public class AIContentValidationService {
      * Validate individual content piece
      */
     public ValidationResult validateContent(AdContent content) {
+        return validateContent(content, true);
+    }
+
+    public ValidationResult validateContent(AdContent content, boolean enforceLengthLimits) {
         ValidationResult result = new ValidationResult();
         List<String> violations = new ArrayList<>();
         
@@ -144,19 +152,19 @@ public class AIContentValidationService {
         
         // Validate headline
         if (content.getHeadline() != null) {
-            violations.addAll(validateText(content.getHeadline(), "headline", MAX_HEADLINE_LENGTH));
+            violations.addAll(validateText(content.getHeadline(), "headline", MAX_HEADLINE_LENGTH, enforceLengthLimits));
         } else {
             violations.add("Headline is missing");
         }
         
         // Validate description
         if (content.getDescription() != null) {
-            violations.addAll(validateText(content.getDescription(), "description", MAX_DESCRIPTION_LENGTH));
+            violations.addAll(validateText(content.getDescription(), "description", MAX_DESCRIPTION_LENGTH, enforceLengthLimits));
         }
         
         // Validate primary text
         if (content.getPrimaryText() != null) {
-            violations.addAll(validateText(content.getPrimaryText(), "primary text", MAX_PRIMARY_TEXT_LENGTH));
+            violations.addAll(validateText(content.getPrimaryText(), "primary text", MAX_PRIMARY_TEXT_LENGTH, enforceLengthLimits));
         }
         
         // Check overall content quality
@@ -175,7 +183,7 @@ public class AIContentValidationService {
     /**
      * Validate text content
      */
-    private List<String> validateText(String text, String fieldName, int maxLength) {
+    private List<String> validateText(String text, String fieldName, int maxLength, boolean enforceLengthLimits) {
         List<String> violations = new ArrayList<>();
         if (text == null || text.trim().isEmpty()) {
             violations.add(fieldName + " is empty");
@@ -183,7 +191,7 @@ public class AIContentValidationService {
         }
         
         String cleanText = text.trim().toLowerCase(); // Check length
-        if (text.length() > maxLength) {
+        if (enforceLengthLimits && text.length() > maxLength) {
             violations.add(fieldName + " exceeds maximum length of " + maxLength + " characters");
         }
         

@@ -28,7 +28,15 @@ public class AdContentValidator {
      * @param content The AdContent to validate and truncate
      */
     public void validateAndTruncate(AdContent content) {
+        validateAndTruncate(content, true);
+    }
+
+    public void validateAndTruncate(AdContent content, boolean enforceLengthLimits) {
         if (content == null) {
+            return;
+        }
+        if (!enforceLengthLimits) {
+            content.setNeedsReview(false);
             return;
         }
 
@@ -96,7 +104,14 @@ public class AdContentValidator {
      * @return true if any field was truncated
      */
     public boolean enforceAdLimits(Ad ad) {
+        return enforceAdLimits(ad, true);
+    }
+
+    public boolean enforceAdLimits(Ad ad, boolean enforceLengthLimits) {
         if (ad == null) {
+            return false;
+        }
+        if (!enforceLengthLimits) {
             return false;
         }
 

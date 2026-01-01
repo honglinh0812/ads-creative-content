@@ -54,7 +54,8 @@ import org.springframework.stereotype.Service;
                                            com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment,
                                            com.fbadsautomation.model.Persona userSelectedPersona,
                                            List<String> trendingKeywords,
-                                           List<AdGenerationRequest.VariationProviderConfig> variationConfigs) {
+                                           List<AdGenerationRequest.VariationProviderConfig> variationConfigs,
+                                           boolean enforceLengthLimits) {
        log.info("[Issue #9] Generating content for ad: {}, campaign: {}, mediaFileUrl: {}, persona: {}, trending keywords: {}",
                 ad.getId(),
                 ad.getCampaign() != null ? ad.getCampaign().getId() : "none",
@@ -101,7 +102,8 @@ import org.springframework.stereotype.Service;
                campaign,
                ad.getAdStyle(),
                userSelectedPersona,
-               trendingKeywords);
+               trendingKeywords,
+               enforceLengthLimits);
        } else {
            generatedContents = aiIntegrationService.generateContentWithCampaign(
                prompt,
@@ -117,7 +119,8 @@ import org.springframework.stereotype.Service;
                campaign,
                ad.getAdStyle(),
                userSelectedPersona,
-               trendingKeywords);
+               trendingKeywords,
+               enforceLengthLimits);
        }
        
        // Set ad reference and preview order for each content
@@ -166,7 +169,8 @@ import org.springframework.stereotype.Service;
                                                        com.fbadsautomation.model.Campaign campaign,
                                                        com.fbadsautomation.model.AdStyle adStyle,
                                                        com.fbadsautomation.model.Persona userSelectedPersona,
-                                                       List<String> trendingKeywords) {
+                                                       List<String> trendingKeywords,
+                                                       boolean enforceLengthLimits) {
        List<AdContent> perVariationContents = new ArrayList<>();
 
        for (int i = 0; i < variationConfigs.size(); i++) {
@@ -195,7 +199,8 @@ import org.springframework.stereotype.Service;
                campaign,
                adStyle,
                userSelectedPersona,
-               trendingKeywords);
+               trendingKeywords,
+               enforceLengthLimits);
 
            if (!generated.isEmpty()) {
                perVariationContents.add(generated.get(0));

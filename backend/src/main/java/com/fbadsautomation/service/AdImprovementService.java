@@ -175,7 +175,8 @@ public class AdImprovementService {
                 request.getAudienceSegment(),
                 request.getPersonaId(),
                 request.getTrendingKeywords(),
-                request.getVariations());
+                request.getVariations(),
+                false);
 
         if (CollectionUtils.isEmpty(contents)) {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Không sinh được biến thể nào");
@@ -269,7 +270,8 @@ public class AdImprovementService {
                 request.getPersonaId(),
                 request.getTrendingKeywords(),
                 request.getCreativeStyle(),
-                request.getVariations()
+                request.getVariations(),
+                false
         );
 
         return Map.of(
@@ -298,7 +300,8 @@ public class AdImprovementService {
                     request.getMediaFileUrl(),
                     request.getWebsiteUrl(),
                     request.getLeadFormQuestions(),
-                    request.getAdStyle());
+                    request.getAdStyle(),
+                    false);
         } else if (request.getSelectedVariation() != null) {
             adResult = adService.createAdWithExistingContent(request.getCampaignId(),
                     request.getAdType(),
@@ -311,7 +314,8 @@ public class AdImprovementService {
                     request.getMediaFileUrl(),
                     request.getWebsiteUrl(),
                     request.getLeadFormQuestions(),
-                    request.getAdStyle());
+                    request.getAdStyle(),
+                    false);
         } else {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Không có biến thể nào được chọn để lưu");
         }
@@ -392,14 +396,82 @@ public class AdImprovementService {
         String productContext = StringUtils.hasText(request.getProductDescription())
                 ? request.getProductDescription()
                 : "";
+        Integer sentenceCount = null;
+        Integer wordCount = null;
+        Boolean containsCTA = null;
+        Boolean containsPrice = null;
+        ReferenceAnalysisResponse.ReferenceInsights referenceInsights = null;
+        if (request.getReferenceInsights() != null) {
+            sentenceCount = request.getReferenceInsights().getSentenceCount();
+            wordCount = request.getReferenceInsights().getWordCount();
+            containsCTA = request.getReferenceInsights().getContainsCallToAction();
+            containsPrice = request.getReferenceInsights().getContainsPrice();
+        } else if (StringUtils.hasText(referenceContent)) {
+            referenceInsights = buildInsights(referenceContent);
+            sentenceCount = referenceInsights.getSentenceCount();
+            wordCount = referenceInsights.getWordCount();
+            containsCTA = referenceInsights.isContainsCallToAction();
+            containsPrice = referenceInsights.isContainsPrice();
+        }
+
+        FacebookCTA inferredCTA = request.getCallToAction();
+        if (inferredCTA == null && StringUtils.hasText(referenceContent)) {
+            inferredCTA = detectCallToAction(referenceContent);
+        }
+
+        ReferenceStyleProfile styleProfile = request.getReferenceStyle();
+        if (styleProfile == null && StringUtils.hasText(referenceContent)) {
+            styleProfile = analyzeStyleProfile(referenceContent, inferredCTA);
+        }
         int variations = request.getNumberOfVariations() != null ? request.getNumberOfVariations() : 3;
         String languageLabel = language == Language.VIETNAMESE ? "Vietnamese" : "English";
 
         StringBuilder prompt = new StringBuilder();
         prompt.append("Write ").append(variations).append(" ad variations in ").append(languageLabel).append(". ");
-        prompt.append("Mirror the reference ad's tone, structure, language and formatting. ");
-        if (request.getCallToAction() != null) {
-            prompt.append("Use CTA: ").append(request.getCallToAction().name()).append(". ");
+        prompt.append("Reuse the reference ad's wording as closely as possible while replacing the product with the new context. ");
+        prompt.append("Keep tone, structure, line breaks, punctuation, emoji usage, and formatting nearly identical to the reference. ");
+        prompt.append("Do not enforce character limits; match the reference lengths naturally. ");
+        if (inferredCTA != null) {
+            prompt.append("Use CTA: ").append(inferredCTA.name()).append(". ");
+        }
+        if (sentenceCount != null && sentenceCount > 0) {
+            prompt.append("Target roughly ").append(sentenceCount)
+                    .append(" sentences per variation. ");
+        }
+        if (wordCount != null && wordCount > 0) {
+            prompt.append("Match the reference word count (~").append(wordCount)
+                    .append(" words). ");
+        }
+        if (Boolean.TRUE.equals(containsCTA)) {
+            prompt.append("Ensure a CTA line is present and positioned similar to the reference. ");
+        }
+        if (Boolean.TRUE.equals(containsPrice)) {
+            prompt.append("Preserve price/offer mentions if they appear in the reference (replace values accordingly). ");
+        }
+        if (styleProfile != null) {
+            if (StringUtils.hasText(styleProfile.getPacing())) {
+                prompt.append("Pacing: ").append(styleProfile.getPacing()).append(". ");
+            }
+            if (StringUtils.hasText(styleProfile.getHookType())) {
+                prompt.append("Hook: ").append(styleProfile.getHookType()).append(". ");
+            }
+            if (StringUtils.hasText(styleProfile.getTone())) {
+                prompt.append("Tone: ").append(styleProfile.getTone()).append(". ");
+            }
+            if (styleProfile.getUsesEmoji() != null) {
+                prompt.append(styleProfile.getUsesEmoji() ? "Use emojis similar to the reference. " : "Avoid emojis if the reference avoids them. ");
+            }
+            if (styleProfile.getUsesQuestions() != null && styleProfile.getUsesQuestions()) {
+                prompt.append("Include questions if the reference uses them. ");
+            }
+            if (styleProfile.getPunctuation() != null && !styleProfile.getPunctuation().isEmpty()) {
+                prompt.append("Mimic punctuation patterns: ")
+                        .append(String.join(", ", styleProfile.getPunctuation()))
+                        .append(". ");
+            }
+            if (styleProfile.getStyleNotes() != null && !styleProfile.getStyleNotes().isEmpty()) {
+                prompt.append("Style cues: ").append(String.join("; ", styleProfile.getStyleNotes())).append(". ");
+            }
         }
 
         if (StringUtils.hasText(referenceContent)) {

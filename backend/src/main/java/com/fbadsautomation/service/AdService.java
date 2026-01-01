@@ -130,7 +130,7 @@ public class AdService {
      */
     @Transactional
     public Map<String, Object> createAdWithAIContent(Long campaignId, String adType, String prompt,
-                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, String adStyle, Long personaId, List<String> trendingKeywords, List<AdGenerationRequest.VariationProviderConfig> variationConfigs) {
+                                                     String name, MultipartFile mediaFile, Long userId, String textProvider, String imageProvider, Integer numberOfVariations, String language, List<String> adLinks, String extractedContent, String mediaFileUrl, com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, String adStyle, Long personaId, List<String> trendingKeywords, List<AdGenerationRequest.VariationProviderConfig> variationConfigs, boolean enforceLengthLimits) {
         log.info("Creating ad with AI content for user ID: {}, personaId: {}, trending keywords: {}", userId, personaId, trendingKeywords != null ? trendingKeywords.size() : 0);
 
         User user = userRepository.findById(userId)
@@ -203,7 +203,7 @@ public class AdService {
         }
         
         // Lưu ad trước để đảm bảo có ID
-        ad = saveAdWithCreativeValidation(ad);
+        ad = saveAdWithCreativeValidation(ad, enforceLengthLimits);
         log.info("Saved ad with ID: {}", ad.getId());
         
         // Flush để đảm bảo ad được lưu hoàn toàn
@@ -214,7 +214,7 @@ public class AdService {
         log.info("Retrieved managed ad with ID: {}", ad.getId());
 
         // Generate AI content - pass persona and trending keywords (Phase 1 & 2)
-        List<AdContent> contents = aiContentService.generateAdContent(ad, prompt, mediaFile, textProvider, imageProvider, numberOfVariations, language, adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment, userSelectedPersona, trendingKeywords, variationConfigs);
+        List<AdContent> contents = aiContentService.generateAdContent(ad, prompt, mediaFile, textProvider, imageProvider, numberOfVariations, language, adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment, userSelectedPersona, trendingKeywords, variationConfigs, true);
         // Nếu có contents được tạo, copy nội dung đầu tiên vào ad
         if (!contents.isEmpty()) {
             AdContent firstContent = contents.get(0);
@@ -231,7 +231,7 @@ public class AdService {
             adContentRepository.save(firstContent);
 
             // Save updated ad
-            ad = saveAdWithCreativeValidation(ad);
+            ad = saveAdWithCreativeValidation(ad, enforceLengthLimits);
         }
         
         Map<String, Object> result = new HashMap<>();
@@ -514,7 +514,7 @@ public class AdService {
                                                  String textProvider, String imageProvider, Integer numberOfVariations,
                                                  String language, List<String> adLinks,
                                                  String extractedContent, String mediaFileUrl,
-                                                 com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, Long personaId, List<String> trendingKeywords, List<AdGenerationRequest.VariationProviderConfig> variationConfigs) {
+                                                 com.fbadsautomation.model.FacebookCTA callToAction, String websiteUrl, List<AdGenerationRequest.LeadFormQuestion> leadFormQuestions, com.fbadsautomation.dto.AudienceSegmentRequest audienceSegment, Long personaId, List<String> trendingKeywords, List<AdGenerationRequest.VariationProviderConfig> variationConfigs, boolean enforceLengthLimits) {
         log.info("Generating preview content for ad: {}, personaId: {}, trending keywords: {}", tempAd.getName(), personaId, trendingKeywords != null ? trendingKeywords.size() : 0);
 
         // Phase 1: Fetch user-selected persona if provided
@@ -536,7 +536,7 @@ public class AdService {
         // Generate AI content without saving to database
         List<AdContent> contents = aiContentService.generateAdContent(tempAd, prompt, mediaFile, textProvider,
                                                                      imageProvider, numberOfVariations, language,
-                                                                     adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment, userSelectedPersona, trendingKeywords, variationConfigs);
+                                                                     adLinks, extractedContent, mediaFileUrl, callToAction, audienceSegment, userSelectedPersona, trendingKeywords, variationConfigs, enforceLengthLimits);
         // Set temporary IDs for preview
         for (int i = 0; i < contents.size(); i++) {
             AdContent content = contents.get(i);
@@ -589,6 +589,16 @@ public class AdService {
                                                           List<com.fbadsautomation.dto.AdVariation> selectedVariations,
                                                           List<String> adLinks, String mediaFileUrl,
                                                           String websiteUrl, List<com.fbadsautomation.dto.AdGenerationRequest.LeadFormQuestion> leadFormQuestions, String adStyle) {
+        return createAdWithExistingContent(campaignId, adType, prompt, name, mediaFile, userId, selectedVariations,
+                adLinks, mediaFileUrl, websiteUrl, leadFormQuestions, adStyle, true);
+    }
+
+    public Map<String, Object> createAdWithExistingContent(Long campaignId, String adType, String prompt,
+                                                          String name, MultipartFile mediaFile, Long userId,
+                                                          List<com.fbadsautomation.dto.AdVariation> selectedVariations,
+                                                          List<String> adLinks, String mediaFileUrl,
+                                                          String websiteUrl, List<com.fbadsautomation.dto.AdGenerationRequest.LeadFormQuestion> leadFormQuestions, String adStyle,
+                                                          boolean enforceLengthLimits) {
         log.info("Creating {} separate ads from selected variations for user ID: {}",
             selectedVariations != null ? selectedVariations.size() : 0, userId);
 
@@ -669,7 +679,7 @@ public class AdService {
             ad.setImageUrl(imageUrl);
 
             // Save Ad
-            ad = saveAdWithCreativeValidation(ad);
+            ad = saveAdWithCreativeValidation(ad, enforceLengthLimits);
             log.info("Saved ad {} with ID: {}", createdAds.size() + 1, ad.getId());
             createdAds.add(ad);
 
@@ -688,7 +698,7 @@ public class AdService {
             content.setIsSelected(true);
             content.setCreatedDate(LocalDateTime.now());
 
-            adContentValidator.validateAndTruncate(content);
+            adContentValidator.validateAndTruncate(content, enforceLengthLimits);
             content = adContentRepository.save(content);
             createdContents.add(content);
         }
@@ -712,6 +722,16 @@ public class AdService {
                                                           com.fbadsautomation.dto.AdVariation selectedVariation,
                                                           List<String> adLinks, String mediaFileUrl,
                                                           String websiteUrl, List<com.fbadsautomation.dto.AdGenerationRequest.LeadFormQuestion> leadFormQuestions, String adStyle) {
+        return createAdWithExistingContent(campaignId, adType, prompt, name, mediaFile, userId, selectedVariation,
+                adLinks, mediaFileUrl, websiteUrl, leadFormQuestions, adStyle, true);
+    }
+
+    public Map<String, Object> createAdWithExistingContent(Long campaignId, String adType, String prompt,
+                                                          String name, MultipartFile mediaFile, Long userId,
+                                                          com.fbadsautomation.dto.AdVariation selectedVariation,
+                                                          List<String> adLinks, String mediaFileUrl,
+                                                          String websiteUrl, List<com.fbadsautomation.dto.AdGenerationRequest.LeadFormQuestion> leadFormQuestions, String adStyle,
+                                                          boolean enforceLengthLimits) {
         log.info("Creating ad with existing content for user ID: {} (legacy single variation)", userId);
         
         User user = userRepository.findById(userId)
@@ -762,7 +782,7 @@ public class AdService {
         }
         
         // Lưu ad trước để đảm bảo có ID
-        ad = saveAdWithCreativeValidation(ad);
+        ad = saveAdWithCreativeValidation(ad, enforceLengthLimits);
         log.info("Saved ad with ID: {}", ad.getId());
         
         // Tạo AdContent từ selectedVariation
@@ -784,7 +804,7 @@ public class AdService {
         content.setCreatedDate(LocalDateTime.now());
         
         // Save content
-        adContentValidator.validateAndTruncate(content);
+        adContentValidator.validateAndTruncate(content, enforceLengthLimits);
         content = adContentRepository.save(content);
         // Copy content to ad
         ad.setHeadline(content.getHeadline());
@@ -806,11 +826,15 @@ public class AdService {
      * Centralized save to enforce Facebook creative limits before persisting.
      */
     private Ad saveAdWithCreativeValidation(Ad ad) {
+        return saveAdWithCreativeValidation(ad, true);
+    }
+
+    private Ad saveAdWithCreativeValidation(Ad ad, boolean enforceLengthLimits) {
         if (ad == null) {
             return null;
         }
 
-        boolean modified = adContentValidator.enforceAdLimits(ad);
+        boolean modified = adContentValidator.enforceAdLimits(ad, enforceLengthLimits);
         if (modified) {
             log.info("Normalized creative fields for ad {} to satisfy Facebook export limits", ad.getId());
         }

@@ -51,7 +51,8 @@ public class AsyncAIContentService {
             Long personaId,
             List<String> trendingKeywords,
             String adStyle,
-            List<AdGenerationRequest.VariationProviderConfig> variationConfigs) {              // Issue #6: Ad style
+            List<AdGenerationRequest.VariationProviderConfig> variationConfigs,
+            boolean enforceLengthLimits) {              // Issue #6: Ad style
 
         try {
             errorHandlingService.validateJobExecution(jobId, "content-generation");
@@ -137,7 +138,8 @@ public class AsyncAIContentService {
                 audienceSegment,
                 userSelectedPersona, // Phase 1: User-selected persona
                 trendingKeywords,     // Phase 2: Trending keywords
-                variationConfigs
+                variationConfigs,
+                enforceLengthLimits
             );
 
             asyncJobService.updateJobProgress(jobId, 90, "Processing generated content");
@@ -161,7 +163,7 @@ public class AsyncAIContentService {
 
             asyncJobService.updateJobProgress(jobId, 95, "Validating content");
 
-            List<AdContent> validatedContents = validationService.validateAndFilterContent(contents);
+            List<AdContent> validatedContents = validationService.validateAndFilterContent(contents, enforceLengthLimits);
             if (validatedContents.isEmpty()) {
                 throw new RuntimeException("All generated content was filtered out due to validation failures");
             }

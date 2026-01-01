@@ -110,7 +110,8 @@ public class AsyncAdController {
                 request.getPersonaId(),        // Phase 1: Persona ID
                 request.getTrendingKeywords(), // Phase 2: Trending keywords
                 request.getAdStyle(),          // Issue #6: Ad style
-                request.getVariations()
+                request.getVariations(),
+                !Boolean.TRUE.equals(request.getAllowUnlimitedLength())
             );
 
             return ResponseEntity.status(HttpStatus.ACCEPTED)

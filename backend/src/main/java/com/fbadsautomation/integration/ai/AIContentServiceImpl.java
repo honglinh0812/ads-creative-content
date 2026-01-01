@@ -118,7 +118,8 @@ public class AIContentServiceImpl {
                                                         com.fbadsautomation.model.Campaign campaign,
                                                         com.fbadsautomation.model.AdStyle adStyle,
                                                         com.fbadsautomation.model.Persona userSelectedPersona,
-                                                        List<String> trendingKeywords) {
+                                                        List<String> trendingKeywords,
+                                                        boolean enforceLengthLimits) {
 
         String providerId = (textProvider == null || textProvider.isBlank())
                 ? "openai" : textProvider;
@@ -144,16 +145,22 @@ public class AIContentServiceImpl {
             // Phase 1 & 2: Pass persona and trending keywords
             com.fbadsautomation.model.FacebookCTA cta = callToAction != null ? callToAction : com.fbadsautomation.model.FacebookCTA.LEARN_MORE;
 
-            PromptBuildResult promptResult = enhancePromptWithCampaign(
-                finalPrompt,
-                adType,
-                campaign,
-                adStyle,
-                userSelectedPersona,
-                trendingKeywords,
-                cta,
-                numberOfVariations
-            );
+            PromptBuildResult promptResult;
+            if (isReferenceDrivenPrompt(prompt)) {
+                log.info("[Prompt] Using reference-first prompt without CoT enrichment");
+                promptResult = PromptBuildResult.of(finalPrompt, PromptStrategy.REFERENCE);
+            } else {
+                promptResult = enhancePromptWithCampaign(
+                    finalPrompt,
+                    adType,
+                    campaign,
+                    adStyle,
+                    userSelectedPersona,
+                    trendingKeywords,
+                    cta,
+                    numberOfVariations
+                );
+            }
 
             String enhancedPrompt = promptResult.getPrompt();
             log.info("[Prompt] Strategy={} - Final prompt built ({} chars):\n{}",
@@ -168,7 +175,7 @@ public class AIContentServiceImpl {
                 enhancedPrompt, textProvider, numberOfVariations, language, adLinks, cta);
             contentModerationService.enforceSafety(contents);
 
-            final String imageSubject = deriveImageSubject(prompt);
+            final String imageSubject = deriveImageSubject(prompt, extractedContent);
 
             // Handle images
             if (mediaFileUrl != null && !mediaFileUrl.isBlank()) {
@@ -276,7 +283,7 @@ public class AIContentServiceImpl {
             }
 
             // Validate
-            List<AdContent> validatedContents = validationService.validateAndFilterContent(contents);
+            List<AdContent> validatedContents = validationService.validateAndFilterContent(contents, enforceLengthLimits);
             return validatedContents.isEmpty() ? contents : validatedContents;
 
         } catch (Exception e) {
@@ -349,7 +356,7 @@ public class AIContentServiceImpl {
                 enhancedPrompt, textProvider, numberOfVariations, language, adLinks, cta);
             contentModerationService.enforceSafety(contents);
 
-            final String imageSubject = deriveImageSubject(prompt);
+            final String imageSubject = deriveImageSubject(prompt, extractedContent);
 
             // Handle image URL assignment
             // Priority 1: Use uploaded image from frontend (mediaFileUrl)
@@ -1032,6 +1039,42 @@ public class AIContentServiceImpl {
                ", professional advertising photography, high quality, vibrant colors, eye-catching";
     }
 
+    private String deriveImageSubject(String prompt, String extractedContent) {
+        String productContext = extractBlock(prompt,
+            "Product context (replace the reference product with this):",
+            "\nReference ad",
+            "\n=== ",
+            "\n<<");
+        if (StringUtils.hasText(productContext)) {
+            String candidate = extractMeaningfulLine(productContext);
+            if (candidate != null) {
+                return candidate;
+            }
+        }
+
+        String referenceBlock = extractBlock(prompt,
+            "Reference ad:",
+            "\nProduct context",
+            "\n=== ",
+            "\n<<");
+        if (StringUtils.hasText(referenceBlock)) {
+            String candidate = extractMeaningfulLine(referenceBlock);
+            if (candidate != null) {
+                return candidate;
+            }
+        }
+
+        String sanitizedExtracted = promptSecurityService.sanitizeUserInput(extractedContent);
+        if (StringUtils.hasText(sanitizedExtracted)) {
+            String candidate = extractMeaningfulLine(sanitizedExtracted);
+            if (candidate != null) {
+                return candidate;
+            }
+        }
+
+        return deriveImageSubject(prompt);
+    }
+
     private String deriveImageSubject(String prompt) {
         final String fallback = "premium advertising product hero shot";
         if (prompt == null || prompt.isBlank()) {
@@ -1057,6 +1100,28 @@ public class AIContentServiceImpl {
 
         String fallbackCandidate = extractMeaningfulLine(normalized);
         return fallbackCandidate != null ? fallbackCandidate : fallback;
+    }
+
+    private String extractBlock(String text, String label, String... terminators) {
+        if (!StringUtils.hasText(text) || !StringUtils.hasText(label)) {
+            return null;
+        }
+        int idx = text.indexOf(label);
+        if (idx < 0) {
+            return null;
+        }
+        String after = text.substring(idx + label.length()).trim();
+        int end = after.length();
+        if (terminators != null) {
+            for (String terminator : terminators) {
+                int termIdx = after.indexOf(terminator);
+                if (termIdx >= 0 && termIdx < end) {
+                    end = termIdx;
+                }
+            }
+        }
+        String block = after.substring(0, end).trim();
+        return block.isEmpty() ? null : block;
     }
 
     private String extractMeaningfulLine(String text) {
@@ -1098,7 +1163,17 @@ public class AIContentServiceImpl {
     private enum PromptStrategy {
         CHAIN_OF_THOUGHT,
         MULTI_STAGE,
-        LEGACY
+        LEGACY,
+        REFERENCE
+    }
+
+    private boolean isReferenceDrivenPrompt(String prompt) {
+        if (!StringUtils.hasText(prompt)) {
+            return false;
+        }
+        return prompt.contains("Reference ad:")
+            || prompt.contains("Product context (replace the reference product with this):")
+            || prompt.contains("Mirror the reference ad's tone, structure, and formatting");
     }
 
     private static class PromptBuildResult {
