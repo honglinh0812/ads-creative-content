@@ -131,7 +131,7 @@
               type="primary"
               size="large"
               :loading="extracting"
-              :disabled="!validateStep1()"
+              :disabled="!validateStep1() || extracting"
               @click="handleNextFromStep1"
             >
               {{ $t('adLearn.step1.next') }}
@@ -698,9 +698,9 @@ export default {
       this.selectedCampaign = this.campaigns.find(c => c.id === id) || null
     },
     validateStep1() {
-      return this.formData.campaignId &&
-        this.formData.name &&
-        this.formData.referenceLink
+      const hasCampaign = this.formData.campaignId !== null && this.formData.campaignId !== undefined
+      const hasReference = String(this.formData.referenceLink || '').trim().length > 0
+      return hasCampaign && hasReference
     },
     validateStep2() {
       return this.formData.textProvider &&
