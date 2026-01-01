@@ -2323,6 +2323,22 @@
         "saveAdFailed": "Không thể lưu quảng cáo"
       }
     },
+    "referenceModal": {
+      "title": "Đang phân tích quảng cáo tham khảo",
+      "loadingHeadline": "Đang trích xuất nội dung",
+      "loadingMessage": "Hệ thống đang lấy quảng cáo và trích xuất nội dung. Vui lòng chờ.",
+      "successHeadline": "Đã sẵn sàng",
+      "successMessage": "Đã trích xuất nội dung thành công. Hãy tiếp tục chọn AI.",
+      "errorHeadline": "Không thể lấy quảng cáo",
+      "errorMessage": "Không thể lấy quảng cáo. Vui lòng chọn link tham khảo hợp lệ khác.",
+      "continue": "Tiếp tục sang bước 2",
+      "tryAgain": "Thử lại",
+      "status": {
+        "loading": "Đang xử lý",
+        "success": "Thành công",
+        "error": "Thất bại"
+      }
+    },
     "prompt": {
       "referenceStyle": "Viết lại nội dung theo phong cách/thông điệp ở trên nhưng điều chỉnh phù hợp với sản phẩm/dịch vụ của người dùng.",
       "referenceLinkOnly": "Học cách trình bày từ link tham khảo: {link}. Không sao chép nguyên văn nội dung.",

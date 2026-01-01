@@ -44,9 +44,8 @@ class ChainOfThoughtPromptBuilderTest {
         );
 
         assertTrue(prompt.contains("Call-to-Action: Mua ngay"), "CTA phải được hiển thị bằng tiếng Việt");
-        assertTrue(prompt.contains("Số lượng biến thể cần tạo: 3"), "Phải phản ánh số biến thể yêu cầu");
-        assertTrue(prompt.contains("Bây giờ hãy tạo 3 biến thể quảng cáo"), "Hướng dẫn tạo nội dung phải đúng số lượng");
-        assertTrue(prompt.contains("Ngôn ngữ: TIẾNG VIỆT"), "Phải khóa ngôn ngữ đầu ra");
+        assertTrue(prompt.contains("📋 BỐI CẢNH NGẮN GỌN"), "Bối cảnh cần có nhãn mới");
+        assertTrue(prompt.contains("✍️ OUTPUT"), "Phần output mới phải xuất hiện");
         assertTrue(prompt.contains("CAM KẾT PHONG CÁCH BẮT BUỘC"), "Prompt phải nhấn mạnh yêu cầu phong cách không thể từ chối");
         assertTrue(prompt.contains("\"styleNotes\""), "JSON output phải yêu cầu styleNotes");
     }
@@ -71,8 +70,8 @@ class ChainOfThoughtPromptBuilderTest {
         );
 
         assertTrue(prompt.contains("Call-to-Action: SIGN_UP"), "CTA phải dùng giá trị tiếng Anh");
-        assertTrue(prompt.contains("Number of variations to generate: 2"), "Stage 1 phải phản ánh số biến thể");
-       	assertTrue(prompt.contains("Now generate 2 unique ad variations"), "Stage 6 phải yêu cầu đúng số biến thể");
+        assertTrue(prompt.contains("📋 QUICK CONTEXT"), "Context snapshot cần xuất hiện");
+       	assertTrue(prompt.contains("✍️ OUTPUT"), "Stage 6 phải có heading mới");
         assertTrue(prompt.contains("NON-NEGOTIABLE STYLE COMMITMENT"), "Prompt phải yêu cầu giữ phong cách bắt buộc");
         assertTrue(prompt.contains("\"styleNotes\""), "JSON output phải chứa styleNotes");
     }

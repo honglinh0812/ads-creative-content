@@ -11,8 +11,6 @@ import com.fbadsautomation.dto.ReferenceStyleProfile;
 import com.fbadsautomation.exception.ApiException;
 import com.fbadsautomation.model.Ad;
 import com.fbadsautomation.model.AdContent;
-import com.fbadsautomation.model.AdStyle;
-import com.fbadsautomation.model.AdType;
 import com.fbadsautomation.model.AsyncJobStatus;
 import com.fbadsautomation.model.FacebookCTA;
 import com.fbadsautomation.util.ValidationMessages.Language;
@@ -40,7 +38,6 @@ import java.util.regex.Pattern;
 public class AdImprovementService {
 
     private final MetaAdLibraryService metaAdLibraryService;
-    private final ChainOfThoughtPromptBuilder chainOfThoughtPromptBuilder;
     private final AdService adService;
     private final AsyncJobService asyncJobService;
     private final AsyncAIContentService asyncAIContentService;
@@ -389,29 +386,37 @@ public class AdImprovementService {
     }
 
     private String buildPromptFromRequest(AdImprovementRequest request, Language language) {
-        AdType adType = adService.mapFrontendAdTypeToEnum(request.getAdType());
-        AdStyle adStyle = parseAdStyle(request.getCreativeStyle());
-        boolean enforceCharacterLimits = !Boolean.TRUE.equals(request.getAllowUnlimitedLength());
+        String referenceContent = StringUtils.hasText(request.getReferenceContent())
+                ? request.getReferenceContent()
+                : "";
+        String productContext = StringUtils.hasText(request.getProductDescription())
+                ? request.getProductDescription()
+                : "";
+        int variations = request.getNumberOfVariations() != null ? request.getNumberOfVariations() : 3;
+        String languageLabel = language == Language.VIETNAMESE ? "Vietnamese" : "English";
 
-        ChainOfThoughtPromptBuilder.ReferenceMetrics referenceMetrics = buildReferenceMetrics(request);
-        ReferenceStyleProfile styleProfile = resolveStyleProfile(request);
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("Write ").append(variations).append(" ad variations in ").append(languageLabel).append(". ");
+        prompt.append("Mirror the reference ad's tone, structure, language and formatting. ");
+        if (request.getCallToAction() != null) {
+            prompt.append("Use CTA: ").append(request.getCallToAction().name()).append(". ");
+        }
 
-        return chainOfThoughtPromptBuilder.buildCoTPrompt(
-                StringUtils.hasText(request.getProductDescription()) ? request.getProductDescription() : "N/A",
-                null,
-                adStyle,
-                null,
-                request.getTrendingKeywords(),
-                language,
-                request.getCallToAction(),
-                adType,
-                request.getNumberOfVariations(),
-                request.getReferenceContent(),
-                request.getReferenceLink(),
-                enforceCharacterLimits,
-                referenceMetrics,
-                styleProfile
-        );
+        if (StringUtils.hasText(referenceContent)) {
+            prompt.append("\nReference ad:\n").append(referenceContent);
+        } else if (StringUtils.hasText(productContext)) {
+            prompt.append("\nReference ad:\n").append(productContext);
+        }
+
+        if (StringUtils.hasText(productContext)) {
+            prompt.append("\n\nProduct context (replace the reference product with this):\n")
+                    .append(productContext);
+        }
+
+        if (prompt.length() > 3000) {
+            log.warn("Prompt length {} chars exceeds 3000; consider trimming reference content", prompt.length());
+        }
+        return prompt.toString();
     }
 
     private Language resolveLanguageEnum(String requestedLanguage) {
@@ -423,46 +428,6 @@ public class AdImprovementService {
 
     private String toLanguageCode(Language language) {
         return language == Language.VIETNAMESE ? "vi" : "en";
-    }
-
-    private ChainOfThoughtPromptBuilder.ReferenceMetrics buildReferenceMetrics(AdImprovementRequest request) {
-        Integer wordCount = null;
-        Integer sentenceCount = null;
-        Boolean containsCTA = null;
-        Boolean containsPrice = null;
-
-        if (request.getReferenceInsights() != null) {
-            AdImprovementRequest.ReferenceInsights insights = request.getReferenceInsights();
-            wordCount = insights.getWordCount();
-            sentenceCount = insights.getSentenceCount();
-            containsCTA = insights.getContainsCallToAction();
-            containsPrice = insights.getContainsPrice();
-        } else if (StringUtils.hasText(request.getReferenceContent())) {
-            ReferenceAnalysisResponse.ReferenceInsights computedInsights = buildInsights(request.getReferenceContent());
-            wordCount = computedInsights.getWordCount();
-            sentenceCount = computedInsights.getSentenceCount();
-            containsCTA = computedInsights.isContainsCallToAction();
-            containsPrice = computedInsights.isContainsPrice();
-        }
-
-        if (wordCount == null && sentenceCount == null && containsCTA == null && containsPrice == null) {
-            return null;
-        }
-
-        return new ChainOfThoughtPromptBuilder.ReferenceMetrics(wordCount, sentenceCount, containsCTA, containsPrice);
-    }
-
-    private ReferenceStyleProfile resolveStyleProfile(AdImprovementRequest request) {
-        if (request.getReferenceStyle() != null) {
-            return request.getReferenceStyle();
-        }
-        if (StringUtils.hasText(request.getReferenceContent())) {
-            FacebookCTA fallbackCTA = request.getCallToAction() != null
-                    ? request.getCallToAction()
-                    : detectCallToAction(request.getReferenceContent());
-            return analyzeStyleProfile(request.getReferenceContent(), fallbackCTA);
-        }
-        return null;
     }
 
     private AdGenerationResponse.AdVariation convertToAdVariation(AdContent content, String languageCode) {
@@ -793,15 +758,4 @@ public class AdImprovementService {
         return score;
     }
 
-    private AdStyle parseAdStyle(String adStyle) {
-        if (!StringUtils.hasText(adStyle)) {
-            return null;
-        }
-        try {
-            return AdStyle.valueOf(adStyle.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid ad style provided: {}", adStyle);
-            return null;
-        }
-    }
 }

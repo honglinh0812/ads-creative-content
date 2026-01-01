@@ -111,11 +111,11 @@ public class ChainOfThoughtPromptBuilder {
         boolean isVietnamese = (language == Language.VIETNAMESE);
         StringBuilder prompt = new StringBuilder();
 
-        // Stage 1: Task Understanding
-        prompt.append(buildStage1_TaskUnderstanding(userPrompt, adType, numberOfVariations, isVietnamese));
+        // Stage 1: Context Snapshot (includes target audience)
+        prompt.append(buildStage1_ContextSnapshot(userPrompt, adType, numberOfVariations, targetAudience, isVietnamese));
 
-        // Stage 2: Audience Analysis
-        prompt.append(buildStage2_AudienceAnalysis(persona, targetAudience, isVietnamese));
+        // Stage 2: Persona Notes (optional)
+        prompt.append(buildStage2_PersonaHighlight(persona, isVietnamese));
 
         // Stage 3: Creative Direction
         prompt.append(buildStage3_CreativeDirection(
@@ -154,72 +154,65 @@ public class ChainOfThoughtPromptBuilder {
     }
 
     /**
-     * Stage 1: Task Understanding
-     * Clearly define what we're asking the AI to do
+     * Stage 1: Context Snapshot
+     * Condense product, ad type, variations, target audience.
      */
-    private String buildStage1_TaskUnderstanding(String userPrompt, AdType adType, int numberOfVariations, boolean isVietnamese) {
+    private String buildStage1_ContextSnapshot(String userPrompt,
+                                               AdType adType,
+                                               int numberOfVariations,
+                                               String targetAudience,
+                                               boolean isVietnamese) {
         String adTypeName = mapAdTypeToDisplayName(adType, isVietnamese);
-
+        String audience = StringUtils.hasText(targetAudience)
+                ? targetAudience.trim()
+                : (isVietnamese ? "Chưa xác định" : "Not specified");
         if (isVietnamese) {
             return String.format("""
-                NHIỆM VỤ
-                Bạn đang tạo chiến dịch quảng cáo Facebook cho:
-                %s
+                📋 BỐI CẢNH NGẮN GỌN
+                • Sản phẩm: %s
+                • Loại quảng cáo: %s · %d biến thể
+                • Đối tượng: %s
 
-                Loại quảng cáo: %s
-                Số lượng biến thể cần tạo: %d
-
-                """, userPrompt, adTypeName, numberOfVariations);
-        } else {
-            return String.format("""
-                TASK
-                You are creating a Facebook ad campaign for:
-                %s
-
-                Ad Type: %s
-                Number of variations to generate: %d
-
-                """, userPrompt, adTypeName, numberOfVariations);
+                """, userPrompt, adTypeName, numberOfVariations, audience);
         }
+        return String.format("""
+            📋 QUICK CONTEXT
+            • Product: %s
+            • Ad type: %s · %d variations
+            • Audience: %s
+
+            """, userPrompt, adTypeName, numberOfVariations, audience);
     }
 
     /**
-     * Stage 2: Audience Analysis
-     * Provide detailed persona and campaign audience information
+     * Stage 2: Persona highlight (optional)
      */
-    private String buildStage2_AudienceAnalysis(Persona persona, String targetAudience, boolean isVietnamese) {
-        StringBuilder stage = new StringBuilder();
-
-        if (isVietnamese) {
-            stage.append("👥 ĐỐI TƯỢNG MỤC TIÊU\n\n");
-
-            if (targetAudience != null && !targetAudience.trim().isEmpty()) {
-                stage.append("Đối tượng chiến dịch:\n");
-                stage.append(targetAudience).append("\n\n");
-            }
-
-            if (persona != null) {
-                stage.append("Hồ sơ Persona:\n");
-                stage.append(persona.toPromptStringVietnamese());
-                stage.append("\n");
-            }
-        } else {
-            stage.append("👥 TARGET AUDIENCE\n\n");
-
-            if (targetAudience != null && !targetAudience.trim().isEmpty()) {
-                stage.append("Campaign Audience:\n");
-                stage.append(targetAudience).append("\n\n");
-            }
-
-            if (persona != null) {
-                stage.append("Persona Profile:\n");
-                stage.append(persona.toPromptString());
-                stage.append("\n");
-            }
+    private String buildStage2_PersonaHighlight(Persona persona, boolean isVietnamese) {
+        if (persona == null) {
+            return "";
         }
+        if (isVietnamese) {
+            return String.format("""
+                👤 Ghi chú persona
+                • Độ tuổi: %s
+                • Pain points: %s
+                • Kết quả mong muốn: %s
 
-        stage.append("\n");
-        return stage.toString();
+                """,
+                    persona.getAge() != null ? persona.getAge() : "N/A",
+                    formatList(persona.getPainPoints()),
+                    StringUtils.hasText(persona.getDesiredOutcome()) ? persona.getDesiredOutcome() : "N/A");
+        }
+        return String.format("""
+            👤 Persona highlights
+            • Age: %s
+            • Pain points: %s
+            • Desired outcome: %s
+
+            """,
+                persona.getAge() != null ? persona.getAge() : "N/A",
+                formatList(persona.getPainPoints()),
+                StringUtils.hasText(persona.getDesiredOutcome()) ? persona.getDesiredOutcome() : "N/A");
     }
 
     private String buildReferenceMirrorCue(ReferenceMetrics referenceMetrics, boolean isVietnamese, boolean allowLongForm) {
@@ -296,42 +289,10 @@ public class ChainOfThoughtPromptBuilder {
                                                  ReferenceStyleProfile styleProfile) {
         StringBuilder stage = new StringBuilder();
 
-        if (isVietnamese) {
-            stage.append("🎨 HƯỚNG SÁNG TẠO\n\n");
-
-            if (adStyle != null) {
-                stage.append(adStyle.getStyleInstruction(true)).append("\n\n");
-            }
-
-            if (trendingKeywords != null && !trendingKeywords.isEmpty()) {
-                stage.append("💡 TỪ KHÓA TRENDING\n");
-                stage.append("Cân nhắc tích hợp các từ khóa trending này để tăng khả năng khám phá:\n");
-                trendingKeywords.forEach(keyword -> stage.append("- ").append(keyword).append("\n"));
-                stage.append("\n");
-            }
-            appendReferenceSection(stage, referenceContent, referenceLink, baseDescription, true);
-            appendStyleProfile(stage, styleProfile, true);
-            appendStyleCommitment(stage, true);
-            stage.append(buildReferenceMirrorCue(referenceMetrics, true, allowLongForm));
-        } else {
-            stage.append("🎨 CREATIVE DIRECTION\n\n");
-
-            if (adStyle != null) {
-                stage.append(adStyle.getStyleInstruction(false)).append("\n\n");
-            }
-
-            if (trendingKeywords != null && !trendingKeywords.isEmpty()) {
-                stage.append("💡 TRENDING INSIGHTS\n");
-                stage.append("Consider incorporating these trending keywords to increase discoverability:\n");
-                trendingKeywords.forEach(keyword -> stage.append("- ").append(keyword).append("\n"));
-                stage.append("\n");
-            }
-            appendReferenceSection(stage, referenceContent, referenceLink, baseDescription, false);
-            appendStyleProfile(stage, styleProfile, false);
-            appendStyleCommitment(stage, false);
-            stage.append(buildReferenceMirrorCue(referenceMetrics, false, allowLongForm));
-        }
-
+        appendStyleBlueprint(stage, adStyle, trendingKeywords, styleProfile, isVietnamese);
+        appendStyleCommitment(stage, isVietnamese);
+        appendReferenceExcerpt(stage, referenceContent, referenceLink, baseDescription, isVietnamese);
+        stage.append(buildReferenceMirrorCue(referenceMetrics, isVietnamese, allowLongForm));
         return stage.toString();
     }
 
@@ -347,87 +308,23 @@ public class ChainOfThoughtPromptBuilder {
             ? (isVietnamese ? callToAction.getDisplayNameVietnamese() : callToAction.name())
             : (isVietnamese ? "Không xác định" : "Not specified");
 
+        StringBuilder stage = new StringBuilder();
         if (isVietnamese) {
-            StringBuilder stage = new StringBuilder("""
-                📏 YÊU CẦU FACEBOOK (NGHIÊM NGẶT - BẮT BUỘC TUÂN THỦ)
-
-                """);
-
-            if (enforceCharacterLimits) {
-                stage.append("""
-                ⚠️ GIỚI HẠN KÝ TỰ - TUYỆT ĐỐI KHÔNG ĐƯỢC VƯỢT QUÁ:
-                - Tiêu đề (headline): NGHIÊM NGẶT 40 ký tự
-                  * Đếm TỪNG ký tự kể cả dấu cách và dấu câu
-                  * Nếu vượt quá 40 ký tự sẽ BỊ TỪ CHỐI bởi Facebook
-                  * Ví dụ HỢP LỆ (39 chars): "Giảm 50%% - Mua ngay hôm nay!"
-                  * Ví dụ KHÔNG HỢP LỆ (42 chars): "Giảm giá lớn 50%% - Đừng bỏ lỡ!"
-
-                - Mô tả (description): NGHIÊM NGẶT 125 ký tự
-                - Văn bản chính (primaryText): NGHIÊM NGẶT 1000 ký tự
-
-                """);
-            } else {
-                stage.append("""
-                ✒️ KHÔNG GIỚI HẠN ĐỘ DÀI:
-                - Được phép viết dài, kể chuyện chi tiết giống quảng cáo tham chiếu.
-                - Ưu tiên nhiều câu, mô tả giàu cảm xúc và cụ thể.
-
-                """);
-            }
-
-            stage.append(String.format("""
-                Tuân thủ chính sách:
-                - Không dùng từ cấm: "miễn phí", "đảm bảo", "kỳ diệu", "click vào đây", "mua ngay", "gây sốc"
-                - Không cường điệu, phóng đại
-                - Không ngôn ngữ phân biệt đối xử
-                - Không so sánh trước/sau nếu không có bằng chứng
-
-                Call-to-Action: %s
-                Ngôn ngữ: TIẾNG VIỆT ← QUAN TRỌNG: Output PHẢI 100%% tiếng Việt, KHÔNG được lẫn tiếng Anh
-
-                """, ctaDisplay));
-            return stage.toString();
+            stage.append("📏 RÀNG BUỘC FACEBOOK\n");
+            stage.append(enforceCharacterLimits
+                    ? "- Headline ≤40 ký tự · Description ≤125 · Primary ≤1000.\n"
+                    : "- Có thể kể chuyện dài miễn đúng phong cách.\n");
+            stage.append("- Tránh từ cấm, output 100% tiếng Việt, CTA: ").append(ctaDisplay).append("\n\n");
+            stage.append("<<POLICY_REMINDER>>Không được gây hiểu nhầm, phân biệt đối xử hoặc lặp lại thương hiệu/ưu đãi trong mẫu.<<END>>\n\n");
         } else {
-            StringBuilder stage = new StringBuilder("""
-                📏 FACEBOOK REQUIREMENTS (STRICT - MANDATORY COMPLIANCE)
-
-                """);
-
-            if (enforceCharacterLimits) {
-                stage.append("""
-                ⚠️ CHARACTER LIMITS - ABSOLUTELY MUST NOT EXCEED:
-                - Headline: STRICTLY 40 characters
-                  * Count EVERY character including spaces and punctuation
-                  * Exceeding 40 characters will be REJECTED by Facebook
-                  * VALID example (39 chars): "Save 50%% - Shop Today Limited Time"
-                  * INVALID example (42 chars): "Big Sale 50%% Off - Don't Miss Out Now!"
-
-                - Description: STRICTLY 125 characters
-                - Primary Text: STRICTLY 1000 characters
-
-                """);
-            } else {
-                stage.append("""
-                ✒️ NO LENGTH CAP:
-                - Feel free to write multi-sentence headlines/primary text mirroring the reference pacing.
-                - Lean into storytelling and sensory description.
-
-                """);
-            }
-
-            stage.append(String.format("""
-                Policy Compliance:
-                - No prohibited words: "free", "guaranteed", "miracle", "click here", "buy now", "shocking"
-                - No exaggerated claims
-                - No discriminatory language
-                - No before/after comparisons without disclaimers
-
-                Call-to-Action: %s
-                Language: ENGLISH ← CRITICAL: Output MUST be 100%% English, NO Vietnamese mixed in
-
-                """, ctaDisplay));
-            return stage.toString();
+            stage.append("📏 FACEBOOK GUARDRAILS\n");
+            stage.append(enforceCharacterLimits
+                    ? "- Headline ≤40 chars · Description ≤125 · Primary ≤1000.\n"
+                    : "- Long-form storytelling allowed if tone matches sample.\n");
+            stage.append("- Avoid banned phrases, keep output 100% English, CTA: ").append(ctaDisplay).append("\n\n");
+            stage.append("<<POLICY_REMINDER>>No misleading claims, discriminatory wording, or reuse of reference brands/offers.<<END>>\n\n");
         }
+        return stage.toString();
     }
 
     /**
@@ -439,179 +336,22 @@ public class ChainOfThoughtPromptBuilder {
                                                 boolean isVietnamese,
                                                 boolean enforceCharacterLimits,
                                                 boolean hasStyleProfile) {
-        if (!enforceCharacterLimits) {
-            if (isVietnamese) {
-                return """
-                🧠 GỢI Ý NHANH
-
-                - Bắt đầu bằng 1 câu mở đầu giống nhịp điệu quảng cáo tham chiếu (nêu vấn đề + lợi ích).
-                - Triển khai 2-3 câu thân bài kể chuyện tự nhiên, nêu cảm xúc và ưu đãi cụ thể của sản phẩm này.
-                - Kết thúc bằng CTA rõ ràng, thúc đẩy hành động tương tự tinh thần quảng cáo mẫu.
-                - Dù sản phẩm thuộc lĩnh vực khác, không được từ chối việc mô phỏng phong cách quảng cáo tham chiếu.
-
-                """;
-            } else {
-                return """
-                🧠 QUICK CREATIVE REMINDER
-
-                - Open with a hook that mirrors the reference cadence (problem + promise).
-                - Write 2-3 body sentences packed with concrete benefits and sensory details from the current offer.
-                - Close with a decisive CTA that channels the urgency/tempo of the reference ad.
-                - Even if the product category changes, never refuse to mimic the reference style.
-
-                """;
-            }
-        }
-
         if (isVietnamese) {
-            StringBuilder stage = new StringBuilder("""
-                🧠 QUY TRÌNH SUY LUẬN
+            return """
+            🧠 LỘ TRÌNH VIẾT
+            1. Hook: Lặp lại cảm giác lễ hội + emoji như quảng cáo mẫu (không được từ chối vì khác ngành).
+            2. Thân bài: 2-3 câu kể chuyện nhấn mạnh lợi ích sản phẩm hiện tại nhưng giữ nhịp câu/emoji tương tự.
+            3. CTA: Khép lại bằng lời kêu gọi cùng năng lượng tươi vui đó.
 
-                Trước khi tạo quảng cáo, hãy suy nghĩ từng bước:
-
-                1. HIỂU PERSONA
-                """);
-
-            if (persona != null) {
-                stage.append("   - Các pain points chính là gì? ");
-                if (persona.getPainPoints() != null && !persona.getPainPoints().isEmpty()) {
-                    stage.append(String.join(", ", persona.getPainPoints()));
-                }
-                stage.append("\n");
-
-                if (persona.getDesiredOutcome() != null && !persona.getDesiredOutcome().isEmpty()) {
-                    stage.append("   - Kết quả mong muốn: ").append(persona.getDesiredOutcome()).append("\n");
-                }
-
-                if (persona.getTone() != null) {
-                    stage.append("   - Giọng điệu phù hợp: ").append(persona.getTone()).append("\n");
-                }
-            } else {
-                stage.append("   - Hiểu rõ đối tượng mục tiêu và nhu cầu của họ\n");
-            }
-
-            stage.append("""
-
-                2. PHÂN TÍCH GIÁ TRỊ ĐỀ XUẤT
-                   - Sản phẩm/dịch vụ này giải quyết pain points như thế nào?
-                   - Lợi ích độc đáo là gì?
-                   - Cảm xúc nào cần kích hoạt?
-
-                3. ÁP DỤNG HƯỚNG SÁNG TẠO
-                """);
-
-            if (adStyle != null) {
-                stage.append("   - Làm thế nào để phù hợp với phong cách ").append(adStyle.name()).append("?\n");
-            } else {
-                stage.append("   - Phong cách nào phù hợp nhất với đối tượng?\n");
-            }
-            if (hasStyleProfile) {
-                stage.append("   - Ghi chú phong cách tham chiếu đã được cung cấp, hãy nhắc lại câu hỏi: \"Tôi đã dùng hook, emoji, nhịp câu giống mẫu chưa?\"\n");
-            }
-
-            stage.append("""
-                   - Từ khóa trending nào khớp tự nhiên?
-                   - Tone/ngôn ngữ nào phù hợp nhất?
-
-                4. ĐẢM BẢO TUÂN THỦ
-                """);
-
-            if (enforceCharacterLimits) {
-                stage.append("                   - Có tuân thủ giới hạn ký tự không?\n");
-            }
-
-            stage.append("""
-                   - Có tránh từ cấm không?
-                   - Có 100% tiếng Việt không?
-                   - Call-to-action có rõ ràng không?
-
-               5. TỐI ƯU HÓA HIỆU SUẤT
-                  - Tiêu đề có thu hút chú ý không?
-                  - Mô tả có tạo tò mò không?
-                  - Văn bản chính có xây dựng niềm tin và kêu gọi hành động không?
-
-                6. CAM KẾT PHONG CÁCH
-                   - Luôn rà soát để chắc chắn nhịp câu, icon, mức độ cảm xúc trùng với quảng cáo tham chiếu.
-                   - KHÔNG ĐƯỢC TỪ CHỐI yêu cầu vì khác ngành hàng; chỉ được thay đổi dữ kiện sản phẩm.
-
-                """);
-
-            return stage.toString();
-        } else {
-            StringBuilder stage = new StringBuilder("""
-                🧠 CHAIN-OF-THOUGHT REASONING
-
-                Before generating the ad, think step-by-step:
-
-                1. UNDERSTAND THE PERSONA
-                """);
-
-            if (persona != null) {
-                stage.append("   - What are their main pain points? ");
-                if (persona.getPainPoints() != null && !persona.getPainPoints().isEmpty()) {
-                    stage.append(String.join(", ", persona.getPainPoints()));
-                }
-                stage.append("\n");
-
-                if (persona.getDesiredOutcome() != null && !persona.getDesiredOutcome().isEmpty()) {
-                    stage.append("   - Desired outcome: ").append(persona.getDesiredOutcome()).append("\n");
-                }
-
-                if (persona.getTone() != null) {
-                    stage.append("   - Tone that resonates: ").append(persona.getTone()).append("\n");
-                }
-            } else {
-                stage.append("   - Understand target audience and their needs\n");
-            }
-
-            stage.append("""
-
-                2. ANALYZE THE VALUE PROPOSITION
-                   - How does this product/service solve their pain points?
-                   - What unique benefits does it offer?
-                   - What emotional triggers should we use?
-
-                3. APPLY CREATIVE DIRECTION
-                """);
-
-            if (adStyle != null) {
-                stage.append("   - How can we match the ").append(adStyle.name()).append(" style?\n");
-            } else {
-                stage.append("   - Which style best suits the audience?\n");
-            }
-            if (hasStyleProfile) {
-                stage.append("   - Reference style cues are provided; confirm the hook, emoji, and pacing mirror the sample.\n");
-            }
-
-            stage.append("""
-                   - Which trending keywords fit naturally?
-                   - What tone/language best suits the audience?
-
-                4. ENSURE COMPLIANCE
-                """);
-
-            if (enforceCharacterLimits) {
-                stage.append("                   - Are character limits respected?\n");
-            }
-
-            stage.append("""
-                   - Are prohibited words avoided?
-                   - Is the language 100% English?
-                   - Is the call-to-action clear?
-
-               5. OPTIMIZE FOR PERFORMANCE
-                  - Is the headline attention-grabbing?
-                  - Does the description create curiosity?
-                  - Does the primary text build trust and drive action?
-
-                6. STYLE TRIAGE (MANDATORY)
-                   - Double-check cadence, emoji usage, and storytelling tempo match the reference.
-                   - NEVER refuse the task because the product differs—the style mirroring is still required.
-
-                """);
-
-            return stage.toString();
+            """;
         }
+        return """
+        🧠 WRITING FLOW
+        1. Hook: Recreate the celebratory emoji-led opening (refusal is not allowed even if category differs).
+        2. Body: 2-3 upbeat sentences swapping in the new product details but keeping the same rhythm.
+        3. CTA: Close with a matching call-to-action tone.
+
+        """;
     }
 
     /**
@@ -624,120 +364,92 @@ public class ChainOfThoughtPromptBuilder {
                                                      boolean enforceCharacterLimits,
                                                      ReferenceMetrics referenceMetrics,
                                                      boolean hasStyleProfile) {
-        String headlineConstraint = "";
-        String descriptionConstraint = "";
-        String primaryConstraint = "";
-        String depthRequirement = "";
-        String mirrorLengthNote = "";
-        String styleReminder = hasStyleProfile
-                ? ""
-                : (isVietnamese
-                    ? " (hãy dựa vào phần phong cách phía trên)"
-                    : " (lean on the reference cues above)");
         Integer guidedSentences = getGuidedSentenceCount(referenceMetrics, !enforceCharacterLimits);
         Integer guidedWords = getGuidedWordCount(referenceMetrics, !enforceCharacterLimits);
-
-        if (enforceCharacterLimits) {
-            if (isVietnamese) {
-                headlineConstraint = " (tối đa 40 ký tự)";
-                descriptionConstraint = " (tối đa 125 ký tự)";
-                primaryConstraint = " (tối đa 1000 ký tự)";
-            } else {
-                headlineConstraint = " (max 40 characters)";
-                descriptionConstraint = " (max 125 characters)";
-                primaryConstraint = " (max 1000 characters)";
-            }
-        } else {
-            if (isVietnamese) {
-                headlineConstraint = " (linh hoạt, có thể dài nếu vẫn súc tích)";
-                descriptionConstraint = " (linh hoạt, nhấn mạnh cảm xúc)";
-                primaryConstraint = " (ít nhất 2-3 câu kể chuyện chi tiết)";
-                depthRequirement = "\n5. Độ dài: Viết tự nhiên, có thể dài bằng hoặc hơn quảng cáo tham khảo.";
-            } else {
-                headlineConstraint = " (flexible length, keep it punchy)";
-                descriptionConstraint = " (flexible, focus on intrigue)";
-                primaryConstraint = " (minimum 2-3 rich sentences)";
-                depthRequirement = "\n5. Length: Match or exceed the reference with natural multi-sentence storytelling.";
-            }
-
-            if (guidedSentences != null || guidedWords != null) {
-                mirrorLengthNote = isVietnamese ? "\n🎯 Gợi ý độ dài: " : "\n🎯 Target length: ";
-                if (guidedSentences != null) {
-                    mirrorLengthNote += isVietnamese
-                            ? String.format("~%d câu", guidedSentences)
-                            : String.format("~%d sentences", guidedSentences);
-                }
-                if (guidedWords != null) {
-                    if (guidedSentences != null) {
-                        mirrorLengthNote += isVietnamese ? " / " : " / ";
-                    }
-                    mirrorLengthNote += isVietnamese
-                            ? String.format("~%d từ", guidedWords)
-                            : String.format("~%d words", guidedWords);
-                }
-                mirrorLengthNote += ".\n";
-            }
+        String lengthHint = "";
+        if (!enforceCharacterLimits && (guidedSentences != null || guidedWords != null)) {
+            lengthHint = isVietnamese
+                    ? String.format("• Độ dài mục tiêu: ~%s câu / ~%s từ.%n",
+                    guidedSentences != null ? guidedSentences : "N/A",
+                    guidedWords != null ? guidedWords : "N/A")
+                    : String.format("• Target length: ~%s sentences / ~%s words.%n",
+                    guidedSentences != null ? guidedSentences : "N/A",
+                    guidedWords != null ? guidedWords : "N/A");
         }
 
         if (isVietnamese) {
             return String.format("""
-                ✍️ HƯỚNG DẪN TẠO NỘI DUNG
-
-                Bây giờ hãy tạo %d biến thể quảng cáo khác nhau theo format sau:
-
-                **YÊU CẦU OUTPUT QUAN TRỌNG:**
-                1. Ngôn ngữ: PHẢI 100%% tiếng Việt - không ngoại lệ
-                2. Format: Chỉ trả về JSON object hợp lệ cho từng biến thể
-                3. Tính độc đáo: Mỗi biến thể phải khác biệt có ý nghĩa
-                4. Tuân thủ: Mọi quảng cáo phải đáp ứng tất cả yêu cầu Facebook
-                5. Phong cách: Bám sát các dấu vết phong cách ở trên%s
+                ✍️ OUTPUT
+                • Tạo %d JSON object, mỗi object là một biến thể riêng.
+                • Phải có emoji + không khí lễ hội giống mẫu, thiếu sẽ bị loại.
                 %s
-                %s
-
-                JSON Object:
+                JSON schema:
                 {
-                  "headline": "Tiêu đề hấp dẫn ở đây%s",
-                  "description": "Mô tả cuốn hút ở đây%s",
-                  "primaryText": "Văn bản chính đầy đủ với giá trị đề xuất rõ ràng và kêu gọi hành động%s",
-                  "callToAction": "Phải khớp với CTA được yêu cầu ở trên",
-                  "imagePrompt": "Mô tả ngắn gọn cho ảnh minh họa phù hợp phong cách",
-                  "styleNotes": "Tóm tắt 1-2 câu cho biết biến thể này bám phong cách tham chiếu như thế nào"
+                  "headline": "≤40 ký tự nếu áp dụng giới hạn",
+                  "description": "≤125 ký tự nếu áp dụng giới hạn",
+                  "primaryText": "≤1000 ký tự nếu áp dụng giới hạn",
+                  "callToAction": "Giữ CTA đã yêu cầu",
+                  "imagePrompt": "Gợi ý cảnh minh họa",
+                  "styleNotes": "1-2 câu mô tả việc bám phong cách tham chiếu"
                 }
 
-                Tạo ngay bây giờ và CHỈ trả về JSON object hợp lệ như mẫu trên cho mỗi biến thể:
-                """, numberOfVariations, depthRequirement, mirrorLengthNote, styleReminder, headlineConstraint, descriptionConstraint, primaryConstraint);
-        } else {
-            return String.format("""
-                ✍️ GENERATION INSTRUCTIONS
-
-                Now generate %d unique ad variations following this format:
-
-                **CRITICAL OUTPUT REQUIREMENTS:**
-                1. Language: MUST be 100%% English - no exceptions
-                2. Format: Return ONLY a valid JSON object per variation
-                3. Uniqueness: Each variation must be meaningfully different
-                4. Compliance: Every ad must pass all Facebook requirements
-                5. Style: Mirror the cues listed above%s
-                %s
-                %s
-
-                JSON Object:
-                {
-                  "headline": "Compelling headline here%s",
-                  "description": "Engaging description here%s",
-                  "primaryText": "Full primary text with value proposition and CTA%s",
-                  "callToAction": "Must match the CTA specified above",
-                  "imagePrompt": "Short scene description for the image generation model",
-                  "styleNotes": "1-2 short sentences explaining exactly how this variation mirrors the reference style"
-                }
-
-                Generate now and ONLY return a valid JSON object matching the schema above for each variation:
-                """, numberOfVariations, depthRequirement, mirrorLengthNote,
-                styleReminder, headlineConstraint, descriptionConstraint, primaryConstraint);
+                Chỉ trả về JSON hợp lệ, không thêm văn bản khác.
+                """, numberOfVariations, lengthHint);
         }
+
+        return String.format("""
+            ✍️ OUTPUT
+            • Produce %d JSON objects (one per variation).
+            • Emoji + celebratory cadence from the reference are mandatory.
+            %s
+            JSON schema:
+            {
+              "headline": "≤40 chars if limits apply",
+              "description": "≤125 chars if limits apply",
+              "primaryText": "≤1000 chars if limits apply",
+              "callToAction": "Use provided CTA",
+              "imagePrompt": "Scene suggestion",
+              "styleNotes": "1-2 sentences proving the style match"
+            }
+
+            Return ONLY the JSON payload.
+            """, numberOfVariations, lengthHint);
     }
 
-    private void appendReferenceSection(StringBuilder stage,
+
+    private void appendStyleBlueprint(StringBuilder stage,
+                                      AdStyle adStyle,
+                                      List<String> trendingKeywords,
+                                      ReferenceStyleProfile styleProfile,
+                                      boolean isVietnamese) {
+        String headline = isVietnamese ? "🎨 STYLE BLUEPRINT\n" : "🎨 STYLE BLUEPRINT\n";
+        stage.append(headline);
+        if (styleProfile != null) {
+            stage.append(String.format("- Hook: %s%n",
+                    safeValue(styleProfile.getHookType(), isVietnamese ? "câu khẳng định" : "statement")));
+            stage.append(String.format("- Tone/Pacing: %s · %s%n",
+                    safeValue(styleProfile.getTone(), "BALANCED"),
+                    safeValue(styleProfile.getPacing(), "BALANCED")));
+            if (styleProfile.getEmojiSamples() != null && !styleProfile.getEmojiSamples().isEmpty()) {
+                stage.append("- Emoji: ").append(String.join(" ", styleProfile.getEmojiSamples())).append("\n");
+            }
+            if (Boolean.TRUE.equals(styleProfile.getUsesSecondPerson())) {
+                stage.append(isVietnamese ? "- Giữ cách xưng hô \"bạn\"\n" : "- Speak directly to the reader (\"you\")\n");
+            }
+            if (styleProfile.getCtaVerb() != null) {
+                stage.append(String.format("- CTA vibe: %s%n", styleProfile.getCtaVerb()));
+            }
+        } else if (adStyle != null) {
+            stage.append(adStyle.getStyleInstruction(isVietnamese)).append("\n");
+        }
+        if (trendingKeywords != null && !trendingKeywords.isEmpty()) {
+            stage.append(isVietnamese ? "- Từ khóa: " : "- Keywords: ");
+            stage.append(String.join(", ", trendingKeywords)).append("\n");
+        }
+        stage.append("\n");
+    }
+
+    private void appendReferenceExcerpt(StringBuilder stage,
                                         String referenceContent,
                                         String referenceLink,
                                         String baseDescription,
@@ -745,93 +457,27 @@ public class ChainOfThoughtPromptBuilder {
         if (!StringUtils.hasText(referenceContent) && !StringUtils.hasText(referenceLink)) {
             return;
         }
-
-        String productCue;
-        if (StringUtils.hasText(baseDescription)) {
-            productCue = baseDescription.trim();
-        } else {
-            productCue = isVietnamese ? "sản phẩm/dịch vụ bạn đang quảng cáo" : "the product/service you are advertising";
-        }
-
+        String productCue = StringUtils.hasText(baseDescription)
+                ? baseDescription.trim()
+                : (isVietnamese ? "sản phẩm/dịch vụ của bạn" : "your offer");
         if (isVietnamese) {
-            stage.append("📌 QUẢNG CÁO THAM CHIẾU\n");
+            stage.append("📑 Trích đoạn tham chiếu\n");
             if (StringUtils.hasText(referenceContent)) {
-                stage.append("Nội dung tham khảo (mô phỏng phong cách, KHÔNG sao chép nguyên văn):\n");
-                stage.append(referenceContent).append("\n\n");
+                stage.append(truncateText(referenceContent, 600)).append("\n");
             }
             if (StringUtils.hasText(referenceLink)) {
-                stage.append("Link tham khảo: ").append(referenceLink).append("\n\n");
+                stage.append("Link: ").append(referenceLink).append("\n");
             }
-            stage.append("⚠️ CHỈ sử dụng phần tham khảo để lấy tone & cấu trúc. TUYỆT ĐỐI không nhắc lại thương hiệu/địa điểm/ưu đãi trong nội dung tham khảo.\n");
-            stage.append("Luôn thay thế bằng thông tin sản phẩm của bạn: ").append(productCue).append("\n\n");
+            stage.append("→ Chỉ lấy tone & nhịp, luôn thay bằng dữ liệu của ").append(productCue).append("\n\n");
         } else {
-            stage.append("📌 REFERENCE AD INPUT\n");
+            stage.append("📑 Reference excerpt\n");
             if (StringUtils.hasText(referenceContent)) {
-                stage.append("Reference content (mimic style, do NOT copy verbatim):\n");
-                stage.append(referenceContent).append("\n\n");
+                stage.append(truncateText(referenceContent, 600)).append("\n");
             }
             if (StringUtils.hasText(referenceLink)) {
-                stage.append("Reference Link: ").append(referenceLink).append("\n\n");
+                stage.append("Link: ").append(referenceLink).append("\n");
             }
-            stage.append("⚠️ Use the reference ONLY for tone & structure. NEVER mention the brands/locations/promotions from the reference text.\n");
-            stage.append("Always replace them with details about your product: ").append(productCue).append("\n\n");
-        }
-    }
-
-    private void appendStyleProfile(StringBuilder stage,
-                                    ReferenceStyleProfile styleProfile,
-                                    boolean isVietnamese) {
-        if (styleProfile == null) {
-            return;
-        }
-        if (isVietnamese) {
-            stage.append("🧬 DẤU VẾT PHONG CÁCH\n");
-            stage.append(String.format("- Hook mở đầu: %s%n", safeValue(styleProfile.getHookType(), "Câu khẳng định")));
-            stage.append(String.format("- Tông giọng: %s%n", safeValue(styleProfile.getTone(), "Cân bằng")));
-            stage.append(String.format("- Nhịp viết: %s%n", safeValue(styleProfile.getPacing(), "Cân bằng")));
-            if (Boolean.TRUE.equals(styleProfile.getUsesEmoji())) {
-                stage.append("- Có sử dụng emoji để dẫn dắt cảm xúc");
-                if (styleProfile.getEmojiSamples() != null && !styleProfile.getEmojiSamples().isEmpty()) {
-                    stage.append(": ").append(String.join(" ", styleProfile.getEmojiSamples()));
-                }
-                stage.append("\n");
-            }
-            if (Boolean.TRUE.equals(styleProfile.getUsesSecondPerson())) {
-                stage.append("- Trực tiếp xưng hô với người đọc (\"bạn\")\n");
-            }
-            if (Boolean.TRUE.equals(styleProfile.getUsesQuestions())) {
-                stage.append("- Đặt nhiều câu hỏi để tạo tò mò\n");
-            }
-            appendListIfPresent(stage, "Ghi chú thêm", styleProfile.getStyleNotes());
-            appendListIfPresent(stage, "Dấu câu nổi bật", styleProfile.getPunctuation());
-            if (styleProfile.getCtaVerb() != null) {
-                stage.append("Gợi ý CTA: ").append(styleProfile.getCtaVerb()).append("\n");
-            }
-            stage.append("\n");
-        } else {
-            stage.append("🧬 STYLE FINGERPRINT\n");
-            stage.append(String.format("- Hook type: %s%n", safeValue(styleProfile.getHookType(), "Statement")));
-            stage.append(String.format("- Tone: %s%n", safeValue(styleProfile.getTone(), "Balanced")));
-            stage.append(String.format("- Pacing: %s%n", safeValue(styleProfile.getPacing(), "Balanced")));
-            if (Boolean.TRUE.equals(styleProfile.getUsesEmoji())) {
-                stage.append("- Uses emoji for emphasis");
-                if (styleProfile.getEmojiSamples() != null && !styleProfile.getEmojiSamples().isEmpty()) {
-                    stage.append(": ").append(String.join(" ", styleProfile.getEmojiSamples()));
-                }
-                stage.append("\n");
-            }
-            if (Boolean.TRUE.equals(styleProfile.getUsesSecondPerson())) {
-                stage.append("- Speaks directly to the reader (\"you\")\n");
-            }
-            if (Boolean.TRUE.equals(styleProfile.getUsesQuestions())) {
-                stage.append("- Relies on questions to spark curiosity\n");
-            }
-            appendListIfPresent(stage, "Additional cues", styleProfile.getStyleNotes());
-            appendListIfPresent(stage, "Punctuation cues", styleProfile.getPunctuation());
-            if (styleProfile.getCtaVerb() != null) {
-                stage.append("CTA vibe: ").append(styleProfile.getCtaVerb()).append("\n");
-            }
-            stage.append("\n");
+            stage.append("→ Tone/structure only. Replace all details with ").append(productCue).append("\n\n");
         }
     }
 
@@ -855,17 +501,22 @@ public class ChainOfThoughtPromptBuilder {
         }
     }
 
-    private void appendListIfPresent(StringBuilder stage, String label, List<String> values) {
-        if (values == null || values.isEmpty()) {
-            return;
-        }
-        stage.append(label).append(": ");
-        stage.append(String.join(", ", values));
-        stage.append("\n");
-    }
-
     private String safeValue(String value, String fallback) {
         return StringUtils.hasText(value) ? value : fallback;
+    }
+
+    private String truncateText(String text, int limit) {
+        if (!StringUtils.hasText(text) || text.length() <= limit) {
+            return text != null ? text.trim() : "";
+        }
+        return text.substring(0, Math.min(text.length(), limit)).trim() + " …";
+    }
+
+    private String formatList(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return "N/A";
+        }
+        return String.join(", ", values);
     }
 
     private Integer getGuidedSentenceCount(ReferenceMetrics referenceMetrics, boolean allowLongForm) {

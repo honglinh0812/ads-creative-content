@@ -2116,6 +2116,22 @@
         "saveAdFailed": "Failed to save ads"
       }
     },
+    "referenceModal": {
+      "title": "Analyzing reference ad",
+      "loadingHeadline": "Extracting reference content",
+      "loadingMessage": "We're fetching the ad and extracting its content. Please wait.",
+      "successHeadline": "Reference ready",
+      "successMessage": "Content extracted successfully. Continue to pick your AI providers.",
+      "errorHeadline": "Reference failed",
+      "errorMessage": "Unable to fetch this ad. Please provide a valid reference link.",
+      "continue": "Continue to Step 2",
+      "tryAgain": "Try another link",
+      "status": {
+        "loading": "Processing",
+        "success": "Success",
+        "error": "Failed"
+      }
+    },
     "prompt": {
       "referenceStyle": "Rewrite the messaging to follow the style/themes above but make it bespoke to the user's offer.",
       "referenceLinkOnly": "Use the style and layout patterns from this reference link: {link}. Do not copy text verbatim.",

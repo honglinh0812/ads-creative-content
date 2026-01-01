@@ -90,7 +90,7 @@
               </a-col>
             </a-row>
 
-            <a-form-item :label="$t('adLearn.step1.baseContent.label')" required>
+            <a-form-item :label="$t('adLearn.step1.baseContent.label')">
               <a-textarea
                 v-model:value="formData.baseContent"
                 :rows="5"
@@ -335,6 +335,53 @@
         </div>
       </div>
     </a-modal>
+
+    <a-modal
+      v-model:visible="showReferenceModal"
+      :title="$t('adLearn.referenceModal.title')"
+      :closable="referenceModalStatus !== 'loading'"
+      :maskClosable="referenceModalStatus !== 'loading'"
+      :footer="null"
+      :width="460"
+    >
+      <div class="reference-modal">
+        <div class="reference-modal-icon">
+          <a-spin v-if="referenceModalStatus === 'loading'" size="large" />
+          <div v-else class="reference-modal-status">
+            <span
+              class="status-pill"
+              :class="{
+                success: referenceModalStatus === 'success',
+                error: referenceModalStatus === 'error'
+              }"
+            >
+              {{ referenceModalStatusLabel }}
+            </span>
+          </div>
+        </div>
+        <div class="reference-modal-content">
+          <h3>{{ referenceModalHeadline }}</h3>
+          <p>{{ referenceModalMessage }}</p>
+        </div>
+        <div class="reference-modal-actions">
+          <a-button
+            v-if="referenceModalStatus === 'success'"
+            type="primary"
+            size="large"
+            @click="confirmReferenceSuccess"
+          >
+            {{ $t('adLearn.referenceModal.continue') }}
+          </a-button>
+          <a-button
+            v-else-if="referenceModalStatus === 'error'"
+            size="large"
+            @click="closeReferenceModal"
+          >
+            {{ $t('adLearn.referenceModal.tryAgain') }}
+          </a-button>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -395,7 +442,11 @@ export default {
       asyncJobCurrentStep: '',
       pollingInterval: null,
       pollingStartTime: null,
-      pollingRetryCount: 0
+      pollingRetryCount: 0,
+      showReferenceModal: false,
+      referenceModalStatus: 'loading',
+      referenceModalMessage: '',
+      referenceReadyToContinue: false
     }
   },
   computed: {
@@ -537,6 +588,24 @@ export default {
         return []
       }
       return this.referenceStyleProfile.styleNotes
+    },
+    referenceModalHeadline() {
+      if (this.referenceModalStatus === 'success') {
+        return this.$t('adLearn.referenceModal.successHeadline')
+      }
+      if (this.referenceModalStatus === 'error') {
+        return this.$t('adLearn.referenceModal.errorHeadline')
+      }
+      return this.$t('adLearn.referenceModal.loadingHeadline')
+    },
+    referenceModalStatusLabel() {
+      if (this.referenceModalStatus === 'success') {
+        return this.$t('adLearn.referenceModal.status.success')
+      }
+      if (this.referenceModalStatus === 'error') {
+        return this.$t('adLearn.referenceModal.status.error')
+      }
+      return this.$t('adLearn.referenceModal.status.loading')
     }
   },
   created() {
@@ -611,7 +680,6 @@ export default {
     validateStep1() {
       return this.formData.campaignId &&
         this.formData.name &&
-        this.formData.baseContent &&
         this.formData.referenceLink
     },
     validateStep2() {
@@ -619,9 +687,19 @@ export default {
     },
     async handleNextFromStep1() {
       if (!this.validateStep1()) return
+      this.showReferenceModal = true
+      this.referenceModalStatus = 'loading'
+      this.referenceModalMessage = this.$t('adLearn.referenceModal.loadingMessage')
+      this.referenceReadyToContinue = false
       const extracted = await this.analyzeReference()
       if (extracted) {
-        this.currentStep = 2
+        this.referenceModalStatus = 'success'
+        this.referenceModalMessage = this.$t('adLearn.referenceModal.successMessage')
+        this.referenceReadyToContinue = true
+      } else {
+        this.referenceModalStatus = 'error'
+        this.referenceModalMessage = this.$t('adLearn.referenceModal.errorMessage')
+        this.referenceReadyToContinue = false
       }
     },
     async analyzeReference() {
@@ -703,7 +781,7 @@ export default {
     buildPrompt() {
       const language = detectLanguage(this.formData.baseContent || '') || this.formData.language
       const templates = i18nTemplates.adReference[language] || i18nTemplates.adReference.en
-      const base = this.formData.baseContent || ''
+      const base = this.extractedContent || this.formData.baseContent || ''
       let prompt = `${base}\n\n${templates.instruction}`
 
       if (this.extractedContent) {
@@ -919,6 +997,19 @@ export default {
         clearInterval(this.pollingInterval)
         this.pollingInterval = null
       }
+    },
+    closeReferenceModal() {
+      this.showReferenceModal = false
+      this.referenceModalStatus = 'loading'
+      this.referenceModalMessage = ''
+      this.referenceReadyToContinue = false
+    },
+    confirmReferenceSuccess() {
+      if (!this.referenceReadyToContinue) {
+        return
+      }
+      this.currentStep = 2
+      this.closeReferenceModal()
     },
     async cancelAsyncJob() {
       if (!this.asyncJobId) return
@@ -1293,6 +1384,43 @@ export default {
 
 .async-progress-container .progress-actions {
   margin-top: 20px;
+}
+
+.reference-modal {
+  text-align: center;
+  padding: 8px 8px 4px;
+}
+
+.reference-modal-icon {
+  margin-bottom: 16px;
+}
+
+.reference-modal-content h3 {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #1d4ed8;
+}
+
+.reference-modal-content p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.reference-modal-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.status-pill.success {
+  background: #ecfdf3;
+  color: #16a34a;
+}
+
+.status-pill.error {
+  background: #fef2f2;
+  color: #dc2626;
 }
 
 @media (max-width: 768px) {
