@@ -2205,12 +2205,12 @@
     "progressSteps": {
       "step1": {
         "title": "Điền thông tin",
-        "description": "Chiến dịch, nội dung, link tham khảo",
+        "description": "Chiến dịch và link tham khảo",
         "emoji": ""
       },
       "step2": {
         "title": "Chọn AI",
-        "description": "Chọn AI để sinh văn bản và tạo ảnh",
+        "description": "Chọn AI và tinh chỉnh nội dung tham chiếu",
         "emoji": ""
       },
       "step3": {
@@ -2225,32 +2225,11 @@
         "label": "Chiến dịch",
         "placeholder": "Chọn chiến dịch"
       },
-      "adName": {
-        "label": "Tên quảng cáo",
-        "placeholder": "Nhập tên quảng cáo"
-      },
-      "variations": {
-        "label": "Số lượng quảng cáo"
-      },
-      "language": {
-        "label": "Ngôn ngữ",
-        "vietnamese": "Tiếng Việt",
-        "english": "Tiếng Anh"
-      },
-      "baseContent": {
-        "label": "Nội dung cần quảng cáo",
-        "placeholder": "Nêu chi tiết về sản phẩm/dịch vụ bạn muốn quảng cáo..."
-      },
       "referenceLink": {
         "label": "Link quảng cáo tham khảo từ Meta Ad Library",
         "placeholder": "Dán link tại đây",
         "previewReady": "Đã phân tích quảng cáo tham khảo. AI sẽ gợi ý phong cách & CTA phù hợp.",
         "fallbackSummary": "Đã phân tích quảng cáo tham khảo"
-      },
-      "websiteUrl": {
-        "label": "Website (không bắt buộc)",
-        "placeholder": "https://trang-web-cua-ban.com",
-        "helper": ""
       },
       "next": "Tiếp tục"
     },
@@ -2284,9 +2263,37 @@
     "step2": {
       "cardTitle": "Chọn nhà cung cấp AI",
       "sectionTitle": "Chọn AI đồng hành",
-      "sectionSubtitle": "Chọn AI để viết lại nội dung và tạo hình",
+      "sectionSubtitle": "Chọn AI và tinh chỉnh nội dung tham chiếu",
+      "sections": {
+        "providers": "Nhà cung cấp AI",
+        "content": "Tinh chỉnh nội dung",
+        "adInfo": "Thông tin quảng cáo"
+      },
       "textProvider": "Nhà cung cấp nội dung",
       "imageProvider": "Nhà cung cấp hình ảnh",
+      "baseContent": {
+        "label": "Nội dung sản phẩm (không bắt buộc)",
+        "placeholder": "Mô tả sản phẩm/dịch vụ muốn thay vào quảng cáo mẫu",
+        "helper": "Nếu có, nội dung này sẽ thay thế sản phẩm trong mẫu nhưng giữ nguyên phong cách."
+      },
+      "language": {
+        "label": "Ngôn ngữ",
+        "vietnamese": "Tiếng Việt",
+        "english": "Tiếng Anh"
+      },
+      "variations": {
+        "label": "Số lượng quảng cáo"
+      },
+      "adName": {
+        "label": "Tên quảng cáo",
+        "placeholder": "Nhập tên quảng cáo",
+        "default": "Quảng cáo từ mẫu"
+      },
+      "websiteUrl": {
+        "label": "Website (không bắt buộc)",
+        "placeholder": "https://trang-web-cua-ban.com",
+        "helper": "Để trống nếu dùng URL mặc định của chiến dịch."
+      },
       "generate": "Tạo xem trước",
       "allowUnlimitedLength": {
         "label": "Cho phép AI bỏ qua giới hạn ký tự",

@@ -1998,12 +1998,12 @@
     "progressSteps": {
       "step1": {
         "title": "Fill info",
-        "description": "Campaign, goal, reference link",
+        "description": "Campaign and reference link",
         "emoji": ""
       },
       "step2": {
         "title": "Choose AI",
-        "description": "Pick text & image providers",
+        "description": "Pick AI and refine the reference",
         "emoji": ""
       },
       "step3": {
@@ -2018,32 +2018,11 @@
         "label": "Campaign",
         "placeholder": "Select a campaign"
       },
-      "adName": {
-        "label": "Ad name",
-        "placeholder": "Enter ad name"
-      },
-      "variations": {
-        "label": "Number of ads"
-      },
-      "language": {
-        "label": "Language",
-        "vietnamese": "Vietnamese",
-        "english": "English"
-      },
-      "baseContent": {
-        "label": "Content to promote",
-        "placeholder": "Describe your product/service, audience, key benefits"
-      },
       "referenceLink": {
         "label": "Reference ad link (Meta Ad Library)",
         "placeholder": "Paste one Meta Ad Library link",
         "previewReady": "Reference analyzed. Style & CTA suggestions ready.",
         "fallbackSummary": "Reference analyzed"
-      },
-      "websiteUrl": {
-        "label": "Website URL (optional)",
-        "placeholder": "https://your-landing-page.com",
-        "helper": "Provide the final destination URL if it's different from the campaign's website."
       },
       "next": "Next"
     },
@@ -2077,9 +2056,37 @@
     "step2": {
       "cardTitle": "AI provider selection",
       "sectionTitle": "Pick your AI copilots",
-      "sectionSubtitle": "Choose the engines that will rewrite and illustrate your ads",
+      "sectionSubtitle": "Choose AI providers and refine the reference",
+      "sections": {
+        "providers": "AI providers",
+        "content": "Reference adjustments",
+        "adInfo": "Ad details"
+      },
       "textProvider": "Text provider",
       "imageProvider": "Image provider",
+      "baseContent": {
+        "label": "Product context (optional)",
+        "placeholder": "Describe the product/service you want to substitute into the reference ad",
+        "helper": "If provided, this replaces the product in the reference while preserving its style."
+      },
+      "language": {
+        "label": "Language",
+        "vietnamese": "Vietnamese",
+        "english": "English"
+      },
+      "variations": {
+        "label": "Number of ads"
+      },
+      "adName": {
+        "label": "Ad name",
+        "placeholder": "Enter ad name",
+        "default": "Ad from reference"
+      },
+      "websiteUrl": {
+        "label": "Website URL (optional)",
+        "placeholder": "https://your-landing-page.com",
+        "helper": "Use the campaign URL if you leave this blank."
+      },
       "generate": "Generate previews",
       "allowUnlimitedLength": {
         "label": "Allow AI to ignore character limits",

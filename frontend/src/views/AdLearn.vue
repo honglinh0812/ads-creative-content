@@ -60,46 +60,6 @@
               </a-select>
             </a-form-item>
 
-            <a-form-item :label="$t('adLearn.step1.adName.label')" required>
-              <a-input
-                v-model:value="formData.name"
-                :placeholder="$t('adLearn.step1.adName.placeholder')"
-                :maxlength="100"
-                show-count
-              />
-            </a-form-item>
-
-            <a-row :gutter="[16, 16]">
-              <a-col :xs="24" :md="12">
-                <a-form-item :label="$t('adLearn.step1.variations.label')">
-                  <a-input-number
-                    v-model:value="formData.numberOfVariations"
-                    :min="1"
-                    :max="5"
-                    class="full-width-input"
-                  />
-                </a-form-item>
-              </a-col>
-              <a-col :xs="24" :md="12">
-                <a-form-item :label="$t('adLearn.step1.language.label')">
-                  <a-select v-model:value="formData.language">
-                    <a-select-option value="vi">{{ $t('adLearn.step1.language.vietnamese') }}</a-select-option>
-                    <a-select-option value="en">{{ $t('adLearn.step1.language.english') }}</a-select-option>
-                  </a-select>
-                </a-form-item>
-              </a-col>
-            </a-row>
-
-            <a-form-item :label="$t('adLearn.step1.baseContent.label')">
-              <a-textarea
-                v-model:value="formData.baseContent"
-                :rows="5"
-                :maxlength="2000"
-                show-count
-                :placeholder="$t('adLearn.step1.baseContent.placeholder')"
-              />
-            </a-form-item>
-
             <a-form-item :label="$t('adLearn.step1.referenceLink.label')" required>
               <a-input
                 v-model:value="formData.referenceLink"
@@ -115,20 +75,10 @@
               />
             </a-form-item>
 
-            <a-form-item :label="$t('adLearn.step1.websiteUrl.label')">
-              <a-input
-                v-model:value="formData.websiteUrl"
-                :placeholder="$t('adLearn.step1.websiteUrl.placeholder')"
-              />
-              <div class="field-hint">
-                {{ $t('adLearn.step1.websiteUrl.helper') }}
-              </div>
-            </a-form-item>
-
-            <a-card
-              v-if="hasReferenceInsights"
-              class="reference-intel-card"
-              size="small"
+          <a-card
+            v-if="hasReferenceInsights"
+            class="reference-intel-card"
+            size="small"
               :bordered="false"
             >
             <a-descriptions
@@ -196,40 +146,110 @@
             <a-typography-title :level="4">{{ $t('adLearn.step2.cardTitle') }}</a-typography-title>
             <p class="section-description">{{ $t('adLearn.step2.sectionSubtitle') }}</p>
           </div>
-          <div class="provider-grid">
-            <div class="provider-panel">
-              <div class="provider-label">{{ $t('adLearn.step2.textProvider') }}</div>
-              <a-select v-model:value="formData.textProvider" class="full-width-input">
-                <a-select-option
-                  v-for="provider in textProviders"
-                  :key="provider.value"
-                  :value="provider.value"
-                >
-                  {{ provider.name }}
-                </a-select-option>
-              </a-select>
+          <div class="step2-section">
+            <div class="section-label">{{ $t('adLearn.step2.sections.providers') }}</div>
+            <div class="provider-grid">
+              <div class="provider-panel">
+                <div class="provider-label">{{ $t('adLearn.step2.textProvider') }}</div>
+                <a-select v-model:value="formData.textProvider" class="full-width-input">
+                  <a-select-option
+                    v-for="provider in textProviders"
+                    :key="provider.value"
+                    :value="provider.value"
+                  >
+                    {{ provider.name }}
+                  </a-select-option>
+                </a-select>
+              </div>
+              <div class="provider-panel">
+                <div class="provider-label">{{ $t('adLearn.step2.imageProvider') }}</div>
+                <a-select v-model:value="formData.imageProvider" class="full-width-input">
+                  <a-select-option
+                    v-for="provider in imageProviders"
+                    :key="provider.value"
+                    :value="provider.value"
+                  >
+                    {{ provider.name }}
+                  </a-select-option>
+                </a-select>
+              </div>
             </div>
-            <div class="provider-panel">
-              <div class="provider-label">{{ $t('adLearn.step2.imageProvider') }}</div>
-              <a-select v-model:value="formData.imageProvider" class="full-width-input">
-                <a-select-option
-                  v-for="provider in imageProviders"
-                  :key="provider.value"
-                  :value="provider.value"
-                >
-                  {{ provider.name }}
-                </a-select-option>
-              </a-select>
+
+            <div class="character-limit-toggle">
+              <a-checkbox v-model:checked="formData.allowUnlimitedLength">
+                {{ $t('adLearn.step2.allowUnlimitedLength.label') }}
+              </a-checkbox>
+              <div class="toggle-hint">
+                {{ $t('adLearn.step2.allowUnlimitedLength.description') }}
+              </div>
             </div>
           </div>
 
-          <div class="character-limit-toggle">
-            <a-checkbox v-model:checked="formData.allowUnlimitedLength">
-              {{ $t('adLearn.step2.allowUnlimitedLength.label') }}
-            </a-checkbox>
-            <div class="toggle-hint">
-              {{ $t('adLearn.step2.allowUnlimitedLength.description') }}
-            </div>
+          <div class="step2-section">
+            <div class="section-label">{{ $t('adLearn.step2.sections.content') }}</div>
+            <a-form layout="vertical" class="clean-form">
+              <a-form-item :label="$t('adLearn.step2.baseContent.label')">
+                <a-textarea
+                  v-model:value="formData.baseContent"
+                  :rows="4"
+                  :maxlength="2000"
+                  show-count
+                  :placeholder="$t('adLearn.step2.baseContent.placeholder')"
+                />
+                <div class="field-hint">
+                  {{ $t('adLearn.step2.baseContent.helper') }}
+                </div>
+              </a-form-item>
+              <a-row :gutter="[16, 16]">
+                <a-col :xs="24" :md="12">
+                  <a-form-item :label="$t('adLearn.step2.language.label')">
+                    <a-select v-model:value="formData.language">
+                      <a-select-option value="vi">{{ $t('adLearn.step2.language.vietnamese') }}</a-select-option>
+                      <a-select-option value="en">{{ $t('adLearn.step2.language.english') }}</a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :xs="24" :md="12">
+                  <a-form-item :label="$t('adLearn.step2.variations.label')">
+                    <a-input-number
+                      v-model:value="formData.numberOfVariations"
+                      :min="1"
+                      :max="5"
+                      class="full-width-input"
+                    />
+                  </a-form-item>
+                </a-col>
+              </a-row>
+            </a-form>
+          </div>
+
+          <div class="step2-section">
+            <div class="section-label">{{ $t('adLearn.step2.sections.adInfo') }}</div>
+            <a-form layout="vertical" class="clean-form">
+              <a-row :gutter="[16, 16]">
+                <a-col :xs="24" :md="12">
+                  <a-form-item :label="$t('adLearn.step2.adName.label')" required>
+                    <a-input
+                      v-model:value="formData.name"
+                      :placeholder="$t('adLearn.step2.adName.placeholder')"
+                      :maxlength="100"
+                      show-count
+                    />
+                  </a-form-item>
+                </a-col>
+                <a-col :xs="24" :md="12">
+                  <a-form-item :label="$t('adLearn.step2.websiteUrl.label')">
+                    <a-input
+                      v-model:value="formData.websiteUrl"
+                      :placeholder="$t('adLearn.step2.websiteUrl.placeholder')"
+                    />
+                    <div class="field-hint">
+                      {{ $t('adLearn.step2.websiteUrl.helper') }}
+                    </div>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+            </a-form>
           </div>
 
           <div class="form-actions dual">
@@ -683,7 +703,10 @@ export default {
         this.formData.referenceLink
     },
     validateStep2() {
-      return this.formData.textProvider && this.formData.imageProvider
+      return this.formData.textProvider &&
+        this.formData.imageProvider &&
+        this.formData.name &&
+        this.formData.numberOfVariations
     },
     async handleNextFromStep1() {
       if (!this.validateStep1()) return
@@ -731,6 +754,12 @@ export default {
         this.referenceStyleProfile = response.data.styleProfile || null
         this.referenceSummaryText = this.formatInsights(this.referenceInsights, response.data.message)
         this.hasReferenceInsights = true
+        if (!this.formData.name) {
+          this.formData.name = this.$t('adLearn.step2.adName.default')
+        }
+        if (extracted) {
+          this.formData.language = detectLanguage(extracted)
+        }
         this.$message.success(this.$t('adLearn.messages.success.extracted'))
         return true
       } catch (error) {
@@ -1279,6 +1308,23 @@ export default {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #fdfefe;
+}
+
+.step2-section {
+  margin-bottom: 24px;
+}
+
+.step2-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.section-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 12px;
 }
 
 .provider-label {
