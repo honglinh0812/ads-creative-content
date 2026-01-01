@@ -485,6 +485,10 @@ public class AdImprovementService {
                     .append(productContext);
         }
 
+        prompt.append("\n\nReturn only valid JSON with fields: ")
+                .append("headline, description, primaryText. ")
+                .append("No extra text, no markdown.");
+
         if (prompt.length() > 3000) {
             log.warn("Prompt length {} chars exceeds 3000; consider trimming reference content", prompt.length());
         }

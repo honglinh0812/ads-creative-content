@@ -307,16 +307,27 @@ public class AIProviderService {
      */
     private List<AdContent> generateMockContent(String prompt, int numberOfVariations) {
         List<AdContent> mockContents = new ArrayList<>();
+        boolean referenceDriven = isReferenceDrivenPrompt(prompt);
         for (int i = 0; i < numberOfVariations; i++) {
             AdContent mockContent = AdContent.builder()
                     .headline("Mock Headline " + (i + 1))
-                    .description("Mock description for: " + prompt)
+                    .description(referenceDriven ? "Mock description (reference-driven generation failed)" : "Mock description for: " + prompt)
                     .primaryText("This is mock content generated when all AI providers failed.")
                     .aiProvider(AdContent.AIProvider.MOCK)
                     .build();
             mockContents.add(mockContent);
         }
         return mockContents;
+    }
+
+    private boolean isReferenceDrivenPrompt(String prompt) {
+        if (prompt == null) {
+            return false;
+        }
+        return prompt.contains("Reference ad:")
+            || prompt.contains("Product context (replace the reference product with this):")
+            || prompt.contains("Reuse the reference ad's wording as closely as possible")
+            || prompt.contains("<<SYSTEM_RULES>>");
     }
 
     /**

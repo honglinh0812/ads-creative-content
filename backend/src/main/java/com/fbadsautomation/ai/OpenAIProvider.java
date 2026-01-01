@@ -94,6 +94,7 @@ public class OpenAIProvider implements AIProvider {
             log.warn("OpenAI API key is missing for text generation. Returning mock data.");
             return generateMockAdContents(prompt, numberOfVariations, callToAction);
         }
+        boolean referenceDriven = isReferenceDrivenPrompt(prompt);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(apiKey);
@@ -105,7 +106,8 @@ public class OpenAIProvider implements AIProvider {
 
         Map<String, Object> userMessage = new HashMap<>();
         userMessage.put("role", "user");
-        userMessage.put("content", prompt); // Complete CoT prompt - no modifications needed
+        String jsonGuard = "Return a valid JSON object only.";
+        userMessage.put("content", prompt + "\n\n" + jsonGuard); // Ensure 'json' appears for response_format
 
         List<Map<String, Object>> messages = new ArrayList<>();
         messages.add(userMessage); // Only user message, no system message
@@ -132,29 +134,34 @@ public class OpenAIProvider implements AIProvider {
                     Map<String, Object> message = (Map<String, Object>) choice.get("message");
                     String content = (String) message.get("content");
                     log.info("Raw OpenAI response content: {}", content);
-                    try {
-                        JsonNode rootNode = objectMapper.readTree(content);
-                        AdContent adContent = new AdContent();
-                        adContent.setHeadline(rootNode.path("headline").asText());
-                        adContent.setDescription(rootNode.path("description").asText());
-                        adContent.setPrimaryText(rootNode.path("primaryText").asText());
-                        adContent.setCallToAction(callToAction); // Gán trực tiếp CTA từ tham số
-                        adContent.setCta(callToAction); // Gán trực tiếp CTA từ tham số
-                        adContent.setAiProvider(AdContent.AIProvider.OPENAI);
-                        adContent.setIsSelected(false); // Default value
-                        adContents.add(adContent);
-                        log.info("Parsed OpenAI Ad Content: {}", adContent);
-                    } catch (JsonProcessingException e) {
-                        log.error("Failed to parse JSON content from OpenAI: {}", content, e);
-                        // Fallback to mock data if parsing fails for one variation
+                    JsonNode rootNode = tryParseJson(content);
+                    if (rootNode == null) {
+                        log.error("Failed to parse JSON content from OpenAI: {}", content);
+                        if (isReferenceDrivenPrompt(prompt)) {
+                            throw new RuntimeException("OpenAI returned non-JSON response for reference-driven prompt");
+                        }
                         adContents.add(generateMockAdContent(prompt, callToAction));
-                    };
+                        continue;
+                    }
+                    AdContent adContent = new AdContent();
+                    adContent.setHeadline(rootNode.path("headline").asText());
+                    adContent.setDescription(rootNode.path("description").asText());
+                    adContent.setPrimaryText(rootNode.path("primaryText").asText());
+                    adContent.setCallToAction(callToAction); // Gán trực tiếp CTA từ tham số
+                    adContent.setCta(callToAction); // Gán trực tiếp CTA từ tham số
+                    adContent.setAiProvider(AdContent.AIProvider.OPENAI);
+                    adContent.setIsSelected(false); // Default value
+                    adContents.add(adContent);
+                    log.info("Parsed OpenAI Ad Content: {}", adContent);
                 }
             }
     } catch (HttpClientErrorException e) {
             log.error("HTTP Error calling OpenAI Text API: {} - Response: {}", e.getStatusCode(), e.getResponseBodyAsString(), e);
         } catch (Exception e) {
             log.error("Error calling OpenAI Text API: {}", e.getMessage(), e);
+            if (referenceDriven) {
+                return new ArrayList<>();
+            }
         // Fill with mock data if not enough variations generated
         while (adContents.size() < numberOfVariations) {
             log.warn("Generated only {} valid ad contents from OpenAI, filling remaining {} with mock data.", adContents.size(), numberOfVariations - adContents.size());
@@ -162,6 +169,36 @@ public class OpenAIProvider implements AIProvider {
         }
     }
         return adContents;
+    }
+
+    private JsonNode tryParseJson(String content) {
+        if (content == null || content.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readTree(content);
+        } catch (JsonProcessingException e) {
+            int start = content.indexOf('{');
+            int end = content.lastIndexOf('}');
+            if (start >= 0 && end > start) {
+                String candidate = content.substring(start, end + 1);
+                try {
+                    return objectMapper.readTree(candidate);
+                } catch (JsonProcessingException ignored) {
+                    return null;
+                }
+            }
+            return null;
+        }
+    }
+
+    private boolean isReferenceDrivenPrompt(String prompt) {
+        if (prompt == null) {
+            return false;
+        }
+        return prompt.contains("Reference ad:")
+            || prompt.contains("Product context (replace the reference product with this):")
+            || prompt.contains("Reuse the reference ad's wording as closely as possible");
     }
 
     /**
@@ -359,14 +396,21 @@ public class OpenAIProvider implements AIProvider {
     // Mock Ad Content Generation (Corrected return type)
     private List<AdContent> generateMockAdContents(String prompt, int numberOfVariations, FacebookCTA callToAction) {
         List<AdContent> mockContents = new ArrayList<>();
+        boolean referenceDriven = isReferenceDrivenPrompt(prompt);
         for (int i = 0; i < numberOfVariations; i++) {
             AdContent adContent = new AdContent();
             // Ensure headline stays within 40 character limit
             String shortPrompt = prompt.length() > 20 ? prompt.substring(0, 17) + "..." : prompt;
-            adContent.setHeadline("Mẫu " + (i + 1) + ": " + shortPrompt); // Max ~30 chars
+            adContent.setHeadline(referenceDriven
+                ? "Mẫu " + (i + 1)
+                : "Mẫu " + (i + 1) + ": " + shortPrompt); // Max ~30 chars
             adContent.setDescription("Nội dung quảng cáo được tạo bởi OpenAI, phiên bản " + (i + 1)); // Max 125 chars
-            adContent.setPrimaryText("Mẫu quảng cáo số " + (i + 1) + " cho: " + prompt + ". " +
-                "Nội dung được tạo tự động bởi OpenAI với chất lượng cao, tối ưu hóa cho Facebook Ads."); // Within 1000 chars
+            if (referenceDriven) {
+                adContent.setPrimaryText("Nội dung mẫu do hệ thống tạo khi AI không phản hồi đúng định dạng.");
+            } else {
+                adContent.setPrimaryText("Mẫu quảng cáo số " + (i + 1) + " cho: " + prompt + ". " +
+                    "Nội dung được tạo tự động bởi OpenAI với chất lượng cao, tối ưu hóa cho Facebook Ads.");
+            }
             adContent.setCallToAction(callToAction);
             adContent.setCta(callToAction);
             adContent.setImageUrl("/img/placeholder.png"); // Use local placeholder
@@ -378,9 +422,12 @@ public class OpenAIProvider implements AIProvider {
     }
     private AdContent generateMockAdContent(String prompt, FacebookCTA callToAction) {
         AdContent mockContent = new AdContent();
+        boolean referenceDriven = isReferenceDrivenPrompt(prompt);
         mockContent.setHeadline("Quảng cáo mẫu"); // Only 14 chars - safe!
         mockContent.setDescription("Nội dung được tạo tự động"); // 27 chars - safe!
-        mockContent.setPrimaryText("Nội dung chính cho quảng cáo: " + prompt);
+        mockContent.setPrimaryText(referenceDriven
+            ? "Nội dung mẫu do hệ thống tạo khi AI không phản hồi đúng định dạng."
+            : "Nội dung chính cho quảng cáo: " + prompt);
         mockContent.setCallToAction(callToAction);
         mockContent.setCta(callToAction);
         return mockContent;
